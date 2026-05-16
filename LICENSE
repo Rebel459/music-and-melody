@@ -1,7 +1,7 @@
 Music And Melody - Legacy License
 
-- Assets ARR / specific to the relevant rights holder. Assets include anything in the assets/, books/ and structure/ directories
-- All code and code contributions licensed under LGPL-3.0 Only. This includes all code used in the java/, recipe/, worldgen/, loot_table/ and enchantment/ directories
+- Assets ARR / specific to the relevant rights holder. Assets include anything in the assets/ directory. Do not distribute any assets from this project without explicit permission from the rights holder of the given asset. It is safe to have music from this project in videos and streams in which this project is used.
+- All code and code contributions licensed under LGPL-3.0 Only. This includes all code in the java/ and data/ directories
 
 Source code: https://github.com/Rebel459/music-and-melody
 
