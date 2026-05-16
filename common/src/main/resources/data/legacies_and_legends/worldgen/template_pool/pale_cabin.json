@@ -1,0 +1,24 @@
+{
+    "name":"legacies_and_legends:pale_cabin",
+    "fallback":"minecraft:empty",
+    "elements":[
+      {
+        "weight":1,
+        "element":{
+          "element_type":"minecraft:single_pool_element",
+          "projection":"rigid",
+          "location":"legacies_and_legends:pale_cabin",
+          "processors":"minecraft:empty"
+        }
+      },
+      {
+        "weight":1,
+        "element":{
+          "element_type":"minecraft:single_pool_element",
+          "projection":"rigid",
+          "location":"legacies_and_legends:pale_cabin_secret",
+          "processors":"minecraft:empty"
+        }
+      }
+    ]
+ }

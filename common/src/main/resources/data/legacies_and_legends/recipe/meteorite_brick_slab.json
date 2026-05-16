@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": "legacies_and_legends:meteorite_bricks"
+  },
+  "pattern": [
+    "###"
+  ],
+  "result": {
+    "id": "legacies_and_legends:meteorite_brick_slab",
+    "count": 6
+  }
+}

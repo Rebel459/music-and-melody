@@ -1,0 +1,11 @@
+{
+  "gives": {
+    "id": "legacies_and_legends:ruby_gem"
+  },
+  "max_uses": 1.0,
+  "reputation_discount": 0.05,
+  "wants": {
+    "id": "minecraft:emerald",
+    "count": 20
+  }
+}

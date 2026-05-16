@@ -1,0 +1,32 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/spawner/zombie",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/spawner/skeleton",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/spawner/spider",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/simple/spawner"
+}

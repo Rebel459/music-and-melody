@@ -1,0 +1,14 @@
+{
+    "structures":[
+       {
+          "structure":"legacies_and_legends:shattered_obelisk_adaptation",
+          "weight":1
+       }
+    ],
+    "placement":{
+       "type":"minecraft:random_spread",
+       "salt":394827,
+       "spacing":12,
+       "separation":8
+    }
+ }

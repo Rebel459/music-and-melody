@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "#S#",
+    "STS",
+    "#S#"
+  ],
+  "key": {
+    "#": "minecraft:gold_ingot",
+    "S": "legacies_and_legends:sapphire",
+    "T": "legacies_and_legends:tablet"
+  },
+  "result": {
+    "id": "legacies_and_legends:tablet_of_haste",
+    "count": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "legacies_and_legends:block/jeweling_table_bottom",
+    "east": "legacies_and_legends:block/jeweling_table_left",
+    "north": "legacies_and_legends:block/jeweling_table_front",
+    "particle": "legacies_and_legends:block/jeweling_table_back",
+    "south": "legacies_and_legends:block/jeweling_table_back",
+    "up": "legacies_and_legends:block/jeweling_table_top",
+    "west": "legacies_and_legends:block/jeweling_table_right"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "has_items": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "legacies_and_legends:tablet"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "experience": 0,
+    "recipes": [
+      "legacies_and_legends:tablet_of_recall",
+      "legacies_and_legends:tablet_of_revealing",
+      "legacies_and_legends:tablet_of_haste",
+      "legacies_and_legends:tablet_of_channeling",
+      "legacies_and_legends:tablet_of_deafening",
+      "legacies_and_legends:tablet_of_levitation"
+    ]
+  }
+}

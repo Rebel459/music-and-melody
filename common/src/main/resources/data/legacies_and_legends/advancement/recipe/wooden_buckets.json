@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "has_items": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "legacies_and_legends:wooden_bucket"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "experience": 0,
+    "recipes": [
+      "legacies_and_legends:coal_bucket",
+      "legacies_and_legends:charcoal_bucket"
+    ]
+  }
+}

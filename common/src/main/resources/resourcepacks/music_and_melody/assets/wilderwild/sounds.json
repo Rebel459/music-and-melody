@@ -1,0 +1,547 @@
+{
+  "music.overworld.wilder_forests": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.forest",
+        "type": "event",
+        "weight": 31
+      },
+      {
+        "name": "wilderwild:music/ludocrypt/serene_sonder",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 1
+      },
+      {
+        "name": "wilderwild:music/ludocrypt/horizon_afoot",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 2
+      }
+    ]
+  },
+  "music.overworld.wilder_flower_forests": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.flower_forest",
+        "type": "event",
+        "weight": 22
+      },
+      {
+        "name": "wilderwild:music/ludocrypt/horizon_afoot",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 2
+      }
+    ]
+  },
+  "music.overworld.wilder_lush_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.lush_caves",
+        "type": "event",
+        "weight": 19
+      },
+      {
+        "name": "wilderwild:music/pictochats/amber",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "wilderwild:music/zhen/pressure",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.wilder_dripstone_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.dripstone_caves",
+        "type": "event",
+        "weight": 15
+      },
+      {
+        "name": "wilderwild:music/pictochats/molt",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "wilderwild:music/zhen/pressure",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.wilder_cherry_groves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.cherry_grove",
+        "type": "event",
+        "weight": 15
+      },
+      {
+        "name": "wilderwild:music/pictochats/amber",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.wilder_groves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.grove",
+        "type": "event",
+        "weight": 17
+      },
+      {
+        "name": "wilderwild:music/pictochats/amber",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.wilder_jungles": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.jungle",
+        "type": "event",
+        "weight": 15
+      },
+      {
+        "name": "wilderwild:music/pictochats/dahlia",
+        "stream": true,
+        "volume": 0.8
+      }
+    ]
+  },
+  "music.overworld.wilder_sparse_jungles": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.sparse_jungle",
+        "type": "event",
+        "weight": 15
+      },
+      {
+        "name": "wilderwild:music/pictochats/dahlia",
+        "stream": true,
+        "volume": 0.8
+      }
+    ]
+  },
+  "music.overworld.wilder_bamboo_jungles": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.bamboo_jungle",
+        "type": "event",
+        "weight": 15
+      },
+      {
+        "name": "wilderwild:music/pictochats/dahlia",
+        "stream": true,
+        "volume": 0.8
+      }
+    ]
+  },
+  "music.overworld.wilder_badlands": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.badlands",
+        "type": "event"
+      }
+    ]
+  },
+  "music.overworld.wilder_deserts": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.desert",
+        "type": "event"
+      }
+    ]
+  },
+  "music.overworld.wilder_snowy": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "wilderwild:music/ludocrypt/serene_sonder",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "wilderwild:music/zhen/frozen_blocks",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "wilderwild:music/pictochats/molt",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "legacies_and_legends:music.overworld.snowy",
+        "type": "event",
+        "weight": 28
+      }
+    ]
+  },
+  "music.overworld.wilder_oceans": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.game",
+        "type": "event",
+        "weight": 49
+      },
+      {
+        "name": "wilderwild:music/pictochats/anemone",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 5
+      },
+      {
+        "name": "wilderwild:music/pictochats/espial",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 2
+      }
+    ]
+  },
+  "music.overworld.wilder_frozen_oceans": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.game",
+        "type": "event",
+        "weight": 49
+      },
+      {
+        "name": "wilderwild:music/pictochats/espial",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 3
+      },
+      {
+        "name": "wilderwild:music/zhen/frozen_blocks",
+        "stream": true,
+        "volume": 0.5
+      }
+    ]
+  },
+  "music.overworld.wilder_warm_oceans": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.game",
+        "type": "event",
+        "weight": 49
+      },
+      {
+        "name": "wilderwild:music/pictochats/anemone",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 5
+      },
+      {
+        "name": "wilderwild:music/pictochats/espial",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 2
+      }
+    ]
+  },
+  "music.overworld.mesoglea_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music/game/water/axolotl",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/water/dragon_fish",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/water/shuniji",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/one_more_day",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/shores",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "wilderwild:music/ludocrypt/dove",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 5
+      },
+      {
+        "name": "wilderwild:music/pictochats/espial",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 2
+      },
+      {
+        "name": "wilderwild:music/zhen/pressure",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.magmatic_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music/game/broken_clocks",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/endless",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/puzzlebox",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/watcher",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/bromeliad",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/subwoofer_lullaby",
+        "stream": true
+      },
+      {
+        "name": "music/game/living_mice",
+        "stream": true
+      },
+      {
+        "name": "music/game/home",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "wilderwild:music/pictochats/dahlia",
+        "stream": true,
+        "volume": 0.8,
+        "weight": 3
+      },
+      {
+        "name": "wilderwild:music/zhen/pressure",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.frozen_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music/game/ebb",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/os_piano",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/infinite_amethyst",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/wending",
+        "stream": true
+      },
+      {
+        "name": "music/game/stand_tall",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/komorebi",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/watcher",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/mice_on_venus",
+        "stream": true
+      },
+      {
+        "name": "music/game/wet_hands",
+        "stream": true
+      },
+      {
+        "name": "music/game/sweden",
+        "stream": true
+      },
+      {
+        "name": "music/game/nightly",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "wilderwild:music/pictochats/molt",
+        "stream": true,
+        "weight": 3
+      },
+      {
+        "name": "wilderwild:music/zhen/frozen_blocks",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "wilderwild:music/zhen/pressure",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.overworld.maple_forest": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music/game/below_and_above",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/comforting_memories",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/bromeliad",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/key",
+        "stream": true
+      },
+      {
+        "name": "music/game/ebb",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/echo_in_the_wind",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/featherfall",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/watcher",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/komorebi",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/haggstrom",
+        "stream": true
+      },
+      {
+        "name": "music/game/left_to_bloom",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/living_mice",
+        "stream": true
+      },
+      {
+        "name": "music/game/memories",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/subwoofer_lullaby",
+        "stream": true
+      },
+      {
+        "name": "music/game/floating_dream",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/left_to_bloom",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "wilderwild:music/ludocrypt/serene_sonder",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "wilderwild:music/pictochats/amber",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 3
+      }
+    ]
+  },
+  "music.overworld.dying_forest": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.forest",
+        "type": "event",
+        "volume": 0.2
+      }
+    ]
+  },
+  "music.overworld.snowy_dying_forest": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "wilderwild:music.overworld.wilder_snowy",
+        "type": "event",
+        "volume": 0.2
+      }
+    ]
+  }
+}

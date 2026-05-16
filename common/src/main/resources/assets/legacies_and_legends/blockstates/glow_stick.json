@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "legacies_and_legends:block/glow_stick",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "legacies_and_legends:block/glow_stick"
+    },
+    "facing=south": {
+      "model": "legacies_and_legends:block/glow_stick",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "legacies_and_legends:block/glow_stick",
+      "y": 270
+    }
+  }
+}

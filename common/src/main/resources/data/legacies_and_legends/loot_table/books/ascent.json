@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Ascent",
+                  "author": "Minecraft",
+                  "pages": [
+                    "Whilst seen as a towering observation point from afar, this spire's treacherous ascent serves as a particularly ruthless form of training for those who happen to stumble upon it."
+                  ]
+                },
+                "legacies_and_legends:lore_book": "ascent"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/ascent"
+}

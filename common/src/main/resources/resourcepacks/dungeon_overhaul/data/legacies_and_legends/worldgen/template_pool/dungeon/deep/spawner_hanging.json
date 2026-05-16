@@ -1,0 +1,32 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/spawner/zombie_hanging",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/spawner/skeleton_hanging",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/spawner/spider_hanging",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/deep/spawner_hanging"
+}

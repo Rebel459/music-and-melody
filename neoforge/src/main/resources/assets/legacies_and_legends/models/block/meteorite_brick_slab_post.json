@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_wall_post",
+  "textures": {
+    "wall": "legacies_and_legends:block/meteorite_bricks"
+  }
+}

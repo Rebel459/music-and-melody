@@ -1,0 +1,302 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/passageway/passageway",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/passageway/passageway_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/passageway/passageway_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/descent",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 8
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/intersection",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/crossing",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/crossing_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/crossing_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/crossway/crossing_4",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/room/reward",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/room/storage",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/room/library",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/room/library_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_4",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_5",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_large_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_large_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_large_4",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_large_5",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_4",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_5",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_large_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_large_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_large_4",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_chain_large_5",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_long_2",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_long_3",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/dungeon/dungeon_corridor",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 4
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/wall/wall",
+        "processors": "legacies_and_legends:dungeon/deep_no_air",
+        "projection": "rigid"
+      },
+      "weight": 8
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/deep/wall"
+}

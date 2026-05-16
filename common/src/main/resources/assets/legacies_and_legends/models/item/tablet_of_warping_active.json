@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "legacies_and_legends:item/tablet_of_warping_active"
+  },
+  "display": {
+    "gui": {
+      "rotation": [ 0, 0, 90 ]
+    }
+  }
+}

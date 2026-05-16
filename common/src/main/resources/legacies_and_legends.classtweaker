@@ -1,0 +1,32 @@
+classTweaker v1 official
+
+accessible field  net/minecraft/client/data/models/ItemModelGenerators$TrimMaterialData materialKey Lnet/minecraft/resources/ResourceKey;
+accessible method net/minecraft/world/item/SmithingTemplateItem createNetheriteUpgradeIconList ()Ljava/util/List;
+accessible method net/minecraft/world/item/SmithingTemplateItem createNetheriteUpgradeMaterialList ()Ljava/util/List;
+accessible class net/minecraft/world/item/enchantment/ItemEnchantments
+accessible method net/minecraft/client/renderer/entity/EntityRenderer getBoundingBoxForCulling (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/AABB;
+accessible method net/minecraft/client/renderer/entity/EntityRenderer getBlockLightLevel (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;)I
+accessible method net/minecraft/world/item/equipment/trim/TrimMaterials register (Lnet/minecraft/data/worldgen/BootstrapContext;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/network/chat/Style;Lnet/minecraft/world/item/equipment/trim/MaterialAssetGroup;)V
+accessible field net/minecraft/world/item/AxeItem STRIPPABLES Ljava/util/Map;
+accessible class net/minecraft/world/level/block/Block$ShapePairKey
+accessible field net/minecraft/world/level/block/Block$ShapePairKey first Lnet/minecraft/world/phys/shapes/VoxelShape;
+accessible field net/minecraft/world/level/block/Block$ShapePairKey second Lnet/minecraft/world/phys/shapes/VoxelShape;
+accessible field net/minecraft/world/entity/Entity level Lnet/minecraft/world/level/Level;
+accessible method net/minecraft/world/item/BowItem shootProjectile (Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/projectile/Projectile;IFFFLnet/minecraft/world/entity/LivingEntity;)V
+accessible method net/minecraft/world/item/CrossbowItem shootProjectile (Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/projectile/Projectile;IFFFLnet/minecraft/world/entity/LivingEntity;)V
+accessible method net/minecraft/world/item/ItemStack applyDamage (ILnet/minecraft/server/level/ServerPlayer;Ljava/util/function/Consumer;)V
+accessible method net/minecraft/world/entity/player/Player isEquipped (Lnet/minecraft/world/item/Item;)Z
+accessible method net/minecraft/world/inventory/AbstractContainerMenu addSlot (Lnet/minecraft/world/inventory/Slot;)Lnet/minecraft/world/inventory/Slot;
+accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen leftPos I
+accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen topPos I
+accessible method net/minecraft/world/level/block/StairBlock <init> (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+accessible method net/minecraft/world/item/MaceItem knockbackPredicate (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)Ljava/util/function/Predicate;
+accessible class net/minecraft/world/inventory/MenuType$MenuSupplier
+extendable class net/minecraft/world/inventory/MenuType$MenuSupplier
+accessible method net/minecraft/client/gui/screens/MenuScreens register (Lnet/minecraft/world/inventory/MenuType;Lnet/minecraft/client/gui/screens/MenuScreens$ScreenConstructor;)V
+accessible class net/minecraft/client/gui/screens/MenuScreens$ScreenConstructor
+accessible method net/minecraft/server/level/ServerLevel getEntities ()Lnet/minecraft/world/level/entity/LevelEntityGetter;
+accessible method net/minecraft/world/entity/Entity getOnPos (F)Lnet/minecraft/core/BlockPos;
+accessible method net/minecraft/world/entity/npc/villager/AbstractVillager addOffersFromTradeSet (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/trading/MerchantOffers;Lnet/minecraft/resources/ResourceKey;)V
+accessible field net/minecraft/world/item/HoeItem TILLABLES Ljava/util/Map;
+accessible field net/minecraft/client/sounds/WeighedSoundEvents list Ljava/util/List;

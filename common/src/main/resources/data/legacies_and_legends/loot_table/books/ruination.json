@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Ruination",
+                  "author": "Minecraft",
+                  "pages": [
+                    "The ruined Outposts of the forgotten world were constructed to protect these ancient lands, serving as eyes and defences far beyond the reach of their central cities. These outposts were eventually overrun, destroyed as the infestation spread beyond their",
+                    "guardians’ control."
+                  ]
+                },
+                "legacies_and_legends:lore_book": "ruination"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/ruination"
+}

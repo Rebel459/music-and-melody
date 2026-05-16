@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "The Stronghold",
+                  "author": "Minecraft",
+                  "pages": [
+                    "You’ve found the Stronghold at last. The stone brick walls, the abandoned hallways. A great Library of vast knowledge, filled with wondrous books of unimaginable power.\n\nYou are here. \n\nA passage to another world. ",
+                    "Will this be your journey’s end?"
+                  ]
+                },
+                "legacies_and_legends:lore_book": "the_stronghold"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/the_stronghold"
+}

@@ -1,0 +1,42 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:desert",
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "#minecraft:is_badlands",
+    "#minecraft:has_structure/desert_pyramid",
+    {
+      "id": "#c:is_desert",
+      "required": false
+    },
+    {
+      "id": "bloom:warm_river",
+      "required": false
+    },
+    {
+      "id": "bloom:arid_shore",
+      "required": false
+    },
+    {
+      "id": "clifftree:warm_caves",
+      "required": false
+    },
+    {
+      "id": "clifftree:coniferous_badlands",
+      "required": false
+    },
+    {
+      "id": "clifftree:oasis",
+      "required": false
+    },
+    {
+      "id": "clifftree:shrubland",
+      "required": false
+    },
+    {
+      "id": "clifftree:warm_river",
+      "required": false
+    }
+  ]
+}

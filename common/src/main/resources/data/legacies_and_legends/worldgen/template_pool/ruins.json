@@ -1,0 +1,24 @@
+{
+    "name":"legacies_and_legends:ruins",
+    "fallback":"minecraft:empty",
+    "elements":[
+      {
+        "weight":2,
+        "element":{
+          "element_type":"minecraft:single_pool_element",
+          "projection":"rigid",
+          "location":"legacies_and_legends:ruins",
+          "processors":"legacies_and_legends:ruins"
+        }
+      },
+      {
+        "weight":1,
+        "element":{
+          "element_type":"minecraft:single_pool_element",
+          "projection":"rigid",
+          "location":"legacies_and_legends:ruins_2",
+          "processors":"legacies_and_legends:ruins"
+        }
+      }
+    ]
+ }

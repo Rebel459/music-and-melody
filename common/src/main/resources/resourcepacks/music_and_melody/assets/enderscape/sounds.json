@@ -1,0 +1,157 @@
+{
+  "music.enderscape.biome.celestial_grove": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "enderscape:music/biome/celestial_grove/elysium",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "enderscape:music/biome/celestial_grove/finality",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "enderscape:music/biome/celestial_grove/otherworld",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "legacy:music/end/only_the_beginning",
+        "stream": true,
+        "weight": 3,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/end/the_end",
+        "stream": true,
+        "weight": 1
+      }
+    ]
+  },
+  "music.enderscape.biome.corrupt_barrens": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "enderscape:music/biome/corrupt_barrens/mutagen",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "enderscape:music/biome/corrupt_barrens/nebula",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "legacy:music/end/only_the_beginning",
+        "stream": true,
+        "weight": 1,
+        "volume": 0.8
+      },
+      {
+        "name": "legacy:music/end/vacuum_decay",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "music/game/end/the_end",
+        "stream": true,
+        "weight": 3
+      }
+    ]
+  },
+  "music.enderscape.biome.default_end": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "enderscape:music/biome/default_end/desolation",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "legacy:music/end/only_the_beginning",
+        "stream": true,
+        "weight": 1,
+        "volume": 0.8
+      },
+      {
+        "name": "legacy:music/end/vacuum_decay",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "music/game/end/the_end",
+        "stream": true,
+        "weight": 2
+      }
+    ]
+  },
+  "music.enderscape.biome.magnia_fields": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "enderscape:music/biome/default_end/desolation",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "enderscape:music/biome/magnia_fields/flutters",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "minecraft:music.end",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "legacy:music/end/only_the_beginning",
+        "stream": true,
+        "weight": 1,
+        "volume": 0.8
+      },
+      {
+        "name": "legacy:music/end/vacuum_decay",
+        "stream": true,
+        "weight": 3
+      },
+      {
+        "name": "music/game/end/the_end",
+        "stream": true,
+        "weight": 1
+      }
+    ]
+  },
+  "music.enderscape.biome.veiled_woodlands": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "enderscape:music/biome/default_end/desolation",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "enderscape:music/biome/veiled_woodlands/respite",
+        "stream": true,
+        "weight": 5
+      },
+      {
+        "name": "legacy:music/end/only_the_beginning",
+        "stream": true,
+        "weight": 1,
+        "volume": 0.8
+      },
+      {
+        "name": "legacy:music/end/vacuum_decay",
+        "stream": true,
+        "weight": 1
+      },
+      {
+        "name": "music/game/end/the_end",
+        "stream": true,
+        "weight": 1
+      }
+    ]
+  }
+}

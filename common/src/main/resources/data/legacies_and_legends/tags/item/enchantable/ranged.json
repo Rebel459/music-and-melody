@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:enchantable/bow",
+    "#legacies_and_legends:enchantable/boomerang"
+  ]
+}

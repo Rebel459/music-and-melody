@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "As Above",
+                  "author": "Minecraft",
+                  "pages": [
+                    "This mysterious structure has something off about it.\n\nIts portal has been unlit for a long time, and wherever this portal went has since been long forgotten, if it even worked in the first place.",
+                    "How could it have ever been lit to begin with, in this hellish place? Maybe this world wasn’t always like this.\n\nIt really makes you wonder…\n\nWhere did this portal lead?"
+                  ]
+                },
+                "legacies_and_legends:lore_book": "as_above"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/as_above"
+}

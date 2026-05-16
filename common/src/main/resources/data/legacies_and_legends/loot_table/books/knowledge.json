@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Knowledge",
+                  "author": "Minecraft",
+                  "pages": [
+                    "They have outposts across the world. They have great mansions hidden in the depths of the forests. They have a great Citadel, in lands far away.\n\nThey hold the last remains of forgotten knowledge. They know of the Strongholds. They know of the",
+                    "Libraries. They know of the Portals. \n\nWhat else do they know? \n\nWhat else are they hiding?"
+                  ]
+                },
+                "legacies_and_legends:lore_book": "knowledge"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/knowledge"
+}

@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "The Portal",
+                  "author": "Minecraft",
+                  "pages": [
+                    "A heavily-damaged book, documenting the Stronghold’s portal. It is missing most of its pages, almost as if they were ripped out from within. Only one page remains, with barely any of the remaining text legible:\n\n…and that is why there is no other choice.",
+                    "The consequences of returning would be catastrophic."
+                  ]
+                },
+                "legacies_and_legends:lore_book": "the_portal"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/the_portal"
+}

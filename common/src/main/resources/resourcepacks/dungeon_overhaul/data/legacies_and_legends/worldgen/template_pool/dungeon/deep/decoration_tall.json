@@ -1,0 +1,32 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration_tall/hanging",
+        "processors": "legacies_and_legends:dungeon/deep_tall_decoration",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration_tall/hanging_2",
+        "processors": "legacies_and_legends:dungeon/deep_tall_decoration",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration_tall/shelf",
+        "processors": "legacies_and_legends:dungeon/deep_tall_decoration",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/deep/decoration_tall"
+}

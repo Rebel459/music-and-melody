@@ -1,0 +1,75 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    neoFormVersion = neo_form_version
+    // Automatically enable AccessTransformers if the file exists
+    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+}
+
+dependencies {
+    compileOnly "org.spongepowered:mixin:0.8.5"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:0.3.5"
+    implementation "org.ow2.asm:asm:9.9.1"
+    implementation "org.ow2.asm:asm-tree:9.9.1"
+
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
+    compileOnly("maven.modrinth:unified-api:$unified_version-fabric")
+    compileOnly("maven.modrinth:item-tooltips:$tooltips_version-fabric")
+    compileOnly("maven.modrinth:trim-patcher:$patcher_version-fabric")
+    compileOnly("maven.modrinth:lithostitched:$lithostitched_fabric_version-fabric-$minecraft_version")
+
+    compileOnly("maven.modrinth:combat-reborn:$combat_version-fabric")
+    compileOnly("maven.modrinth:rei:$rei_version")
+    compileOnly("maven.modrinth:architectury-api:$architectury_version")
+    compileOnly("maven.modrinth:friends-and-foes:$friendsandfoes_version")
+    compileOnly("com.teamresourceful.resourcefullib:resourcefullib-fabric-1.21.11:$resourceful_version")
+    compileOnly("dev.isxander:yet-another-config-lib:$yacl_version")
+    compileOnly("net.fabricmc:fabric-language-kotlin:$kotlin_version")
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonCompileOnly {
+        canBeResolved = false
+        canBeConsumed = true
+        extendsFrom compileOnly
+    }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+}
+
+// Implement mcgradleconventions loader attribute
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'common')
+            }
+        }
+    }
+}

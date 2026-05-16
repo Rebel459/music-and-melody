@@ -1,0 +1,14 @@
+{
+    "structures":[
+      {
+         "structure":"legacies_and_legends:spire",
+        "weight":1
+      }
+    ],
+    "placement":{
+       "type":"minecraft:random_spread",
+       "salt":394857,
+       "spacing":33,
+       "separation":11
+    }
+ }

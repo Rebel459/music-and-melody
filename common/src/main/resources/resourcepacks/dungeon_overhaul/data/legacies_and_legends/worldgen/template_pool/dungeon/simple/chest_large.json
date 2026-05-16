@@ -1,0 +1,68 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/1",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/2",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/3",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/4",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/5",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/6",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/simple/chest/7",
+        "processors": "legacies_and_legends:dungeon/simple",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/simple/chest_large"
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}-fabric",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "${mod_author}"
+  ],
+  "contact": {
+    "sources": "https://github.com/Rebel459/legacies-and-legends"
+  },
+  "license": "${license}",
+  "icon": "assets/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.rebel459.legacies_and_legends.LegaciesAndLegendsFabric"
+    ],
+    "client": [
+      "net.rebel459.legacies_and_legends.LegaciesAndLegendsFabricClient"
+    ],
+    "fabric-datagen": [
+      "net.rebel459.legacies_and_legends.datagen.LaLDataGenerator"
+    ],
+    "modmenu": [
+      "net.rebel459.legacies_and_legends.config.LaLModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "legacies_and_legends.mixins.json",
+    "legacies_and_legends-fabric.mixins.json"
+  ],
+  "accessWidener": "legacies_and_legends.classtweaker",
+  "depends": {
+    "fabricloader": ">=0.18",
+    "fabric-api": "*",
+    "minecraft": "${fabric_minecraft_version}",
+    "java": ">=25",
+    "unified": "*",
+    "cloth-config": "*",
+    "item_tooltips": "*",
+    "trimpatcher": "*",
+    "lithostitched": "*"
+  }
+}

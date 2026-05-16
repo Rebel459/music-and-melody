@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "experience": 1.0,
+  "cookingtime": 200,
+  "ingredient": "legacies_and_legends:deepslate_sapphire_ore",
+  "result": {
+    "id": "legacies_and_legends:sapphire"
+  }
+}

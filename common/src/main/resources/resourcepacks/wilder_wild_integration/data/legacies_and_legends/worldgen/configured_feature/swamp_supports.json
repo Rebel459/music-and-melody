@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:block_column",
+  "config": {
+    "direction": "down",
+    "allowed_placement": {
+      "type": "minecraft:matching_block_tag",
+      "offset":[
+        0,
+        1,
+        0
+      ],
+      "tag": "legacies_and_legends:support_replaceable_blocks"
+    },
+    "prioritize_tip": true,
+    "layers": [
+      {
+        "height": 50,
+        "provider": {
+          "type": "minecraft:weighted_state_provider",
+          "entries": [
+            {
+              "data": {
+                "Name": "wilderwild:willow_log"
+              },
+              "weight": 1
+            },
+            {
+              "data": {
+                "Name": "wilderwild:willow_log"
+              },
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

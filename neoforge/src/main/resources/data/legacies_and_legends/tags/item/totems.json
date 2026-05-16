@@ -1,0 +1,11 @@
+{
+  "values": [
+    "minecraft:totem_of_undying",
+    "legacies_and_legends:totem_of_teleportation",
+    "legacies_and_legends:totem_of_resurrection",
+    {
+      "id": "#friendsandfoes:totems",
+      "required": false
+    }
+  ]
+}

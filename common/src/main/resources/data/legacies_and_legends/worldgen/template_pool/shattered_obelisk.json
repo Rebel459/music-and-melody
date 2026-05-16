@@ -1,0 +1,15 @@
+{
+    "name":"legacies_and_legends:obelisk",
+    "fallback":"minecraft:empty",
+    "elements":[
+       {
+          "weight":1,
+          "element":{
+             "element_type":"minecraft:single_pool_element",
+             "projection":"rigid",
+             "location":"legacies_and_legends:shattered_obelisk",
+             "processors":"legacies_and_legends:obelisks"
+          }
+       }
+    ]
+ }

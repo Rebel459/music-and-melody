@@ -1,0 +1,31 @@
+{
+  "anvil_cost": 8,
+  "description": {
+    "translate": "enchantment.legacies_and_legends.shadowstep"
+  },
+  "effects": {
+    "minecraft:trident_spin_attack_strength": {
+      "type": "minecraft:add",
+      "value": {
+        "type": "minecraft:linear",
+        "base": 1,
+        "per_level_above_first": 1
+      }
+    }
+  },
+  "exclusive_set": "#legacies_and_legends:exclusive_set/boomerang",
+  "max_cost": {
+    "base": 30,
+    "per_level_above_first": 0
+  },
+  "max_level": 1,
+  "min_cost": {
+    "base": 30,
+    "per_level_above_first": 0
+  },
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#legacies_and_legends:enchantable/boomerang",
+  "weight": 2
+}

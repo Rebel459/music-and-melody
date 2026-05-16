@@ -1,0 +1,9 @@
+{
+    "replace": false,
+    "values": [
+        {
+            "id": "bloom:golden_forest",
+            "required": false
+        }
+    ]
+}

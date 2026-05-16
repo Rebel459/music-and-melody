@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Consequences",
+                  "author": "Unknown",
+                  "pages": [
+                    "You travelled far and wide. You reached the stronghold. You lit the portal, forgotten for aeons. And now, you’ve slain a great beast.\n\nWhy?\n\nWhy did you kill it?\n\nWhy did you come here?",
+                    "You don’t understand where you are, or what you did. Yet, entirely unprovoked, you came here.\n\nYou killed a dragon.\n\nYou say you’ve freed the end.\n\nWho, or what, were you freeing?",
+                    "What were you freeing them from?\nWhat was so wrong?\n\nYou made a mistake.\n\nYou don’t understand, but you will.\n\nYou shouldn’t have come here.\n\nThere will be consequences."
+                  ]
+                },
+                "legacies_and_legends:lore_book": "consequences"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/consequences"
+}

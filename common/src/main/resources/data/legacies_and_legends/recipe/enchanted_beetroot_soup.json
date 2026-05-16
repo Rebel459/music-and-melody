@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+      "minecraft:bowl",
+      "legacies_and_legends:enchanted_beetroot",
+      "legacies_and_legends:enchanted_beetroot",
+      "legacies_and_legends:enchanted_beetroot",
+      "legacies_and_legends:enchanted_beetroot",
+      "legacies_and_legends:enchanted_beetroot",
+      "legacies_and_legends:enchanted_beetroot"
+  ],
+  "result": {
+    "count": 1,
+    "id": "legacies_and_legends:enchanted_beetroot_soup"
+  }
+}

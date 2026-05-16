@@ -1,0 +1,32 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/arid/decoration/bookshelf",
+        "processors": "legacies_and_legends:dungeon/arid",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/arid/decoration/bookshelf_2",
+        "processors": "legacies_and_legends:dungeon/arid",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/arid/decoration/bookshelf_3",
+        "processors": "legacies_and_legends:dungeon/arid",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/arid/decoration_library"
+}

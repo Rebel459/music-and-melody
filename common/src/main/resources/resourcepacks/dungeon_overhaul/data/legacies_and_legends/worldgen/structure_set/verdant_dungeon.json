@@ -1,0 +1,14 @@
+{
+    "structures":[
+      {
+        "structure":"legacies_and_legends:verdant_dungeon",
+        "weight":1
+      }
+    ],
+    "placement":{
+       "type":"minecraft:random_spread",
+       "salt":398471,
+       "spacing":24,
+       "separation":8
+    }
+ }

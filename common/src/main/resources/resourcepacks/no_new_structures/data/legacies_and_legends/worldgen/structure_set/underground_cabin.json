@@ -1,0 +1,13 @@
+{
+  "structures":[],
+  "placement":{
+    "type":"minecraft:random_spread",
+    "exclusion_zone": {
+      "chunk_count": 2,
+      "other_set": "legacies_and_legends:deep_cabin"
+    },
+    "salt":498572,
+    "spacing":20,
+    "separation":8
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/pot",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 36
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/stairs_inverted",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 36
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/bench",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 18
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/table",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 18
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/bookshelf",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/bookshelf_2",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/bookshelf_3",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/barrel_inverted",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/barrel_2_inverted",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/deep/decoration/barrel_3_inverted",
+        "processors": "legacies_and_legends:dungeon/deep",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/deep/decoration_inverted"
+}

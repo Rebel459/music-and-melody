@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "legacies_and_legends:frozen_dungeon",
+      "required": false
+    }
+  ]
+}

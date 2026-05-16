@@ -1,0 +1,22 @@
+{
+  "criteria": {
+    "has_items": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "legacies_and_legends:disc_fragment_far_lands"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "experience": 0,
+    "recipes": [
+      "legacies_and_legends:music_disc_far_lands"
+    ]
+  }
+}

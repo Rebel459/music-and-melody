@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "legacies_and_legends:wandering_trader/metal_chunk",
+    "legacies_and_legends:wandering_trader/wooden_bucket",
+    "legacies_and_legends:wandering_trader/glow_stick"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "fallback": "legacies_and_legends:pale_cabin_supports",
+    "elements":[
+      {
+        "weight": 1,
+        "element": {
+          "element_type": "minecraft:feature_pool_element",
+          "projection": "rigid",
+          "feature": {
+            "feature": "legacies_and_legends:pale_oak_supports",
+            "placement": []
+          }
+        }
+      }
+    ]
+ }

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "000",
+    "010",
+    "000"
+  ],
+  "key": {
+    "0": "minecraft:coal",
+    "1": "legacies_and_legends:wooden_bucket"
+  },
+  "result": {
+    "id": "legacies_and_legends:coal_bucket",
+    "count": 1
+  }
+}

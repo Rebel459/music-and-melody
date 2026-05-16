@@ -1,0 +1,14 @@
+{
+  "structures":[
+    {
+      "structure":"legacies_and_legends:underground_cabin",
+      "weight":1
+    }
+  ],
+  "placement":{
+    "type":"minecraft:random_spread",
+    "salt":498572,
+    "spacing":20,
+    "separation":8
+  }
+}

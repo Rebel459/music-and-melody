@@ -1,0 +1,37 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "legacies_and_legends:block/wand_platform_double_side",
+		"north": "legacies_and_legends:block/wand_platform_double_side",
+		"up": "legacies_and_legends:block/wand_platform_top",
+		"down": "legacies_and_legends:block/wand_platform_bottom"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "north", "tintindex": 0},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "east", "tintindex": 0},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "south", "tintindex": 0},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "west", "tintindex": 0},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#up", "cullface": "up", "tintindex": 0},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#down", "cullface": "down", "tintindex": 0}
+			}
+		},
+		{
+			"name": "inverted",
+			"from": [16, 0, 0],
+			"to": [0, 16, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [16, 0, 0]},
+			"faces": {
+				"north": {"uv": [16, 0, 0, 16], "texture": "#north", "cullface": "north", "tintindex": 0},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "west", "tintindex": 0},
+				"south": {"uv": [16, 0, 0, 16], "texture": "#north", "cullface": "south", "tintindex": 0},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#north", "cullface": "east", "tintindex": 0},
+				"up": {"uv": [16, 0, 0, 16], "texture": "#up", "cullface": "up", "tintindex": 0},
+				"down": {"uv": [16, 0, 0, 16], "texture": "#down", "cullface": "down", "tintindex": 0}
+			}
+		}
+	]
+}

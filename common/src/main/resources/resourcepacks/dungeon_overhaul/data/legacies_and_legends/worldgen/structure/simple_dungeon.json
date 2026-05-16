@@ -1,0 +1,74 @@
+{
+  "type":"minecraft:jigsaw",
+  "biomes": "#legacies_and_legends:has_structure/dungeon/simple",
+  "step":"underground_structures",
+  "liquid_settings": "ignore_waterlogging",
+  "spawn_overrides": {
+    "ambient": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "axolotls": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "creature": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "misc": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "monster": {
+      "bounding_box": "piece",
+      "spawns": [
+        {
+          "type": "minecraft:zombie",
+          "maxCount": 1,
+          "minCount": 1,
+          "weight": 1
+        },
+        {
+          "type": "minecraft:skeleton",
+          "maxCount": 1,
+          "minCount": 1,
+          "weight": 1
+        },
+        {
+          "type": "minecraft:spider",
+          "maxCount": 1,
+          "minCount": 1,
+          "weight": 1
+        }
+      ]
+    },
+    "underground_water_creature": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "water_ambient": {
+      "bounding_box": "piece",
+      "spawns": []
+    },
+    "water_creature": {
+      "bounding_box": "piece",
+      "spawns": []
+    }
+  },
+  "terrain_adaptation":"none",
+  "start_pool":"legacies_and_legends:dungeon/simple/start",
+  "size": 5,
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "start_height": {
+    "type": "minecraft:uniform",
+    "min_inclusive": {
+      "absolute": -64
+    },
+    "max_inclusive": {
+      "absolute": -12
+    }
+  },
+  "max_distance_from_center":116,
+  "use_expansion_hack":false
+ }

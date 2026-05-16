@@ -1,0 +1,95 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/pot",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 36
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/stairs_inverted",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 36
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/bench",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 18
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/table",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 18
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/bookshelf",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/bookshelf_2",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/bookshelf_3",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/barrel_inverted",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/barrel_2_inverted",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "legacies_and_legends:dungeon/frozen/decoration/barrel_3_inverted",
+        "processors": "legacies_and_legends:dungeon/frozen",
+        "projection": "rigid"
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "legacies_and_legends:dungeon/frozen/decoration_inverted"
+}

@@ -1,0 +1,15 @@
+{
+    "replace": false,
+    "values": [
+        "minecraft:forest",
+        "minecraft:plains",
+        {
+            "id": "natures_spirit:oak_savanna",
+            "required": false
+        },
+        {
+            "id": "wilderwild:sparse_forest",
+            "required": false
+        }
+    ]
+}

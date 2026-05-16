@@ -1,0 +1,14 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "legacies_and_legends:item/tablet_of_instability"
+    },
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "legacies_and_legends:item/tablet_of_instability_active"
+    },
+    "property": "minecraft:using_item"
+  }
+}

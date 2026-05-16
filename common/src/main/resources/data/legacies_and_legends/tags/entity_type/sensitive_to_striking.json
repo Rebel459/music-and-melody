@@ -1,0 +1,38 @@
+{
+  "values": [
+    "minecraft:pig",
+    "minecraft:cow",
+    "minecraft:chicken",
+    "minecraft:sheep",
+    "minecraft:donkey",
+    "minecraft:horse",
+    "minecraft:mooshroom",
+    "minecraft:mule",
+    "minecraft:rabbit",
+    "minecraft:camel",
+    "minecraft:goat",
+    "minecraft:fox",
+    "minecraft:llama",
+    "minecraft:trader_llama",
+    "minecraft:panda",
+    "minecraft:polar_bear",
+    "minecraft:sniffer",
+    "minecraft:ocelot",
+    "minecraft:cat",
+    "minecraft:wolf",
+    "minecraft:frog",
+    "minecraft:parrot",
+    {
+      "id": "wilderwild:moobloom",
+      "required": false
+    },
+    {
+      "id": "wilderwild:penguin",
+      "required": false
+    },
+    {
+      "id": "wilderwild:ostrich",
+      "required": false
+    }
+  ]
+}

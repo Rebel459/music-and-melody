@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "legacies_and_legends:meteorite_bricks",
+  "result": {
+    "id": "legacies_and_legends:chiseled_meteorite_bricks"
+  }
+}

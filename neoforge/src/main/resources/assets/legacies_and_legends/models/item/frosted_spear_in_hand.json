@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/spear_in_hand",
+  "textures": {
+    "layer0": "legacies_and_legends:item/frosted_spear_in_hand"
+  }
+}

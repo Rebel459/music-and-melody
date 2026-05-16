@@ -1,0 +1,8 @@
+{
+  "misc.threshold": {
+    "replace": true,
+    "sounds": [
+      "block/end_portal/endportal"
+    ]
+  }
+}

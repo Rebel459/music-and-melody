@@ -1,0 +1,14 @@
+{
+    "structures":[
+      {
+         "structure":"legacies_and_legends:ruined_library",
+         "weight":1
+      }
+    ],
+    "placement":{
+       "type":"minecraft:random_spread",
+       "salt":5893992,
+       "spacing":72,
+       "separation":24
+    }
+ }

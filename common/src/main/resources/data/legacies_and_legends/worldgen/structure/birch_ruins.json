@@ -1,0 +1,15 @@
+{
+  "type":"minecraft:jigsaw",
+  "biomes": "#legacies_and_legends:has_structure/birch_ruins",
+  "step":"surface_structures",
+  "spawn_overrides":{},
+  "terrain_adaptation":"beard_thin",
+  "start_pool":"legacies_and_legends:birch_ruins",
+  "size":3,
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "start_height": {
+    "absolute": 0
+  },
+  "max_distance_from_center":80,
+  "use_expansion_hack":false
+ }

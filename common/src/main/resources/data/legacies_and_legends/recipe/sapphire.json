@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "#"
+  ],
+  "key": {
+    "#": "legacies_and_legends:sapphire_block"
+  },
+  "result": {
+    "id": "legacies_and_legends:sapphire",
+    "count": 9
+  }
+}

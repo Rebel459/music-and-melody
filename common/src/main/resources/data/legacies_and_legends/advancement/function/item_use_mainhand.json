@@ -1,0 +1,19 @@
+{
+  "criteria": {
+    "time_passed": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "player": {
+          "equipment": {
+            "mainhand": {
+              "items": "#legacies_and_legends:has_use_effect"
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "legacies_and_legends:use_effect"
+  }
+}

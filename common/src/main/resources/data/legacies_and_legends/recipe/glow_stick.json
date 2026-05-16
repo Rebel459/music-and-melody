@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:stick",
+    "@": "#legacies_and_legends:crafts_glow_stick"
+  },
+  "pattern": [
+    "@",
+    "#"
+  ],
+  "result": {
+    "id": "legacies_and_legends:glow_stick"
+  }
+}

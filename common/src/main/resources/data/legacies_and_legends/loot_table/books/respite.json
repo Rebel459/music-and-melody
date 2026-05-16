@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Respite",
+                  "author": "Minecraft",
+                  "pages": [
+                    "This humble cabin, once a lived-in home, represents both the solace and solitude of those who find themselves underground.\n\nNow, what little of it remains serves as a brief respite from the unending darkness of many foreboding caverns"
+                  ]
+                },
+                "legacies_and_legends:lore_book": "respite"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "legacies_and_legends:books/respite"
+}

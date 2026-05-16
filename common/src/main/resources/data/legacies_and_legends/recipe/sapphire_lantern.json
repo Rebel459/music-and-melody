@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###",
+    "#S#",
+    "###"
+  ],
+  "key": {
+    "#": "minecraft:iron_nugget",
+    "S": "legacies_and_legends:sapphire"
+  },
+  "result": {
+    "id": "legacies_and_legends:sapphire_lantern",
+    "count": 1
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "criteria": {
+    "has_items": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "legacies_and_legends:sapphire"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "experience": 0,
+    "recipes": [
+      "legacies_and_legends:sapphire",
+      "legacies_and_legends:sapphire_block",
+      "legacies_and_legends:sapphire_lantern",
+      "legacies_and_legends:wand"
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "music.overworld.taiga": {
+    "replace": false,
+    "sounds": [
+      {
+        "name": "music.game",
+        "type": "event",
+        "weight": 22
+      },
+      {
+        "name": "legacy:music/overworld/mosaic",
+        "stream": true,
+        "weight": 2
+      },
+      {
+        "name": "bloom:music/overworld/lock_and_key",
+        "stream": true,
+        "volume": 0.4,
+        "weight": 2
+      }
+    ]
+  },
+  "music.overworld.old_growth_taiga": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music.overworld.old_growth_taiga",
+        "type": "event",
+        "weight": 24
+      },
+      {
+        "name": "bloom:music/overworld/lock_and_key",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  },
+  "music.overworld.windswept_jungle": {
+    "replace": false,
+    "sounds": [
+      {
+        "name": "legacy:music/overworld/814",
+        "stream": true
+      },
+      {
+        "name": "legacy:music/overworld/burning_konkrete",
+        "stream": true
+      },
+      {
+        "name": "music/game/home",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  },
+  "music.overworld.golden_forest": {
+    "replace": false,
+    "sounds": [
+      {
+        "name": "legacy:music/overworld/albeit",
+        "stream": true
+      },
+      {
+        "name": "legacy:music/overworld/mt_reed",
+        "stream": true
+      },
+      {
+        "name": "music/game/memories",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  }
+}

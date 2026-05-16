@@ -1,0 +1,14 @@
+{
+    "structures":[
+      {
+         "structure":"legacies_and_legends:end_ruins",
+         "weight":1
+      }
+    ],
+    "placement":{
+       "type":"minecraft:random_spread",
+       "salt":8912364,
+       "spacing":58,
+       "separation":22
+    }
+ }

@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "legacies_and_legends:simple_dungeon",
+      "required": false
+    },
+    {
+      "id": "legacies_and_legends:arid_dungeon",
+      "required": false
+    },
+    {
+      "id": "legacies_and_legends:cold_dungeon",
+      "required": false
+    },
+    {
+      "id": "legacies_and_legends:deep_dungeon",
+      "required": false
+    },
+    {
+      "id": "legacies_and_legends:infernal_dungeon",
+      "required": false
+    },
+    {
+      "id": "legacies_and_legends:verdant_dungeon",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 400,
+  "experience": 0.3,
+  "ingredient": "legacies_and_legends:meteorite",
+  "result": {
+    "id": "legacies_and_legends:meteorite_brick"
+  }
+}
