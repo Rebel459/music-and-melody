@@ -1,34 +1,35 @@
 {
-  "block.end_portal.spawn": {
-    "replace": true,
-    "sounds": [
-      {
-        "name": "legacy:misc.threshold",
-        "type": "event"
-      }
-    ],
-    "subtitle": "subtitles.block.end_portal.spawn"
-  },
   "music.creative": {
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/creative/miscible",
+        "name": "music_and_melody:music/creative/miscible",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music/creative/stolen_grid",
+        "name": "music_and_melody:music/creative/stolen_grid",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music/overworld/decay",
+        "name": "music_and_melody:music/creative/earth",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/creative/lugn",
+        "stream": true,
+        "volume": 0.6
+      },
+      {
+        "name": "music_and_melody:music/overworld/decay",
         "stream": true
       },
       {
         "name": "music.game",
-        "type": "event"
+        "type": "event",
+        "weight": 1
       },
       {
         "name": "music/game/creative/biome_fest",
@@ -60,12 +61,12 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/end/minecraft_end_remix",
+        "name": "music_and_melody:music/end/minecraft_end_remix",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music/end/sweden_end_remix",
+        "name": "music_and_melody:music/end/sweden_end_remix",
         "stream": true,
         "volume": 0.5
       },
@@ -79,13 +80,13 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 2,
         "volume": 0.8
       },
       {
-        "name": "legacy:music/end/vacuum_decay",
+        "name": "music_and_melody:music/end/vacuum_decay",
         "stream": true
       },
       {
@@ -99,29 +100,32 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/albeit",
+        "name": "music_and_melody:music/overworld/albeit",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/alpha",
+        "name": "music_and_melody:music/overworld/alpha",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/cliff_hanger",
+        "name": "music_and_melody:music/overworld/cliff_hanger",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/shrub",
+        "name": "music_and_melody:music/overworld/shrub",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/hunger",
+        "name": "music_and_melody:music/overworld/hunger",
         "stream": true
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 24
+        "name": "music_and_melody:music.classic",
+        "type": "event"
+      },
+      {
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/a_familiar_room",
@@ -229,7 +233,12 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/creative/stolen_grid",
+        "name": "music_and_melody:music/menu/halland",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "music_and_melody:music/creative/stolen_grid",
         "stream": true,
         "volume": 0.7
       },
@@ -289,11 +298,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/nether/bubbles",
+        "name": "music_and_melody:music/nether/bubbles",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/jellyfish",
+        "name": "music_and_melody:music/nether/jellyfish",
         "stream": true
       },
       {
@@ -324,11 +333,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/nether/bubbles",
+        "name": "music_and_melody:music/nether/bubbles",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/jellyfish",
+        "name": "music_and_melody:music/nether/jellyfish",
         "stream": true
       },
       {
@@ -359,15 +368,15 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/nether/bubbles",
+        "name": "music_and_melody:music/nether/bubbles",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/jellyfish",
+        "name": "music_and_melody:music/nether/jellyfish",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/beneath",
+        "name": "music_and_melody:music/nether/beneath",
         "stream": true,
         "volume": 0.8,
         "weight": 2
@@ -400,15 +409,15 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/nether/bubbles",
+        "name": "music_and_melody:music/nether/bubbles",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/jellyfish",
+        "name": "music_and_melody:music/nether/jellyfish",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/wasteland",
+        "name": "music_and_melody:music/nether/wasteland",
         "stream": true,
         "weight": 2
       },
@@ -440,16 +449,16 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/nether/prophet",
+        "name": "music_and_melody:music/nether/prophet",
         "stream": true
       },
       {
-        "name": "legacy:music/nether/psilopsychotic",
+        "name": "music_and_melody:music/nether/psilopsychotic",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music/misc/placeholder_silence",
+        "name": "music_and_melody:music/empty",
         "stream": true
       }
     ]
@@ -458,19 +467,18 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/sunrise_on_the_mesa_2",
+        "name": "music_and_melody:music/overworld/sunrise_on_the_mesa_2",
         "stream": true,
         "weight": 3
       },
       {
-        "name": "legacy:music/overworld/black_desert_of_endless_stars",
+        "name": "music_and_melody:music/overworld/black_desert_of_endless_stars",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/crescent_dunes",
@@ -513,11 +521,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/mt_reed",
+        "name": "music_and_melody:music/overworld/mt_reed",
         "stream": true,
         "weight": 2
       },
@@ -580,7 +588,7 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/caves/abyss",
+        "name": "music_and_melody:music/caves/abyss",
         "stream": true
       },
       {
@@ -598,19 +606,18 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/black_desert_of_endless_stars",
+        "name": "music_and_melody:music/overworld/black_desert_of_endless_stars",
         "stream": true,
         "volume": 0.5,
         "weight": 3
       },
       {
-        "name": "legacy:music/overworld/hunger",
+        "name": "music_and_melody:music/overworld/hunger",
         "stream": true
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/crescent_dunes",
@@ -639,12 +646,12 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/caves/shelter",
+        "name": "music_and_melody:music/caves/shelter",
         "stream": true,
         "weight": 3
       },
       {
-        "name": "legacy:music/overworld/hunger",
+        "name": "music_and_melody:music/overworld/hunger",
         "stream": true
       },
       {
@@ -719,26 +726,25 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/cliff_hanger",
+        "name": "music_and_melody:music/overworld/cliff_hanger",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/mt_reed",
+        "name": "music_and_melody:music/overworld/mt_reed",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/ravine",
+        "name": "music_and_melody:music/overworld/ravine",
         "stream": true,
         "volume": 0.5
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/bromeliad",
@@ -776,35 +782,34 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/cliff_hanger",
+        "name": "music_and_melody:music/overworld/cliff_hanger",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/ravine",
+        "name": "music_and_melody:music/overworld/ravine",
         "stream": true,
         "volume": 0.5,
         "weight": 2
       },
       {
-        "name": "legacy:music/overworld/shrub",
+        "name": "music_and_melody:music/overworld/shrub",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/decay",
+        "name": "music_and_melody:music/overworld/decay",
         "stream": true
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/broken_clocks",
@@ -868,11 +873,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/tundra",
+        "name": "music_and_melody:music/overworld/tundra",
         "stream": true,
         "weight": 2
       },
@@ -941,13 +946,13 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/kall",
+        "name": "music_and_melody:music/overworld/kall",
         "stream": true,
         "volume": 0.8,
         "weight" : 2
       },
       {
-        "name": "legacy:music/overworld/decay",
+        "name": "music_and_melody:music/overworld/decay",
         "stream": true
       },
       {
@@ -1021,16 +1026,16 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true,
         "weight" : 2
       },
       {
-        "name": "legacy:music/overworld/fall",
+        "name": "music_and_melody:music/overworld/fall",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/kall",
+        "name": "music_and_melody:music/overworld/kall",
         "stream": true,
         "volume": 0.8
       },
@@ -1108,8 +1113,13 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/creative/lugn",
+        "stream": true,
+        "volume": 0.6
       },
       {
         "name": "music/game/creative/aria_math",
@@ -1117,9 +1127,8 @@
         "weight": 2
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/bromeliad",
@@ -1142,13 +1151,18 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/caves/extract_one",
+        "name": "music_and_melody:music/caves/extract_one",
         "stream": true,
         "volume": 0.8,
         "weight": 3
       },
       {
-        "name": "legacy:music/overworld/hunger",
+        "name": "music_and_melody:music/creative/lugn",
+        "stream": true,
+        "volume": 0.6
+      },
+      {
+        "name": "music_and_melody:music/overworld/hunger",
         "stream": true
       },
       {
@@ -1229,15 +1243,15 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/decay",
+        "name": "music_and_melody:music/overworld/decay",
         "stream": true
       },
       {
@@ -1277,18 +1291,17 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/mosaic",
+        "name": "music_and_melody:music/overworld/mosaic",
         "stream": true,
         "weight": 3
       },
       {
-        "name": "legacy:music/overworld/shrub",
+        "name": "music_and_melody:music/overworld/shrub",
         "stream": true
       },
       {
-        "name": "legacy:music.classic",
-        "type": "event",
-        "weight": 12
+        "name": "music_and_melody:music.classic",
+        "type": "event"
       },
       {
         "name": "music/game/comforting_memories",
@@ -1336,11 +1349,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/fall",
+        "name": "music_and_melody:music/overworld/fall",
         "stream": true
       },
       {
@@ -1396,11 +1409,11 @@
     "replace": true,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/kall",
+        "name": "music_and_melody:music/overworld/kall",
         "stream": true,
         "volume": 0.8
       },
@@ -1474,7 +1487,7 @@
     "replace": false,
     "sounds": [
       {
-        "name": "legacy:music/under_water/strand_atoll",
+        "name": "music_and_melody:music/under_water/strand_atoll",
         "stream": true
       }
     ]

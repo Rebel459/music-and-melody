@@ -1,1 +1,0 @@
-execute at @s as @e[distance=..8,type=item,nbt={Age:2s}] unless data entity @s Thrower run item modify entity @s container.0 legacies_and_legends:smelt

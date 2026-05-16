@@ -18,7 +18,7 @@
         "weight": 5
       },
       {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 3,
         "volume": 0.8
@@ -44,13 +44,13 @@
         "weight": 5
       },
       {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 1,
         "volume": 0.8
       },
       {
-        "name": "legacy:music/end/vacuum_decay",
+        "name": "music_and_melody:music/end/vacuum_decay",
         "stream": true,
         "weight": 1
       },
@@ -70,13 +70,13 @@
         "weight": 1
       },
       {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 1,
         "volume": 0.8
       },
       {
-        "name": "legacy:music/end/vacuum_decay",
+        "name": "music_and_melody:music/end/vacuum_decay",
         "stream": true,
         "weight": 1
       },
@@ -101,18 +101,13 @@
         "weight": 5
       },
       {
-        "name": "minecraft:music.end",
-        "type": "event",
-        "weight": 1
-      },
-      {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 1,
         "volume": 0.8
       },
       {
-        "name": "legacy:music/end/vacuum_decay",
+        "name": "music_and_melody:music/end/vacuum_decay",
         "stream": true,
         "weight": 3
       },
@@ -137,13 +132,13 @@
         "weight": 5
       },
       {
-        "name": "legacy:music/end/only_the_beginning",
+        "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
         "weight": 1,
         "volume": 0.8
       },
       {
-        "name": "legacy:music/end/vacuum_decay",
+        "name": "music_and_melody:music/end/vacuum_decay",
         "stream": true,
         "weight": 1
       },

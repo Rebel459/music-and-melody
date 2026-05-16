@@ -8,39 +8,33 @@
     "${mod_author}"
   ],
   "contact": {
-    "sources": "https://github.com/Rebel459/legacies-and-legends"
+    "sources": "https://github.com/Rebel459/music-and-melody"
   },
   "license": "${license}",
   "icon": "assets/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.rebel459.legacies_and_legends.LegaciesAndLegendsFabric"
+      "net.rebel459.music_and_melody.MusicAndMelodyFabric"
     ],
     "client": [
-      "net.rebel459.legacies_and_legends.LegaciesAndLegendsFabricClient"
-    ],
-    "fabric-datagen": [
-      "net.rebel459.legacies_and_legends.datagen.LaLDataGenerator"
+      "net.rebel459.music_and_melody.MusicAndMelodyFabricClient"
     ],
     "modmenu": [
-      "net.rebel459.legacies_and_legends.config.LaLModMenuIntegration"
+      "net.rebel459.music_and_melody.config.MaMModMenuIntegration"
     ]
   },
   "mixins": [
-    "legacies_and_legends.mixins.json",
-    "legacies_and_legends-fabric.mixins.json"
+    "music_and_melody.mixins.json",
+    "music_and_melody-fabric.mixins.json"
   ],
-  "accessWidener": "legacies_and_legends.classtweaker",
+  "accessWidener": "music_and_melody.classtweaker",
   "depends": {
     "fabricloader": ">=0.18",
     "fabric-api": "*",
     "minecraft": "${fabric_minecraft_version}",
     "java": ">=25",
     "unified": "*",
-    "cloth-config": "*",
-    "item_tooltips": "*",
-    "trimpatcher": "*",
-    "lithostitched": "*"
+    "cloth-config": "*"
   }
 }

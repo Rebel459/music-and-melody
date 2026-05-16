@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="[1,)"
 license="${license}"
-issueTrackerURL="https://github.com/Rebel459/legacies-and-legends/issues"
+issueTrackerURL="https://github.com/Rebel459/music-and-melody/issues"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}-neoforge"
 displayName="${mod_name}"
-displayURL="https://github.com/Rebel459/legacies-and-legends"
+displayURL="https://github.com/Rebel459/music-and-melody"
 logoFile="assets/icon.png"
 authors="${mod_author}"
 description='''
@@ -35,22 +35,10 @@ type="required"
 modId="cloth_config"
 type="required"
 
-[[dependencies.${mod_id}]]
-modId="item_tooltips"
-type="required"
-
-[[dependencies.${mod_id}]]
-modId="trimpatcher"
-type="required"
-
-[[dependencies.${mod_id}]]
-modId="lithostitched"
-type="required"
-
 [[accessTransformers]]
 file="META-INF/accesstransformer.cfg"
 
 [[mixins]]
-config = "legacies_and_legends.mixins.json"
+config = "music_and_melody.mixins.json"
 [[mixins]]
-config = "legacies_and_legends-neoforge.mixins.json"
+config = "music_and_melody-neoforge.mixins.json"

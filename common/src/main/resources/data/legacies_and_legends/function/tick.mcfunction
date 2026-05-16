@@ -1,1 +1,0 @@
-execute as @a if items entity @s weapon.mainhand legacies_and_legends:molten_pickaxe run function legacies_and_legends:mine_effect/molten_pickaxe

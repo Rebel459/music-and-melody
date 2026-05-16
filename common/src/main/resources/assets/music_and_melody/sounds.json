@@ -1,0 +1,366 @@
+{
+  "music.common": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music.classic",
+        "type": "event"
+      }
+    ]
+  },
+  "music.classic": {
+    "sounds": [
+      {
+        "name": "music/game/clark",
+        "stream": true
+      },
+      {
+        "name": "music/game/danny",
+        "stream": true
+      },
+      {
+        "name": "music/game/dry_hands",
+        "stream": true
+      },
+      {
+        "name": "music/game/haggstrom",
+        "stream": true
+      },
+      {
+        "name": "music/game/key",
+        "stream": true
+      },
+      {
+        "name": "music/game/living_mice",
+        "stream": true
+      },
+      {
+        "name": "music/game/mice_on_venus",
+        "stream": true
+      },
+      {
+        "name": "music/game/minecraft",
+        "stream": true
+      },
+      {
+        "name": "music/game/oxygene",
+        "stream": true
+      },
+      {
+        "name": "music/game/subwoofer_lullaby",
+        "stream": true
+      },
+      {
+        "name": "music/game/sweden",
+        "stream": true
+      },
+      {
+        "name": "music/game/wet_hands",
+        "stream": true
+      }
+    ]
+  },
+  "music.wither": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/misc/wither_storm_theme",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  },
+  "music.end.main_island": {
+    "sounds": [
+      {
+        "name": "music/game/end/the_end",
+        "stream": true
+      }
+    ]
+  },
+  "music.overworld.dark_forest": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/creative/stolen_grid",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 3
+      },
+      {
+        "name": "music_and_melody:music/overworld/814",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/burning_konkrete",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/cliff_hanger",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/ravine",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music.classic",
+        "type": "event"
+      },
+      {
+        "name": "music/game/bromeliad",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/comforting_memories",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/floating_dream",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/left_to_bloom",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/one_more_day",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/swamp/aerie",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/swamp/firebugs",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/swamp/labyrinthine",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/memories",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/shores",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  },
+  "music.overworld.snowy": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/overworld/814",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/albeit",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/cliff_hanger",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/fall",
+        "stream": true,
+        "weight" : 2
+      },
+      {
+        "name": "music_and_melody:music/overworld/shrub",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music.classic",
+        "type": "event"
+      },
+      {
+        "name": "music/game/lilypad",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/stand_tall",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/left_to_bloom",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/wending",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/infinite_amethyst",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/an_ordinary_day",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/watcher",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/puzzlebox",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/komorebi",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/yakusoku",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/ebb",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/shores",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/nightly",
+        "stream": true,
+        "volume": 0.4
+      }
+    ]
+  },
+  "music.overworld.savanna": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/overworld/sunrise_on_the_mesa_2",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/alpha",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/hunger",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music.classic",
+        "type": "event"
+      },
+      {
+        "name": "music/game/fireflies",
+        "stream": true,
+        "volume": 0.4,
+        "weight": 2
+      },
+      {
+        "name": "music/game/echo_in_the_wind",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/a_familiar_room",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/featherfall",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/floating_dream",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/home",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/komorebi",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/left_to_bloom",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/one_more_day",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/puzzlebox",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/watcher",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/yakusoku",
+        "stream": true,
+        "volume": 0.8
+      }
+    ]
+  },
+  "music.structure.stronghold": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/structure/stronghold/worn_away",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/stronghold/if_we_could_reverse_time",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/stronghold/voide",
+        "stream": true
+      }
+    ]
+  },
+  "music.structure.ancient_city": {
+    "sounds": [
+      {
+        "name": "music/game/ancestry",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/ancient_city/abandoned_halls",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/ancient_city/echoes",
+        "stream": true
+      }
+    ]
+  }
+}

@@ -14,16 +14,6 @@ dependencies {
         exclude(group: "net.fabricmc.fabric-api")
     }
     api("maven.modrinth:unified-api:$unified_version-fabric")
-    implementation("maven.modrinth:item-tooltips:$tooltips_version-fabric")
-    implementation("maven.modrinth:lithostitched:$lithostitched_fabric_version-fabric-$minecraft_version")
-    implementation("maven.modrinth:trim-patcher:$patcher_version-fabric")
-}
-
-fabricApi {
-    configureDataGeneration() {
-        client = true;
-        modId = "legacies_and_legends"
-    }
 }
 
 loom {

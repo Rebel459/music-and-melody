@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/inner_stairs",
-  "textures": {
-    "bottom": "legacies_and_legends:block/meteorite_bricks",
-    "side": "legacies_and_legends:block/meteorite_bricks",
-    "top": "legacies_and_legends:block/meteorite_bricks"
-  }
-}

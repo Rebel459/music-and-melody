@@ -3,12 +3,7 @@
     "replace": false,
     "sounds": [
       {
-        "name": "music.game",
-        "type": "event",
-        "weight": 22
-      },
-      {
-        "name": "legacy:music/overworld/mosaic",
+        "name": "music_and_melody:music/overworld/mosaic",
         "stream": true,
         "weight": 2
       },
@@ -20,31 +15,21 @@
       }
     ]
   },
-  "music.overworld.old_growth_taiga": {
-    "replace": true,
-    "sounds": [
-      {
-        "name": "music.overworld.old_growth_taiga",
-        "type": "event",
-        "weight": 24
-      },
-      {
-        "name": "bloom:music/overworld/lock_and_key",
-        "stream": true,
-        "volume": 0.4
-      }
-    ]
-  },
   "music.overworld.windswept_jungle": {
     "replace": false,
     "sounds": [
       {
-        "name": "legacy:music/overworld/814",
+        "name": "music_and_melody:music/overworld/814",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/burning_konkrete",
+        "name": "music_and_melody:music/overworld/burning_konkrete",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/creative/lugn",
+        "stream": true,
+        "volume": 0.6
       },
       {
         "name": "music/game/home",
@@ -57,11 +42,11 @@
     "replace": false,
     "sounds": [
       {
-        "name": "legacy:music/overworld/albeit",
+        "name": "music_and_melody:music/overworld/albeit",
         "stream": true
       },
       {
-        "name": "legacy:music/overworld/mt_reed",
+        "name": "music_and_melody:music/overworld/mt_reed",
         "stream": true
       },
       {
