@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
 
 @Config(name = MusicAndMelody.MOD_ID)
 public class MaMConfig implements ConfigData {
@@ -47,15 +50,59 @@ public class MaMConfig implements ConfigData {
 		@ConfigEntry.Category("config")
 		@ConfigEntry.Gui.Tooltip
 		public boolean music_rebalance = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean new_music = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean backported_music = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean spinoff_music = true;
+
+		@ConfigEntry.Gui.CollapsibleObject
+		public Albums albums = new Albums();
+		public static class Albums {
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean music_and_melody = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean spinoff_music = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean volume_alpha = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean volume_beta = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean update_aquatic = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean nether_update = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean caves_and_cliffs = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean wild_update = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean trails_and_tales = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean tricky_trials = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean chase_the_skies = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.RequiresRestart
+			@ConfigEntry.Gui.Tooltip
+			public boolean chaos_cubed = true;
+		}
 
 		@ConfigEntry.Category("config")
 		@ConfigEntry.Gui.Tooltip

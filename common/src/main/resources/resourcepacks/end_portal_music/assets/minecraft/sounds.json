@@ -1,9 +1,7 @@
 {
   "block.end_portal.spawn": {
     "replace": true,
-    "sounds": [
-      "music_and_melody:music/misc/threshold_end_portal"
-    ],
+    "sounds": [],
     "subtitle": "subtitles.block.end_portal.spawn"
   }
 }

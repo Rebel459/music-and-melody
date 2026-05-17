@@ -17,6 +17,7 @@ public class MaMSounds {
 
 	public static final Supplied<SoundEvent> MUSIC_COMMON = SOUNDS.register("music.common");
 	public static final Holder<SoundEvent> MUSIC_WITHER = SOUNDS.registerForHolder("music.wither");
+	public static final Holder<SoundEvent> MUSIC_THRESHOLD = SOUNDS.registerForHolder("music.threshold");
 
 	public static void init() {
         List<String> pools = new ArrayList<>();

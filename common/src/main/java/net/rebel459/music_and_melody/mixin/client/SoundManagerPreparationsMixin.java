@@ -9,6 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import org.spongepowered.asm.mixin.Final;
@@ -19,11 +20,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
 public class SoundManagerPreparationsMixin {
@@ -37,31 +34,6 @@ public class SoundManagerPreparationsMixin {
 
     @Unique
     private static final Map<Identifier, Identifier> REMAPPED_MUSIC = Map.of();
-
-    @Unique
-    private static final List<Identifier> BACKPORTED_MUSIC = List.of(
-            vanilla("ebb"),
-            vanilla("home"),
-            vanilla("memories"),
-            vanilla("nightly"),
-            vanilla("shores")
-    );
-
-    @Unique
-    private static final List<Identifier> SPINOFF_MUSIC = List.of(
-            melody("creative/earth"),
-            melody("menu/halland")
-    );
-
-    @Unique
-    private static Identifier vanilla(String path) {
-        return Identifier.withDefaultNamespace("music/game/" + path);
-    }
-
-    @Unique
-    private static Identifier melody(String path) {
-        return MusicAndMelody.id("music/" + path);
-    }
 
     @Inject(method = "listResources", at = @At("HEAD"))
     private void clearRawSoundPools(ResourceManager resourceManager, CallbackInfo ci) {
@@ -115,15 +87,22 @@ public class SoundManagerPreparationsMixin {
 
     @Unique
     private static boolean isDisabled(Sound sound) {
+        Identifier soundLocation = sound.getLocation();
         if (sound.getType() == Sound.Type.FILE) {
             boolean disabled = false;
-            MaMConfig.ClientConfig clientConfig = MaMConfig.get().client;
-            if (!clientConfig.new_music) disabled = sound.getLocation().getNamespace().equals(MusicAndMelody.MOD_ID);
-            if (!clientConfig.backported_music) disabled = disabled || BACKPORTED_MUSIC.contains(sound.getLocation());
-            if (!clientConfig.spinoff_music) disabled = disabled || SPINOFF_MUSIC.contains(sound.getLocation());
+            for (Album album : Album.ALBUMS) {
+                if (!album.enabled) {
+                    if (album.namespace.isPresent()) {
+                        disabled = disabled || soundLocation.getNamespace().equals(album.namespace.get());
+                    }
+                    if (album.songs.isPresent()) {
+                        disabled = disabled || album.songs.get().contains(soundLocation);
+                    }
+                }
+            }
             return disabled;
         }
-        return sound.getType() == Sound.Type.SOUND_EVENT && DISABLED_EVENTS.contains(sound.getLocation());
+        return sound.getType() == Sound.Type.SOUND_EVENT && DISABLED_EVENTS.contains(soundLocation);
     }
 
     @Unique

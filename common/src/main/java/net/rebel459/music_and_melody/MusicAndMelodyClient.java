@@ -1,12 +1,15 @@
 package net.rebel459.music_and_melody;
 
+import net.rebel459.music_and_melody.client.Albums;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
 import net.rebel459.unified.util.PackType;
 
 public final class MusicAndMelodyClient {
 
-    public static void initRegistries() {}
+    public static void initRegistries() {
+        Albums.init();
+    }
 
     public static void init() {
         if (MaMConfig.get().client.music_rebalance) {

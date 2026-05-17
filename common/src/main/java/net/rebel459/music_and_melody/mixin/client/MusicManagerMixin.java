@@ -9,7 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
-import net.rebel459.music_and_melody.client.WitherMusicHelper;
+import net.rebel459.music_and_melody.client.EventMusicHelper;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,9 +19,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(MusicManager.class)
 public abstract class MusicManagerMixin {
-
-    @Shadow
-    protected abstract boolean fadePlaying(float volume);
 
     @Shadow
     public abstract boolean isPlayingMusic(Music music);
@@ -44,7 +41,7 @@ public abstract class MusicManagerMixin {
             )
     )
     private float fadeWitherMusic(float volume) {
-        if (this.isPlayingMusic(WitherMusicHelper.WITHER_BOSS) && !WitherMusicHelper.hasWitherBossBar()) return 0F;
+        if (this.isPlayingMusic(EventMusicHelper.WITHER_BOSS) && !EventMusicHelper.hasWitherBossBar()) return 0F;
         return volume;
     }
 
