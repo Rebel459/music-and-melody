@@ -10,18 +10,27 @@ import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
 import net.rebel459.music_and_melody.client.EventMusicHelper;
+import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MusicManager.class)
 public abstract class MusicManagerMixin {
 
     @Shadow
     public abstract boolean isPlayingMusic(Music music);
+
+    @Inject(method = "getCurrentMusicTranslationKey", at = @At("HEAD"), cancellable = true)
+    private void playlistMusicTranslationKey(CallbackInfoReturnable<String> cir) {
+        String key = PlaylistHelper.getCurrentMusicTranslationKey();
+        if (key != null) cir.setReturnValue(key);
+    }
 
     @ModifyVariable(method = "startPlaying", at = @At("HEAD"), argsOnly = true)
     private Music selectCommonMusic(Music music) {

@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody;
 
 import net.minecraft.resources.Identifier;
+import net.rebel459.music_and_melody.network.MaMNetwork;
 import net.rebel459.music_and_melody.sound.MaMBiomeMusic;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 import net.rebel459.music_and_melody.sound.MaMStructureMusic;
@@ -8,6 +9,7 @@ import net.rebel459.music_and_melody.sound.MaMStructureMusic;
 public class MusicAndMelody {
 
 	public static void initRegistries() {
+        MaMNetwork.init();
         MaMSounds.init();
         MaMBiomeMusic.init();
 	}

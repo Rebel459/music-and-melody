@@ -3,11 +3,14 @@
   "package": "net.rebel459.music_and_melody.mixin",
   "compatibilityLevel": "JAVA_25",
   "plugin": "net.rebel459.music_and_melody.mixin.MaMMixinPlugin",
-  "mixins": [],
+  "mixins": [
+    "server.JukeboxPlayableMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
+    "client.ClientPacketListenerMixin",
     "client.MinecraftMixin",
     "client.MusicManagerMixin",
     "client.OptionsScreenMixin",

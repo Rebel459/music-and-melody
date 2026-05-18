@@ -1,0 +1,186 @@
+package net.rebel459.music_and_melody.client.screen;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
+import net.rebel459.music_and_melody.client.PlaylistHelper;
+
+public class PlaylistScreen extends Screen {
+
+    private static final Component TITLE = Component.translatable("screen.music_and_melody.playlist");
+    private final Screen parent;
+    private QueueList list;
+    private Button playPauseButton;
+    private Button loopButton;
+
+    public PlaylistScreen(Screen parent) {
+        super(TITLE);
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 88));
+        int controlY = this.height - 51;
+        int navY = this.height - 27;
+        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
+                this.minecraft.setScreen(new AlbumScreen(this))
+        ).bounds(this.width / 2 - 102, navY, 100, 20).build());
+        this.playPauseButton = this.addRenderableWidget(Button.builder(playPauseMessage(), button -> {
+            if (PlaylistHelper.isPlaying()) {
+                PlaylistHelper.pauseQueue();
+            } else {
+                PlaylistHelper.playNextNow();
+            }
+            button.setMessage(playPauseMessage());
+        }).bounds(this.width / 2 - 144, controlY, 88, 20).build());
+        this.loopButton = this.addRenderableWidget(Button.builder(loopMessage(), button -> {
+            PlaylistHelper.setLoopingQueue(!PlaylistHelper.isLoopingQueue());
+            button.setMessage(loopMessage());
+        }).bounds(this.width / 2 - 50, controlY, 100, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.clear_all"), button -> {
+            PlaylistHelper.clear();
+            this.refreshQueue();
+        }).bounds(this.width / 2 + 56, controlY, 88, 20).build());
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
+                .bounds(this.width / 2 + 2, navY, 100, 20)
+                .build());
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+        if (this.playPauseButton != null) {
+            this.playPauseButton.setMessage(playPauseMessage());
+            this.playPauseButton.active = PlaylistHelper.isPlaying() || PlaylistHelper.hasQueuedSongs();
+        }
+        if (this.loopButton != null) this.loopButton.setMessage(loopMessage());
+    }
+
+    @Override
+    public void onClose() {
+        this.minecraft.setScreen(this.parent);
+    }
+
+    void refreshQueue() {
+        if (this.list != null) this.list.refresh();
+    }
+
+    private static Component loopMessage() {
+        return Component.translatable("button.music_and_melody.loop_queue").append(CommonComponents.SPACE).append(CommonComponents.optionStatus(PlaylistHelper.isLoopingQueue()));
+    }
+
+    private static Component playPauseMessage() {
+        return Component.translatable(PlaylistHelper.isPlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
+    }
+
+    private static class QueueList extends ObjectSelectionList<QueueEntry> {
+
+        private final PlaylistScreen screen;
+
+        QueueList(PlaylistScreen screen, Minecraft minecraft, int width, int height) {
+            super(minecraft, width, height, 32, 24);
+            this.screen = screen;
+            this.centerListVertically = false;
+            this.refresh();
+        }
+
+        private void refresh() {
+            this.clearEntries();
+            if (PlaylistHelper.queuedSongs().isEmpty()) {
+                this.addEntry(new QueueEntry(this.minecraft, Component.translatable("screen.music_and_melody.playlist.empty").withStyle(ChatFormatting.GRAY), 0xFFAAAAAA));
+                return;
+            }
+            for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
+                Identifier id = PlaylistHelper.queuedSongs().get(i);
+                this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));
+            }
+        }
+
+        @Override
+        public int getRowWidth() {
+            return Math.min(420, this.width - 20);
+        }
+
+        @Override
+        protected int scrollBarX() {
+            return this.getRowRight() + 6;
+        }
+    }
+
+    private static class QueueEntry extends ObjectSelectionList.Entry<QueueEntry> {
+
+        private final PlaylistScreen screen;
+        private final Minecraft minecraft;
+        private final int index;
+        private final Identifier song;
+        private final Component text;
+        private final int color;
+        private final Button playButton;
+        private final Button removeButton;
+
+        QueueEntry(Minecraft minecraft, Component text, int color) {
+            this.screen = null;
+            this.minecraft = minecraft;
+            this.index = -1;
+            this.song = null;
+            this.text = text;
+            this.color = color;
+            this.playButton = null;
+            this.removeButton = null;
+        }
+
+        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, Identifier song) {
+            this.screen = screen;
+            this.minecraft = minecraft;
+            this.index = index;
+            this.song = song;
+            this.text = MusicScreenHelper.trackName(song).copy().withStyle(ChatFormatting.GRAY);
+            this.color = 0xFFAAAAAA;
+            this.playButton = Button.builder(Component.translatable("button.music_and_melody.play"), button -> PlaylistHelper.playNow(index)).size(46, 20).build();
+            this.removeButton = Button.builder(Component.translatable("button.music_and_melody.remove"), button -> {
+                PlaylistHelper.remove(index);
+                screen.refreshQueue();
+            }).size(64, 20).build();
+        }
+
+        @Override
+        public Component getNarration() {
+            return this.text;
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int buttonWidth = this.removeButton == null ? 0 : 122;
+            Component rowText = this.song != null && PlaylistHelper.isPlaying(this.song) ? this.text.copy().withStyle(ChatFormatting.UNDERLINE) : this.text;
+            FormattedCharSequence line = this.minecraft.font.split(rowText, this.getContentWidth() - buttonWidth).getFirst();
+            graphics.text(this.minecraft.font, line, this.getContentX(), this.getContentY() + 4, this.color);
+            if (this.removeButton != null) {
+                int buttonY = this.getContentYMiddle() - 10;
+                int removeX = this.getContentRight() - 64;
+                this.playButton.setX(removeX - 50);
+                this.playButton.setY(buttonY);
+                this.removeButton.setX(removeX);
+                this.removeButton.setY(buttonY);
+                this.playButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                this.removeButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            }
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.playButton != null && this.playButton.mouseClicked(event, doubleClick)
+                    || this.removeButton != null && this.removeButton.mouseClicked(event, doubleClick)
+                    || super.mouseClicked(event, doubleClick);
+        }
+    }
+}

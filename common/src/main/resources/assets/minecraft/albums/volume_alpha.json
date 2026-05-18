@@ -17,5 +17,9 @@
     "music/game/subwoofer_lullaby",
     "music/game/sweden",
     "music/game/wet_hands"
+  ],
+  "discs": [
+    "cat",
+    "far"
   ]
 }

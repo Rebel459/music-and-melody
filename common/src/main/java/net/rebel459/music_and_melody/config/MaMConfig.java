@@ -89,16 +89,7 @@ public class MaMConfig implements ConfigData {
 		public static class Albums {
 			@ConfigEntry.Category("config")
 			@ConfigEntry.Gui.Tooltip
-			public int position_x = 4;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public int position_y = 6;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public int size_x = 80;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public int size_y = 20;
+			public boolean button = true;
 
 			@ConfigEntry.Category("config")
 			@ConfigEntry.Gui.Tooltip
@@ -107,12 +98,35 @@ public class MaMConfig implements ConfigData {
 			@ConfigEntry.Gui.Tooltip
 			public List<String> disabled_tracks = new ArrayList<>();
 		}
+
+		@ConfigEntry.Gui.CollapsibleObject
+		public Playlist playlist = new Playlist();
+
+		public static class Playlist {
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public boolean button = true;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public boolean background_music = true;
+
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public boolean loop = false;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public List<String> queued_songs = new ArrayList<>();
+		}
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject
 	public ServerConfig server = new ServerConfig();
 
 	public static class ServerConfig {
+		@ConfigEntry.Category("config")
+		@ConfigEntry.Gui.Tooltip
+		public boolean count_disc_uses = true;
+
 		@ConfigEntry.Category("config")
 		@ConfigEntry.Gui.Tooltip
 		public List<BiomeMusic> biome_music = new ArrayList<>();
