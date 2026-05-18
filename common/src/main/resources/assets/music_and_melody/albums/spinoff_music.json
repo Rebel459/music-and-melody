@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/spinoff_music.png",
   "composers": 2,
-  "songs": [
+  "tracks": [
     "music/creative/earth",
     "music/menu/halland"
   ]

@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:icon.png",
   "composers": 16,
-  "songs": [
+  "tracks": [
     "music/caves/abyss",
     "music/caves/extract_one",
     "music/caves/shelter",

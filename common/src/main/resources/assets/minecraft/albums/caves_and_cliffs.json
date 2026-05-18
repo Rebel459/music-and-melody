@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/caves_and_cliffs.png",
   "composers": 2,
-  "songs": [
+  "tracks": [
     "music/game/ancestry",
     "music/game/an_ordinary_day",
     "music/game/comforting_memories",

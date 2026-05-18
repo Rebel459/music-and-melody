@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/trails_and_tales.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/a_familiar_room",
     "music/game/bromeliad",
     "music/game/crescent_dunes",

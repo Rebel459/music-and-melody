@@ -92,9 +92,9 @@ public class SoundManagerPreparationsMixin {
             boolean disabled = false;
             for (Album album : Album.ALBUMS) {
                 if (!album.isEnabled()) {
-                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.songs.contains(soundLocation.getPath()));
+                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()));
                 }
-                if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.songs.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
+                if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
                     disabled = true;
                 }
             }

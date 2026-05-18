@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/wild_update.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/swamp/aerie",
     "music/game/swamp/firebugs",
     "music/game/swamp/labyrinthine"

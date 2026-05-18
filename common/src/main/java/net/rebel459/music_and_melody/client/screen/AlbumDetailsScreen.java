@@ -59,11 +59,11 @@ public class AlbumDetailsScreen extends Screen {
 
         private void addTracks(Album album) {
             this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
-            if (album.songs.isEmpty()) {
+            if (album.tracks.isEmpty()) {
                 this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.empty").withStyle(ChatFormatting.GRAY), 0xFFAAAAAA));
                 return;
             }
-            album.songs.stream()
+            album.tracks.stream()
                     .map(song -> new DetailEntry(this.screen, this.minecraft, album, song, trackName(album, song).copy().withStyle(ChatFormatting.GRAY), 0xFFAAAAAA))
                     .forEach(this::addEntry);
         }

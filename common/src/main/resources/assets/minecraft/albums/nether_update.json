@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/nether_update.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/nether/crimson_forest/chrysopoeia",
     "music/game/nether/nether_wastes/rubedo",
     "music/game/nether/soulsand_valley/so_below"

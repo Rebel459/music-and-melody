@@ -163,7 +163,7 @@ public class AlbumScreen extends Screen {
 
         private String details() {
             String composers = count(this.album.composers, "composer", "composers");
-            String tracks = count(this.album.songs.size(), "track", "tracks");
+            String tracks = count(this.album.tracks.size(), "track", "tracks");
             if (this.album.composers == 0) return tracks;
             return composers + " | " + tracks;
         }

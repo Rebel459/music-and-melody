@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/tricky_trials.png",
   "composers": 3,
-  "songs": [
+  "tracks": [
     "music/game/deeper",
     "music/game/eld_unknown",
     "music/game/endless",

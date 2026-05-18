@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/update_aquatic.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/water/axolotl",
     "music/game/water/dragon_fish",
     "music/game/water/shuniji"

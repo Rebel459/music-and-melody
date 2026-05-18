@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/volume_beta.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/creative/aria_math",
     "music/game/creative/biome_fest",
     "music/game/creative/blind_spots",

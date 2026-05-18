@@ -4,7 +4,7 @@
   },
   "icon": "music_and_melody:textures/album/volume_alpha.png",
   "composers": 1,
-  "songs": [
+  "tracks": [
     "music/game/clark",
     "music/game/danny",
     "music/game/dry_hands",
