@@ -23,13 +23,15 @@ public class Album {
     public Identifier icon;
     public int composers;
     public List<String> tracks;
+    public List<String> discs;
 
-    public Album(Identifier album, Component name, Identifier icon, int composers, List<String> tracks) {
+    public Album(Identifier album, Component name, Identifier icon, int composers, List<String> tracks, List<String> discs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
         this.composers = composers;
         this.tracks = tracks;
+        this.discs = discs;
         ALBUMS.add(this);
         if (!isEnabled()) DISABLED_ALBUMS.add(this);
     }
@@ -76,12 +78,13 @@ public class Album {
         AutoConfig.getConfigHolder(MaMConfig.class).save();
     }
 
-    public record Record(Component name, Identifier icon, int composers, List<String> tracks) {
+    public record Record(Component name, Identifier icon, int composers, List<String> tracks, List<String> discs) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
                 Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
                 ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("composers", 0).forGetter(Record::composers),
-                ExtraCodecs.NON_EMPTY_STRING.listOf().fieldOf("tracks").forGetter(Record::tracks)
+                ExtraCodecs.NON_EMPTY_STRING.listOf().fieldOf("tracks").forGetter(Record::tracks),
+                ExtraCodecs.NON_EMPTY_STRING.listOf().optionalFieldOf("discs", List.of()).forGetter(Record::discs)
         ).apply(instance, Record::new));
     }
 }

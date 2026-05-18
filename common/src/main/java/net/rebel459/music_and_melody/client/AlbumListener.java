@@ -29,7 +29,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
 
         for (Map.Entry<Identifier, Album.Record> entry : identifierRecordMap.entrySet()) {
             Album.Record record = entry.getValue();
-            Album album = new Album(entry.getKey(), record.name(), record.icon(), record.composers(), record.tracks());
+            Album album = new Album(entry.getKey(), record.name(), record.icon(), record.composers(), record.tracks(), record.discs());
             loadedAlbums.add(album);
         }
     }

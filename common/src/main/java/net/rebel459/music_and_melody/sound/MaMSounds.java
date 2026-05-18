@@ -15,6 +15,7 @@ public class MaMSounds {
 	
 	public static UnifiedRegistries.SoundEvents SOUNDS = UnifiedRegistries.SoundEvents.create(MusicAndMelody.MOD_ID);
 
+	public static final Holder<SoundEvent> MUSIC_EMPTY = SOUNDS.registerForHolder("music.empty");
 	public static final Supplied<SoundEvent> MUSIC_COMMON = SOUNDS.register("music.common");
 	public static final Holder<SoundEvent> MUSIC_WITHER = SOUNDS.registerForHolder("music.wither");
 	public static final Holder<SoundEvent> MUSIC_THRESHOLD = SOUNDS.registerForHolder("music.threshold");

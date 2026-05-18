@@ -1,10 +1,27 @@
 package net.rebel459.music_and_melody;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
+import net.rebel459.unified.platform.client.UnifiedClientEvents;
+import net.rebel459.unified.platform.client.UnifiedClientRegistries;
+import net.rebel459.unified.util.EventType;
 import net.rebel459.unified.util.PackType;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.function.Supplier;
 
 public final class MusicAndMelodyClient {
+
+    public static UnifiedClientRegistries.KeyMappings KEY_MAPPINGS = UnifiedClientRegistries.KeyMappings.create(CombatReborn.MOD_ID);
+
+    public static final Supplier<KeyMapping> PLAYLIST_KEY = KEY_MAPPINGS.registerKeybind(
+            "playlist",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_P,
+            KeyMapping.Category.GAMEPLAY
+    );
 
     public static void initRegistries() {}
 
@@ -15,5 +32,11 @@ public final class MusicAndMelodyClient {
         if (MaMConfig.get().client.end_portal_music) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("end_portal_music"), PackType.REQUIRED_RESOURCES);
         }
+
+        UnifiedClientEvents.Instance.onTick(EventType.POST, client -> {
+            while (PLAYLIST_KEY.get().consumeClick()) {
+
+            }
+        });
     }
 }

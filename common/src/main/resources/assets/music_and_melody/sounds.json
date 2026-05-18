@@ -1,4 +1,7 @@
 {
+  "music.empty": {
+    "sounds": []
+  },
   "music.common": {
     "sounds": [
       {

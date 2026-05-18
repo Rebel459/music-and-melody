@@ -11,6 +11,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
+import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,7 +44,7 @@ public class SoundManagerPreparationsMixin {
 
     @Inject(method = "handleRegistration", at = @At("HEAD"), cancellable = true)
     private void storeRawSoundPool(Identifier eventLocation, SoundEventRegistration soundEventRegistration, CallbackInfo ci) {
-        remapEntries(soundEventRegistration.getSounds());
+        processRaw(soundEventRegistration.getSounds());
 
         soundEventRegistration.getSounds().removeIf(SoundManagerPreparationsMixin::isDisabled);
         if (soundEventRegistration.getSounds().isEmpty()) {
@@ -104,11 +105,13 @@ public class SoundManagerPreparationsMixin {
     }
 
     @Unique
-    private static void remapEntries(List<Sound> sounds) {
+    private static void processRaw(List<Sound> sounds) {
         ListIterator<Sound> iterator = sounds.listIterator();
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
-            Identifier location = REMAPPED_MUSIC.get(sound.getLocation());
+            Identifier id = sound.getLocation();
+            PlaylistHelper.STORED_VOLUME.put(id, sound.getVolume());
+            Identifier location = REMAPPED_MUSIC.get(id);
             if (location != null) iterator.set(copy(sound, location));
         }
     }

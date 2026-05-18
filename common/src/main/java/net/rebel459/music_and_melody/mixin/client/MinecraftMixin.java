@@ -8,11 +8,13 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.Musics;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.attribute.BackgroundMusic;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.rebel459.music_and_melody.client.EventMusicHelper;
+import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMConfig;
 import net.rebel459.music_and_melody.tag.MaMBiomeTags;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +41,8 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "getSituationalMusic", at = @At(value = "HEAD"), cancellable = true)
     private void endPortalMusic(CallbackInfoReturnable<Music> cir) {
+        if (PlaylistHelper.isPlaying()) cir.setReturnValue(PlaylistHelper.EMPTY);
+        if (PlaylistHelper.playNext()) cir.setReturnValue(PlaylistHelper.EMPTY);
         if (MaMConfig.get().client.end_portal_music && EventMusicHelper.isEndPortalFilled()) cir.setReturnValue(EventMusicHelper.THRESHOLD);
         if (MaMConfig.get().client.wither_music && EventMusicHelper.hasWitherBossBar()) cir.setReturnValue(EventMusicHelper.WITHER_BOSS);
     }
