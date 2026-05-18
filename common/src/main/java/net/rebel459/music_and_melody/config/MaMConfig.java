@@ -51,59 +51,6 @@ public class MaMConfig implements ConfigData {
 		@ConfigEntry.Gui.Tooltip
 		public boolean music_rebalance = true;
 
-		@ConfigEntry.Gui.CollapsibleObject
-		public Albums albums = new Albums();
-		public static class Albums {
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean music_and_melody = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean spinoff_music = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean volume_alpha = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean volume_beta = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean update_aquatic = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean nether_update = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean caves_and_cliffs = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean wild_update = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean trails_and_tales = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean tricky_trials = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean chase_the_skies = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.RequiresRestart
-			@ConfigEntry.Gui.Tooltip
-			public boolean chaos_cubed = true;
-		}
-
 		@ConfigEntry.Category("config")
 		@ConfigEntry.Gui.Tooltip
 		public boolean jukebox_fading = true;
@@ -135,6 +82,31 @@ public class MaMConfig implements ConfigData {
 		@ConfigEntry.Gui.Tooltip
 		@ConfigEntry.BoundedDiscrete(min = 0, max = 100)
 		public int common_music_chance = 50;
+
+		@ConfigEntry.Gui.CollapsibleObject
+		public Albums albums = new Albums();
+
+		public static class Albums {
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public int position_x = 4;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public int position_y = 6;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public int size_x = 80;
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public int size_y = 20;
+
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public List<String> disabled_albums = new ArrayList<>();
+			@ConfigEntry.Category("config")
+			@ConfigEntry.Gui.Tooltip
+			public List<String> disabled_tracks = new ArrayList<>();
+		}
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject

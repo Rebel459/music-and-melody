@@ -1,0 +1,26 @@
+{
+  "name": {
+    "translate": "album.minecraft.volume_beta"
+  },
+  "icon": "music_and_melody:textures/album/volume_beta.png",
+  "composers": 1,
+  "songs": [
+    "music/game/creative/aria_math",
+    "music/game/creative/biome_fest",
+    "music/game/creative/blind_spots",
+    "music/game/creative/dreiton",
+    "music/game/creative/haunt_muskie",
+    "music/game/creative/taswell",
+    "music/game/nether/ballad_of_the_cats",
+    "music/game/nether/concrete_halls",
+    "music/game/nether/dead_voxel",
+    "music/game/nether/warmth",
+    "music/game/end/the_end",
+    "music/game/end/boss",
+    "music/game/end/alpha",
+    "music/menu/beginning_2",
+    "music/menu/floating_trees",
+    "music/menu/moog_city_2",
+    "music/menu/mutation"
+  ]
+}

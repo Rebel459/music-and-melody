@@ -11,7 +11,7 @@
     "sources": "https://github.com/Rebel459/music-and-melody"
   },
   "license": "${license}",
-  "icon": "assets/icon.png",
+  "icon": "assets/music_and_melody/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

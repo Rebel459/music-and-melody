@@ -1,0 +1,13 @@
+{
+  "name": {
+    "translate": "album.minecraft.trails_and_tales"
+  },
+  "icon": "music_and_melody:textures/album/trails_and_tales.png",
+  "composers": 1,
+  "songs": [
+    "music/game/a_familiar_room",
+    "music/game/bromeliad",
+    "music/game/crescent_dunes",
+    "music/game/echo_in_the_wind"
+  ]
+}

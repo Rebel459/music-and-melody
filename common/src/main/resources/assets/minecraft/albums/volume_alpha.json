@@ -1,0 +1,21 @@
+{
+  "name": {
+    "translate": "album.minecraft.volume_alpha"
+  },
+  "icon": "music_and_melody:textures/album/volume_alpha.png",
+  "composers": 1,
+  "songs": [
+    "music/game/clark",
+    "music/game/danny",
+    "music/game/dry_hands",
+    "music/game/haggstrom",
+    "music/game/key",
+    "music/game/living_mice",
+    "music/game/mice_on_venus",
+    "music/game/minecraft",
+    "music/game/oxygene",
+    "music/game/subwoofer_lullaby",
+    "music/game/sweden",
+    "music/game/wet_hands"
+  ]
+}

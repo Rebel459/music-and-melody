@@ -91,13 +91,11 @@ public class SoundManagerPreparationsMixin {
         if (sound.getType() == Sound.Type.FILE) {
             boolean disabled = false;
             for (Album album : Album.ALBUMS) {
-                if (!album.enabled) {
-                    if (album.namespace.isPresent()) {
-                        disabled = disabled || soundLocation.getNamespace().equals(album.namespace.get());
-                    }
-                    if (album.songs.isPresent()) {
-                        disabled = disabled || album.songs.get().contains(soundLocation);
-                    }
+                if (!album.isEnabled()) {
+                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.songs.contains(soundLocation.getPath()));
+                }
+                if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.songs.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
+                    disabled = true;
                 }
             }
             return disabled;

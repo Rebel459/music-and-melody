@@ -10,6 +10,7 @@
   "client": [
     "client.MinecraftMixin",
     "client.MusicManagerMixin",
+    "client.OptionsScreenMixin",
     "client.SoundEventRegistrationSerializerMixin",
     "client.SoundManagerMixin",
     "client.SoundManagerPreparationsMixin",

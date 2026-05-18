@@ -1,0 +1,11 @@
+{
+  "name": {
+    "translate": "album.music_and_melody.spinoff_music"
+  },
+  "icon": "music_and_melody:textures/album/spinoff_music.png",
+  "composers": 2,
+  "songs": [
+    "music/creative/earth",
+    "music/menu/halland"
+  ]
+}

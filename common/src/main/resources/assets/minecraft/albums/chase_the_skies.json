@@ -1,0 +1,14 @@
+{
+  "name": {
+    "translate": "album.minecraft.chase_the_skies"
+  },
+  "icon": "music_and_melody:textures/album/chase_the_skies.png",
+  "composers": 1,
+  "songs": [
+    "music/game/below_and_above",
+    "music/game/broken_clocks",
+    "music/game/fireflies",
+    "music/game/lilypad",
+    "music/game/os_piano"
+  ]
+}
