@@ -14,8 +14,8 @@ neoForge {
 
 dependencies {
     compileOnly "org.spongepowered:mixin:0.8.5"
-    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
-    annotationProcessor "io.github.llamalad7:mixinextras-common:0.3.5"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.5.3"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.3"
     implementation "org.ow2.asm:asm:9.9.1"
     implementation "org.ow2.asm:asm-tree:9.9.1"
 
@@ -46,7 +46,7 @@ artifacts {
 
 // Implement mcgradleconventions loader attribute
 def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
-['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+['apiElements', 'runtimeElements'].each { variant ->
     configurations.named("$variant") {
         attributes {
             attribute(loaderAttribute, 'common')

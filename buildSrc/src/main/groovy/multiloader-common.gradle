@@ -1,6 +1,5 @@
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 base {
@@ -9,8 +8,6 @@ base {
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(java_version)
-    withSourcesJar()
-    withJavadocJar()
 }
 
 repositories {
@@ -40,12 +37,6 @@ repositories {
     maven {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
-    }
-}
-
-sourcesJar {
-    from(rootProject.file('LICENSE')) {
-        rename { "${it}_${mod_name}" }
     }
 }
 
@@ -82,7 +73,9 @@ processResources {
             'license'                      : license,
             'mod_description'              : mod_description,
             'neoforge_version'             : neoforge_version,
-            'java_version'                 : java_version
+            'java_version'                 : java_version,
+            'sources_url'                  : sources_url,
+            'issues_url'                   : issues_url
     ]
 
     var jsonExpandProps = expandProps.collectEntries {
@@ -98,18 +91,4 @@ processResources {
     }
 
     inputs.properties(expandProps)
-}
-
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            artifactId base.archivesName.get()
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            url System.getenv('local_maven_url')
-        }
-    }
 }
