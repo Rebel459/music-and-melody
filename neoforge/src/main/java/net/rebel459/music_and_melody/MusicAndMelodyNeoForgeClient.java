@@ -9,6 +9,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebel459.music_and_melody.client.AlbumListener;
+import net.rebel459.music_and_melody.client.PlaylistListener;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMConfigScreen;
 
@@ -32,5 +33,6 @@ public class MusicAndMelodyNeoForgeClient {
 
     private static void addClientReloadListeners(final AddClientReloadListenersEvent event) {
         event.addListener(AlbumListener.ID, new AlbumListener());
+        event.addListener(PlaylistListener.ID, new PlaylistListener());
     }
 }

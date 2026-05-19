@@ -30,8 +30,10 @@ public class MaMDataConfig implements ConfigData {
 	public Albums albums = new Albums();
 
 	public static class Albums {
+		public AlbumDisplay display = AlbumDisplay.ALBUMS;
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
+		public List<String> favourites = new ArrayList<>();
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject
@@ -40,5 +42,13 @@ public class MaMDataConfig implements ConfigData {
 	public static class Playlist {
 		public boolean loop = false;
 		public List<String> queued_songs = new ArrayList<>();
+		public List<String> favourites = new ArrayList<>();
+	}
+
+	public enum AlbumDisplay {
+		ALBUMS,
+		PLAYLISTS,
+		BOTH,
+		SAVED
 	}
 }
