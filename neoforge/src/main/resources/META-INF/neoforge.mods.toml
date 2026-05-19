@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="[1,)"
 license="${license}"
-issueTrackerURL="https://github.com/Rebel459/music-and-melody/issues"
+issueTrackerURL="${issues_url}"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}-neoforge"
 displayName="${mod_name}"
-displayURL="https://github.com/Rebel459/music-and-melody"
+displayURL="${sources_url}"
 logoFile="assets/music_and_melody/icon.png"
 authors="${mod_author}"
 description='''

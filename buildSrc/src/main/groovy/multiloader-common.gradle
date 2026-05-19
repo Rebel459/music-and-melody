@@ -74,7 +74,9 @@ processResources {
             'license'                      : license,
             'mod_description'              : mod_description,
             'neoforge_version'             : neoforge_version,
-            'java_version'                 : java_version
+            'java_version'                 : java_version,
+            'sources_url'                  : sources_url,
+            'issues_url'                   : issues_url
     ]
 
     var jsonExpandProps = expandProps.collectEntries {

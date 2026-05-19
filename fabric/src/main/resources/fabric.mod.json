@@ -8,7 +8,9 @@
     "${mod_author}"
   ],
   "contact": {
-    "sources": "https://github.com/Rebel459/music-and-melody"
+    "homepage": "${sources_url}",
+    "issues": "${issues_url}",
+    "sources": "${sources_url}"
   },
   "license": "${license}",
   "icon": "assets/music_and_melody/icon.png",
