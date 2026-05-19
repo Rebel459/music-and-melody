@@ -9,7 +9,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
-public class EventMusicHelper {
+public class MusicHelper {
 
     public static final Music WITHER_BOSS = createEventMusic(MaMSounds.MUSIC_WITHER);
     public static final Music THRESHOLD = createEventMusic(MaMSounds.MUSIC_THRESHOLD);

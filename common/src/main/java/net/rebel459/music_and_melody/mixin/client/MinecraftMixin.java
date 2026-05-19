@@ -6,9 +6,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -25,7 +23,6 @@ import net.rebel459.music_and_melody.client.*;
 import net.rebel459.music_and_melody.client.screen.AlbumDetailsScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.tag.MaMBiomeTags;
-import net.rebel459.unified.util.helper.StructureMusicImpl;
 import net.rebel459.unified.util.mixin.PlayerStructureMusic;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -109,8 +106,8 @@ public abstract class MinecraftMixin {
         if (PlaylistHelper.isPlaying()) cir.setReturnValue(PlaylistHelper.EMPTY);
         if (PlaylistHelper.playNext() || !MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
 
-        if (MaMClientConfig.get().end_portal_music && EventMusicHelper.isEndPortalFilled()) cir.setReturnValue(EventMusicHelper.THRESHOLD);
-        if (MaMClientConfig.get().wither_music && EventMusicHelper.hasWitherBossBar()) cir.setReturnValue(EventMusicHelper.WITHER_BOSS);
+        if (MaMClientConfig.get().end_portal_music && MusicHelper.isEndPortalFilled()) cir.setReturnValue(MusicHelper.THRESHOLD);
+        if (MaMClientConfig.get().wither_music && MusicHelper.hasWitherBossBar()) cir.setReturnValue(MusicHelper.WITHER_BOSS);
     }
 
     @Unique

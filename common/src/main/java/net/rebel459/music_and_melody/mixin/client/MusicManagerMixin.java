@@ -9,7 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
-import net.rebel459.music_and_melody.client.EventMusicHelper;
+import net.rebel459.music_and_melody.client.MusicHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
@@ -50,7 +50,7 @@ public abstract class MusicManagerMixin {
             )
     )
     private float fadeWitherMusic(float volume) {
-        if (this.isPlayingMusic(EventMusicHelper.WITHER_BOSS) && !EventMusicHelper.hasWitherBossBar()) return 0F;
+        if (this.isPlayingMusic(MusicHelper.WITHER_BOSS) && !MusicHelper.hasWitherBossBar()) return 0F;
         return volume;
     }
 
