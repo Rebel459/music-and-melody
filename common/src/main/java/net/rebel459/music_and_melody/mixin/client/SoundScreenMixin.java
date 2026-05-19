@@ -24,23 +24,7 @@ public abstract class SoundScreenMixin extends Screen {
     @Inject(method = "addOptions", at = @At(value = "HEAD"))
     private void addTopSoundOptionsButtons(CallbackInfo ci) {
         SoundOptionsScreen screen = SoundOptionsScreen.class.cast(this);
-        if (screen.list == null || MaMClientConfig.get().button_positions != MaMClientConfig.Position.SOUNDS_TOP) return;
-
-        Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
-                this.minecraft.setScreen(new AlbumScreen(this))
-        ).size(150, 20).build();
-
-        Button playlistButton = Button.builder(Component.translatable("button.music_and_melody.playlist"), button ->
-                this.minecraft.setScreen(new PlaylistScreen(this))
-        ).size(150, 20).build();
-
-        screen.list.addSmall(List.of(albumsButton, playlistButton));
-    }
-
-    @Inject(method = "addOptions", at = @At(value = "TAIL"))
-    private void addBottomSoundOptionsButtons(CallbackInfo ci) {
-        SoundOptionsScreen screen = SoundOptionsScreen.class.cast(this);
-        if (screen.list == null || MaMClientConfig.get().button_positions != MaMClientConfig.Position.SOUNDS_BOTTOM) return;
+        if (screen.list == null || MaMClientConfig.get().button_positions != MaMClientConfig.ButtonPosition.SOUNDS) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))

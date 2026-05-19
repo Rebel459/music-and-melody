@@ -47,6 +47,18 @@ public final class PlaylistHelper {
         }
     }
 
+    public static void addAll(Collection<Identifier> songs) {
+        ensureLoaded();
+        boolean changed = false;
+        for (Identifier song : songs) {
+            if (!QUEUED_SONGS.contains(song)) {
+                QUEUED_SONGS.add(song);
+                changed = true;
+            }
+        }
+        if (changed) save();
+    }
+
     public static boolean isQueued(Identifier song) {
         ensureLoaded();
         return QUEUED_SONGS.contains(song);
@@ -87,14 +99,8 @@ public final class PlaylistHelper {
     public static boolean shuffleQueue() {
         ensureLoaded();
         if (QUEUED_SONGS.size() < 2) return false;
-        Identifier currentQueuedSong = currentSongFromQueue ? currentSongId : null;
         Collections.shuffle(QUEUED_SONGS);
-        if (currentQueuedSong != null) {
-            int currentIndex = QUEUED_SONGS.indexOf(currentQueuedSong);
-            if (currentIndex >= 0) queueIndex = currentIndex;
-        } else {
-            queueIndex = clampQueueIndex(queueIndex);
-        }
+        queueIndex = 0;
         save();
         return true;
     }
@@ -286,8 +292,8 @@ public final class PlaylistHelper {
         loaded = true;
         QUEUED_SONGS.clear();
         MaMDataConfig config = MaMDataConfig.get();
-        loop = config.playlist.loop;
-        for (String song : config.playlist.queued_songs) {
+        loop = config.playlists.loop;
+        for (String song : config.playlists.queued_songs) {
             Identifier id = Identifier.tryParse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
@@ -295,8 +301,8 @@ public final class PlaylistHelper {
 
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlist.loop = loop;
-        config.playlist.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(Identifier::toString).toList());
+        config.playlists.loop = loop;
+        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(Identifier::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 

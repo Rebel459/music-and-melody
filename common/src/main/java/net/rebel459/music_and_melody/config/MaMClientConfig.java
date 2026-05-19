@@ -61,16 +61,15 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-	public Position button_positions = Position.SOUNDS_TOP;
+	public ButtonPosition button_positions = ButtonPosition.SOUNDS;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean custom_album = true;
 
-	public enum Position {
+	public enum ButtonPosition {
+		SOUNDS,
 		OPTIONS,
-		SOUNDS_TOP,
-		SOUNDS_BOTTOM,
 		NONE
 	}
 }

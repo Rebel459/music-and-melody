@@ -6,15 +6,9 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 
 @Config(name = MusicAndMelody.MOD_ID + "/" + "data")
 public class MaMDataConfig implements ConfigData {
@@ -30,25 +24,25 @@ public class MaMDataConfig implements ConfigData {
 	public Albums albums = new Albums();
 
 	public static class Albums {
-		public AlbumDisplay display = AlbumDisplay.ALBUMS;
+		public AlbumDisplay display = AlbumDisplay.ALL;
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject
-	public Playlist playlist = new Playlist();
+	public Playlists playlists = new Playlists();
 
-	public static class Playlist {
+	public static class Playlists {
 		public boolean loop = false;
 		public List<String> queued_songs = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
 	}
 
 	public enum AlbumDisplay {
+		ALL,
 		ALBUMS,
 		PLAYLISTS,
-		BOTH,
-		SAVED
+		FAVOURITES
 	}
 }

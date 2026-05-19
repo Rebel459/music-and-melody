@@ -47,6 +47,25 @@ public class Album {
         return !MaMDataConfig.get().albums.disabled_albums.contains(this.album.toString());
     }
 
+    public boolean isFavourite() {
+        return MaMDataConfig.get().albums.favourites.contains(this.album.toString());
+    }
+
+    public void setFavourite(boolean favourite) {
+        String id = this.album.toString();
+        MaMDataConfig config = MaMDataConfig.get();
+
+        if (favourite) {
+            if (!config.albums.favourites.contains(id)) {
+                config.albums.favourites.add(id);
+            }
+        } else {
+            config.albums.favourites.remove(id);
+        }
+
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+    }
+
     public void setEnabled(boolean enabled) {
         String id = this.album.toString();
         MaMDataConfig config = MaMDataConfig.get();

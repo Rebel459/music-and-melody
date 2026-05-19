@@ -25,15 +25,10 @@ public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.
         loadedPlaylists.clear();
 
         for (Map.Entry<Identifier, Playlist.Record> entry : identifierRecordMap.entrySet()) {
-            Playlist.Record record = entry.getValue();
-            List<Identifier> tracks = new ArrayList<>();
-            List<Identifier> discs = new ArrayList<>();
-            record.tracks().forEach(trackEntry -> trackEntry.tracks().forEach(track -> tracks.add(Identifier.fromNamespaceAndPath(trackEntry.namespace(), track))));
-            record.discs().forEach(discEntry -> discEntry.discs().forEach(disc -> discs.add(Identifier.fromNamespaceAndPath(discEntry.namespace(), disc))));
-            Playlist album = new Playlist(entry.getKey(), record.name(), record.icon(), tracks, discs);
+            Playlist album = Playlist.create(entry.getKey(), entry.getValue(), null);
             loadedPlaylists.add(album);
         }
 
-        // also read playlist jsons in the config/music_and_melody/playlists folder
+        Playlist.reloadConfigPlaylists();
     }
 }

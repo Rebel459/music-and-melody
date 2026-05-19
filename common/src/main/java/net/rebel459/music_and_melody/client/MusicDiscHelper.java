@@ -35,12 +35,19 @@ public final class MusicDiscHelper {
                 }
             }
         }
+        for (Playlist playlist : Playlist.PLAYLISTS) {
+            for (Identifier disc : playlist.discs) {
+                if (discSoundId(minecraft, disc).equals(soundId)) {
+                    return Optional.of(new Match(null, disc.toString(), disc));
+                }
+            }
+        }
         return Optional.empty();
     }
 
     public static boolean isSoundUnlocked(Minecraft minecraft, Identifier soundId) {
         return matchSound(minecraft, soundId)
-                .map(match -> match.album().isDiscForcedUnlocked(match.disc()) || isDiscUnlocked(minecraft, match.jukeboxSong()))
+                .map(match -> match.album() != null && match.album().isDiscForcedUnlocked(match.disc()) || isDiscUnlocked(minecraft, match.jukeboxSong()))
                 .orElse(true);
     }
 

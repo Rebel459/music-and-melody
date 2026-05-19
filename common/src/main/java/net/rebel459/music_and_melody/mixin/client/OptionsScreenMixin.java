@@ -29,7 +29,7 @@ public abstract class OptionsScreenMixin extends Screen {
             )
     )
     private void musicAndMelody$addAlbumScreenButton(CallbackInfo ci, @Local(name = "helper") GridLayout.RowHelper helper) {
-        if (MaMClientConfig.get().button_positions != MaMClientConfig.Position.OPTIONS) return;
+        if (MaMClientConfig.get().button_positions != MaMClientConfig.ButtonPosition.OPTIONS) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))

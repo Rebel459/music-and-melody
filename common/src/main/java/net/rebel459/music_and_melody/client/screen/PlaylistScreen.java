@@ -23,6 +23,7 @@ public class PlaylistScreen extends Screen {
     private Button loopButton;
     private Button shuffleButton;
     private Button clearButton;
+    private Button saveButton;
 
     public PlaylistScreen(Screen parent) {
         super(TITLE);
@@ -35,10 +36,13 @@ public class PlaylistScreen extends Screen {
         this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 88));
         int controlY = this.height - 51;
         int navY = this.height - 27;
-        int rowX = this.width / 2 - 154;
+        int rowWidth = Math.min(360, this.width - 20);
+        int controlWidth = (rowWidth - 12) / 4;
+        int navWidth = (rowWidth - 8) / 3;
+        int rowX = this.width / 2 - rowWidth / 2;
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))
-        ).bounds(rowX, navY, 152, 20).build());
+        ).bounds(rowX, navY, navWidth, 20).build());
         this.playPauseButton = this.addRenderableWidget(Button.builder(playPauseMessage(), button -> {
             if (PlaylistHelper.isPlaying()) {
                 PlaylistHelper.pauseQueue();
@@ -46,22 +50,25 @@ public class PlaylistScreen extends Screen {
                 PlaylistHelper.playNextNow();
             }
             button.setMessage(playPauseMessage());
-        }).bounds(rowX, controlY, 74, 20).build());
+        }).bounds(rowX, controlY, controlWidth, 20).build());
         this.loopButton = this.addRenderableWidget(Button.builder(loopMessage(), button -> {
             PlaylistHelper.setLoopingQueue(!PlaylistHelper.isLoopingQueue());
             button.setMessage(loopMessage());
-        }).bounds(rowX + 78, controlY, 74, 20).build());
+        }).bounds(rowX + (controlWidth + 4), controlY, controlWidth, 20).build());
         this.shuffleButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.shuffle"), button -> {
             if (PlaylistHelper.shuffleQueue()) {
                 this.refreshQueue();
             }
-        }).bounds(rowX + 156, controlY, 74, 20).build());
+        }).bounds(rowX + (controlWidth + 4) * 2, controlY, controlWidth, 20).build());
         this.clearButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.clear_all"), button -> {
             PlaylistHelper.clear();
             this.refreshQueue();
-        }).bounds(rowX + 234, controlY, 74, 20).build());
+        }).bounds(rowX + (controlWidth + 4) * 3, controlY, controlWidth, 20).build());
+        this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
+                this.minecraft.setScreen(new SavePlaylistScreen(this))
+        ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + 156, navY, 152, 20)
+                .bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20)
                 .build());
     }
 
@@ -76,6 +83,7 @@ public class PlaylistScreen extends Screen {
         if (this.loopButton != null) this.loopButton.setMessage(loopMessage());
         if (this.shuffleButton != null) this.shuffleButton.active = PlaylistHelper.queuedSongs().size() > 1;
         if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
+        if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasQueuedSongs();
     }
 
     @Override
@@ -88,7 +96,8 @@ public class PlaylistScreen extends Screen {
     }
 
     private static Component loopMessage() {
-        return Component.translatable("button.music_and_melody.loop_queue").append(CommonComponents.SPACE).append(CommonComponents.optionStatus(PlaylistHelper.isLoopingQueue()));
+        if (PlaylistHelper.isLoopingQueue()) return Component.translatable("button.music_and_melody.looping");
+        else return Component.translatable("button.music_and_melody.loop");
     }
 
     private static Component playPauseMessage() {
