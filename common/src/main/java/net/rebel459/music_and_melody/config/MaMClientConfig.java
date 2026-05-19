@@ -67,6 +67,13 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Gui.Tooltip
 	public boolean custom_album = true;
 
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public int event_music_min = 300;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public int event_music_max = 600;
+
 	public enum ButtonPosition {
 		SOUNDS,
 		OPTIONS,

@@ -14,6 +14,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.minecraft.util.valueproviders.SampledFloat;
+import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public final class PlaylistHelper {
+    public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
     public static final List<Identifier> QUEUED_SONGS = new ArrayList<>();
     public static final HashMap<Identifier, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
@@ -32,7 +34,7 @@ public final class PlaylistHelper {
     private static Identifier currentSongId = null;
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
-    private static boolean queuePaused = false;
+    private static boolean queuePaused = true;
     private static int queueIndex = 0;
 
     public static final Music EMPTY = new Music(MaMSounds.MUSIC_EMPTY, 0, 0, true);
@@ -137,10 +139,17 @@ public final class PlaylistHelper {
 
     public static String getCurrentMusicTranslationKey() {
         if (!isPlaying() || currentSongId == null) return null;
-        var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), currentSongId);
+        Identifier displayId = currentSongId;
+        Sound currentSound = currentSong.getSound();
+        if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
+            displayId = currentSound.getLocation();
+        }
+        String configName = ConfigAlbum.displayName(displayId);
+        if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
+        var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), displayId);
         if (disc.isPresent()) return MusicDiscHelper.translationKey(disc.get().jukeboxSong());
-        String pathKey = currentSongId.getPath().replace('/', '.');
-        return currentSongId.getNamespace().equals("minecraft") ? pathKey : currentSongId.getNamespace() + "." + pathKey;
+        String pathKey = displayId.getPath().replace('/', '.');
+        return displayId.getNamespace().equals("minecraft") ? pathKey : displayId.getNamespace() + "." + pathKey;
     }
 
     public static boolean playNext() {
@@ -154,8 +163,7 @@ public final class PlaylistHelper {
         }
         queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
-        playSound(id, false, true);
-        return true;
+        return playSound(id, false, true);
     }
 
     public static boolean playNextNow() {
@@ -169,8 +177,7 @@ public final class PlaylistHelper {
         queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
         stop();
-        playSound(id, false, true);
-        return true;
+        return playSound(id, false, true);
     }
 
     public static boolean playNow(int index) {
@@ -180,8 +187,7 @@ public final class PlaylistHelper {
         queuePaused = false;
         queueIndex = index;
         stop();
-        playSound(QUEUED_SONGS.get(queueIndex), false, true);
-        return true;
+        return playSound(QUEUED_SONGS.get(queueIndex), false, true);
     }
 
     private static void advanceFinishedQueuedSong() {
@@ -205,7 +211,7 @@ public final class PlaylistHelper {
         currentSongFromQueue = false;
     }
 
-    private static boolean hasActiveMusic() {
+    public static boolean hasActiveMusic() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
         if (instances == null) return false;
@@ -234,7 +240,8 @@ public final class PlaylistHelper {
         return -1;
     }
 
-    private static void playSound(Identifier id, boolean loop, boolean fromQueue) {
+    private static boolean playSound(Identifier id, boolean loop, boolean fromQueue) {
+        id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
         RandomSource random = SoundInstance.createUnseededRandom();
@@ -256,9 +263,18 @@ public final class PlaylistHelper {
                 0.0D,
                 true
         );
-        if (Minecraft.getInstance().getSoundManager().play(currentSong) == SoundEngine.PlayResult.STARTED) {
+        SoundEngine.PlayResult result = Minecraft.getInstance().getSoundManager().play(currentSong);
+        if (result == SoundEngine.PlayResult.NOT_STARTED) {
+            currentSong = null;
+            currentSongId = null;
+            currentSongLooping = false;
+            currentSongFromQueue = false;
+            return false;
+        }
+        if (result == SoundEngine.PlayResult.STARTED) {
             Minecraft.getInstance().getToastManager().showNowPlayingToast();
         }
+        return true;
     }
 
     public static void stop() {
@@ -275,10 +291,10 @@ public final class PlaylistHelper {
         currentSongFromQueue = false;
     }
 
-    public static void play(Identifier id, boolean loop) {
+    public static boolean play(Identifier id, boolean loop) {
         ensureLoaded();
         stop();
-        playSound(id, loop, false);
+        return playSound(id, loop, false);
     }
 
     public static void pauseQueue() {
@@ -291,6 +307,7 @@ public final class PlaylistHelper {
         if (loaded) return;
         loaded = true;
         QUEUED_SONGS.clear();
+        queuePaused = true;
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
         for (String song : config.playlists.queued_songs) {
@@ -341,6 +358,11 @@ public final class PlaylistHelper {
 
         @Override
         public WeighedSoundEvents resolve(SoundManager soundManager) {
+            WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
+            if (registered != null) {
+                this.sound = registered.getSound(this.random);
+                return registered;
+            }
             return this.soundEvent;
         }
     }

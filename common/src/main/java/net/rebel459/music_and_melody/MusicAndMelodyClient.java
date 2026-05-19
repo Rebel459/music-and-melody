@@ -2,6 +2,7 @@ package net.rebel459.music_and_melody;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+import net.rebel459.music_and_melody.client.EventMusic;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
@@ -28,12 +29,10 @@ public final class MusicAndMelodyClient {
         if (MaMClientConfig.get().music_rebalance) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("music_and_melody"), PackType.REQUIRED_RESOURCES);
         }
-        if (MaMClientConfig.get().end_portal_music) {
-            UnifiedHelpers.PACKS.add(MusicAndMelody.id("end_portal_music"), PackType.REQUIRED_RESOURCES);
-        }
     }
 
     public static void init() {
+        EventMusic.reloadConfigEvents();
         UnifiedClientEvents.Instance.onTick(EventType.POST, client -> {
             while (PLAYLIST_KEY.get().consumeClick()) {
                 client.setScreen(new PlaylistScreen(client.screen));

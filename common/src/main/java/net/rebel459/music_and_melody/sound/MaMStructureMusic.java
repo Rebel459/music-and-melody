@@ -6,7 +6,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
+import net.rebel459.music_and_melody.client.EventMusic;
+import net.rebel459.music_and_melody.client.MusicHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
 

@@ -75,9 +75,8 @@
     "replace": true,
     "sounds": [
       {
-        "name": "music_and_melody:music/misc/threshold_end_portal",
-        "stream": true,
-        "volume": 0.4
+        "name": "music_and_melody:music/misc/threshold",
+        "stream": true
       }
     ],
     "subtitle": "subtitles.block.end_portal.spawn"

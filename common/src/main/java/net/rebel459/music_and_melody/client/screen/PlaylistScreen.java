@@ -38,7 +38,7 @@ public class PlaylistScreen extends Screen {
         int navY = this.height - 27;
         int rowWidth = Math.min(360, this.width - 20);
         int controlWidth = (rowWidth - 12) / 4;
-        int navWidth = (rowWidth - 8) / 3;
+        int navWidth = (rowWidth - 12) / 4;
         int rowX = this.width / 2 - rowWidth / 2;
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))
@@ -64,11 +64,14 @@ public class PlaylistScreen extends Screen {
             PlaylistHelper.clear();
             this.refreshQueue();
         }).bounds(rowX + (controlWidth + 4) * 3, controlY, controlWidth, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.events"), button ->
+                this.minecraft.setScreen(new EventMusicScreen(this))
+        ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
                 this.minecraft.setScreen(new SavePlaylistScreen(this))
-        ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
+        ).bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20)
+                .bounds(rowX + (navWidth + 4) * 3, navY, navWidth, 20)
                 .build());
     }
 

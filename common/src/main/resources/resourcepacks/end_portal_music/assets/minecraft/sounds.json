@@ -1,7 +1,0 @@
-{
-  "block.end_portal.spawn": {
-    "replace": true,
-    "sounds": [],
-    "subtitle": "subtitles.block.end_portal.spawn"
-  }
-}

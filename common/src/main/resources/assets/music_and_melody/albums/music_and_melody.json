@@ -15,7 +15,7 @@
     "music/end/sweden_end_remix",
     "music/end/vacuum_decay",
     {
-      "track": "music/misc/threshold_end_portal",
+      "track": "music/misc/threshold",
       "enabled": true
     },
     "music/nether/beneath",

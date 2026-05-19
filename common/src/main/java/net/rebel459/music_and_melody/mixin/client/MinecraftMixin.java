@@ -17,6 +17,7 @@ import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.attribute.BackgroundMusic;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.rebel459.music_and_melody.client.*;
@@ -32,7 +33,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
@@ -55,18 +58,28 @@ public abstract class MinecraftMixin {
         return original.call(music, isCreative, isUnderwater);
     }
 
-    @Unique
-    private int currentBreak = 0;
-    @Unique
-    private int targetBreak = -1;
-
     @Inject(method = "getSituationalMusic", at = @At(value = "HEAD"), cancellable = true)
     private void playlistAndEventMusic(CallbackInfoReturnable<Music> cir) {
         Minecraft client = Minecraft.class.cast(this);
 
-        if (targetBreak == -1) targetBreak = SoundInstance.createUnseededRandom().nextIntBetweenInclusive(300, 600);
-        if (currentBreak < targetBreak) {
-            currentBreak++;
+        if (PlaylistHelper.isPlaying()) {
+            cir.setReturnValue(PlaylistHelper.EMPTY);
+            return;
+        }
+        if (PlaylistHelper.playNext()) {
+            cir.setReturnValue(PlaylistHelper.EMPTY);
+            return;
+        }
+        if (PlaylistHelper.hasActiveMusic()) {
+            return;
+        }
+
+        if (EventMusic.targetBreak == -1) {
+            EventMusic.currentBreak = 0;
+            EventMusic.targetBreak = EventMusic.createMusicBreak();
+        }
+        if (EventMusic.currentBreak < EventMusic.targetBreak) {
+            EventMusic.currentBreak++;
         } else {
             WeightedList.Builder<EventMusic> validEvents = new WeightedList.Builder<>();
             processEvents(validEvents, EventMusic.HIGH_PRIORITY);
@@ -76,86 +89,117 @@ public abstract class MinecraftMixin {
             WeightedList<EventMusic> events = validEvents.build();
             if (!events.isEmpty()) {
                 EventMusic event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
-                if (event.category == EventMusic.CategoryType.ALBUM) {
-                    HashSet<Album> albums = new HashSet<>(Album.ALBUMS);
-                    albums.removeIf(entry -> entry.album != event.music);
-                    List<Identifier> songs = AlbumDetailsScreen.queueSongs(albums.stream().findFirst().get(), client);
-                    PlaylistHelper.clear();
-                    PlaylistHelper.pauseQueue();
-                    PlaylistHelper.addAll(songs);
-                    PlaylistHelper.playNow(0);
+                if (playEvent(client, event)) {
+                    EventMusic.currentBreak = 0;
+                    EventMusic.targetBreak = EventMusic.createMusicBreak();
+                    cir.setReturnValue(PlaylistHelper.EMPTY);
+                    return;
                 }
-                if (event.category == EventMusic.CategoryType.PLAYLIST) {
-                    HashSet<Playlist> playlists = new HashSet<>(Playlist.PLAYLISTS);
-                    playlists.removeIf(entry -> entry.playlist != event.music);
-                    PlaylistHelper.clear();
-                    PlaylistHelper.pauseQueue();
-                    PlaylistHelper.addAll(playlists.stream().findFirst().get().tracks);
-                    PlaylistHelper.playNow(0);
-                }
-                if (event.category == EventMusic.CategoryType.SONG) {
-                    PlaylistHelper.play(event.music, false);
-                }
-                if (event.category == EventMusic.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music)) {
-                    PlaylistHelper.play(MusicDiscHelper.discSoundId(client, event.music), false);
-                }
-                currentBreak = 0;
             }
         }
 
-        if (PlaylistHelper.isPlaying()) cir.setReturnValue(PlaylistHelper.EMPTY);
-        if (PlaylistHelper.playNext() || !MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
-
         if (MaMClientConfig.get().end_portal_music && MusicHelper.isEndPortalFilled()) cir.setReturnValue(MusicHelper.THRESHOLD);
         if (MaMClientConfig.get().wither_music && MusicHelper.hasWitherBossBar()) cir.setReturnValue(MusicHelper.WITHER_BOSS);
+        if (!MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
     }
 
     @Unique
-    private WeightedList.Builder<EventMusic> processEvents(WeightedList.Builder<EventMusic> validEvents, Set<EventMusic> events) {
+    private boolean playEvent(Minecraft client, EventMusic event) {
+        if (event.category == EventMusic.CategoryType.ALBUM) {
+            Optional<Album> album = Album.ALBUMS.stream().filter(entry -> entry.album.equals(event.music)).findFirst();
+            if (album.isEmpty()) return false;
+            List<Identifier> songs = AlbumDetailsScreen.queueSongs(album.get(), client);
+            if (songs.isEmpty()) return false;
+            PlaylistHelper.clear();
+            PlaylistHelper.pauseQueue();
+            PlaylistHelper.addAll(songs);
+            return PlaylistHelper.playNow(0);
+        }
+        if (event.category == EventMusic.CategoryType.PLAYLIST) {
+            Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music)).findFirst();
+            if (playlist.isEmpty() || playlist.get().tracks.isEmpty()) return false;
+            PlaylistHelper.clear();
+            PlaylistHelper.pauseQueue();
+            PlaylistHelper.addAll(playlist.get().tracks);
+            return PlaylistHelper.playNow(0);
+        }
+        if (event.category == EventMusic.CategoryType.SONG) {
+            PlaylistHelper.pauseQueue();
+            return PlaylistHelper.play(event.music, false);
+        }
+        if (event.category == EventMusic.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music)) {
+            PlaylistHelper.pauseQueue();
+            return PlaylistHelper.play(MusicDiscHelper.discSoundId(client, event.music), false);
+        }
+        return false;
+    }
+
+    @Unique
+    private void processEvents(WeightedList.Builder<EventMusic> validEvents, Set<EventMusic> events) {
         LocalPlayer player = this.player;
         ClientLevel level = this.level;
         for (EventMusic event : events) {
-            boolean shouldBeActive = !events.isEmpty();
+            boolean shouldBeActive = true;
             for (EventMusic.Condition condition : event.conditions) {
-                if (condition.type() == EventMusic.ConditionType.BIOME && player != null && level != null) {
-                    Holder<Biome> biome = level.getBiome(this.player.blockPosition());
-                    shouldBeActive = shouldBeActive && biome.is(condition.idValue().get());
+                if (condition.type() == EventMusic.ConditionType.BIOME) {
+                    shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(this.player.blockPosition()).is(condition.idValue().get());
                 }
-                if (condition.type() == EventMusic.ConditionType.BIOME_TAG && player != null && level != null) {
-                    Holder<Biome> biome = level.getBiome(this.player.blockPosition());
-                    shouldBeActive = shouldBeActive && biome.is(TagKey.create(Registries.BIOME, condition.idValue().get()));
+                if (condition.type() == EventMusic.ConditionType.BIOME_TAG) {
+                    shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(this.player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
                 }
-                if (condition.type() == EventMusic.ConditionType.STRUCTURE && player instanceof PlayerStructureMusic music) {
-                    shouldBeActive = shouldBeActive && music.getPieceStructure() != null && music.getPieceStructure() == condition.idValue().get();
+                if (condition.type() == EventMusic.ConditionType.DIMENSION) {
+                    shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
                 }
-                if (condition.type() == EventMusic.ConditionType.TIME && level != null) {
-                    long time = level.getGameTime();
-                    switch(condition.timeValue().get()) {
-                        case DAY -> shouldBeActive = shouldBeActive && time > 0 && time <= 12000;
-                        case SUNSET -> shouldBeActive = shouldBeActive && time > 12000 && time <= 13000;
-                        case NIGHT -> shouldBeActive = shouldBeActive && time > 13000 && time <= 23000;
-                        case SUNRISE -> shouldBeActive = shouldBeActive && time > 23000 && time <= 24000;
+                if (condition.type() == EventMusic.ConditionType.STRUCTURE) {
+                    shouldBeActive = shouldBeActive && player instanceof PlayerStructureMusic music && condition.idValue().get().equals(music.getPieceStructure());
+                }
+                if (condition.type() == EventMusic.ConditionType.TIME) {
+                    shouldBeActive = shouldBeActive && level != null;
+                    if (level != null) {
+                        long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
+                        switch (condition.timeValue().get()) {
+                            case DAY -> shouldBeActive = shouldBeActive && time > 0 && time <= 12000;
+                            case SUNSET -> shouldBeActive = shouldBeActive && time > 12000 && time <= 13000;
+                            case NIGHT -> shouldBeActive = shouldBeActive && time > 13000 && time <= 23000;
+                            case SUNRISE -> shouldBeActive = shouldBeActive && time > 23000 && time <= 24000;
+                        }
                     }
                 }
-                if (condition.type() == EventMusic.ConditionType.WEATHER && level != null) {
-                    switch(condition.weatherValue().get()) {
-                        case CLEAR -> shouldBeActive = shouldBeActive && !level.isRaining();
-                        case RAIN -> shouldBeActive = shouldBeActive && level.isRaining();
-                        case THUNDER -> shouldBeActive = shouldBeActive && level.isThundering();
+                if (condition.type() == EventMusic.ConditionType.WEATHER) {
+                    shouldBeActive = shouldBeActive && level != null;
+                    if (level != null) {
+                        switch (condition.weatherValue().get()) {
+                            case CLEAR -> shouldBeActive = shouldBeActive && !level.isRaining();
+                            case RAIN -> shouldBeActive = shouldBeActive && level.isRaining();
+                            case THUNDER -> shouldBeActive = shouldBeActive && level.isThundering();
+                        }
                     }
+                }
+                if (condition.type() == EventMusic.ConditionType.GAMEMODE) {
+                    Minecraft client = Minecraft.class.cast(this);
+                    shouldBeActive = shouldBeActive && client.gameMode != null && matchesGameMode(client.gameMode.getPlayerMode(), condition.gameModeValue().get());
                 }
                 if (condition.type() == EventMusic.ConditionType.MENU) {
                     shouldBeActive = shouldBeActive && this.screen != null && this.level == null;
                 }
-                if (condition.type() == EventMusic.ConditionType.ABOVE_Y && player != null) {
-                    shouldBeActive = shouldBeActive && player.blockPosition().getY() > condition.intValue().get();
+                if (condition.type() == EventMusic.ConditionType.ABOVE_Y) {
+                    shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() > condition.intValue().get();
                 }
-                if (condition.type() == EventMusic.ConditionType.BELOW_Y && player != null) {
-                    shouldBeActive = shouldBeActive && player.blockPosition().getY() < condition.intValue().get();
+                if (condition.type() == EventMusic.ConditionType.BELOW_Y) {
+                    shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
                 }
-                if (shouldBeActive) validEvents.add(event, event.weight);
             }
+            if (shouldBeActive) validEvents.add(event, event.weight);
         }
-        return validEvents;
+    }
+
+    @Unique
+    private boolean matchesGameMode(GameType current, EventMusic.GameModeCondition condition) {
+        return switch (condition) {
+            case SURVIVAL -> current == GameType.SURVIVAL;
+            case CREATIVE -> current == GameType.CREATIVE;
+            case ADVENTURE -> current == GameType.ADVENTURE;
+            case SPECTATOR -> current == GameType.SPECTATOR;
+        };
     }
 }
