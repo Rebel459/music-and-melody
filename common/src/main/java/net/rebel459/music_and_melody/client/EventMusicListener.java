@@ -22,7 +22,9 @@ public class EventMusicListener extends SimpleJsonResourceReloadListener<EventMu
 
     @Override
     protected void apply(Map<Identifier, EventMusic.Record> identifierRecordMap, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
-        EventMusic.LOADED.removeAll(loaded);
+        EventMusic.HIGH_PRIORITY.removeAll(loaded);
+        EventMusic.MEDIUM_PRIORITY.removeAll(loaded);
+        EventMusic.LOW_PRIORITY.removeAll(loaded);
         loaded.clear();
 
         for (Map.Entry<Identifier, EventMusic.Record> entry : identifierRecordMap.entrySet()) {
@@ -54,6 +56,10 @@ public class EventMusicListener extends SimpleJsonResourceReloadListener<EventMu
                     }
                     else if (condition.type().equals("biome_tag")) {
                         conditionType = EventMusic.ConditionType.BIOME_TAG;
+                        idValue = Optional.of(Identifier.parse(condition.value().get().left().get()));
+                    }
+                    else if (condition.type().equals("structure")) {
+                        conditionType = EventMusic.ConditionType.STRUCTURE;
                         idValue = Optional.of(Identifier.parse(condition.value().get().left().get()));
                     }
                     else if (condition.type().equals("above_y")) {
@@ -93,7 +99,15 @@ public class EventMusicListener extends SimpleJsonResourceReloadListener<EventMu
                     }
                     conditions.add(new EventMusic.Condition(conditionType, idValue, intValue, timeValue, weatherValue));
                 });
-                EventMusic eventMusic = new EventMusic(category, Identifier.parse(dynEntry.music()), conditions);
+                EventMusic.PriorityType priority;
+                if (dynEntry.priority().equals("low")) priority = EventMusic.PriorityType.LOW;
+                else if (dynEntry.priority().equals("medium")) priority = EventMusic.PriorityType.MEDIUM;
+                else if (dynEntry.priority().equals("high")) priority = EventMusic.PriorityType.HIGH;
+                else {
+                    LogUtils.getLogger().warn("Invalid priority: " + dynEntry.priority());
+                    return;
+                }
+                EventMusic eventMusic = new EventMusic(category, Identifier.parse(dynEntry.music()), conditions, priority, dynEntry.weight());
                 loaded.add(eventMusic);
             });
         }

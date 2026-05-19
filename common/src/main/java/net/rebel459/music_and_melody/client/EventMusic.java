@@ -12,17 +12,31 @@ public class EventMusic {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static Set<EventMusic> LOADED = new HashSet<>();
+    public static Set<EventMusic> HIGH_PRIORITY = new HashSet<>();
+    public static Set<EventMusic> MEDIUM_PRIORITY = new HashSet<>();
+    public static Set<EventMusic> LOW_PRIORITY = new HashSet<>();
 
     public CategoryType category;
     public Identifier music;
     public List<Condition> conditions;
+    public int weight;
 
-    public EventMusic(CategoryType category, Identifier music, List<Condition> conditions) {
+    public EventMusic(CategoryType category, Identifier music, List<Condition> conditions, PriorityType priority, int weight) {
         this.category = category;
         this.music = music;
         this.conditions = conditions;
-        LOADED.add(this);
+        this.weight = weight;
+        switch (priority) {
+            case PriorityType.HIGH -> HIGH_PRIORITY.add(this);
+            case PriorityType.MEDIUM -> MEDIUM_PRIORITY.add(this);
+            case PriorityType.LOW -> LOW_PRIORITY.add(this);
+        }
+    }
+
+    public enum PriorityType {
+        LOW,
+        MEDIUM,
+        HIGH
     }
 
     public enum CategoryType {
@@ -36,6 +50,7 @@ public class EventMusic {
         DIMENSION,
         BIOME,
         BIOME_TAG,
+        STRUCTURE,
         TIME,
         WEATHER,
         MENU,
@@ -61,11 +76,13 @@ public class EventMusic {
                 Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries)
         ).apply(instance, Record::new));
 
-        public record Entry(String category, String music, List<Condition> conditions) {
+        public record Entry(String category, String music, List<Condition> conditions, String priority, int weight) {
             private static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                     Codec.STRING.fieldOf("category").forGetter(type -> type.category),
                     Codec.STRING.fieldOf("music").forGetter(type -> type.music),
-                    Condition.CODEC.listOf().fieldOf("conditions").forGetter(Entry::conditions)
+                    Condition.CODEC.listOf().fieldOf("conditions").forGetter(Entry::conditions),
+                    Codec.STRING.optionalFieldOf("priority", "low").forGetter(Entry::priority),
+                    Codec.INT.optionalFieldOf("weight", 1).forGetter(Entry::weight)
             ).apply(instance, Entry::new));
         }
 

@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -18,6 +19,7 @@ import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AlbumDetailsScreen extends Screen {
@@ -133,17 +135,22 @@ public class AlbumDetailsScreen extends Screen {
         return favouriteMessage();
     }
 
+    public static List<Identifier> queueSongs(Album album, Minecraft minecraft) {
+        List<Identifier> songs = new ArrayList<>();
+        album.tracks.stream()
+                .map(album::trackId)
+                .forEach(songs::add);
+        album.discs.stream()
+                .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
+                .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
+                .forEach(songs::add);
+        return songs;
+    }
+
     private List<Identifier> queueSongs(Minecraft minecraft) {
         List<Identifier> songs = new ArrayList<>();
-        if (this.album != null) {
-            this.album.tracks.stream()
-                    .map(this.album::trackId)
-                    .forEach(songs::add);
-            this.album.discs.stream()
-                    .map(disc -> MusicDiscHelper.albumEntryId(this.album, disc))
-                    .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
-                    .forEach(songs::add);
-            return songs;
+        if (album != null) {
+            return queueSongs(this.album, minecraft);
         }
 
         songs.addAll(this.playlist.tracks);
