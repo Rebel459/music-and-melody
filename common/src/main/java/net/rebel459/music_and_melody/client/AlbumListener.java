@@ -52,7 +52,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             Album album = new Album(entry.getKey(), record.name(), record.icon(), tracks, forcedEnabledTracks, discs, forcedUnlockedDiscs);
             loadedAlbums.add(album);
         }
-        
+
         if (MaMClientConfig.get().custom_album) {
             Album configAlbum = ConfigAlbum.createAlbum(registeredDiscs);
             if (configAlbum != null) loadedAlbums.add(configAlbum);
