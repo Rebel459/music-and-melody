@@ -24,16 +24,16 @@ public final class MusicAndMelodyClient {
             KeyMapping.Category.MISC
     );
 
-    public static void initRegistries() {}
-
-    public static void init() {
+    public static void initRegistries() {
         if (MaMClientConfig.get().music_rebalance) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("music_and_melody"), PackType.REQUIRED_RESOURCES);
         }
         if (MaMClientConfig.get().end_portal_music) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("end_portal_music"), PackType.REQUIRED_RESOURCES);
         }
+    }
 
+    public static void init() {
         UnifiedClientEvents.Instance.onTick(EventType.POST, client -> {
             while (PLAYLIST_KEY.get().consumeClick()) {
                 client.setScreen(new PlaylistScreen(client.screen));

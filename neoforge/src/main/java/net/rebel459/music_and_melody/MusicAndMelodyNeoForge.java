@@ -10,6 +10,7 @@ public class MusicAndMelodyNeoForge {
 
     public MusicAndMelodyNeoForge(IEventBus modEventBus) {
         NeoForgeUnifiedRegistries.registerBus(MusicAndMelody.MOD_ID, modEventBus);
+        NeoForgeUnifiedRegistries.registerBus("minecraft", modEventBus);
         MusicAndMelody.initRegistries();
         modEventBus.addListener(MusicAndMelodyNeoForge::commonSetup);
     }
