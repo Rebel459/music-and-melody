@@ -8,7 +8,7 @@ import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.screen.AlbumScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,6 +29,8 @@ public abstract class OptionsScreenMixin extends Screen {
             )
     )
     private void musicAndMelody$addAlbumScreenButton(CallbackInfo ci, @Local(name = "helper") GridLayout.RowHelper helper) {
+        if (MaMClientConfig.get().button_positions != MaMClientConfig.Position.OPTIONS) return;
+
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))
         ).size(150, 20).build();
@@ -37,7 +39,7 @@ public abstract class OptionsScreenMixin extends Screen {
                 this.minecraft.setScreen(new PlaylistScreen(this))
         ).size(150, 20).build();
 
-        if (MaMConfig.get().client.albums.button) helper.addChild(albumsButton);
-        if (MaMConfig.get().client.playlist.button) helper.addChild(playlistButton);
+        helper.addChild(albumsButton);
+        helper.addChild(playlistButton);
     }
 }

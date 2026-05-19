@@ -3,9 +3,12 @@
     "translate": "album.music_and_melody.spinoff_music"
   },
   "icon": "music_and_melody:textures/album/spinoff_music.png",
-  "composers": 2,
   "tracks": [
     "music/creative/earth",
-    "music/menu/halland"
+    "music/menu/halland",
+    {
+      "track": "music/misc/wither_storm_theme",
+      "enabled": true
+    }
   ]
 }

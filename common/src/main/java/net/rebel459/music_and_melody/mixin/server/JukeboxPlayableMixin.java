@@ -1,29 +1,28 @@
 package net.rebel459.music_and_melody.mixin.server;
 
-import net.minecraft.core.BlockPos;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.JukeboxPlayable;
-import net.minecraft.world.level.Level;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMServerConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(JukeboxPlayable.class)
 public abstract class JukeboxPlayableMixin {
 
-    @Inject(
+    @WrapOperation(
             method = "tryInsertIntoJukebox",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/player/Player;awardStat(Lnet/minecraft/resources/Identifier;)V",
-                    shift = At.Shift.AFTER
+                    target = "Lnet/minecraft/world/item/ItemStack;consumeAndReturn(ILnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/ItemStack;"
             )
     )
-    private static void trackDiscUses(Level level, BlockPos pos, ItemStack toInsert, Player player, CallbackInfoReturnable<?> cir) {
-        if (MaMConfig.get().server.count_disc_uses) player.awardStat(Stats.ITEM_USED.get(toInsert.getItem()));
+    private static ItemStack trackDiscUses(ItemStack stack, int amount, LivingEntity owner, Operation<ItemStack> original) {
+        if (MaMServerConfig.get().count_disc_uses && owner instanceof Player player) player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+        return original.call(stack, amount, owner);
     }
 }

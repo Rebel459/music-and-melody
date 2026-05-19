@@ -1,7 +1,8 @@
 package net.rebel459.music_and_melody.mixin;
 
-import net.rebel459.music_and_melody.config.MaMConfig;
-import net.rebel459.unified.platform.UnifiedPlatform;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.rebel459.music_and_melody.config.MaMServerConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -18,7 +19,9 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
         if (!registered) {
-            MaMConfig.init();
+            MaMClientConfig.init();
+            MaMDataConfig.init();
+            MaMServerConfig.init();
             registered = true;
         }
     }

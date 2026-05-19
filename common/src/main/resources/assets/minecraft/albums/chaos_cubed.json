@@ -3,12 +3,14 @@
     "translate": "album.minecraft.chaos_cubed"
   },
   "icon": "music_and_melody:textures/album/chaos_cubed.png",
-  "composers": 1,
   "tracks": [
     "music/game/ebb",
     "music/game/home",
     "music/game/memories",
     "music/game/nightly",
     "music/game/shores"
+  ],
+  "discs": [
+    "bounce"
   ]
 }

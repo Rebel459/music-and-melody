@@ -3,7 +3,6 @@
     "translate": "album.minecraft.caves_and_cliffs"
   },
   "icon": "music_and_melody:textures/album/caves_and_cliffs.png",
-  "composers": 2,
   "tracks": [
     "music/game/ancestry",
     "music/game/an_ordinary_day",
@@ -14,5 +13,8 @@
     "music/game/one_more_day",
     "music/game/stand_tall",
     "music/game/wending"
+  ],
+  "discs": [
+    "otherside"
   ]
 }

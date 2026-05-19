@@ -3,7 +3,6 @@
     "translate": "album.minecraft.volume_alpha"
   },
   "icon": "music_and_melody:textures/album/volume_alpha.png",
-  "composers": 1,
   "tracks": [
     "music/game/clark",
     "music/game/danny",
@@ -19,7 +18,7 @@
     "music/game/wet_hands"
   ],
   "discs": [
-    "cat",
-    "far"
+    "13",
+    "cat"
   ]
 }

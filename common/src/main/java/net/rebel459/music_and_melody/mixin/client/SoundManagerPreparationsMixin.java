@@ -11,8 +11,9 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
+import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,6 +31,9 @@ public class SoundManagerPreparationsMixin {
     @Final
     private Map<Identifier, WeighedSoundEvents> registry;
 
+    @Shadow
+    private Map<Identifier, Resource> soundCache;
+
     @Unique
     private static final Set<Identifier> DISABLED_EVENTS = new HashSet<>();
 
@@ -40,6 +44,11 @@ public class SoundManagerPreparationsMixin {
     private void clearRawSoundPools(ResourceManager resourceManager, CallbackInfo ci) {
         DISABLED_EVENTS.clear();
         CommonMusicHelper.clearSoundPools();
+    }
+
+    @Inject(method = "listResources", at = @At("RETURN"))
+    private void addConfigAlbumSounds(ResourceManager resourceManager, CallbackInfo ci) {
+        ConfigAlbum.addSoundResources(this.soundCache);
     }
 
     @Inject(method = "handleRegistration", at = @At("HEAD"), cancellable = true)
@@ -58,7 +67,7 @@ public class SoundManagerPreparationsMixin {
     @Inject(method = "apply", at = @At("HEAD"))
     private void storeFilteredMusicPools(Map<Identifier, WeighedSoundEvents> registry, Map<Identifier, Resource> soundCache, SoundEngine engine, CallbackInfo ci) {
         CommonMusicHelper.FILTERED_POOLS.clear();
-        if (!MaMConfig.get().client.common_music) return;
+        if (!MaMClientConfig.get().common_music) return;
         registry = this.registry;
         WeighedSoundEvents common = registry.get(CommonMusicHelper.BASE_POOL);
         if (common == null) return;
@@ -93,7 +102,7 @@ public class SoundManagerPreparationsMixin {
             boolean disabled = false;
             for (Album album : Album.ALBUMS) {
                 if (!album.isEnabled()) {
-                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()));
+                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackForcedEnabled(soundLocation.getPath()));
                 }
                 if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
                     disabled = true;

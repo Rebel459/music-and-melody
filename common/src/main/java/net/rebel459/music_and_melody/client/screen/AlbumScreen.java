@@ -116,10 +116,10 @@ public class AlbumScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            int iconX = this.getContentX();
-            int iconY = this.getContentY() + 3;
-            int textX = iconX + ICON_SIZE + 6;
-            int textY = this.getContentY() + 2;
+            int iconX = this.getContentX() + 1;
+            int iconY = this.getContentYMiddle() - ICON_SIZE / 2;
+            int textX = iconX + ICON_SIZE + 7;
+            int textY = this.getContentYMiddle() - 15;
             int buttonsWidth = BUTTON_WIDTH * 2 + BUTTON_GAP;
             int maxTextWidth = this.getContentWidth() - ICON_SIZE - buttonsWidth - 26;
 
@@ -162,12 +162,9 @@ public class AlbumScreen extends Screen {
         }
 
         private String details() {
-            String composers = count(this.album.composers, "composer", "composers");
             String tracks = count(this.album.tracks.size(), "track", "tracks");
             String discs = count(this.album.discs.size(), "disc", "discs");
-            String music = this.album.discs.isEmpty() ? tracks : tracks + " | " + discs;
-            if (this.album.composers == 0) return music;
-            return composers + " | " + music;
+            return tracks + " | " + discs;
         }
 
         private static String count(int count, String singular, String plural) {

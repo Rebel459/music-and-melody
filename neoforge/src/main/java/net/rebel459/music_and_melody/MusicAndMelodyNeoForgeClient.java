@@ -9,7 +9,8 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebel459.music_and_melody.client.AlbumListener;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMConfigScreen;
 
 @Mod(value = MusicAndMelody.MOD_ID, dist = Dist.CLIENT)
 public class MusicAndMelodyNeoForgeClient {
@@ -19,7 +20,7 @@ public class MusicAndMelodyNeoForgeClient {
         ModLoadingContext.get().registerExtensionPoint(
                 IConfigScreenFactory.class,
                 () -> (modContainer, parent) ->
-                        AutoConfigClient.getConfigScreen(MaMConfig.class, parent).get()
+                        new MaMConfigScreen(parent)
         );
         modEventBus.addListener(MusicAndMelodyNeoForgeClient::addClientReloadListeners);
         modEventBus.addListener(MusicAndMelodyNeoForgeClient::commonSetup);

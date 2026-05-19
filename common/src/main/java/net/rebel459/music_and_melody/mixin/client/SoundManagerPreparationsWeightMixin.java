@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.mixin.client;
 
 import net.minecraft.client.resources.sounds.Sound;
 import net.rebel459.music_and_melody.client.EventWeightHelper;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,7 +19,7 @@ public class SoundManagerPreparationsWeightMixin {
 
     @Inject(method = "getWeight()I", at = @At("HEAD"), cancellable = true, remap = false)
     private void enforceWeight(CallbackInfoReturnable<Integer> cir) {
-        if (!MaMConfig.get().client.event_weight_fix) return;
+        if (!MaMClientConfig.get().event_weight_fix) return;
         if (EventWeightHelper.contains(this.val$sound)) {
             cir.setReturnValue(this.val$sound.getWeight());
         }

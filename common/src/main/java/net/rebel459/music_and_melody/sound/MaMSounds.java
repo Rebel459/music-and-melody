@@ -4,7 +4,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMServerConfig;
 import net.rebel459.unified.platform.UnifiedRegistries;
 import net.rebel459.unified.util.registry.Supplied;
 
@@ -20,12 +21,14 @@ public class MaMSounds {
 	public static final Holder<SoundEvent> MUSIC_WITHER = SOUNDS.registerForHolder("music.wither");
 	public static final Holder<SoundEvent> MUSIC_THRESHOLD = SOUNDS.registerForHolder("music.threshold");
 
+	public static final Holder<SoundEvent> MUSIC_DISC_BOUNCE = UnifiedRegistries.SoundEvents.create("minecraft").registerForHolder("music_disc.bounce");
+
 	public static void init() {
         List<String> pools = new ArrayList<>();
-		for (MaMConfig.BiomeMusic entry : MaMConfig.get().server.biome_music) {
+		for (MaMServerConfig.BiomeMusic entry : MaMServerConfig.get().biome_music) {
             pools.add(entry.pool);
 		}
-		for (MaMConfig.StructureMusic entry : MaMConfig.get().server.structure_music) {
+		for (MaMServerConfig.StructureMusic entry : MaMServerConfig.get().structure_music) {
 			pools.add(entry.pool);
 		}
 		for (String pool : pools) {

@@ -11,6 +11,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
+import net.rebel459.music_and_melody.client.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 
 public class PlaylistScreen extends Screen {
@@ -20,6 +21,8 @@ public class PlaylistScreen extends Screen {
     private QueueList list;
     private Button playPauseButton;
     private Button loopButton;
+    private Button shuffleButton;
+    private Button clearButton;
 
     public PlaylistScreen(Screen parent) {
         super(TITLE);
@@ -28,12 +31,14 @@ public class PlaylistScreen extends Screen {
 
     @Override
     protected void init() {
+        MusicDiscHelper.requestStats(this.minecraft);
         this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 88));
         int controlY = this.height - 51;
         int navY = this.height - 27;
+        int rowX = this.width / 2 - 154;
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))
-        ).bounds(this.width / 2 - 102, navY, 100, 20).build());
+        ).bounds(rowX, navY, 152, 20).build());
         this.playPauseButton = this.addRenderableWidget(Button.builder(playPauseMessage(), button -> {
             if (PlaylistHelper.isPlaying()) {
                 PlaylistHelper.pauseQueue();
@@ -41,17 +46,22 @@ public class PlaylistScreen extends Screen {
                 PlaylistHelper.playNextNow();
             }
             button.setMessage(playPauseMessage());
-        }).bounds(this.width / 2 - 144, controlY, 88, 20).build());
+        }).bounds(rowX, controlY, 74, 20).build());
         this.loopButton = this.addRenderableWidget(Button.builder(loopMessage(), button -> {
             PlaylistHelper.setLoopingQueue(!PlaylistHelper.isLoopingQueue());
             button.setMessage(loopMessage());
-        }).bounds(this.width / 2 - 50, controlY, 100, 20).build());
-        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.clear_all"), button -> {
+        }).bounds(rowX + 78, controlY, 74, 20).build());
+        this.shuffleButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.shuffle"), button -> {
+            if (PlaylistHelper.shuffleQueue()) {
+                this.refreshQueue();
+            }
+        }).bounds(rowX + 156, controlY, 74, 20).build());
+        this.clearButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.clear_all"), button -> {
             PlaylistHelper.clear();
             this.refreshQueue();
-        }).bounds(this.width / 2 + 56, controlY, 88, 20).build());
+        }).bounds(rowX + 234, controlY, 74, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(this.width / 2 + 2, navY, 100, 20)
+                .bounds(rowX + 156, navY, 152, 20)
                 .build());
     }
 
@@ -64,6 +74,8 @@ public class PlaylistScreen extends Screen {
             this.playPauseButton.active = PlaylistHelper.isPlaying() || PlaylistHelper.hasQueuedSongs();
         }
         if (this.loopButton != null) this.loopButton.setMessage(loopMessage());
+        if (this.shuffleButton != null) this.shuffleButton.active = PlaylistHelper.queuedSongs().size() > 1;
+        if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
     }
 
     @Override
@@ -144,9 +156,9 @@ public class PlaylistScreen extends Screen {
             this.minecraft = minecraft;
             this.index = index;
             this.song = song;
-            this.text = MusicScreenHelper.trackName(song).copy().withStyle(ChatFormatting.GRAY);
-            this.color = 0xFFAAAAAA;
-            this.playButton = Button.builder(Component.translatable("button.music_and_melody.play"), button -> PlaylistHelper.playNow(index)).size(46, 20).build();
+            this.text = MusicScreenHelper.playlistName(minecraft, song);
+            this.color = 0xFFFFFFFF;
+            this.playButton = Button.builder(Component.translatable("button.music_and_melody.play"), button -> PlaylistHelper.playNow(index)).size(64, 20).build();
             this.removeButton = Button.builder(Component.translatable("button.music_and_melody.remove"), button -> {
                 PlaylistHelper.remove(index);
                 screen.refreshQueue();
@@ -161,13 +173,17 @@ public class PlaylistScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int buttonWidth = this.removeButton == null ? 0 : 122;
-            Component rowText = this.song != null && PlaylistHelper.isPlaying(this.song) ? this.text.copy().withStyle(ChatFormatting.UNDERLINE) : this.text;
+            boolean unlocked = this.song == null || MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
+            Component rowText = this.song == null ? this.text : this.text.copy().withStyle(unlocked ? ChatFormatting.WHITE : ChatFormatting.GRAY);
+            if (this.song != null && PlaylistHelper.isPlaying(this.song)) rowText = rowText.copy().withStyle(ChatFormatting.UNDERLINE);
             FormattedCharSequence line = this.minecraft.font.split(rowText, this.getContentWidth() - buttonWidth).getFirst();
-            graphics.text(this.minecraft.font, line, this.getContentX(), this.getContentY() + 4, this.color);
+            int textColor = this.song == null ? this.color : unlocked ? 0xFFFFFFFF : 0xFF888888;
+            graphics.text(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textColor);
             if (this.removeButton != null) {
                 int buttonY = this.getContentYMiddle() - 10;
                 int removeX = this.getContentRight() - 64;
-                this.playButton.setX(removeX - 50);
+                this.playButton.active = unlocked;
+                this.playButton.setX(removeX - 68);
                 this.playButton.setY(buttonY);
                 this.removeButton.setX(removeX);
                 this.removeButton.setY(buttonY);

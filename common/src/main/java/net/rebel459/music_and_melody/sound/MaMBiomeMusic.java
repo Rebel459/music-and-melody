@@ -10,7 +10,8 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.attribute.BackgroundMusic;
 import net.minecraft.world.attribute.EnvironmentAttributes;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMServerConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
 
 import java.util.ArrayList;
@@ -20,9 +21,9 @@ import java.util.Optional;
 public final class MaMBiomeMusic {
 
 	public static void init() {
-		List<MaMConfig.BiomeMusic> tagEntries = new ArrayList<>();
-		List<MaMConfig.BiomeMusic> biomeEntries = new ArrayList<>();
-		MaMConfig.get().server.biome_music.forEach(entry -> {
+		List<MaMServerConfig.BiomeMusic> tagEntries = new ArrayList<>();
+		List<MaMServerConfig.BiomeMusic> biomeEntries = new ArrayList<>();
+		MaMServerConfig.get().biome_music.forEach(entry -> {
 			if (entry.key.contains("#")) tagEntries.add(entry);
 			else biomeEntries.add(entry);
 		});

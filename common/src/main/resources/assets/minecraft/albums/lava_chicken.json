@@ -1,0 +1,9 @@
+{
+  "name": {
+    "translate": "album.minecraft.lava_chicken"
+  },
+  "icon": "music_and_melody:textures/album/lava_chicken.png",
+  "discs": [
+    "lava_chicken"
+  ]
+}

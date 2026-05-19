@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.platform.UnifiedHelpers;
 import net.rebel459.unified.platform.client.UnifiedClientEvents;
 import net.rebel459.unified.platform.client.UnifiedClientRegistries;
@@ -20,17 +20,17 @@ public final class MusicAndMelodyClient {
     public static final Supplier<KeyMapping> PLAYLIST_KEY = KEY_MAPPINGS.registerKeybind(
             "playlist",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_P,
-            KeyMapping.Category.GAMEPLAY
+            GLFW.GLFW_KEY_H,
+            KeyMapping.Category.MISC
     );
 
     public static void initRegistries() {}
 
     public static void init() {
-        if (MaMConfig.get().client.music_rebalance) {
+        if (MaMClientConfig.get().music_rebalance) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("music_and_melody"), PackType.REQUIRED_RESOURCES);
         }
-        if (MaMConfig.get().client.end_portal_music) {
+        if (MaMClientConfig.get().end_portal_music) {
             UnifiedHelpers.PACKS.add(MusicAndMelody.id("end_portal_music"), PackType.REQUIRED_RESOURCES);
         }
 

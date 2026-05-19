@@ -3,7 +3,6 @@
     "translate": "album.minecraft.volume_beta"
   },
   "icon": "music_and_melody:textures/album/volume_beta.png",
-  "composers": 1,
   "tracks": [
     "music/game/creative/aria_math",
     "music/game/creative/biome_fest",
@@ -22,5 +21,17 @@
     "music/menu/floating_trees",
     "music/menu/moog_city_2",
     "music/menu/mutation"
+  ],
+  "discs": [
+    "blocks",
+    "chirp",
+    "far",
+    "mall",
+    "mellohi",
+    "stal",
+    "strad",
+    "ward",
+    "11",
+    "wait"
   ]
 }

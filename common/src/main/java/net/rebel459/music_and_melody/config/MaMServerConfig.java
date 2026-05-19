@@ -16,16 +16,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 
-@Config(name = MusicAndMelody.MOD_ID)
-public class MaMConfig implements ConfigData {
+@Config(name = MusicAndMelody.MOD_ID + "/" + "server")
+public class MaMServerConfig implements ConfigData {
 
 	@Contract(pure = true)
 	public static @NotNull Path configPath(boolean json5) {
-		return Path.of("./config/" + MusicAndMelody.MOD_ID + "." + (json5 ? "json5" : "json"));
+		return Path.of("./config/" + MusicAndMelody.MOD_ID + "/server." + (json5 ? "json5" : "json"));
 	}
 
-	public static MaMConfig get() {
-		return AutoConfig.getConfigHolder(MaMConfig.class).getConfig();
+	public static MaMServerConfig get() {
+		return AutoConfig.getConfigHolder(MaMServerConfig.class).getConfig();
 	}
 
 	public static void init() {
@@ -35,112 +35,31 @@ public class MaMConfig implements ConfigData {
 		boolean hasExistingConfig = Files.exists(existingConfigPath);
 		boolean restoreStructureMusic = !hasExistingConfig || !configContainsField(existingConfigPath, "structure_music");
 		boolean restoreBiomeMusic = !hasExistingConfig || !configContainsField(existingConfigPath, "biome_music");
-		AutoConfig.register(MaMConfig.class, JanksonConfigSerializer::new);
-		var holder = AutoConfig.getConfigHolder(MaMConfig.class);
-		MaMConfig config = holder.getConfig();
+		AutoConfig.register(MaMServerConfig.class, JanksonConfigSerializer::new);
+		var holder = AutoConfig.getConfigHolder(MaMServerConfig.class);
+		MaMServerConfig config = holder.getConfig();
 		if (config.normalizeDefaults(restoreStructureMusic, restoreBiomeMusic)) {
 			holder.save();
 		}
 	}
 
-	@ConfigEntry.Gui.CollapsibleObject
-	public ClientConfig client = new ClientConfig();
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public boolean count_disc_uses = true;
 
-	public static class ClientConfig {
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean music_rebalance = true;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public List<BiomeMusic> biome_music = new ArrayList<>();
 
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean jukebox_fading = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public float fade_speed = 0.01F;
-
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean creative_fix = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean under_water_fix = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean event_weight_fix = true;
-
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean wither_music = true;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean end_portal_music = true;
-
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean common_music = false;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		@ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-		public int common_music_chance = 50;
-
-		@ConfigEntry.Gui.CollapsibleObject
-		public Albums albums = new Albums();
-
-		public static class Albums {
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public boolean button = true;
-
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public List<String> disabled_albums = new ArrayList<>();
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public List<String> disabled_tracks = new ArrayList<>();
-		}
-
-		@ConfigEntry.Gui.CollapsibleObject
-		public Playlist playlist = new Playlist();
-
-		public static class Playlist {
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public boolean button = true;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public boolean background_music = true;
-
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public boolean loop = false;
-			@ConfigEntry.Category("config")
-			@ConfigEntry.Gui.Tooltip
-			public List<String> queued_songs = new ArrayList<>();
-		}
-	}
-
-	@ConfigEntry.Gui.CollapsibleObject
-	public ServerConfig server = new ServerConfig();
-
-	public static class ServerConfig {
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public boolean count_disc_uses = true;
-
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public List<BiomeMusic> biome_music = new ArrayList<>();
-
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public List<StructureMusic> structure_music = new ArrayList<>();
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public int structure_music_min = 300;
-		@ConfigEntry.Category("config")
-		@ConfigEntry.Gui.Tooltip
-		public int structure_music_max = 600;
-	}
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public int structure_music_min = 300;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public int structure_music_max = 600;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public List<StructureMusic> structure_music = new ArrayList<>();
 
 	private static boolean configContainsField(Path path, String fieldName) {
 		try {
@@ -155,13 +74,13 @@ public class MaMConfig implements ConfigData {
 
 		// Structure Music
 
-		if (restoreStructureMusic && this.server.structure_music.isEmpty()) {
-			this.server.structure_music.addAll(defaultStructureMusic());
+		if (restoreStructureMusic && this.structure_music.isEmpty()) {
+			this.structure_music.addAll(defaultStructureMusic());
 			changed = true;
 		}
 
 		LinkedHashMap<String, String> normalizedStructureMusic = new LinkedHashMap<>();
-		for (StructureMusic entry : this.server.structure_music) {
+		for (StructureMusic entry : this.structure_music) {
 			if (entry == null || entry.id == null || entry.id.isBlank()) continue;
 			normalizedStructureMusic.remove(entry.id);
 			normalizedStructureMusic.put(entry.id, entry.pool);
@@ -169,20 +88,20 @@ public class MaMConfig implements ConfigData {
 
 		List<StructureMusic> normalizedStructureMusicPools = new ArrayList<>();
 		normalizedStructureMusic.forEach((key, pool) -> normalizedStructureMusicPools.add(new StructureMusic(key, pool)));
-		if (!sameStructureEntries(normalizedStructureMusicPools, this.server.structure_music)) {
-			this.server.structure_music = normalizedStructureMusicPools;
+		if (!sameStructureEntries(normalizedStructureMusicPools, this.structure_music)) {
+			this.structure_music = normalizedStructureMusicPools;
 			changed = true;
 		}
 
 		// Biome Music
 
-		if (restoreBiomeMusic && this.server.biome_music.isEmpty()) {
-			this.server.biome_music.addAll(defaultBiomeMusic());
+		if (restoreBiomeMusic && this.biome_music.isEmpty()) {
+			this.biome_music.addAll(defaultBiomeMusic());
 			changed = true;
 		}
 
 		LinkedHashMap<String, String> normalizedBiomeMusic = new LinkedHashMap<>();
-		for (BiomeMusic entry : this.server.biome_music) {
+		for (BiomeMusic entry : this.biome_music) {
 			if (entry == null || entry.key == null || entry.key.isBlank()) continue;
 			normalizedBiomeMusic.remove(entry.key);
 			normalizedBiomeMusic.put(entry.key, entry.pool);
@@ -190,8 +109,8 @@ public class MaMConfig implements ConfigData {
 
 		List<BiomeMusic> normalizedBiomeMusicPools = new ArrayList<>();
 		normalizedBiomeMusic.forEach((key, pool) -> normalizedBiomeMusicPools.add(new BiomeMusic(key, pool)));
-		if (!sameBiomeEntries(normalizedBiomeMusicPools, this.server.biome_music)) {
-			this.server.biome_music = normalizedBiomeMusicPools;
+		if (!sameBiomeEntries(normalizedBiomeMusicPools, this.biome_music)) {
+			this.biome_music = normalizedBiomeMusicPools;
 			changed = true;
 		}
 

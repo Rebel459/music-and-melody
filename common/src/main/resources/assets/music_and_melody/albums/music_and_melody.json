@@ -3,7 +3,6 @@
     "translate": "album.music_and_melody.music_and_melody"
   },
   "icon": "music_and_melody:icon.png",
-  "composers": 16,
   "tracks": [
     "music/caves/abyss",
     "music/caves/extract_one",
@@ -15,6 +14,10 @@
     "music/end/only_the_beginning",
     "music/end/sweden_end_remix",
     "music/end/vacuum_decay",
+    {
+      "track": "music/misc/threshold_end_portal",
+      "enabled": true
+    },
     "music/nether/beneath",
     "music/nether/bubbles",
     "music/nether/jellyfish",
@@ -37,6 +40,26 @@
     "music/overworld/shrub",
     "music/overworld/sunrise_on_the_mesa_2",
     "music/overworld/tundra",
+    {
+      "track": "music/structure/ancient_city/abandoned_halls",
+      "enabled": true
+    },
+    {
+      "track": "music/structure/ancient_city/echoes",
+      "enabled": true
+    },
+    {
+      "track": "music/structure/stronghold/if_we_could_reverse_time",
+      "enabled": true
+    },
+    {
+      "track": "music/structure/stronghold/voide",
+      "enabled": true
+    },
+    {
+      "track": "music/structure/stronghold/worn_away",
+      "enabled": true
+    },
     "music/under_water/strand_atoll"
   ]
 }

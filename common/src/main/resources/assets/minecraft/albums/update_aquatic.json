@@ -3,7 +3,6 @@
     "translate": "album.minecraft.update_aquatic"
   },
   "icon": "music_and_melody:textures/album/update_aquatic.png",
-  "composers": 1,
   "tracks": [
     "music/game/water/axolotl",
     "music/game/water/dragon_fish",

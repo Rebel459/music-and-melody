@@ -3,10 +3,12 @@
     "translate": "album.minecraft.wild_update"
   },
   "icon": "music_and_melody:textures/album/wild_update.png",
-  "composers": 1,
   "tracks": [
     "music/game/swamp/aerie",
     "music/game/swamp/firebugs",
     "music/game/swamp/labyrinthine"
+  ],
+  "discs": [
+    "5"
   ]
 }

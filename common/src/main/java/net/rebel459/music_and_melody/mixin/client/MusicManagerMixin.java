@@ -11,7 +11,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
 import net.rebel459.music_and_melody.client.EventMusicHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,7 +34,7 @@ public abstract class MusicManagerMixin {
 
     @ModifyVariable(method = "startPlaying", at = @At("HEAD"), argsOnly = true)
     private Music selectCommonMusic(Music music) {
-        var config = MaMConfig.get().client;
+        var config = MaMClientConfig.get();
         Identifier musicId = music.sound().value().location();
         if (config.common_music && CommonMusicHelper.FILTERED_POOLS.contains(musicId) && SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= config.common_music_chance) {
             return new Music(MaMSounds.MUSIC_COMMON.holder(), music.minDelay(), music.maxDelay(), music.replaceCurrentMusic());
@@ -62,7 +62,7 @@ public abstract class MusicManagerMixin {
             )
     )
     private SimpleSoundInstance filterOnlyBackgroundMusic(SimpleSoundInstance original, @Local(name = "soundEvent") SoundEvent soundEvent) {
-        if (MaMConfig.get().client.common_music) return new CommonMusicHelper.Instance(soundEvent);
+        if (MaMClientConfig.get().common_music) return new CommonMusicHelper.Instance(soundEvent);
         else return original;
     }
 }

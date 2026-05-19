@@ -17,6 +17,7 @@
     "client.SoundEventRegistrationSerializerMixin",
     "client.SoundManagerMixin",
     "client.SoundManagerPreparationsMixin",
-    "client.SoundManagerPreparationsWeightMixin"
+    "client.SoundManagerPreparationsWeightMixin",
+    "client.SoundScreenMixin"
   ]
 }

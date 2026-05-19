@@ -3,7 +3,6 @@
     "translate": "album.minecraft.tricky_trials"
   },
   "icon": "music_and_melody:textures/album/tricky_trials.png",
-  "composers": 3,
   "tracks": [
     "music/game/deeper",
     "music/game/eld_unknown",
@@ -14,5 +13,10 @@
     "music/game/puzzlebox",
     "music/game/watcher",
     "music/game/yakusoku"
+  ],
+  "discs": [
+    "creator",
+    "creator_music_box",
+    "precipice"
   ]
 }

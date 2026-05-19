@@ -14,11 +14,12 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.minecraft.util.valueproviders.SampledFloat;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -83,6 +84,21 @@ public final class PlaylistHelper {
         save();
     }
 
+    public static boolean shuffleQueue() {
+        ensureLoaded();
+        if (QUEUED_SONGS.size() < 2) return false;
+        Identifier currentQueuedSong = currentSongFromQueue ? currentSongId : null;
+        Collections.shuffle(QUEUED_SONGS);
+        if (currentQueuedSong != null) {
+            int currentIndex = QUEUED_SONGS.indexOf(currentQueuedSong);
+            if (currentIndex >= 0) queueIndex = currentIndex;
+        } else {
+            queueIndex = clampQueueIndex(queueIndex);
+        }
+        save();
+        return true;
+    }
+
     public static boolean isPlaying(Identifier song) {
         return song.equals(currentSongId) && isPlaying();
     }
@@ -115,6 +131,8 @@ public final class PlaylistHelper {
 
     public static String getCurrentMusicTranslationKey() {
         if (!isPlaying() || currentSongId == null) return null;
+        var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), currentSongId);
+        if (disc.isPresent()) return MusicDiscHelper.translationKey(disc.get().jukeboxSong());
         String pathKey = currentSongId.getPath().replace('/', '.');
         return currentSongId.getNamespace().equals("minecraft") ? pathKey : currentSongId.getNamespace() + "." + pathKey;
     }
@@ -123,6 +141,12 @@ public final class PlaylistHelper {
         ensureLoaded();
         advanceFinishedQueuedSong();
         if (queuePaused || QUEUED_SONGS.isEmpty() || hasActiveMusic()) return false;
+        int playableIndex = nextPlayableIndex(queueIndex, loop);
+        if (playableIndex < 0) {
+            queuePaused = true;
+            return false;
+        }
+        queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
         playSound(id, false, true);
         return true;
@@ -134,6 +158,9 @@ public final class PlaylistHelper {
         if (QUEUED_SONGS.isEmpty()) return false;
         queuePaused = false;
         queueIndex = clampQueueIndex(queueIndex);
+        int playableIndex = nextPlayableIndex(queueIndex, true);
+        if (playableIndex < 0) return false;
+        queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
         stop();
         playSound(id, false, true);
@@ -143,6 +170,7 @@ public final class PlaylistHelper {
     public static boolean playNow(int index) {
         ensureLoaded();
         if (index < 0 || index >= QUEUED_SONGS.size()) return false;
+        if (!MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return false;
         queuePaused = false;
         queueIndex = index;
         stop();
@@ -184,6 +212,20 @@ public final class PlaylistHelper {
     private static int clampQueueIndex(int index) {
         if (QUEUED_SONGS.isEmpty()) return 0;
         return Math.max(0, Math.min(index, QUEUED_SONGS.size() - 1));
+    }
+
+    private static int nextPlayableIndex(int start, boolean wrap) {
+        if (QUEUED_SONGS.isEmpty()) return -1;
+        int index = clampQueueIndex(start);
+        for (int checked = 0; checked < QUEUED_SONGS.size(); checked++) {
+            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return index;
+            index++;
+            if (index >= QUEUED_SONGS.size()) {
+                if (!wrap) return -1;
+                index = 0;
+            }
+        }
+        return -1;
     }
 
     private static void playSound(Identifier id, boolean loop, boolean fromQueue) {
@@ -243,19 +285,19 @@ public final class PlaylistHelper {
         if (loaded) return;
         loaded = true;
         QUEUED_SONGS.clear();
-        MaMConfig config = MaMConfig.get();
-        loop = config.client.playlist.loop;
-        for (String song : config.client.playlist.queued_songs) {
+        MaMDataConfig config = MaMDataConfig.get();
+        loop = config.playlist.loop;
+        for (String song : config.playlist.queued_songs) {
             Identifier id = Identifier.tryParse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
     }
 
     private static void save() {
-        MaMConfig config = MaMConfig.get();
-        config.client.playlist.loop = loop;
-        config.client.playlist.queued_songs = QUEUED_SONGS.stream().map(Identifier::toString).toList();
-        AutoConfig.getConfigHolder(MaMConfig.class).save();
+        MaMDataConfig config = MaMDataConfig.get();
+        config.playlist.loop = loop;
+        config.playlist.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(Identifier::toString).toList());
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
     private static class DirectSoundInstance extends AbstractSoundInstance {

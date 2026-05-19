@@ -9,9 +9,9 @@ import net.rebel459.music_and_melody.sound.MaMStructureMusic;
 public class MusicAndMelody {
 
 	public static void initRegistries() {
-        MaMNetwork.init();
         MaMSounds.init();
         MaMBiomeMusic.init();
+        MaMNetwork.init();
 	}
 
     public static void init() {

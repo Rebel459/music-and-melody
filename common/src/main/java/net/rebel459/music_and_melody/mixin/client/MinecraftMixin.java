@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.rebel459.music_and_melody.client.EventMusicHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
-import net.rebel459.music_and_melody.config.MaMConfig;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.tag.MaMBiomeTags;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,16 +33,16 @@ public abstract class MinecraftMixin {
     @WrapOperation(method = "getSituationalMusic", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/attribute/BackgroundMusic;select(ZZ)Ljava/util/Optional;"))
     private Optional<Music> musicFixesAndSituationalMusic(BackgroundMusic music, boolean isCreative, boolean isUnderwater, Operation<Optional<Music>> original, @Local(name = "playerLevel") Level playerLevel) {
         Holder<Biome> biome = playerLevel.getBiome(this.player.blockPosition());
-        if (MaMConfig.get().client.creative_fix && (playerLevel.dimension() == Level.OVERWORLD || biome.is(MaMBiomeTags.HAS_CREATIVE_MUSIC)) && music.creativeMusic().isEmpty()) music = new BackgroundMusic(music.defaultMusic(), Optional.of(Musics.CREATIVE), music.underwaterMusic());
-        if (MaMConfig.get().client.under_water_fix && (biome.is(BiomeTags.IS_RIVER) || biome.is(BiomeTags.IS_OCEAN) || biome.is(MaMBiomeTags.HAS_UNDER_WATER_MUSIC)) && music.underwaterMusic().isEmpty()) music = new BackgroundMusic(music.defaultMusic(), music.creativeMusic(), Optional.of(Musics.UNDER_WATER));
+        if (MaMClientConfig.get().creative_fix && (playerLevel.dimension() == Level.OVERWORLD || biome.is(MaMBiomeTags.HAS_CREATIVE_MUSIC)) && music.creativeMusic().isEmpty()) music = new BackgroundMusic(music.defaultMusic(), Optional.of(Musics.CREATIVE), music.underwaterMusic());
+        if (MaMClientConfig.get().under_water_fix && (biome.is(BiomeTags.IS_RIVER) || biome.is(BiomeTags.IS_OCEAN) || biome.is(MaMBiomeTags.HAS_UNDER_WATER_MUSIC)) && music.underwaterMusic().isEmpty()) music = new BackgroundMusic(music.defaultMusic(), music.creativeMusic(), Optional.of(Musics.UNDER_WATER));
         return original.call(music, isCreative, isUnderwater);
     }
 
     @Inject(method = "getSituationalMusic", at = @At(value = "HEAD"), cancellable = true)
-    private void endPortalMusic(CallbackInfoReturnable<Music> cir) {
+    private void playlistAndEventMusic(CallbackInfoReturnable<Music> cir) {
         if (PlaylistHelper.isPlaying()) cir.setReturnValue(PlaylistHelper.EMPTY);
-        if (PlaylistHelper.playNext() || !MaMConfig.get().client.playlist.background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
-        if (MaMConfig.get().client.end_portal_music && EventMusicHelper.isEndPortalFilled()) cir.setReturnValue(EventMusicHelper.THRESHOLD);
-        if (MaMConfig.get().client.wither_music && EventMusicHelper.hasWitherBossBar()) cir.setReturnValue(EventMusicHelper.WITHER_BOSS);
+        if (PlaylistHelper.playNext() || !MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
+        if (MaMClientConfig.get().end_portal_music && EventMusicHelper.isEndPortalFilled()) cir.setReturnValue(EventMusicHelper.THRESHOLD);
+        if (MaMClientConfig.get().wither_music && EventMusicHelper.hasWitherBossBar()) cir.setReturnValue(EventMusicHelper.WITHER_BOSS);
     }
 }
