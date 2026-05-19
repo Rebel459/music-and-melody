@@ -35,10 +35,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
@@ -83,7 +80,7 @@ public abstract class MinecraftMixin {
             if (!events.isEmpty()) {
                 EventMusic event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
                 if (event.category == EventMusic.CategoryType.ALBUM) {
-                    Set<Album> albums = Album.ALBUMS;
+                    HashSet<Album> albums = new HashSet<>(Album.ALBUMS);
                     albums.removeIf(entry -> entry.album != event.music);
                     List<Identifier> songs = AlbumDetailsScreen.queueSongs(albums.stream().findFirst().get(), client);
                     PlaylistHelper.clear();
@@ -92,7 +89,7 @@ public abstract class MinecraftMixin {
                     PlaylistHelper.playNow(0);
                 }
                 if (event.category == EventMusic.CategoryType.PLAYLIST) {
-                    Set<Playlist> playlists = Playlist.PLAYLISTS;
+                    HashSet<Playlist> playlists = new HashSet<>(Playlist.PLAYLISTS);
                     playlists.removeIf(entry -> entry.playlist != event.music);
                     PlaylistHelper.clear();
                     PlaylistHelper.pauseQueue();
