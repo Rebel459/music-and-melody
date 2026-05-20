@@ -45,6 +45,10 @@ public class MaMServerConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
+	public boolean sync_structures = true;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
 	public List<String> sound_events = new ArrayList<>();
 
 	private static boolean configContainsField(Path path, String fieldName) {
