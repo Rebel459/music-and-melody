@@ -39,6 +39,13 @@ public class MaMDataConfig implements ConfigData {
 		public List<String> favourites = new ArrayList<>();
 	}
 
+	@ConfigEntry.Gui.CollapsibleObject
+	public Events events = new Events();
+
+	public static class Events {
+		public List<String> disabled_events = new ArrayList<>();
+	}
+
 	public enum AlbumDisplay {
 		ALL,
 		ALBUMS,

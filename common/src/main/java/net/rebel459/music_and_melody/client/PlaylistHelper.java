@@ -37,7 +37,7 @@ public final class PlaylistHelper {
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
 
-    public static final Music EMPTY = new Music(MaMSounds.MUSIC_EMPTY, 0, 0, true);
+    public static final Music EMPTY = new Music(MaMSounds.REGISTERED_SOUNDS.get("music.empty"), 0, 0, true);
 
     private PlaylistHelper() {}
 
@@ -214,7 +214,7 @@ public final class PlaylistHelper {
     public static boolean hasActiveMusic() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
-        if (instances == null) return false;
+        if (instances.isEmpty()) return false;
         for (SoundInstance instance : instances) {
             if (manager.isActive(instance)) return true;
         }

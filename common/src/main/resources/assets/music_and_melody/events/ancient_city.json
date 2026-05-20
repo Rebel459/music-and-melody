@@ -1,0 +1,15 @@
+{
+  "name": "Ancient City",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.structure.ancient_city",
+      "conditions": [
+        {
+          "type": "structure",
+          "value": "ancient_city"
+        }
+      ]
+    }
+  ]
+}

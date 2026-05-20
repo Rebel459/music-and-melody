@@ -73,13 +73,6 @@ public class MaMServerConfig implements ConfigData {
 	}
 
 	private static List<String> defaultSoundEvents() {
-		return List.of(
-				"music.overworld.snowy",
-				"music.overworld.savanna",
-				"music.overworld.dark_forest",
-				"music.end.main_island",
-				"music.structure.stronghold",
-				"music.structure.ancient_city"
-		);
+		return List.of();
 	}
 }

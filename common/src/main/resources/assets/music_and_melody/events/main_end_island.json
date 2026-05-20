@@ -1,0 +1,16 @@
+{
+  "name": "Main End Island",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.end.main_island",
+      "conditions": [
+        {
+          "type": "biome",
+          "value": "the_end"
+        }
+      ],
+      "priority": "low"
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody;
 
-import me.shedaniel.autoconfig.AutoConfigClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
@@ -9,8 +8,8 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebel459.music_and_melody.client.AlbumListener;
+import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMConfigScreen;
 
 @Mod(value = MusicAndMelody.MOD_ID, dist = Dist.CLIENT)
@@ -34,5 +33,6 @@ public class MusicAndMelodyNeoForgeClient {
     private static void addClientReloadListeners(final AddClientReloadListenersEvent event) {
         event.addListener(AlbumListener.ID, new AlbumListener());
         event.addListener(PlaylistListener.ID, new PlaylistListener());
+        event.addListener(EventListener.ID, new EventListener());
     }
 }

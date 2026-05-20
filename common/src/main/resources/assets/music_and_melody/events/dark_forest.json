@@ -1,0 +1,16 @@
+{
+  "name": "Dark Forest",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.overworld.dark_forest",
+      "conditions": [
+        {
+          "type": "biome_tag",
+          "value": "music_and_melody:music/dark_forest"
+        }
+      ],
+      "priority": "low"
+    }
+  ]
+}

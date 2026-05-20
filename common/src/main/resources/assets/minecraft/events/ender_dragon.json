@@ -1,0 +1,17 @@
+{
+  "name": "Ender Dragon",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "minecraft:music.dragon",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "dragon"
+        }
+      ],
+      "priority": "very_high",
+      "sustain": false
+    }
+  ]
+}

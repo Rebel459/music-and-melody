@@ -1,0 +1,16 @@
+{
+  "name": "Snowy",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.overworld.snowy",
+      "conditions": [
+        {
+          "type": "biome_tag",
+          "value": "music_and_melody:music/snowy"
+        }
+      ],
+      "priority": "low"
+    }
+  ]
+}

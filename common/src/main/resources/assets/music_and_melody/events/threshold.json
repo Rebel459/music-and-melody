@@ -1,0 +1,16 @@
+{
+  "name": "Threshold",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.threshold",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "end_portal"
+        }
+      ],
+      "priority": "high"
+    }
+  ]
+}

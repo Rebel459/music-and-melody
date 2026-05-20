@@ -12,13 +12,14 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.MultipliedFloats;
+import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
 public class CommonMusicHelper {
-    public static final Identifier BASE_POOL = MaMSounds.MUSIC_COMMON.identifier();
+    public static final Identifier BASE_POOL = MusicAndMelody.id("music.common");
     public static final Set<Identifier> FILTERED_POOLS = new HashSet<>();
     private static final Map<Identifier, List<Sound>> SOUND_POOLS = new HashMap<>();
 

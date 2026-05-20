@@ -1,0 +1,17 @@
+{
+  "name": "Wither",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.wither",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "wither"
+        }
+      ],
+      "priority": "high",
+      "sustain": false
+    }
+  ]
+}

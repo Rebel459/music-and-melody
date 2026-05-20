@@ -9,7 +9,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.CommonMusicHelper;
-import net.rebel459.music_and_melody.client.MusicHelper;
+import net.rebel459.music_and_melody.client.Event;
+import net.rebel459.music_and_melody.client.EventHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
@@ -19,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
 
 @Mixin(MusicManager.class)
 public abstract class MusicManagerMixin {
@@ -37,7 +40,7 @@ public abstract class MusicManagerMixin {
         var config = MaMClientConfig.get();
         Identifier musicId = music.sound().value().location();
         if (config.common_music && CommonMusicHelper.FILTERED_POOLS.contains(musicId) && SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= config.common_music_chance) {
-            return new Music(MaMSounds.MUSIC_COMMON.holder(), music.minDelay(), music.maxDelay(), music.replaceCurrentMusic());
+            return new Music(MaMSounds.REGISTERED_SOUNDS.get("music.common"), music.minDelay(), music.maxDelay(), music.replaceCurrentMusic());
         }
         else return music;
     }
@@ -49,8 +52,8 @@ public abstract class MusicManagerMixin {
                     target = "Lnet/minecraft/client/Minecraft;getMusicVolume()F"
             )
     )
-    private float fadeWitherMusic(float volume) {
-        if (this.isPlayingMusic(MusicHelper.WITHER_BOSS) && !MusicHelper.hasWitherBossBar()) return 0F;
+    private float fadeMusic(float volume) {
+        if (!EventHelper.shouldSustain && !EventHelper.shouldBeActive(EventHelper.lastConditions) && !EventHelper.lastConditions.isEmpty() && !PlaylistHelper.isPlaying()) return 0F;
         return volume;
     }
 

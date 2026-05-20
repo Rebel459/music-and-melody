@@ -31,6 +31,13 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
+	public int event_music_min = 300;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public int event_music_max = 600;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
 	public boolean creative_fix = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -38,13 +45,6 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean event_weight_fix = true;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public boolean wither_music = true;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public boolean end_portal_music = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -66,13 +66,6 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean custom_album = true;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public int event_music_min = 300;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public int event_music_max = 600;
 
 	public enum ButtonPosition {
 		SOUNDS,
