@@ -108,18 +108,6 @@ public class Event {
         return entries;
     }
 
-    public static synchronized boolean hasStructureConditions() {
-        for (Source source : SOURCES) {
-            if (!source.isEnabled()) continue;
-            for (Record.Entry entry : source.record.entries()) {
-                for (Record.Condition condition : entry.conditions()) {
-                    if (hasStructureCondition(condition)) return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public static synchronized Source writableSource() {
         if (CONFIG_SOURCES.isEmpty()) {
             writeConfigRecord(CONFIG_DIR.resolve("events.json"), new Record(Component.literal("Events"), new ArrayList<>()));

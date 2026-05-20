@@ -8,6 +8,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
@@ -34,6 +35,7 @@ public final class PlaylistHelper {
     private static Identifier currentSongId = null;
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
+    private static boolean currentSongFromEvent = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
 
@@ -137,6 +139,10 @@ public final class PlaylistHelper {
         return currentSong != null && Minecraft.getInstance().getSoundManager().isActive(currentSong);
     }
 
+    public static boolean isEventPlaying() {
+        return currentSongFromEvent && isPlaying();
+    }
+
     public static String getCurrentMusicTranslationKey() {
         if (!isPlaying() || currentSongId == null) return null;
         Identifier displayId = currentSongId;
@@ -163,7 +169,7 @@ public final class PlaylistHelper {
         }
         queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
-        return playSound(id, false, true);
+        return playSound(id, false, true, false);
     }
 
     public static boolean playNextNow() {
@@ -177,7 +183,7 @@ public final class PlaylistHelper {
         queueIndex = playableIndex;
         Identifier id = QUEUED_SONGS.get(queueIndex);
         stop();
-        return playSound(id, false, true);
+        return playSound(id, false, true, false);
     }
 
     public static boolean playNow(int index) {
@@ -187,7 +193,7 @@ public final class PlaylistHelper {
         queuePaused = false;
         queueIndex = index;
         stop();
-        return playSound(QUEUED_SONGS.get(queueIndex), false, true);
+        return playSound(QUEUED_SONGS.get(queueIndex), false, true, false);
     }
 
     private static void advanceFinishedQueuedSong() {
@@ -209,6 +215,7 @@ public final class PlaylistHelper {
         currentSongId = null;
         currentSongLooping = false;
         currentSongFromQueue = false;
+        currentSongFromEvent = false;
     }
 
     public static boolean hasActiveMusic() {
@@ -216,9 +223,14 @@ public final class PlaylistHelper {
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
         if (instances.isEmpty()) return false;
         for (SoundInstance instance : instances) {
+            if (isEmptyMusic(instance)) continue;
             if (manager.isActive(instance)) return true;
         }
         return false;
+    }
+
+    public static boolean isEmptyMusic(SoundInstance instance) {
+        return instance != null && instance.getIdentifier().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location());
     }
 
     private static int clampQueueIndex(int index) {
@@ -240,7 +252,7 @@ public final class PlaylistHelper {
         return -1;
     }
 
-    private static boolean playSound(Identifier id, boolean loop, boolean fromQueue) {
+    private static boolean playSound(Identifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
         id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
@@ -249,6 +261,7 @@ public final class PlaylistHelper {
         currentSongId = id;
         currentSongLooping = loop;
         currentSongFromQueue = fromQueue;
+        currentSongFromEvent = fromEvent;
         currentSong = new DirectSoundInstance(
                 id,
                 SoundSource.MUSIC,
@@ -269,6 +282,7 @@ public final class PlaylistHelper {
             currentSongId = null;
             currentSongLooping = false;
             currentSongFromQueue = false;
+            currentSongFromEvent = false;
             return false;
         }
         if (result == SoundEngine.PlayResult.STARTED) {
@@ -289,12 +303,25 @@ public final class PlaylistHelper {
         currentSongId = null;
         currentSongLooping = false;
         currentSongFromQueue = false;
+        currentSongFromEvent = false;
     }
 
     public static boolean play(Identifier id, boolean loop) {
         ensureLoaded();
         stop();
-        return playSound(id, loop, false);
+        return playSound(id, loop, false, false);
+    }
+
+    public static boolean playEvent(Identifier id, boolean loop) {
+        ensureLoaded();
+        stop();
+        return playSound(id, loop, false, true);
+    }
+
+    public static void stopEvent() {
+        if (currentSongFromEvent) {
+            stop();
+        }
     }
 
     public static void pauseQueue() {

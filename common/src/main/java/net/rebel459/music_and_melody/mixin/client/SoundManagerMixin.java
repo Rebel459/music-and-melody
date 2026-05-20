@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
+import net.rebel459.music_and_melody.client.EventHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,17 +25,33 @@ public class SoundManagerMixin {
     private float currentVolume = -1F;
 
     @Inject(method = "tick", at = @At("TAIL"))
-    private void jukeboxMusicSuppression(boolean paused, CallbackInfo ci) {
+    private void fadeMusic(boolean paused, CallbackInfo ci) {
         MaMClientConfig clientConfig = MaMClientConfig.get();
-        if (!clientConfig.jukebox_fading) return;
         SoundManager manager = SoundManager.class.cast(this);
         float targetVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MUSIC);
-        float fade = targetVolume * Math.clamp(clientConfig.jukebox_fade_speed, 0.001F, 1F);
+        boolean activeJukebox = this.soundEngine.instanceBySource.get(SoundSource.RECORDS).stream().anyMatch(SoundManager.class.cast(this)::isActive);
+        float fade = targetVolume * Math.clamp(clientConfig.fade_speed, 0.001F, 1F);
         if (this.currentVolume == -1F) this.currentVolume = targetVolume;
-
-        if (this.soundEngine.instanceBySource.get(SoundSource.RECORDS).stream().anyMatch(SoundManager.class.cast(this)::isActive)) {
+        if (activeJukebox && clientConfig.jukebox_fading) {
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
             manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+        } else if (!activeJukebox && EventHelper.isFading()) {
+            if (!EventHelper.shouldContinueEventFade()) {
+                EventHelper.clearFadeEvent();
+                if (this.currentVolume < targetVolume) {
+                    this.currentVolume = targetVolume;
+                    manager.updateCategoryVolume(SoundSource.MUSIC, targetVolume);
+                }
+                return;
+            }
+            this.currentVolume = Math.max(this.currentVolume - fade, 0F);
+            manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            if (this.currentVolume <= 0.001F) {
+                Minecraft.getInstance().getMusicManager().stopPlaying();
+                EventHelper.finishFade();
+                this.currentVolume = 0F;
+                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            }
         } else {
             if (this.currentVolume > targetVolume) {
                 this.currentVolume = targetVolume;

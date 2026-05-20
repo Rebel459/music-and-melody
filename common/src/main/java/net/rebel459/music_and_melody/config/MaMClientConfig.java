@@ -27,11 +27,7 @@ public class MaMClientConfig implements ConfigData {
 	public boolean jukebox_fading = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public float jukebox_fade_speed = 0.01F;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public float event_fade_speed = 0.005F;
+	public float fade_speed = 0.01F;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
