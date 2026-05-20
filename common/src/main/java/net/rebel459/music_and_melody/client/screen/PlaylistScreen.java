@@ -120,10 +120,6 @@ public class PlaylistScreen extends Screen {
 
         private void refresh() {
             this.clearEntries();
-            if (PlaylistHelper.queuedSongs().isEmpty()) {
-                this.addEntry(new QueueEntry(this.minecraft, Component.translatable("screen.music_and_melody.playlist.empty").withStyle(ChatFormatting.GRAY), 0xFFAAAAAA));
-                return;
-            }
             for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
                 Identifier id = PlaylistHelper.queuedSongs().get(i);
                 this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));

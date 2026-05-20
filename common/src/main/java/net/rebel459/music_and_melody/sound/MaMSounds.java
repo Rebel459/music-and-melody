@@ -4,7 +4,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
 import net.rebel459.unified.platform.UnifiedRegistries;
 import net.rebel459.unified.util.registry.Supplied;
@@ -24,17 +23,8 @@ public class MaMSounds {
 	public static final Holder<SoundEvent> MUSIC_DISC_BOUNCE = UnifiedRegistries.SoundEvents.create("minecraft").registerForHolder("music_disc.bounce");
 
 	public static void init() {
-        List<String> pools = new ArrayList<>();
-		for (MaMServerConfig.BiomeMusic entry : MaMServerConfig.get().biome_music) {
-            pools.add(entry.pool);
-		}
-		for (MaMServerConfig.StructureMusic entry : MaMServerConfig.get().structure_music) {
-			pools.add(entry.pool);
-		}
-		for (String pool : pools) {
-			Identifier id = Identifier.parse(pool);
-			if (!id.getNamespace().equals(MusicAndMelody.MOD_ID)) continue;
-			SOUNDS.registerForHolder(id.getPath());
+		for (String pool : MaMServerConfig.get().sound_events) {
+			SOUNDS.registerForHolder(pool);
 		}
 	}
 }

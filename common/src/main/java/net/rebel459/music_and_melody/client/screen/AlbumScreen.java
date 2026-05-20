@@ -120,6 +120,7 @@ public class AlbumScreen extends Screen {
             }
             if (display == MaMDataConfig.AlbumDisplay.PLAYLISTS || display == MaMDataConfig.AlbumDisplay.ALL || display == MaMDataConfig.AlbumDisplay.FAVOURITES) {
                 Playlist.PLAYLISTS.stream()
+                        .filter(playlist -> !playlist.hidden)
                         .filter(playlist -> display != MaMDataConfig.AlbumDisplay.FAVOURITES || playlist.isFavourite())
                         .map(DisplayEntry::new)
                         .forEach(entries::add);

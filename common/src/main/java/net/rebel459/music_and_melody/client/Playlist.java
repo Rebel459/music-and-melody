@@ -45,18 +45,16 @@ public class Playlist {
     public Identifier icon;
     public List<Identifier> tracks;
     public List<Identifier> discs;
+    public boolean hidden;
     public Path source;
 
-    public Playlist(Identifier playlist, Component name, Identifier icon, List<Identifier> tracks, List<Identifier> discs) {
-        this(playlist, name, icon, tracks, discs, null);
-    }
-
-    public Playlist(Identifier playlist, Component name, Identifier icon, List<Identifier> tracks, List<Identifier> discs, Path source) {
+    public Playlist(Identifier playlist, Component name, Identifier icon, List<Identifier> tracks, List<Identifier> discs, boolean hidden, Path source) {
         this.playlist = playlist;
         this.name = name;
         this.icon = icon;
         this.tracks = tracks;
         this.discs = discs;
+        this.hidden = hidden;
         this.source = source;
         PLAYLISTS.add(this);
     }
@@ -172,7 +170,7 @@ public class Playlist {
             entry.tracks().forEach(track -> tracks.add(Identifier.fromNamespaceAndPath(entry.namespace(), track)));
             entry.discs().forEach(disc -> discs.add(Identifier.fromNamespaceAndPath(entry.namespace(), disc)));
         });
-        return new Playlist(id, record.name(), record.icon(), tracks, discs, source);
+        return new Playlist(id, record.name(), record.icon(), tracks, discs, record.hidden, source);
     }
 
     private static Record readRecord(Path file) {
@@ -256,11 +254,12 @@ public class Playlist {
         }
     }
 
-    public record Record(Component name, Identifier icon, List<Entry> entries) {
+    public record Record(Component name, Identifier icon, List<Entry> entries, boolean hidden) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
                 Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
-                Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries)
+                Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
+                Codec.BOOL.optionalFieldOf("hidden", false).forGetter(Record::hidden)
         ).apply(instance, Record::new));
     }
 

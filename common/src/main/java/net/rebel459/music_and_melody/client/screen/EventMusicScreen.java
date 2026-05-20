@@ -40,7 +40,7 @@ class EventMusicScreen extends Screen {
     private Button expandButton;
     private int selectedIndex = -1;
     private int categoryIndex = EventMusic.CategoryType.PLAYLIST.ordinal();
-    private int priorityIndex = EventMusic.PriorityType.LOW.ordinal();
+    private int priorityIndex = EventMusic.PriorityType.MEDIUM.ordinal();
     private boolean listExpanded;
     private boolean loadingEditor;
     private boolean savedChanges;
@@ -85,7 +85,7 @@ class EventMusicScreen extends Screen {
             this.conditionsField = this.addRenderableWidget(new EditBox(this.font, fieldX, 114, fieldWidth, 20, Component.translatable("screen.music_and_melody.events.conditions")));
             this.conditionsField.setMaxLength(512);
             this.conditionsField.setResponder(value -> markDirty());
-            this.conditionsField.setHint(Component.literal("eg. biome=minecraft:forest, time=night, game_mode=survival").withStyle(ChatFormatting.DARK_GRAY));
+            this.conditionsField.setHint(Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY));
         }
 
         int listY = this.listExpanded ? 32 : 146;
@@ -169,7 +169,7 @@ class EventMusicScreen extends Screen {
         this.selectedIndex = -1;
         this.loadingEditor = true;
         this.categoryIndex = EventMusic.CategoryType.PLAYLIST.ordinal();
-        this.priorityIndex = EventMusic.PriorityType.LOW.ordinal();
+        this.priorityIndex = EventMusic.PriorityType.MEDIUM.ordinal();
         if (this.musicField != null) this.musicField.setValue("");
         if (this.weightField != null) this.weightField.setValue("1");
         if (this.conditionsField != null) this.conditionsField.setValue("");
@@ -289,6 +289,7 @@ class EventMusicScreen extends Screen {
         return switch (CATEGORIES[this.categoryIndex]) {
             case ALBUM -> "minecraft:volume_alpha";
             case PLAYLIST -> "music_and_melody:playlists/example";
+            case POOL -> "minecraft:music.overworld.forest";
             case SONG -> "music_and_melody:music/overworld/alpha";
             case DISC -> "minecraft:cat";
         };
@@ -305,7 +306,7 @@ class EventMusicScreen extends Screen {
         for (int i = 0; i < PRIORITIES.length; i++) {
             if (EventMusic.priorityName(PRIORITIES[i]).equals(priority.toLowerCase(Locale.ROOT))) return i;
         }
-        return EventMusic.PriorityType.LOW.ordinal();
+        return EventMusic.PriorityType.MEDIUM.ordinal();
     }
 
     private static List<EventMusic.Record.Condition> parseConditions(String value) {
@@ -319,15 +320,13 @@ class EventMusicScreen extends Screen {
             String type = (separator < 0 ? part : part.substring(0, separator)).trim().toLowerCase(Locale.ROOT);
             String conditionValue = separator < 0 ? "" : part.substring(separator + 1).trim();
             Optional<Either<String, Integer>> parsedValue;
-            if (type.equals("menu")) {
-                parsedValue = Optional.empty();
-            } else if (type.equals("above_y") || type.equals("below_y")) {
+            if (type.equals("above_y") || type.equals("below_y")) {
                 try {
                     parsedValue = Optional.of(Either.right(Integer.parseInt(conditionValue)));
                 } catch (NumberFormatException exception) {
                     return null;
                 }
-            } else if (Identifier.tryParse(conditionValue) != null || type.equals("time") || type.equals("weather") || type.equals("game_mode")) {
+            } else if (Identifier.tryParse(conditionValue) != null || type.equals("time") || type.equals("weather") || type.equals("game_mode") || type.equals("event")) {
                 if (conditionValue.isEmpty()) return null;
                 parsedValue = Optional.of(Either.left(conditionValue));
             } else {
