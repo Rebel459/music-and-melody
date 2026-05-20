@@ -189,7 +189,6 @@ public class EventMusicScreen extends Screen {
     @Override
     public void onClose() {
         if (this.savedChanges) {
-            Event.resetMusicBreak();
             if (Event.hasStructureConditions()) EventHelper.requestStructureSync();
         }
         if (this.closeToSources) this.minecraft.setScreen(new EventSourceScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
@@ -686,7 +685,6 @@ public class EventMusicScreen extends Screen {
         @Override
         public void onClose() {
             if (this.editor.savedChanges) {
-                Event.resetMusicBreak();
                 if (Event.hasStructureConditions()) EventHelper.requestStructureSync();
             }
             this.minecraft.setScreen(this.parent);

@@ -19,7 +19,7 @@ public class SoundManagerPreparationsWeightMixin {
 
     @Inject(method = "getWeight()I", at = @At("HEAD"), cancellable = true, remap = false)
     private void enforceWeight(CallbackInfoReturnable<Integer> cir) {
-        if (!MaMClientConfig.get().event_weight_fix) return;
+        if (!MaMClientConfig.get().pool_weight_fix) return;
         if (EventWeightHelper.contains(this.val$sound)) {
             cir.setReturnValue(this.val$sound.getWeight());
         }

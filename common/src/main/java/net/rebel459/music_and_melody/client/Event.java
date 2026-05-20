@@ -24,18 +24,6 @@ import java.util.*;
 
 public class Event {
 
-    public static int currentBreak = -1;
-    public static int targetBreak = -1;
-
-    public static int createMusicBreak() {
-        return SoundInstance.createUnseededRandom().nextIntBetweenInclusive(MaMClientConfig.get().event_music_min * 20, MaMClientConfig.get().event_music_max * 20);
-    }
-
-    public static void resetMusicBreak() {
-        currentBreak = -1;
-        targetBreak = -1;
-    }
-
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final Path CONFIG_DIR = Path.of("config", MusicAndMelody.MOD_ID, "events");
 
@@ -250,7 +238,6 @@ public class Event {
                 create(entry, source);
             }
         }
-        resetMusicBreak();
     }
 
     private static List<Path> configFiles() {

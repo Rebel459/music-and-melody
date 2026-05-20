@@ -27,14 +27,11 @@ public class MaMClientConfig implements ConfigData {
 	public boolean jukebox_fading = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public float fade_speed = 0.01F;
+	public float jukebox_fade_speed = 0.01F;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public int event_music_min = 300;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public int event_music_max = 600;
+	public float event_fade_speed = 0.005F;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -44,7 +41,7 @@ public class MaMClientConfig implements ConfigData {
 	public boolean under_water_fix = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean event_weight_fix = true;
+	public boolean pool_weight_fix = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip

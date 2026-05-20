@@ -29,7 +29,7 @@ public class SoundManagerMixin {
         if (!clientConfig.jukebox_fading) return;
         SoundManager manager = SoundManager.class.cast(this);
         float targetVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MUSIC);
-        float fade = targetVolume * Math.clamp(clientConfig.fade_speed, 0.001F, 1F);
+        float fade = targetVolume * Math.clamp(clientConfig.jukebox_fade_speed, 0.001F, 1F);
         if (this.currentVolume == -1F) this.currentVolume = targetVolume;
 
         if (this.soundEngine.instanceBySource.get(SoundSource.RECORDS).stream().anyMatch(SoundManager.class.cast(this)::isActive)) {
