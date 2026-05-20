@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.mixin;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
+import net.rebel459.unified.platform.UnifiedPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -34,6 +35,7 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, @NotNull String mixinClassName) {
+        if (mixinClassName.contains("integration.simple_music_control.")) return UnifiedPlatform.isModLoaded("simple_music_control");
         return true;
     }
 

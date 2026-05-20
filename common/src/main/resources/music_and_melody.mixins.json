@@ -19,6 +19,7 @@
     "client.SoundManagerMixin",
     "client.SoundManagerPreparationsMixin",
     "client.SoundManagerPreparationsWeightMixin",
-    "client.SoundScreenMixin"
+    "client.SoundScreenMixin",
+    "integration.simple_music_control.SimpleMusicDelayMixin"
   ]
 }
