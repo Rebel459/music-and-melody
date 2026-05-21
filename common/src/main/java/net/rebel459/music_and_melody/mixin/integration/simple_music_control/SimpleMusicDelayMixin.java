@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.mixin.integration.simple_music_control;
 
 import com.mojang.datafixers.util.Pair;
 import me.pajic.simple_music_control.SMC;
-import net.rebel459.music_and_melody.client.EventHelper;
+import net.rebel459.music_and_melody.client.util.EventHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

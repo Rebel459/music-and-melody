@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.MusicDiscHelper;
+import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 
 final class MusicScreenHelper {

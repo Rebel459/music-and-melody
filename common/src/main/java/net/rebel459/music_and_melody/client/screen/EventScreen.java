@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Event;
-import net.rebel459.music_and_melody.client.EventHelper;
+import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;

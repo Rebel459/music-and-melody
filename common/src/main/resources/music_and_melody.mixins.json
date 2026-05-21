@@ -14,11 +14,13 @@
     "client.MinecraftMixin",
     "client.MusicManagerMixin",
     "client.NowPlayingToastMixin",
+    "client.SoundEngineMixin",
     "client.SoundEventRegistrationSerializerMixin",
     "client.SoundManagerMixin",
     "client.SoundManagerPreparationsMixin",
     "client.SoundManagerPreparationsWeightMixin",
     "client.SoundScreenMixin",
-    "integration.simple_music_control.SimpleMusicDelayMixin"
+    "integration.simple_music_control.SimpleMusicDelayMixin",
+    "integration.simple_music_control.SimpleMusicWidgetMixin"
   ]
 }

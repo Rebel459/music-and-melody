@@ -16,6 +16,8 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.io.IOException;

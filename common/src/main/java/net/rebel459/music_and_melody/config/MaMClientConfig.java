@@ -50,6 +50,7 @@ public class MaMClientConfig implements ConfigData {
 	public boolean custom_album = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
+	@ConfigEntry.Gui.RequiresRestart
 	public boolean allow_events = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip

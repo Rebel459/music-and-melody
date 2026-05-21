@@ -1,12 +1,10 @@
 package net.rebel459.music_and_melody.mixin.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.LevelLoadingScreen;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
-import net.rebel459.music_and_melody.client.EventHelper;
+import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

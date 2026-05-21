@@ -11,8 +11,8 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
-import net.rebel459.music_and_melody.client.MusicDiscHelper;
-import net.rebel459.music_and_melody.client.PlaylistHelper;
+import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 public class PlaylistScreen extends Screen {

@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.client;
+package net.rebel459.music_and_melody.client.util;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
@@ -20,6 +20,7 @@ import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.rebel459.music_and_melody.client.*;
 import net.rebel459.music_and_melody.client.screen.AlbumDetailsScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
@@ -95,7 +96,8 @@ public class EventHelper {
 
             Event.PriorityType currentPriority = lastCategory != null ? lastPriority : Event.PriorityType.LOW;
             boolean higherPriority = event.priority.ordinal() > currentPriority.ordinal();
-            if (higherPriority) {
+            boolean restoreInactiveStoredEvent = storedEventInactive && event.priority.ordinal() >= currentPriority.ordinal();
+            if (higherPriority || restoreInactiveStoredEvent) {
                 cooldownEmptyMusic = false;
                 if (activeMusic) {
                     queueEventFade(event, true);

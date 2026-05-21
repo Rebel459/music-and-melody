@@ -24,6 +24,7 @@ dependencies {
 
     compileOnly("maven.modrinth:simple-music-control:$simple_music_control-fabric")
     compileOnly("maven.modrinth:fzzy-config:$fzzy_version")
+    compileOnly("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
 }
 
 configurations {

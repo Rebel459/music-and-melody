@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.client;
+package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
@@ -14,6 +14,8 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.JukeboxSong;
+import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.network.ServerHelper;
 
 import java.util.Optional;

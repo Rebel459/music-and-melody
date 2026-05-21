@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -13,13 +12,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.MusicDiscHelper;
+import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.Playlist;
-import net.rebel459.music_and_melody.client.PlaylistHelper;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class AlbumDetailsScreen extends Screen {

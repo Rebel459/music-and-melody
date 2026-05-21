@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.client;
+package net.rebel459.music_and_melody.client.util;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
@@ -8,7 +8,6 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
@@ -112,10 +111,6 @@ public final class PlaylistHelper {
         return currentSongFromQueue && isPlaying(song);
     }
 
-    public static boolean isLooping(Identifier song) {
-        return isPlaying(song) && currentSongLooping;
-    }
-
     public static boolean hasQueuedSongs() {
         ensureLoaded();
         return !QUEUED_SONGS.isEmpty();
@@ -146,8 +141,26 @@ public final class PlaylistHelper {
         return currentSongFromEvent && isPlaying();
     }
 
+    public static SoundInstance getCurrentQueueSound() {
+        return isQueuePlaying() ? currentSong : null;
+    }
+
+    public static void interruptCurrentPlayback(SoundInstance sound) {
+        if (!currentSongFromQueue || currentSong == null) return;
+        if (sound != null && sound != currentSong) return;
+        currentSong = null;
+        currentSongId = null;
+        currentSongLooping = false;
+        currentSongFromQueue = false;
+        currentSongFromEvent = false;
+    }
+
     public static String getCurrentMusicTranslationKey() {
-        if (!isPlaying() || currentSongId == null) return null;
+        return getMusicTranslationKey(currentSong);
+    }
+
+    public static String getMusicTranslationKey(SoundInstance sound) {
+        if (sound == null || sound != currentSong || !isPlaying() || currentSongId == null) return null;
         Identifier displayId = currentSongId;
         Sound currentSound = currentSong.getSound();
         if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
