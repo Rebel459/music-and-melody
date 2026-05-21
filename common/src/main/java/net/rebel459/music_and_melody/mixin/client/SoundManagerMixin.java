@@ -1,6 +1,8 @@
 package net.rebel459.music_and_melody.mixin.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
@@ -26,8 +28,8 @@ public class SoundManagerMixin {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void fadeMusic(boolean paused, CallbackInfo ci) {
-        MaMClientConfig clientConfig = MaMClientConfig.get();
         SoundManager manager = SoundManager.class.cast(this);
+        MaMClientConfig clientConfig = MaMClientConfig.get();
         float targetVolume = Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MUSIC);
         boolean activeJukebox = this.soundEngine.instanceBySource.get(SoundSource.RECORDS).stream().anyMatch(SoundManager.class.cast(this)::isActive);
         float fade = targetVolume * Math.clamp(clientConfig.fade_speed, 0.001F, 1F);
@@ -35,6 +37,22 @@ public class SoundManagerMixin {
         if (activeJukebox && clientConfig.jukebox_fading) {
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
             manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+        } else if (!activeJukebox && EventHelper.isFadingOutCurrentEvent()) {
+            if (!EventHelper.shouldContinueCurrentEventFadeOut()) {
+                EventHelper.clearCurrentEventFadeOut();
+                if (this.currentVolume < targetVolume) {
+                    this.currentVolume = targetVolume;
+                    manager.updateCategoryVolume(SoundSource.MUSIC, targetVolume);
+                }
+                return;
+            }
+            this.currentVolume = Math.max(this.currentVolume - fade, 0F);
+            manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            if (this.currentVolume <= 0.001F) {
+                EventHelper.finishCurrentEventFadeOut();
+                this.currentVolume = 0F;
+                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            }
         } else if (!activeJukebox && EventHelper.isFading()) {
             if (!EventHelper.shouldContinueEventFade()) {
                 EventHelper.clearFadeEvent();

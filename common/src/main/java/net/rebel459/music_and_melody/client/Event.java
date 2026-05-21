@@ -8,6 +8,7 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
@@ -85,7 +86,7 @@ public class Event {
 
         Set<String> usedPaths = new HashSet<>();
         for (Path file : configFiles()) {
-            Identifier id = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "events/" + uniquePath(configPath(file), usedPaths));
+            Identifier id = Identifier.fromNamespaceAndPath("config", "events/" + uniquePath(configPath(file), usedPaths));
             Record record = readRecord(file, shortName(id));
             if (record == null) continue;
             CONFIG_SOURCES.add(new Source(id, record, file));
@@ -108,14 +109,6 @@ public class Event {
         return entries;
     }
 
-    public static synchronized Source writableSource() {
-        if (CONFIG_SOURCES.isEmpty()) {
-            writeConfigRecord(CONFIG_DIR.resolve("events.json"), new Record(Component.literal("Events"), new ArrayList<>()));
-            reloadConfigEvents();
-        }
-        return CONFIG_SOURCES.isEmpty() ? null : CONFIG_SOURCES.getFirst();
-    }
-
     public static synchronized boolean canCreateConfigSource(String name, String pathOverride) {
         if (name.trim().isEmpty()) return false;
         Path target = configTarget(name, pathOverride);
@@ -131,12 +124,13 @@ public class Event {
         return path.endsWith(".json") ? path.substring(0, path.length() - ".json".length()) : path;
     }
 
-    public static synchronized Source createConfigSource(String name, String pathOverride) {
+    public static synchronized Source createConfigSource(String name, String description, String pathOverride) {
         String trimmedName = name.trim();
         if (trimmedName.isEmpty()) return null;
         Path target = configTarget(trimmedName, pathOverride);
         if (target == null || Files.exists(target)) return null;
-        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), new ArrayList<>()))) return null;
+        Component descriptionComponent = description.trim().isEmpty() ? CommonComponents.EMPTY : Component.literal(description.trim());
+        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), descriptionComponent, new ArrayList<>()))) return null;
         reloadConfigEvents();
         for (Source source : CONFIG_SOURCES) {
             if (source.path.equals(target)) return source;
@@ -146,7 +140,7 @@ public class Event {
 
     public static synchronized boolean saveSourceEntries(Source source, List<Record.Entry> entries) {
         if (source == null || !source.isConfig()) return false;
-        if (!writeConfigRecord(source.path, new Record(source.record.name(), entries))) return false;
+        if (!writeConfigRecord(source.path, new Record(source.record.name(), source.record.description(), entries, source.record.defaultState(), source.record.hasName()))) return false;
         reloadConfigEvents();
         return true;
     }
@@ -242,20 +236,11 @@ public class Event {
         }
     }
 
-    private static boolean hasStructureCondition(Record.Condition condition) {
-        String type = condition.type().toLowerCase(Locale.ROOT);
-        if (type.equals("structure") || type.equals("structure_tag")) return true;
-        for (Record.Condition nested : condition.conditions()) {
-            if (hasStructureCondition(nested)) return true;
-        }
-        return false;
-    }
-
     private static Record readRecord(Path file, String fallbackName) {
         try (Reader reader = Files.newBufferedReader(file)) {
             JsonElement json = JsonParser.parseReader(reader);
             Record record = Record.CODEC.parse(JsonOps.INSTANCE, json).result().orElse(null);
-            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.entries(), false);
+            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.entries(), record.defaultState(), false);
         } catch (Exception exception) {
             LogUtils.getLogger().warn("Failed to read event music config: " + file, exception);
             return null;
@@ -311,7 +296,7 @@ public class Event {
             return Optional.empty();
         }
 
-        if (type == ConditionType.ALL_OF || type == ConditionType.ANY_OF) {
+        if (type == ConditionType.ALL_OF || type == ConditionType.ANY_OF || type == ConditionType.NOT) {
             if (condition.conditions().isEmpty()) {
                 LogUtils.getLogger().warn("Missing nested event music conditions: " + condition.type());
                 return Optional.empty();
@@ -323,7 +308,7 @@ public class Event {
                 if (parsed.isEmpty()) return Optional.empty();
                 conditions.add(parsed.get());
             }
-            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
+            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
         }
 
         if (condition.value().isEmpty()) {
@@ -332,6 +317,7 @@ public class Event {
         }
 
         Either<String, Integer> value = condition.value().get();
+        Optional<String> stringValue = Optional.empty();
         Optional<Identifier> idValue = Optional.empty();
         Optional<Integer> intValue = Optional.empty();
         Optional<TimeCondition> timeValue = Optional.empty();
@@ -339,38 +325,45 @@ public class Event {
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<EventCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y) {
+        if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y || type == ConditionType.RANDOM_CHANCE) {
             if (value.right().isEmpty()) return Optional.empty();
             intValue = value.right();
+            if (type == ConditionType.RANDOM_CHANCE && (intValue.get() < 0 || intValue.get() > 100)) {
+                LogUtils.getLogger().warn("Random chance must be a percentage (0-100%), was: " + intValue.get() + "%");
+                return Optional.empty();
+            }
         } else {
             if (value.left().isEmpty()) return Optional.empty();
 
-            String stringValue = value.left().get();
+            String string = value.left().get();
 
-            if (type == ConditionType.TIME) {
-                TimeCondition time = time(stringValue);
+            if (type == ConditionType.MOD_LOADED) {
+                if (string.isBlank()) return Optional.empty();
+                stringValue = value.left();
+            } else if (type == ConditionType.TIME) {
+                TimeCondition time = time(string);
                 if (time == null) return Optional.empty();
                 timeValue = Optional.of(time);
             } else if (type == ConditionType.WEATHER) {
-                WeatherCondition weather = weather(stringValue);
+                WeatherCondition weather = weather(string);
                 if (weather == null) return Optional.empty();
                 weatherValue = Optional.of(weather);
             } else if (type == ConditionType.GAME_MODE) {
-                GameModeCondition gameMode = gameMode(stringValue);
+                GameModeCondition gameMode = gameMode(string);
                 if (gameMode == null) return Optional.empty();
                 gameModeValue = Optional.of(gameMode);
             } else if (type == ConditionType.EVENT) {
-                EventCondition event = event(stringValue);
+                EventCondition event = event(string);
                 if (event == null) return Optional.empty();
                 eventValue = Optional.of(event);
             } else {
-                Identifier id = Identifier.tryParse(stringValue);
+                Identifier id = Identifier.tryParse(string);
                 if (id == null) return Optional.empty();
                 idValue = Optional.of(id);
             }
         }
 
-        return Optional.of(new Condition(type, idValue, intValue, timeValue, weatherValue, gameModeValue, eventValue, List.of()));
+        return Optional.of(new Condition(type, stringValue, idValue, intValue, timeValue, weatherValue, gameModeValue, eventValue, List.of()));
     }
 
     private static CategoryType category(String category) {
@@ -395,6 +388,14 @@ public class Event {
         };
     }
 
+    private static DefaultState defaultState(String defaultState) {
+        return switch (defaultState.toLowerCase(Locale.ROOT)) {
+            case "disabled" -> DefaultState.DISABLED;
+            case "enabled" -> DefaultState.ENABLED;
+            default -> DefaultState.ENABLED;
+        };
+    }
+
     private static ConditionType conditionType(String condition) {
         return switch (condition.toLowerCase(Locale.ROOT)) {
             case "dimension" -> ConditionType.DIMENSION;
@@ -408,8 +409,11 @@ public class Event {
             case "event" -> ConditionType.EVENT;
             case "all_of" -> ConditionType.ALL_OF;
             case "any_of" -> ConditionType.ANY_OF;
+            case "not" -> ConditionType.NOT;
             case "below_y" -> ConditionType.BELOW_Y;
             case "above_y" -> ConditionType.ABOVE_Y;
+            case "mod_loaded" -> ConditionType.MOD_LOADED;
+            case "random_chance" -> ConditionType.RANDOM_CHANCE;
             default -> null;
         };
     }
@@ -446,6 +450,7 @@ public class Event {
     private static EventCondition event(String event) {
         return switch (event.toLowerCase(Locale.ROOT)) {
             case "menu" -> EventCondition.MENU;
+            case "credits" -> EventCondition.CREDITS;
             case "dragon" -> EventCondition.DRAGON;
             case "wither" -> EventCondition.WITHER;
             case "end_portal" -> EventCondition.END_PORTAL;
@@ -469,13 +474,13 @@ public class Event {
     }
 
     private static String sanitize(String value) {
-        String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "_");
+        String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("\\s+", "_").replaceAll("[^a-z0-9._-]", "");
         if (sanitized.isBlank()) return "events";
         return sanitized;
     }
 
     private static String sanitizePath(String value) {
-        String sanitized = value.toLowerCase(Locale.ROOT).replace('\\', '/').replaceAll("[^a-z0-9._/-]", "_");
+        String sanitized = value.toLowerCase(Locale.ROOT).replace('\\', '/').replaceAll("\\s+", "_").replaceAll("[^a-z0-9._/-]", "");
         while (sanitized.startsWith("/")) sanitized = sanitized.substring(1);
         return Arrays.stream(sanitized.split("/"))
                 .filter(part -> !part.isBlank() && !part.equals(".") && !part.equals(".."))
@@ -526,7 +531,15 @@ public class Event {
         ABOVE_Y,
         EVENT,
         ALL_OF,
-        ANY_OF
+        ANY_OF,
+        NOT,
+        MOD_LOADED,
+        RANDOM_CHANCE
+    }
+
+    private enum DefaultState {
+        ENABLED,
+        DISABLED
     }
 
     public enum TimeCondition {
@@ -551,6 +564,7 @@ public class Event {
 
     public enum EventCondition {
         MENU,
+        CREDITS,
         DRAGON,
         WITHER,
         END_PORTAL,
@@ -573,16 +587,25 @@ public class Event {
         }
 
         public boolean isEnabled() {
-            return !MaMDataConfig.get().events.disabled_events.contains(this.id.toString());
+            MaMDataConfig.Events events = MaMDataConfig.get().events;
+            String id = this.id.toString();
+            if (isDefaultDisabled()) {
+                return events.enabled_events.contains(id);
+            }
+            return !events.disabled_events.contains(id);
         }
 
         public void setEnabled(boolean enabled) {
             MaMDataConfig config = MaMDataConfig.get();
             String id = this.id.toString();
-            if (enabled) {
-                config.events.disabled_events.remove(id);
-            } else if (!config.events.disabled_events.contains(id)) {
-                config.events.disabled_events.add(id);
+            config.events.enabled_events.remove(id);
+            config.events.disabled_events.remove(id);
+            if (enabled != defaultEnabled()) {
+                if (enabled) {
+                    config.events.enabled_events.add(id);
+                } else {
+                    config.events.disabled_events.add(id);
+                }
             }
             AutoConfig.getConfigHolder(MaMDataConfig.class).save();
             rebuildEvents();
@@ -592,7 +615,10 @@ public class Event {
             if (!isConfig()) return false;
             try {
                 if (Files.deleteIfExists(this.path)) {
-                    MaMDataConfig.get().events.disabled_events.remove(this.id.toString());
+                    MaMDataConfig config = MaMDataConfig.get();
+                    String id = this.id.toString();
+                    config.events.disabled_events.remove(id);
+                    config.events.enabled_events.remove(id);
                     AutoConfig.getConfigHolder(MaMDataConfig.class).save();
                     reloadConfigEvents();
                     return true;
@@ -602,18 +628,28 @@ public class Event {
             }
             return false;
         }
+
+        private boolean isDefaultDisabled() {
+            return !defaultEnabled();
+        }
+
+        private boolean defaultEnabled() {
+            return defaultState(this.record.defaultState()) != DefaultState.DISABLED;
+        }
     }
 
     public record ScreenEntry(Source source, int index, Record.Entry entry) {}
 
-    public record Record(Component name, List<Entry> entries, boolean hasName) {
+    public record Record(Component name, Component description, List<Entry> entries, String defaultState, boolean hasName) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(record -> record.hasName ? Optional.of(record.name) : Optional.empty()),
-                Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries)
-        ).apply(instance, (name, entries) -> new Record(name.orElse(Component.empty()), entries, name.isPresent())));
+                ComponentSerialization.CODEC.optionalFieldOf("description", CommonComponents.EMPTY).forGetter(Record::description),
+                Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
+                Codec.STRING.optionalFieldOf("default", "enabled").forGetter(Record::defaultState)
+        ).apply(instance, (name, description, entries, defaultState) -> new Record(name.orElse(Component.empty()), description, entries, defaultState, name.isPresent())));
 
-        public Record(Component name, List<Entry> entries) {
-            this(name, entries, true);
+        public Record(Component name, Component description, List<Entry> entries) {
+            this(name, description, entries, "enabled", true);
         }
 
         public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, int weight) {
@@ -642,6 +678,7 @@ public class Event {
 
     public record Condition(
             ConditionType type,
+            Optional<String> stringValue,
             Optional<Identifier> idValue,
             Optional<Integer> intValue,
             Optional<TimeCondition> timeValue,

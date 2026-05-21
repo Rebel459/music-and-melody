@@ -1,0 +1,17 @@
+{
+  "name": "Credits",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "minecraft:music.credits",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "credits"
+        }
+      ],
+      "priority": "very_high",
+      "sustain": false
+    }
+  ]
+}

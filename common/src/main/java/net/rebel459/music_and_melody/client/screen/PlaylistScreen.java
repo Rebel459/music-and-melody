@@ -65,7 +65,7 @@ public class PlaylistScreen extends Screen {
             this.refreshQueue();
         }).bounds(rowX + (controlWidth + 4) * 3, controlY, controlWidth, 20).build());
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.events"), button ->
-                this.minecraft.setScreen(new EventMusicScreen(this, true))
+                this.minecraft.setScreen(new EventScreen(this, true))
         ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
                 this.minecraft.setScreen(new SavePlaylistScreen(this))

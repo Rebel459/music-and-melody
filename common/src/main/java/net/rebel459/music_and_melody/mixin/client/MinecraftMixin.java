@@ -3,6 +3,8 @@ package net.rebel459.music_and_melody.mixin.client;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.logging.LogUtils;
+import net.minecraft.Optionull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.screens.Screen;
@@ -35,10 +37,6 @@ public abstract class MinecraftMixin {
 
     @Shadow
     @Nullable
-    public ClientLevel level;
-
-    @Shadow
-    @Nullable
     public Screen screen;
 
     @Shadow
@@ -57,18 +55,21 @@ public abstract class MinecraftMixin {
     private void playlistAndEventMusic(CallbackInfoReturnable<Music> cir) {
         EventHelper.stopOldEventMusic();
 
+        if (!PlaylistHelper.isPlaying() || PlaylistHelper.isEventPlaying()) {
+            Music music = EventHelper.processEventMusic();
+            if (music != null) {
+                cir.setReturnValue(music);
+                return;
+            }
+        }
+
         if (PlaylistHelper.isPlaying()) {
             cir.setReturnValue(PlaylistHelper.EMPTY);
             return;
         }
+
         if (PlaylistHelper.playNext()) {
             cir.setReturnValue(PlaylistHelper.EMPTY);
-            return;
-        }
-
-        Music music = EventHelper.processEventMusic();
-        if (music != null) {
-            cir.setReturnValue(music);
             return;
         }
 
@@ -76,7 +77,7 @@ public abstract class MinecraftMixin {
             return;
         }
 
-        EventHelper.resetStoredEvent();
+        EventHelper.clearStoredEvent();
 
         if (!MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
     }

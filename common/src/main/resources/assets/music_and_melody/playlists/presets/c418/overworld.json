@@ -1,0 +1,26 @@
+{
+  "name": {
+    "text": "C418 - Overworld"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/clark",
+        "music/game/danny",
+        "music/game/dry_hands",
+        "music/game/haggstrom",
+        "music/game/key",
+        "music/game/living_mice",
+        "music/game/mice_on_venus",
+        "music/game/minecraft",
+        "music/game/oxygene",
+        "music/game/subwoofer_lullaby",
+        "music/game/sweden",
+        "music/game/wet_hands"
+      ]
+    }
+  ],
+  "hidden": true
+}

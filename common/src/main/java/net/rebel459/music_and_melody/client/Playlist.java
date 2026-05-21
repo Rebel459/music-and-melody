@@ -123,13 +123,30 @@ public class Playlist {
         for (Path file : files) {
             Record record = readRecord(file);
             if (record == null) continue;
-            Identifier id = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "playlists/" + uniquePath(sanitize(stem(file)), usedPaths));
+            Identifier id = Identifier.fromNamespaceAndPath("config", "playlists/" + uniquePath(sanitize(stem(file)), usedPaths));
             Playlist playlist = create(id, record, file);
             CONFIG_PLAYLISTS.add(playlist);
         }
     }
 
-    public static synchronized boolean saveCurrentQueue(Minecraft minecraft, String playlistName, String iconPath) {
+    public static synchronized String previewConfigPlaylistPath(String playlistName) {
+        if (playlistName.trim().isEmpty()) return "";
+        Path target = configTarget(playlistName, "");
+        if (target == null) return "";
+        String path = DIRECTORY.relativize(target).toString().replace('\\', '/');
+        return path.endsWith(".json") ? path.substring(0, path.length() - ".json".length()) : path;
+    }
+
+    public static synchronized boolean configPlaylistExists(String playlistName, String pathOverride) {
+        Path target = configTarget(playlistName, pathOverride);
+        return target != null && Files.exists(target);
+    }
+
+    public static synchronized boolean canWriteConfigPlaylist(String playlistName, String pathOverride) {
+        return configTarget(playlistName, pathOverride) != null;
+    }
+
+    public static synchronized boolean saveCurrentQueue(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {
         List<Identifier> queuedSongs = PlaylistHelper.queuedSongs();
         String trimmedName = playlistName.trim();
         if (queuedSongs.isEmpty() || trimmedName.isEmpty()) return false;
@@ -140,7 +157,8 @@ public class Playlist {
             return false;
         }
 
-        Path path = DIRECTORY.resolve(sanitize(trimmedName) + ".json");
+        Path path = configTarget(trimmedName, pathOverride);
+        if (path == null) return false;
         Identifier icon = iconPath.isBlank()
                 ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")
                 : Identifier.tryParse(iconPath.trim());
@@ -152,6 +170,12 @@ public class Playlist {
         root.add("name", nameObject);
         root.addProperty("icon", icon.toString());
         root.add("entries", entries(groupTracks(minecraft, queuedSongs, false), groupTracks(minecraft, queuedSongs, true)));
+
+        try {
+            Files.createDirectories(path.getParent());
+        } catch (IOException ignored) {
+            return false;
+        }
 
         try (Writer writer = Files.newBufferedWriter(path)) {
             GSON.toJson(root, writer);
@@ -241,9 +265,27 @@ public class Playlist {
     }
 
     private static String sanitize(String value) {
-        String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "_");
+        String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("\\s+", "_").replaceAll("[^a-z0-9._-]", "");
         if (sanitized.isBlank()) return "playlist";
         return sanitized;
+    }
+
+    private static Path configTarget(String name, String pathOverride) {
+        String rawPath = pathOverride.trim().isEmpty() ? sanitize(name) : sanitizePath(pathOverride.trim());
+        if (rawPath.isBlank()) return null;
+        if (!rawPath.toLowerCase(Locale.ROOT).endsWith(".json")) rawPath += ".json";
+        Path target = DIRECTORY.resolve(rawPath).normalize();
+        Path root = DIRECTORY.toAbsolutePath().normalize();
+        return target.toAbsolutePath().normalize().startsWith(root) ? target : null;
+    }
+
+    private static String sanitizePath(String value) {
+        String sanitized = value.toLowerCase(Locale.ROOT).replace('\\', '/').replaceAll("\\s+", "_").replaceAll("[^a-z0-9._/-]", "");
+        while (sanitized.startsWith("/")) sanitized = sanitized.substring(1);
+        return java.util.Arrays.stream(sanitized.split("/"))
+                .filter(part -> !part.isBlank() && !part.equals(".") && !part.equals(".."))
+                .map(Playlist::sanitize)
+                .collect(java.util.stream.Collectors.joining("/"));
     }
 
     private static String uniquePath(String path, Set<String> usedPaths) {
@@ -254,11 +296,12 @@ public class Playlist {
         }
     }
 
-    public record Record(Component name, Identifier icon, List<Entry> entries, boolean hidden) {
+    public record Record(Component name, Identifier icon, List<Entry> entries, List<String> dependencies, boolean hidden) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
                 Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
                 Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
+                Codec.STRING.listOf().optionalFieldOf("dependencies", List.of()).forGetter(Record::dependencies),
                 Codec.BOOL.optionalFieldOf("hidden", false).forGetter(Record::hidden)
         ).apply(instance, Record::new));
     }

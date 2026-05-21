@@ -1,0 +1,18 @@
+{
+  "name": {
+    "text": "C418 - Nether"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/nether/concrete_halls",
+        "music/game/nether/dead_voxel",
+        "music/game/nether/warmth",
+        "music/game/nether/ballad_of_the_cats"
+      ]
+    }
+  ],
+  "hidden": true
+}

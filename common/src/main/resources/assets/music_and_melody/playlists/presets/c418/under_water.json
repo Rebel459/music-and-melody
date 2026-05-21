@@ -1,0 +1,17 @@
+{
+  "name": {
+    "text": "C418 - Under Water"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/water/axolotl",
+        "music/game/water/dragon_fish",
+        "music/game/water/shuniji"
+      ]
+    }
+  ],
+  "hidden": true
+}

@@ -73,11 +73,6 @@ public final class PlaylistHelper {
         return List.copyOf(QUEUED_SONGS);
     }
 
-    public static void remove(Identifier song) {
-        ensureLoaded();
-        if (QUEUED_SONGS.remove(song)) save();
-    }
-
     public static void remove(int index) {
         ensureLoaded();
         if (index >= 0 && index < QUEUED_SONGS.size()) {
@@ -96,7 +91,7 @@ public final class PlaylistHelper {
         if (currentSongFromQueue) stop();
         QUEUED_SONGS.clear();
         queueIndex = 0;
-        queuePaused = false;
+        queuePaused = true;
         save();
     }
 

@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.screen.AlbumScreen;
-import net.rebel459.music_and_melody.client.screen.EventMusicScreen;
+import net.rebel459.music_and_melody.client.screen.EventScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 
 public class MaMConfigScreen extends Screen {
@@ -42,7 +42,7 @@ public class MaMConfigScreen extends Screen {
         y += 24;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.events"),
-                button -> this.minecraft.setScreen(new EventMusicScreen.EventSourceScreen(this))
+                button -> this.minecraft.setScreen(new EventScreen.EventSourceScreen(this))
         ).bounds(x, y, 200, 20).build());
         y += 24;
         this.addRenderableWidget(Button.builder(

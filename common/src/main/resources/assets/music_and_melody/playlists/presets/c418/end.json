@@ -1,0 +1,15 @@
+{
+  "name": {
+    "text": "C418 - End"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/end/the_end"
+      ]
+    }
+  ],
+  "hidden": true
+}

@@ -8,6 +8,7 @@ import net.rebel459.music_and_melody.client.screen.AlbumScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,9 +23,19 @@ public abstract class SoundScreenMixin extends Screen {
     }
 
     @Inject(method = "addOptions", at = @At(value = "HEAD"))
-    private void addTopSoundOptionsButtons(CallbackInfo ci) {
+    private void addButtonsToTop(CallbackInfo ci) {
+        if (MaMClientConfig.get().button_placement == MaMClientConfig.ButtonPlacement.TOP) addButtons();
+    }
+
+    @Inject(method = "addOptions", at = @At(value = "TAIL"))
+    private void addButtonsToBottom(CallbackInfo ci) {
+        if (MaMClientConfig.get().button_placement == MaMClientConfig.ButtonPlacement.BOTTOM) addButtons();
+    }
+
+    @Unique
+    private void addButtons() {
         SoundOptionsScreen screen = SoundOptionsScreen.class.cast(this);
-        if (screen.list == null || MaMClientConfig.get().button_positions != MaMClientConfig.ButtonPosition.SOUNDS) return;
+        if (screen.list == null) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))

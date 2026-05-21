@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import com.mojang.datafixers.util.Either;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,14 +17,17 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.EventHelper;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class EventMusicScreen extends Screen {
+public class EventScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.event_editor");
     private static final Event.CategoryType[] CATEGORIES = Event.CategoryType.values();
@@ -60,18 +64,18 @@ public class EventMusicScreen extends Screen {
     private Screen sourceBrowserParent;
     private Identifier activeSourceId;
 
-    public EventMusicScreen(Screen parent) {
+    public EventScreen(Screen parent) {
         super(TITLE);
         this.parent = parent;
         reloadEntries();
     }
 
-    public EventMusicScreen(Screen parent, boolean openSourcesOnInit) {
+    public EventScreen(Screen parent, boolean openSourcesOnInit) {
         this(parent);
         this.openSourcesOnInit = openSourcesOnInit;
     }
 
-    private EventMusicScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId) {
+    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId) {
         super(TITLE);
         this.parent = parent;
         this.selectedIndex = selectedIndex;
@@ -81,7 +85,7 @@ public class EventMusicScreen extends Screen {
         reloadEntries();
     }
 
-    private EventMusicScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId, boolean closeToSources, Screen sourceBrowserParent) {
+    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId, boolean closeToSources, Screen sourceBrowserParent) {
         this(parent, selectedIndex, listExpanded, savedChanges, activeSourceId);
         this.closeToSources = closeToSources;
         this.sourceBrowserParent = sourceBrowserParent;
@@ -244,7 +248,7 @@ public class EventMusicScreen extends Screen {
     }
 
     private void toggleExpanded() {
-        this.minecraft.setScreen(new EventMusicScreen(this.parent, this.selectedIndex, !this.listExpanded, this.savedChanges, this.activeSourceId, this.closeToSources, this.sourceBrowserParent));
+        this.minecraft.setScreen(new EventScreen(this.parent, this.selectedIndex, !this.listExpanded, this.savedChanges, this.activeSourceId, this.closeToSources, this.sourceBrowserParent));
     }
 
     private void addEntry() {
@@ -458,7 +462,7 @@ public class EventMusicScreen extends Screen {
     private String musicExample() {
         return switch (CATEGORIES[this.categoryIndex]) {
             case ALBUM -> "minecraft:volume_alpha";
-            case PLAYLIST -> "music_and_melody:playlists/example";
+            case PLAYLIST -> "config:playlists/example";
             case POOL -> "minecraft:music.overworld.forest";
             case SONG -> "music_and_melody:music/overworld/alpha";
             case DISC -> "minecraft:cat";
@@ -500,11 +504,11 @@ public class EventMusicScreen extends Screen {
 
     private static Event.Record.Condition parseConditionPart(String part) {
         String lower = part.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("all_of") || lower.startsWith("any_of")) {
+        if (lower.startsWith("all_of") || lower.startsWith("any_of") || lower.startsWith("not")) {
             int separator = groupSeparator(part);
             if (separator < 0) return null;
             String type = part.substring(0, separator).trim().toLowerCase(Locale.ROOT);
-            if (!type.equals("all_of") && !type.equals("any_of")) return null;
+            if (!type.equals("all_of") && !type.equals("any_of") && !type.equals("not")) return null;
             String body = part.substring(separator + 1).trim();
             if (!body.startsWith("[") || !body.endsWith("]")) return null;
             List<Event.Record.Condition> nested = parseConditionList(body.substring(1, body.length() - 1));
@@ -515,19 +519,29 @@ public class EventMusicScreen extends Screen {
         String type = (separator < 0 ? part : part.substring(0, separator)).trim().toLowerCase(Locale.ROOT);
         String conditionValue = separator < 0 ? "" : part.substring(separator + 1).trim();
         Optional<Either<String, Integer>> parsedValue;
-        if (type.equals("above_y") || type.equals("below_y")) {
+        if (type.equals("above_y") || type.equals("below_y") || type.equals("random_chance")) {
             try {
-                parsedValue = Optional.of(Either.right(Integer.parseInt(conditionValue)));
+                int intValue = Integer.parseInt(conditionValue);
+                if (type.equals("random_chance") && (intValue < 0 || intValue > 100)) return null;
+                parsedValue = Optional.of(Either.right(intValue));
             } catch (NumberFormatException exception) {
                 return null;
             }
-        } else if (Identifier.tryParse(conditionValue) != null || type.equals("time") || type.equals("weather") || type.equals("game_mode") || type.equals("event")) {
+        } else if (isStringCondition(type) || Identifier.tryParse(conditionValue) != null) {
             if (conditionValue.isEmpty()) return null;
             parsedValue = Optional.of(Either.left(conditionValue));
         } else {
             return null;
         }
         return new Event.Record.Condition(type, parsedValue);
+    }
+
+    private static boolean isStringCondition(String type) {
+        return type.equals("time")
+                || type.equals("weather")
+                || type.equals("game_mode")
+                || type.equals("event")
+                || type.equals("mod_loaded");
     }
 
     private static List<String> splitConditionParts(String value) {
@@ -552,11 +566,11 @@ public class EventMusicScreen extends Screen {
     }
 
     private static String conditionsText(List<Event.Record.Condition> conditions) {
-        return conditions.stream().map(EventMusicScreen::conditionText).collect(Collectors.joining(", "));
+        return conditions.stream().map(EventScreen::conditionText).collect(Collectors.joining(", "));
     }
 
     private static String conditionText(Event.Record.Condition condition) {
-        if (condition.type().equalsIgnoreCase("all_of") || condition.type().equalsIgnoreCase("any_of")) {
+        if (condition.type().equalsIgnoreCase("all_of") || condition.type().equalsIgnoreCase("any_of") || condition.type().equalsIgnoreCase("not")) {
             return condition.type().toLowerCase(Locale.ROOT) + "=[" + conditionsText(condition.conditions()) + "]";
         }
         if (condition.value().isEmpty()) return condition.type();
@@ -566,9 +580,9 @@ public class EventMusicScreen extends Screen {
 
     private static class EventList extends ObjectSelectionList<EventEntry> {
 
-        private final EventMusicScreen screen;
+        private final EventScreen screen;
 
-        EventList(EventMusicScreen screen, Minecraft minecraft, int width, int height, int y) {
+        EventList(EventScreen screen, Minecraft minecraft, int width, int height, int y) {
             super(minecraft, width, height, y, 34);
             this.screen = screen;
             this.centerListVertically = false;
@@ -595,12 +609,12 @@ public class EventMusicScreen extends Screen {
 
     private static class EventEntry extends ObjectSelectionList.Entry<EventEntry> {
 
-        private final EventMusicScreen screen;
+        private final EventScreen screen;
         private final Minecraft minecraft;
         private final int index;
         private final Event.ScreenEntry row;
 
-        EventEntry(EventMusicScreen screen, Minecraft minecraft, int index, Event.ScreenEntry row) {
+        EventEntry(EventScreen screen, Minecraft minecraft, int index, Event.ScreenEntry row) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.index = index;
@@ -633,21 +647,21 @@ public class EventMusicScreen extends Screen {
     public static class EventSourceScreen extends Screen {
 
         private static final Component TITLE = Component.translatable("screen.music_and_melody.events");
-        private final EventMusicScreen editor;
+        private final EventScreen editor;
         private final Screen parent;
+        private final Set<Identifier> deletePendingSources = new HashSet<>();
         private SourceList list;
         private Button filterButton;
-        private SourceFilter filter = SourceFilter.ALL;
 
         public EventSourceScreen(Screen parent) {
-            this(new EventMusicScreen(parent), parent);
+            this(new EventScreen(parent), parent);
         }
 
-        public EventSourceScreen(EventMusicScreen parent) {
+        public EventSourceScreen(EventScreen parent) {
             this(parent, parent);
         }
 
-        public EventSourceScreen(EventMusicScreen editor, Screen parent) {
+        public EventSourceScreen(EventScreen editor, Screen parent) {
             super(TITLE);
             this.editor = editor;
             this.parent = parent;
@@ -684,6 +698,21 @@ public class EventMusicScreen extends Screen {
 
         @Override
         public void onClose() {
+            boolean deletedActiveSource = false;
+            if (!this.deletePendingSources.isEmpty()) {
+                for (Event.Source source : Event.sources()) {
+                    if (!this.deletePendingSources.contains(source.id)) continue;
+                    deletedActiveSource |= source.id.equals(this.editor.activeSourceId);
+                    source.deleteConfig();
+                }
+                this.deletePendingSources.clear();
+                if (deletedActiveSource) {
+                    this.editor.loadSource(null);
+                } else {
+                    this.editor.reloadEntries();
+                    this.editor.refreshList();
+                }
+            }
             if (this.editor.savedChanges) {
                 EventHelper.resetMusicBreak();
             }
@@ -705,36 +734,43 @@ public class EventMusicScreen extends Screen {
             if (this.list != null) this.list.refresh();
         }
 
+        private boolean isDeletePending(Event.Source source) {
+            return this.deletePendingSources.contains(source.id);
+        }
+
+        private void toggleDeletePending(Event.Source source) {
+            if (!source.isConfig()) return;
+            if (!this.deletePendingSources.remove(source.id)) {
+                this.deletePendingSources.add(source.id);
+            }
+            this.editor.markSavedChanges();
+            refreshList();
+        }
+
         private void cycleFilter() {
-            this.filter = switch (this.filter) {
-                case ALL -> SourceFilter.CUSTOM;
-                case CUSTOM -> SourceFilter.BUILT_IN;
-                case BUILT_IN -> SourceFilter.ALL;
+            MaMDataConfig config = MaMDataConfig.get();
+            config.events.display = switch (config.events.display) {
+                case ALL -> MaMDataConfig.EventDisplay.ENABLED;
+                case ENABLED -> MaMDataConfig.EventDisplay.DISABLED;
+                case DISABLED -> MaMDataConfig.EventDisplay.CUSTOM;
+                case CUSTOM -> MaMDataConfig.EventDisplay.BUILT_IN;
+                case BUILT_IN -> MaMDataConfig.EventDisplay.ALL;
             };
+            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         }
 
         private Component filterMessage() {
-            return Component.translatable("button.music_and_melody.event_display." + this.filter.key);
+            return Component.translatable("button.music_and_melody.event_display." + MaMDataConfig.get().events.display.name().toLowerCase(Locale.ROOT));
         }
 
         private boolean visible(Event.Source source) {
-            return switch (this.filter) {
+            return switch (MaMDataConfig.get().events.display) {
                 case ALL -> true;
+                case ENABLED -> source.isEnabled();
+                case DISABLED -> !source.isEnabled();
                 case CUSTOM -> source.isConfig();
                 case BUILT_IN -> !source.isConfig();
             };
-        }
-
-        private enum SourceFilter {
-            ALL("all"),
-            CUSTOM("custom"),
-            BUILT_IN("built_in");
-
-            private final String key;
-
-            SourceFilter(String key) {
-                this.key = key;
-            }
         }
     }
 
@@ -790,7 +826,7 @@ public class EventMusicScreen extends Screen {
             this.toggleButton = Button.builder(toggleMessage(), button -> toggleSource())
                     .size(BUTTON_WIDTH, 20)
                     .build();
-            this.deleteButton = source.isConfig() ? Button.builder(Component.translatable("button.music_and_melody.delete"), button -> deleteSource())
+            this.deleteButton = source.isConfig() ? Button.builder(deleteMessage(), button -> deleteSource())
                     .size(BUTTON_WIDTH, 20)
                     .build() : null;
         }
@@ -805,11 +841,18 @@ public class EventMusicScreen extends Screen {
             int x = this.getContentX() + 1;
             int buttonsWidth = BUTTON_WIDTH * 3 + BUTTON_GAP * 2;
             int maxWidth = this.getContentWidth() - buttonsWidth - 12;
-            int color = this.source.isEnabled() ? 0xFFFFFFFF : 0xFF888888;
+            int color = this.screen.isDeletePending(this.source) ? 0xFFFF8888 : this.source.isEnabled() ? 0xFFFFFFFF : 0xFF888888;
             FormattedCharSequence name = this.minecraft.font.split(this.source.record.name(), maxWidth).getFirst();
             graphics.text(this.minecraft.font, name, x, this.getContentYMiddle() - this.minecraft.font.lineHeight - 1, color);
             graphics.text(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(this.source.id.toString(), maxWidth), x, this.getContentYMiddle() + 2, 0xFFAAAAAA);
+            if (hovered && hasDescription()) {
+                graphics.setTooltipForNextFrame(this.minecraft.font, this.minecraft.font.split(this.source.record.description(), 240), mouseX, mouseY);
+            }
             renderButtons(graphics, mouseX, mouseY, tickDelta);
+        }
+
+        private boolean hasDescription() {
+            return !this.source.record.description().getString().isBlank();
         }
 
         @Override
@@ -834,6 +877,7 @@ public class EventMusicScreen extends Screen {
 
             int thirdX = buttonX + (BUTTON_WIDTH + BUTTON_GAP) * 2;
             if (this.deleteButton != null) {
+                this.deleteButton.setMessage(deleteMessage());
                 this.deleteButton.setX(thirdX);
                 this.deleteButton.setY(buttonY);
                 this.deleteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
@@ -853,6 +897,10 @@ public class EventMusicScreen extends Screen {
             return Component.translatable(this.source.isEnabled() ? "button.music_and_melody.disable" : "button.music_and_melody.enable");
         }
 
+        private Component deleteMessage() {
+            return Component.translatable(this.screen.isDeletePending(this.source) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+        }
+
         private void toggleSource() {
             this.source.setEnabled(!this.source.isEnabled());
             this.screen.editor.markSavedChanges();
@@ -862,16 +910,7 @@ public class EventMusicScreen extends Screen {
         }
 
         private void deleteSource() {
-            Identifier deleted = this.source.id;
-            if (!this.source.deleteConfig()) return;
-            this.screen.editor.markSavedChanges();
-            if (deleted.equals(this.screen.editor.activeSourceId)) {
-                this.screen.editor.loadSource(null);
-            } else {
-                this.screen.editor.reloadEntries();
-                this.screen.editor.refreshList();
-            }
-            this.screen.refreshList();
+            this.screen.toggleDeletePending(this.source);
         }
     }
 
@@ -880,6 +919,7 @@ public class EventMusicScreen extends Screen {
         private static final Component TITLE = Component.translatable("screen.music_and_melody.create_event");
         private final EventSourceScreen parent;
         private EditBox nameField;
+        private EditBox descriptionField;
         private EditBox pathField;
         private Button createButton;
 
@@ -898,7 +938,9 @@ public class EventMusicScreen extends Screen {
                 updatePathHint();
                 refreshCreateState();
             });
-            this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 104, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.path")));
+            this.descriptionField = this.addRenderableWidget(new EditBox(this.font, fieldX, 104, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.description")));
+            this.descriptionField.setMaxLength(256);
+            this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 146, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.path")));
             this.pathField.setMaxLength(256);
             this.pathField.setResponder(value -> refreshCreateState());
             updatePathHint();
@@ -921,7 +963,8 @@ public class EventMusicScreen extends Screen {
             graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
             int fieldX = this.nameField.getX();
             graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), fieldX, 50, 0xFFAAAAAA);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), fieldX, 92, 0xFFAAAAAA);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), fieldX, 92, 0xFFAAAAAA);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), fieldX, 134, 0xFFAAAAAA);
         }
 
         @Override
@@ -930,7 +973,7 @@ public class EventMusicScreen extends Screen {
         }
 
         private void create() {
-            Event.Source source = Event.createConfigSource(this.nameField.getValue(), this.pathField.getValue());
+            Event.Source source = Event.createConfigSource(this.nameField.getValue(), this.descriptionField.getValue(), this.pathField.getValue());
             if (source == null) return;
             this.parent.editor.markSavedChanges();
             this.parent.editor.loadSource(source.id);

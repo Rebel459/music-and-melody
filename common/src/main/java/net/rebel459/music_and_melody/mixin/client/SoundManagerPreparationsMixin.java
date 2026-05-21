@@ -10,7 +10,6 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.CommonMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -28,10 +27,6 @@ import java.util.*;
 public class SoundManagerPreparationsMixin {
 
     @Shadow
-    @Final
-    private Map<Identifier, WeighedSoundEvents> registry;
-
-    @Shadow
     private Map<Identifier, Resource> soundCache;
 
     @Unique
@@ -43,7 +38,6 @@ public class SoundManagerPreparationsMixin {
     @Inject(method = "listResources", at = @At("HEAD"))
     private void clearRawSoundPools(ResourceManager resourceManager, CallbackInfo ci) {
         DISABLED_EVENTS.clear();
-        CommonMusicHelper.clearSoundPools();
     }
 
     @Inject(method = "listResources", at = @At("RETURN"))
@@ -59,40 +53,7 @@ public class SoundManagerPreparationsMixin {
         if (soundEventRegistration.getSounds().isEmpty()) {
             DISABLED_EVENTS.add(eventLocation);
             ci.cancel();
-            return;
         }
-        CommonMusicHelper.addSoundPool(eventLocation, soundEventRegistration.getSounds(), soundEventRegistration.isReplace());
-    }
-
-    @Inject(method = "apply", at = @At("HEAD"))
-    private void storeFilteredMusicPools(Map<Identifier, WeighedSoundEvents> registry, Map<Identifier, Resource> soundCache, SoundEngine engine, CallbackInfo ci) {
-        CommonMusicHelper.FILTERED_POOLS.clear();
-        if (!MaMClientConfig.get().common_music) return;
-        registry = this.registry;
-        WeighedSoundEvents common = registry.get(CommonMusicHelper.BASE_POOL);
-        if (common == null) return;
-
-        Set<CommonMusicHelper.SoundKey> commonSounds = CommonMusicHelper.getCommonSounds(CommonMusicHelper.BASE_POOL);
-
-        if (commonSounds.isEmpty()) return;
-
-        registry.forEach((poolId, pool) -> {
-            pool.list.removeIf(weighted -> weighted instanceof Sound sound && sound.getPath().getNamespace().equals(MusicAndMelody.MOD_ID));
-            if (poolId.equals(CommonMusicHelper.BASE_POOL)) return;
-            if (CommonMusicHelper.containsCommonSound(poolId, commonSounds)) {
-                CommonMusicHelper.FILTERED_POOLS.add(poolId);
-                return;
-            }
-            pool.list.forEach(weighted -> {
-                List<Weighted<Sound>> sounds = List.of(weighted);
-                if (weighted instanceof WeighedSoundEvents weighedSounds) {
-                    if (CommonMusicHelper.filterWeighedSounds(weighedSounds, commonSounds)) CommonMusicHelper.FILTERED_POOLS.add(poolId);
-                }
-                for (Weighted<Sound> sound : sounds) {
-                    if (sound instanceof Sound && commonSounds.contains(CommonMusicHelper.SoundKey.of((Sound) sound))) CommonMusicHelper.FILTERED_POOLS.add(poolId);
-                }
-            });
-        });
     }
 
     @Unique

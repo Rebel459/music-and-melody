@@ -2,6 +2,7 @@ package net.rebel459.music_and_melody.client;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.WinScreen;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
@@ -21,22 +22,18 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.rebel459.music_and_melody.client.screen.AlbumDetailsScreen;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
+import net.rebel459.unified.platform.UnifiedPlatform;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class EventHelper {
 
-    private static final Identifier EMPTY_STRUCTURE = Identifier.withDefaultNamespace("empty");
-    private static int structureRequestCooldown;
     private static int musicBreak;
     private static boolean blockingForEventMusic;
     private static boolean cooldownEmptyMusic;
     private static boolean fading;
     private static boolean finishedFading;
+    private static boolean fadingOutCurrentEvent;
     private static QueuedEvent queuedEvent;
 
     private static Event.PriorityType lastPriority = Event.PriorityType.LOW;
@@ -66,25 +63,31 @@ public class EventHelper {
         if (finishedFading) {
             return playQueuedEvent();
         }
+        if (fadingOutCurrentEvent) {
+            return storedEventMusicOrBlocker();
+        }
         if (fading) {
             if (!events.isEmpty()) {
                 Event event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
-                if (queuedEvent == null || event.priority.ordinal() >= queuedEvent.event().priority.ordinal()) {
+                if (queuedEvent == null || event.priority.ordinal() > queuedEvent.event().priority.ordinal()) {
                     queuedEvent = new QueuedEvent(event, true);
                 }
             }
-            return null;
+            return storedEventMusicOrBlocker();
         }
 
         if (!events.isEmpty()) {
             Event event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
             boolean activeMusic = hasActiveNonEmptyMusic();
             boolean storedEventActive = isStoredEventMusicActive();
+            boolean storedEventStillApplicable = isCurrentEventMusicStillApplicable(storedEventActive);
+            boolean storedEventInactive = lastCategory != null && !storedEventActive;
             if (activeMusic && !storedEventActive) {
                 clearStoredEvent();
+                storedEventInactive = false;
             }
 
-            Event.PriorityType currentPriority = storedEventActive ? lastPriority : Event.PriorityType.LOW;
+            Event.PriorityType currentPriority = lastCategory != null ? lastPriority : Event.PriorityType.LOW;
             boolean higherPriority = event.priority.ordinal() > currentPriority.ordinal();
             if (higherPriority) {
                 cooldownEmptyMusic = false;
@@ -96,17 +99,22 @@ public class EventHelper {
                 return playEventOrBlockVanilla(Minecraft.getInstance(), event, true);
             }
 
+            if (storedEventStillApplicable) {
+                cooldownEmptyMusic = false;
+                return storedEventMusicOrBlocker();
+            }
+
             if (musicBreak > 0) {
                 musicBreak--;
                 blockingForEventMusic = true;
                 cooldownEmptyMusic = !activeMusic;
-                return activeMusic ? null : PlaylistHelper.EMPTY;
+                return activeMusic ? storedEventMusicOrBlocker() : PlaylistHelper.EMPTY;
             }
 
             if (blockingForEventMusic) {
                 if (activeMusic) {
                     cooldownEmptyMusic = false;
-                    return null;
+                    return storedEventMusicOrBlocker();
                 }
                 blockingForEventMusic = false;
                 cooldownEmptyMusic = false;
@@ -126,10 +134,10 @@ public class EventHelper {
 
             if (!blockingForEventMusic && activeMusic) {
                 cooldownEmptyMusic = false;
-                return null;
+                return storedEventMusicOrBlocker();
             }
 
-            musicBreak = randomMusicBreak();
+            musicBreak = storedEventInactive ? randomMusicBreak() : randomMusicBreak();
             if (musicBreak > 0) {
                 musicBreak--;
                 blockingForEventMusic = true;
@@ -145,9 +153,10 @@ public class EventHelper {
         cooldownEmptyMusic = false;
         clearFadeEvent();
         stopEmptyMusic();
-        if (!isStoredEventMusicActive()) {
-            clearStoredEvent();
+        if (isStoredEventMusicActive()) {
+            return storedEventMusicOrBlocker();
         }
+        clearStoredEvent();
         return null;
     }
 
@@ -167,14 +176,26 @@ public class EventHelper {
     }
 
     public static boolean shouldContinueEventFade() {
-        return fading && queuedEvent != null && shouldBeActive(queuedEvent.event().conditions, StructureMode.IGNORE);
+        return fading && queuedEvent != null && shouldBeActive(queuedEvent.event().conditions, false);
+    }
+
+    public static boolean isFadingOutCurrentEvent() {
+        return fadingOutCurrentEvent;
+    }
+
+    public static boolean shouldContinueCurrentEventFadeOut() {
+        return fadingOutCurrentEvent
+                && PlaylistHelper.isEventPlaying()
+                && !shouldSustain
+                && !lastConditions.isEmpty()
+                && !shouldBeActive(lastConditions, false);
     }
 
     public static boolean shouldFadeCurrentMusic(SoundInstance currentMusic) {
         return isStoredPoolMusic(currentMusic)
                 && !shouldSustain
                 && !lastConditions.isEmpty()
-                && !storedConditionsStillActive()
+                && !shouldBeActive(lastConditions, false)
                 && !PlaylistHelper.isPlaying();
     }
 
@@ -188,10 +209,19 @@ public class EventHelper {
         if (lastCategory == null || lastCategory == Event.CategoryType.POOL || shouldSustain || lastConditions.isEmpty()) {
             return;
         }
-        if (PlaylistHelper.isEventPlaying() && !shouldBeActive(lastConditions)) {
-            PlaylistHelper.stopEvent();
-            clearStoredEvent();
+        if (PlaylistHelper.isEventPlaying() && !shouldBeActive(lastConditions, false)) {
+            fadingOutCurrentEvent = true;
         }
+    }
+
+    public static void clearCurrentEventFadeOut() {
+        fadingOutCurrentEvent = false;
+    }
+
+    public static void finishCurrentEventFadeOut() {
+        PlaylistHelper.stopEvent();
+        clearStoredEvent();
+        fadingOutCurrentEvent = false;
     }
 
     public static Pair<Integer, Integer> getMusicFrequency() {
@@ -248,23 +278,20 @@ public class EventHelper {
         clearFadeEvent();
         if (queued == null) return null;
         Event event = queued.event();
-        if (!shouldBeActive(event.conditions, StructureMode.IGNORE)) return null;
+        if (!shouldBeActive(event.conditions, false)) return null;
         return playEventOrBlockVanilla(Minecraft.getInstance(), event, queued.replaceCurrentMusic());
     }
 
     public static void clearFadeEvent() {
         fading = false;
         finishedFading = false;
+        fadingOutCurrentEvent = false;
         queuedEvent = null;
     }
 
     public static void finishFade() {
         fading = false;
         finishedFading = true;
-    }
-
-    public static void resetStoredEvent() {
-        clearStoredEvent();
     }
 
     private static void stopEmptyMusic() {
@@ -296,6 +323,19 @@ public class EventHelper {
         return PlaylistHelper.EMPTY;
     }
 
+    private static Music storedEventMusicOrBlocker() {
+        if (lastCategory == Event.CategoryType.POOL && lastMusic != null) {
+            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.get(lastMusic);
+            if (sound.isPresent()) {
+                return new Music(sound.get(), 0, 0, false);
+            }
+        }
+        if (lastCategory != null) {
+            return PlaylistHelper.EMPTY;
+        }
+        return null;
+    }
+
     private static void storeEvent(Event event) {
         musicBreak = 0;
         blockingForEventMusic = false;
@@ -308,11 +348,7 @@ public class EventHelper {
     }
 
     private static boolean isCurrentEventMusicStillApplicable(boolean storedEventActive) {
-        return storedEventActive && !lastConditions.isEmpty() && storedConditionsStillActive();
-    }
-
-    private static boolean storedConditionsStillActive() {
-        return shouldBeActive(lastConditions, StructureMode.NORMAL);
+        return storedEventActive && !lastConditions.isEmpty() && shouldBeActive(lastConditions, false);
     }
 
     private static boolean isStoredEventMusicActive() {
@@ -337,17 +373,20 @@ public class EventHelper {
         return currentMusic != null && lastCategory == Event.CategoryType.POOL && currentMusic.getIdentifier().equals(lastMusic);
     }
 
-    private static void clearStoredEvent() {
+    public static void clearStoredEvent() {
         lastPriority = Event.PriorityType.LOW;
         lastConditions = List.of();
         shouldSustain = true;
         lastCategory = null;
         lastMusic = null;
+        fadingOutCurrentEvent = false;
     }
 
     private static int randomMusicBreak() {
         Pair<Integer, Integer> frequency = getMusicFrequency();
-        return SoundInstance.createUnseededRandom().nextIntBetweenInclusive(frequency.getFirst(), frequency.getSecond()) * 20;
+        int minimumTicks = 0;
+        if (Minecraft.getInstance().level == null) minimumTicks = 200;
+        return Math.max(minimumTicks, SoundInstance.createUnseededRandom().nextIntBetweenInclusive(frequency.getFirst(), frequency.getSecond()) * 20);
     }
 
     private static boolean playRandomEventSong(Minecraft client, List<Identifier> songs) {
@@ -366,21 +405,24 @@ public class EventHelper {
         }
     }
 
-    public static boolean shouldBeActive(List<Event.Condition> conditions) {
-        return shouldBeActive(conditions, StructureMode.NORMAL);
+    private static boolean shouldBeActive(List<Event.Condition> conditions) {
+        return shouldBeActive(conditions, true);
     }
 
-    private static boolean shouldBeActive(List<Event.Condition> conditions, StructureMode structureMode) {
+    private static boolean shouldBeActive(List<Event.Condition> conditions, boolean rollRandomChance) {
         boolean shouldBeActive = true;
         Minecraft client = Minecraft.getInstance();
         Player player = client.player;
         Level level = client.level;
         for (Event.Condition condition : conditions) {
             if (condition.type() == Event.ConditionType.ALL_OF) {
-                shouldBeActive = shouldBeActive && shouldBeActive(condition.conditions(), structureMode);
+                shouldBeActive = shouldBeActive && shouldBeActive(condition.conditions(), rollRandomChance);
             }
             if (condition.type() == Event.ConditionType.ANY_OF) {
-                shouldBeActive = shouldBeActive && condition.conditions().stream().anyMatch(nested -> shouldBeActive(List.of(nested), structureMode));
+                shouldBeActive = shouldBeActive && condition.conditions().stream().anyMatch(nested -> shouldBeActive(List.of(nested), rollRandomChance));
+            }
+            if (condition.type() == Event.ConditionType.NOT) {
+                shouldBeActive = shouldBeActive && !shouldBeActive(condition.conditions(), rollRandomChance);
             }
             if (condition.type() == Event.ConditionType.BIOME) {
                 shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
@@ -424,7 +466,8 @@ public class EventHelper {
             }
             if (condition.type() == Event.ConditionType.EVENT) {
                 switch (condition.eventValue().get()) {
-                    case MENU -> shouldBeActive = shouldBeActive && client.screen != null && level == null;
+                    case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
+                    case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
                     case DRAGON -> shouldBeActive = shouldBeActive && level != null && level.dimension() == Level.END && client.gui.getBossOverlay().shouldPlayMusic();
                     case WITHER -> shouldBeActive = shouldBeActive && EventHelper.hasWitherBossBar();
                     case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
@@ -437,7 +480,14 @@ public class EventHelper {
             if (condition.type() == Event.ConditionType.BELOW_Y) {
                 shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
             }
+            if (condition.type() == Event.ConditionType.MOD_LOADED) {
+                shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+            }
+            if (condition.type() == Event.ConditionType.RANDOM_CHANCE) {
+                shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= condition.intValue().get());
+            }
         }
+
         return shouldBeActive;
     }
 
@@ -449,11 +499,5 @@ public class EventHelper {
             case SPECTATOR -> current == GameType.SPECTATOR;
         };
     }
-
     private record QueuedEvent(Event event, boolean replaceCurrentMusic) {}
-
-    private enum StructureMode {
-        NORMAL,
-        IGNORE
-    }
 }

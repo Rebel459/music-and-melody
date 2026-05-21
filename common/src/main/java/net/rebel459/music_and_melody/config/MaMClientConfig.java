@@ -41,11 +41,8 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean common_music = false;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	@ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-	public int common_music_chance = 50;
+	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+	public ButtonPlacement button_placement = ButtonPlacement.TOP;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -53,16 +50,11 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-	public ButtonPosition button_positions = ButtonPosition.SOUNDS;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
 	public boolean custom_album = true;
 
-	public enum ButtonPosition {
-		SOUNDS,
-		OPTIONS,
+	public enum ButtonPlacement {
+		TOP,
+		BOTTOM,
 		NONE
 	}
 }

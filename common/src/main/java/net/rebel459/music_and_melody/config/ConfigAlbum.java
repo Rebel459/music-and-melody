@@ -24,7 +24,7 @@ import java.util.Set;
 
 public final class ConfigAlbum {
 
-    public static final Identifier ALBUM_ID = MusicAndMelody.id("album");
+    public static final Identifier ALBUM_ID = Identifier.fromNamespaceAndPath("config", "album");
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "album");
     private static final String SOUND_PATH = "album/";
     private static final Map<Identifier, Path> FILES = new LinkedHashMap<>();
@@ -55,8 +55,8 @@ public final class ConfigAlbum {
     }
 
     public static Identifier playableId(Identifier id) {
-        if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith("album/")) {
-            return Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, SOUND_PATH + id.getPath().substring("album/".length()));
+        if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(SOUND_PATH)) {
+            return Identifier.fromNamespaceAndPath("config", id.getPath());
         }
         return id;
     }
@@ -86,7 +86,7 @@ public final class ConfigAlbum {
         for (Path file : files) {
             String fileName = file.getFileName().toString();
             String path = uniquePath(SOUND_PATH + sanitize(stem(fileName)), usedPaths);
-            Identifier id = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, path);
+            Identifier id = Identifier.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
         }

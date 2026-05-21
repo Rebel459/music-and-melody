@@ -9,10 +9,11 @@ import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
+import net.minecraft.sounds.Musics;
 import net.minecraft.sounds.SoundEvent;
-import net.rebel459.music_and_melody.client.CommonMusicHelper;
+import net.minecraft.sounds.SoundEvents;
+import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.EventHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -23,15 +24,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MusicManager.class)
 public abstract class MusicManagerMixin {
-
-    @Shadow
-    public abstract boolean isPlayingMusic(Music music);
 
     @Shadow
     public abstract void stopPlaying();
@@ -52,16 +49,6 @@ public abstract class MusicManagerMixin {
         if (key != null) cir.setReturnValue(key);
     }
 
-    @ModifyVariable(method = "startPlaying", at = @At("HEAD"), argsOnly = true)
-    private Music selectCommonMusic(Music music) {
-        var config = MaMClientConfig.get();
-        Identifier musicId = music.sound().value().location();
-        if (config.common_music && CommonMusicHelper.FILTERED_POOLS.contains(musicId) && SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= config.common_music_chance) {
-            return new Music(MaMSounds.REGISTERED_SOUNDS.get("music.common"), music.minDelay(), music.maxDelay(), music.replaceCurrentMusic());
-        }
-        else return music;
-    }
-
     @WrapOperation(
             method = "startPlaying",
             at = @At(
@@ -70,9 +57,8 @@ public abstract class MusicManagerMixin {
             )
     )
     private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, @Local(name = "soundEvent") SoundEvent soundEvent) {
-        if (!soundEvent.location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) {
-            original.call(toastManager);
-        }
+        if (soundEvent.location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
+        original.call(toastManager);
     }
 
     @ModifyExpressionValue(
@@ -118,18 +104,6 @@ public abstract class MusicManagerMixin {
 
         Minecraft.getInstance().getSoundManager().stop(this.currentMusic);
         this.currentMusic = null;
-        this.nextSongDelay = 0;
-    }
-
-    @ModifyExpressionValue(
-            method = "startPlaying",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/resources/sounds/SimpleSoundInstance;forMusic(Lnet/minecraft/sounds/SoundEvent;)Lnet/minecraft/client/resources/sounds/SimpleSoundInstance;"
-            )
-    )
-    private SimpleSoundInstance filterOnlyBackgroundMusic(SimpleSoundInstance original, @Local(name = "soundEvent") SoundEvent soundEvent) {
-        if (MaMClientConfig.get().common_music) return new CommonMusicHelper.Instance(soundEvent);
-        else return original;
+        this.nextSongDelay = Math.max(this.nextSongDelay, 20);
     }
 }

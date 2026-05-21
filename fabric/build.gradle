@@ -15,8 +15,8 @@ dependencies {
     }
     api("maven.modrinth:unified-api:$unified_version-fabric")
 
-    implementation("maven.modrinth:simple-music-control:$simple_music_control-fabric")
-    implementation("maven.modrinth:fzzy-config:$fzzy_version")
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-fabric")
+    compileOnly("maven.modrinth:fzzy-config:$fzzy_version")
 }
 
 loom {

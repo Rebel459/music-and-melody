@@ -1,0 +1,15 @@
+{
+  "name": {
+    "text": "C418 - Dragon"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/end/boss"
+      ]
+    }
+  ],
+  "hidden": true
+}

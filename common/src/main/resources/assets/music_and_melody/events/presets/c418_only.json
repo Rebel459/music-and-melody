@@ -1,0 +1,149 @@
+{
+  "name": "C418 Only",
+  "description": "Replaces all music with C418 tracks",
+  "entries": [
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/overworld",
+      "conditions": [
+        {
+          "type": "dimension",
+          "value": "overworld"
+        },
+        {
+          "type": "not",
+          "conditions": [
+            {
+              "type": "any_of",
+              "conditions": [
+                {
+                  "type": "all_of",
+                  "conditions": [
+                    {
+                      "type": "event",
+                      "value": "under_water"
+                    },
+                    {
+                      "type": "any_of",
+                      "conditions": [
+                        {
+                          "type": "biome_tag",
+                          "value": "is_river"
+                        },
+                        {
+                          "type": "biome_tag",
+                          "value": "is_ocean"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "game_mode",
+                  "value": "creative"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/nether",
+      "conditions": [
+        {
+          "type": "dimension",
+          "value": "the_nether"
+        }
+      ]
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/end",
+      "conditions": [
+        {
+          "type": "dimension",
+          "value": "the_end"
+        }
+      ]
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/creative",
+      "conditions": [
+        {
+          "type": "dimension",
+          "value": "overworld"
+        },
+        {
+          "type": "game_mode",
+          "value": "creative"
+        }
+      ]
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/under_water",
+      "conditions": [
+        {
+          "type": "dimension",
+          "value": "overworld"
+        },
+        {
+          "type": "event",
+          "value": "under_water"
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "biome_tag",
+              "value": "is_river"
+            },
+            {
+              "type": "biome_tag",
+              "value": "is_ocean"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/dragon",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "dragon"
+        }
+      ],
+      "priority": "high",
+      "sustain": false
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/credits",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "credits"
+        }
+      ],
+      "priority": "high",
+      "sustain": false
+    },
+    {
+      "category": "playlist",
+      "music": "music_and_melody:presets/c418/menu",
+      "conditions": [
+        {
+          "type": "event",
+          "value": "menu"
+        }
+      ],
+      "sustain": false
+    }
+  ],
+  "default": "disabled"
+}

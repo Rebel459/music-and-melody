@@ -18,6 +18,7 @@ class SavePlaylistScreen extends Screen {
     private final PlaylistScreen parent;
     private EditBox nameField;
     private EditBox iconField;
+    private EditBox pathField;
     private Button saveButton;
 
     SavePlaylistScreen(PlaylistScreen parent) {
@@ -31,15 +32,22 @@ class SavePlaylistScreen extends Screen {
         int fieldX = this.width / 2 - fieldWidth / 2;
         this.nameField = this.addRenderableWidget(new EditBox(this.font, fieldX, 62, fieldWidth, 20, Component.translatable("screen.music_and_melody.save_playlist.name")));
         this.nameField.setMaxLength(80);
-        this.nameField.setResponder(value -> refreshSaveState());
+        this.nameField.setResponder(value -> {
+            updatePathHint();
+            refreshSaveState();
+        });
         this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, 104, fieldWidth, 20, Component.translatable("screen.music_and_melody.save_playlist.icon")));
         this.iconField.setMaxLength(256);
         this.iconField.setResponder(value -> refreshSaveState());
         this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(ChatFormatting.DARK_GRAY));
+        this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 146, fieldWidth, 20, Component.translatable("screen.music_and_melody.save_playlist.path")));
+        this.pathField.setMaxLength(256);
+        this.pathField.setResponder(value -> refreshSaveState());
+        updatePathHint();
 
         int buttonY = this.height - 27;
         int rowX = this.width / 2 - 154;
-        this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button -> save())
+        this.saveButton = this.addRenderableWidget(Button.builder(saveMessage(), button -> save())
                 .bounds(rowX, buttonY, 152, 20)
                 .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
@@ -56,6 +64,7 @@ class SavePlaylistScreen extends Screen {
         int fieldX = this.nameField.getX();
         graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), fieldX, 50, 0xFFAAAAAA);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), fieldX, 92, 0xFFAAAAAA);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), fieldX, 134, 0xFFAAAAAA);
     }
 
     @Override
@@ -64,18 +73,34 @@ class SavePlaylistScreen extends Screen {
     }
 
     private void save() {
-        if (Playlist.saveCurrentQueue(this.minecraft, this.nameField.getValue(), this.iconField.getValue())) {
+        if (Playlist.saveCurrentQueue(this.minecraft, this.nameField.getValue(), this.iconField.getValue(), this.pathField.getValue())) {
             this.onClose();
         }
     }
 
     private void refreshSaveState() {
         if (this.saveButton == null) return;
-        this.saveButton.active = !this.nameField.getValue().trim().isEmpty() && iconValid();
+        this.saveButton.active = !this.nameField.getValue().trim().isEmpty()
+                && iconValid()
+                && Playlist.canWriteConfigPlaylist(this.nameField.getValue(), this.pathField.getValue());
+        this.saveButton.setMessage(saveMessage());
     }
 
     private boolean iconValid() {
         String icon = this.iconField.getValue().trim();
         return icon.isEmpty() || Identifier.tryParse(icon) != null;
+    }
+
+    private Component saveMessage() {
+        return Component.translatable(!this.nameField.getValue().trim().isEmpty()
+                && Playlist.configPlaylistExists(this.nameField.getValue(), this.pathField == null ? "" : this.pathField.getValue())
+                ? "button.music_and_melody.overwrite"
+                : "button.music_and_melody.save");
+    }
+
+    private void updatePathHint() {
+        if (this.pathField == null) return;
+        String preview = Playlist.previewConfigPlaylistPath(this.nameField.getValue());
+        this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

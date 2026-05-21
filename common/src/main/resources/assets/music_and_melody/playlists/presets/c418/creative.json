@@ -1,0 +1,20 @@
+{
+  "name": {
+    "text": "C418 - Overworld"
+  },
+  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "entries": [
+    {
+      "namespace": "minecraft",
+      "tracks": [
+        "music/game/creative/aria_math",
+        "music/game/creative/biome_fest",
+        "music/game/creative/blind_spots",
+        "music/game/creative/dreiton",
+        "music/game/creative/haunt_muskie",
+        "music/game/creative/taswell"
+      ]
+    }
+  ],
+  "hidden": true
+}

@@ -43,7 +43,9 @@ public class MaMDataConfig implements ConfigData {
 	public Events events = new Events();
 
 	public static class Events {
+		public EventDisplay display = EventDisplay.ALL;
 		public List<String> disabled_events = new ArrayList<>();
+		public List<String> enabled_events = new ArrayList<>();
 	}
 
 	public enum AlbumDisplay {
@@ -51,5 +53,13 @@ public class MaMDataConfig implements ConfigData {
 		ALBUMS,
 		PLAYLISTS,
 		FAVOURITES
+	}
+
+	public enum EventDisplay {
+		ALL,
+		ENABLED,
+		DISABLED,
+		CUSTOM,
+		BUILT_IN
 	}
 }
