@@ -108,6 +108,10 @@ public final class PlaylistHelper {
         return song.equals(currentSongId) && isPlaying();
     }
 
+    public static boolean isQueuePlaying(Identifier song) {
+        return currentSongFromQueue && isPlaying(song);
+    }
+
     public static boolean isLooping(Identifier song) {
         return isPlaying(song) && currentSongLooping;
     }
@@ -132,6 +136,10 @@ public final class PlaylistHelper {
 
     public static boolean isPlaying() {
         return currentSong != null && Minecraft.getInstance().getSoundManager().isActive(currentSong);
+    }
+
+    public static boolean isQueuePlaying() {
+        return currentSongFromQueue && isPlaying();
     }
 
     public static boolean isEventPlaying() {

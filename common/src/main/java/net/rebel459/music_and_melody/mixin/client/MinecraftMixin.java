@@ -3,12 +3,9 @@ package net.rebel459.music_and_melody.mixin.client;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.logging.LogUtils;
-import net.minecraft.Optionull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.Music;
@@ -79,6 +76,6 @@ public abstract class MinecraftMixin {
 
         EventHelper.clearStoredEvent();
 
-        if (!MaMClientConfig.get().background_music) cir.setReturnValue(PlaylistHelper.EMPTY);
+        if (!MaMClientConfig.get().vanilla_music) cir.setReturnValue(PlaylistHelper.EMPTY);
     }
 }

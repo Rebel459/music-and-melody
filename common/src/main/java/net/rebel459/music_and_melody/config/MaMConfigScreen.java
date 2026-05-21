@@ -12,6 +12,7 @@ import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 
 public class MaMConfigScreen extends Screen {
     private final Screen parent;
+    private Button eventsButton;
 
     public MaMConfigScreen(Screen parent) {
         super(Component.translatable("text.autoconfig.music_and_melody.title"));
@@ -40,7 +41,7 @@ public class MaMConfigScreen extends Screen {
                 button -> this.minecraft.setScreen(new AlbumScreen(this))
         ).bounds(x, y, 200, 20).build());
         y += 24;
-        this.addRenderableWidget(Button.builder(
+        this.eventsButton = this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.events"),
                 button -> this.minecraft.setScreen(new EventScreen.EventSourceScreen(this))
         ).bounds(x, y, 200, 20).build());
@@ -59,6 +60,7 @@ public class MaMConfigScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
         graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+        if (this.eventsButton != null) this.eventsButton.active = MaMClientConfig.get().allow_events;
     }
 
     @Override

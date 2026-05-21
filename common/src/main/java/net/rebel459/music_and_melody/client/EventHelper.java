@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.rebel459.music_and_melody.client.screen.AlbumDetailsScreen;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
 import net.rebel459.unified.platform.UnifiedPlatform;
 
@@ -52,6 +53,11 @@ public class EventHelper {
     }
 
     public static Music processEventMusic() {
+        if (!isEnabled()) {
+            stopDisabledEventActivity();
+            return null;
+        }
+
         WeightedList.Builder<Event> validEvents = new WeightedList.Builder<>();
         processEvents(validEvents, Event.VERY_HIGH_PRIORITY);
         if (validEvents.build().isEmpty()) processEvents(validEvents, Event.HIGH_PRIORITY);
@@ -168,23 +174,24 @@ public class EventHelper {
     }
 
     public static boolean isCooldownEmptyMusic() {
-        return cooldownEmptyMusic;
+        return isEnabled() && cooldownEmptyMusic;
     }
 
     public static boolean isFading() {
-        return fading;
+        return isEnabled() && fading;
     }
 
     public static boolean shouldContinueEventFade() {
-        return fading && queuedEvent != null && shouldBeActive(queuedEvent.event().conditions, false);
+        return isEnabled() && fading && queuedEvent != null && shouldBeActive(queuedEvent.event().conditions, false);
     }
 
     public static boolean isFadingOutCurrentEvent() {
-        return fadingOutCurrentEvent;
+        return isEnabled() && fadingOutCurrentEvent;
     }
 
     public static boolean shouldContinueCurrentEventFadeOut() {
-        return fadingOutCurrentEvent
+        return isEnabled()
+                && fadingOutCurrentEvent
                 && PlaylistHelper.isEventPlaying()
                 && !shouldSustain
                 && !lastConditions.isEmpty()
@@ -192,7 +199,8 @@ public class EventHelper {
     }
 
     public static boolean shouldFadeCurrentMusic(SoundInstance currentMusic) {
-        return isStoredPoolMusic(currentMusic)
+        return isEnabled()
+                && isStoredPoolMusic(currentMusic)
                 && !shouldSustain
                 && !lastConditions.isEmpty()
                 && !shouldBeActive(lastConditions, false)
@@ -206,6 +214,10 @@ public class EventHelper {
     }
 
     public static void stopOldEventMusic() {
+        if (!isEnabled()) {
+            stopDisabledEventActivity();
+            return;
+        }
         if (lastCategory == null || lastCategory == Event.CategoryType.POOL || shouldSustain || lastConditions.isEmpty()) {
             return;
         }
@@ -255,7 +267,7 @@ public class EventHelper {
             storeEvent(event);
             return new Music(sound.get(), 0, 0, replaceCurrentMusic);
         }
-        if (event.category == Event.CategoryType.SONG) {
+        if (event.category == Event.CategoryType.TRACK) {
             playEvent = PlaylistHelper.playEvent(event.music, false);
         }
         if (event.category == Event.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music)) {
@@ -302,6 +314,16 @@ public class EventHelper {
         for (SoundInstance instance : new ArrayList<>(instances)) {
             if (PlaylistHelper.isEmptyMusic(instance)) manager.stop(instance);
         }
+    }
+
+    private static boolean isEnabled() {
+        return MaMClientConfig.get().allow_events;
+    }
+
+    private static void stopDisabledEventActivity() {
+        PlaylistHelper.stopEvent();
+        resetMusicBreak();
+        clearStoredEvent();
     }
 
     private static boolean hasActiveNonEmptyMusic() {

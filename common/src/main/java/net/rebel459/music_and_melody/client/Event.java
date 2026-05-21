@@ -7,7 +7,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -66,6 +65,10 @@ public class Event {
 
     public static synchronized void reloadResourceEvents(Map<Identifier, Record> records) {
         RESOURCE_SOURCES.clear();
+        if (!MaMClientConfig.get().allow_events) {
+            clearLoadedEvents();
+            return;
+        }
         records.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().toString(), String.CASE_INSENSITIVE_ORDER))
                 .map(entry -> new Source(entry.getKey(), entry.getValue(), null))
@@ -75,6 +78,10 @@ public class Event {
 
     public static synchronized void reloadConfigEvents() {
         CONFIG_SOURCES.clear();
+        if (!MaMClientConfig.get().allow_events) {
+            clearLoadedEvents();
+            return;
+        }
 
         try {
             Files.createDirectories(CONFIG_DIR);
@@ -92,6 +99,12 @@ public class Event {
             CONFIG_SOURCES.add(new Source(id, record, file));
         }
 
+        rebuildEvents();
+    }
+
+    private static void clearLoadedEvents() {
+        RESOURCE_SOURCES.clear();
+        CONFIG_SOURCES.clear();
         rebuildEvents();
     }
 
@@ -371,7 +384,7 @@ public class Event {
             case "album" -> CategoryType.ALBUM;
             case "playlist" -> CategoryType.PLAYLIST;
             case "pool" -> CategoryType.POOL;
-            case "song" -> CategoryType.SONG;
+            case "track" -> CategoryType.TRACK;
             case "disc" -> CategoryType.DISC;
             default -> null;
         };
@@ -514,7 +527,7 @@ public class Event {
         ALBUM,
         PLAYLIST,
         POOL,
-        SONG,
+        TRACK,
         DISC
     }
 

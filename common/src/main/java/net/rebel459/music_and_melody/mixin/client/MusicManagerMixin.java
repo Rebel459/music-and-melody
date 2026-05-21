@@ -6,14 +6,10 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.ToastManager;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.Music;
-import net.minecraft.sounds.Musics;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.EventHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -98,7 +94,7 @@ public abstract class MusicManagerMixin {
 
     @Unique
     private void musicAndMelody$clearEmptyMusic() {
-        if (!PlaylistHelper.isEmptyMusic(this.currentMusic) || EventHelper.isCooldownEmptyMusic() || PlaylistHelper.isPlaying() || !MaMClientConfig.get().background_music) {
+        if (!PlaylistHelper.isEmptyMusic(this.currentMusic) || EventHelper.isCooldownEmptyMusic() || PlaylistHelper.isPlaying() || !MaMClientConfig.get().vanilla_music) {
             return;
         }
 

@@ -464,7 +464,7 @@ public class EventScreen extends Screen {
             case ALBUM -> "minecraft:volume_alpha";
             case PLAYLIST -> "config:playlists/example";
             case POOL -> "minecraft:music.overworld.forest";
-            case SONG -> "music_and_melody:music/overworld/alpha";
+            case TRACK -> "music_and_melody:music/overworld/alpha";
             case DISC -> "minecraft:cat";
         };
     }

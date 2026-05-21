@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.PlaylistHelper;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 public class PlaylistScreen extends Screen {
 
@@ -24,6 +25,7 @@ public class PlaylistScreen extends Screen {
     private Button shuffleButton;
     private Button clearButton;
     private Button saveButton;
+    private Button eventsButton;
 
     public PlaylistScreen(Screen parent) {
         super(TITLE);
@@ -44,7 +46,7 @@ public class PlaylistScreen extends Screen {
                 this.minecraft.setScreen(new AlbumScreen(this))
         ).bounds(rowX, navY, navWidth, 20).build());
         this.playPauseButton = this.addRenderableWidget(Button.builder(playPauseMessage(), button -> {
-            if (PlaylistHelper.isPlaying()) {
+            if (PlaylistHelper.isQueuePlaying()) {
                 PlaylistHelper.pauseQueue();
             } else {
                 PlaylistHelper.playNextNow();
@@ -64,7 +66,7 @@ public class PlaylistScreen extends Screen {
             PlaylistHelper.clear();
             this.refreshQueue();
         }).bounds(rowX + (controlWidth + 4) * 3, controlY, controlWidth, 20).build());
-        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.events"), button ->
+        this.eventsButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.events"), button ->
                 this.minecraft.setScreen(new EventScreen(this, true))
         ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
@@ -81,12 +83,13 @@ public class PlaylistScreen extends Screen {
         graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         if (this.playPauseButton != null) {
             this.playPauseButton.setMessage(playPauseMessage());
-            this.playPauseButton.active = PlaylistHelper.isPlaying() || PlaylistHelper.hasQueuedSongs();
+            this.playPauseButton.active = PlaylistHelper.isQueuePlaying() || PlaylistHelper.hasQueuedSongs();
         }
         if (this.loopButton != null) this.loopButton.setMessage(loopMessage());
         if (this.shuffleButton != null) this.shuffleButton.active = PlaylistHelper.queuedSongs().size() > 1;
         if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
         if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasQueuedSongs();
+        if (this.eventsButton != null) this.eventsButton.active = MaMClientConfig.get().allow_events;
     }
 
     @Override
@@ -104,7 +107,7 @@ public class PlaylistScreen extends Screen {
     }
 
     private static Component playPauseMessage() {
-        return Component.translatable(PlaylistHelper.isPlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
+        return Component.translatable(PlaylistHelper.isQueuePlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
     }
 
     private static class QueueList extends ObjectSelectionList<QueueEntry> {
@@ -183,7 +186,7 @@ public class PlaylistScreen extends Screen {
             int buttonWidth = this.removeButton == null ? 0 : 122;
             boolean unlocked = this.song == null || MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
             Component rowText = this.song == null ? this.text : this.text.copy().withStyle(unlocked ? ChatFormatting.WHITE : ChatFormatting.GRAY);
-            if (this.song != null && PlaylistHelper.isPlaying(this.song)) rowText = rowText.copy().withStyle(ChatFormatting.UNDERLINE);
+            if (this.song != null && PlaylistHelper.isQueuePlaying(this.song)) rowText = rowText.copy().withStyle(ChatFormatting.UNDERLINE);
             FormattedCharSequence line = this.minecraft.font.split(rowText, this.getContentWidth() - buttonWidth).getFirst();
             int textColor = this.song == null ? this.color : unlocked ? 0xFFFFFFFF : 0xFF888888;
             graphics.text(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textColor);

@@ -25,6 +25,7 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean jukebox_fading = true;
+
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public float fade_speed = 0.01F;
@@ -46,11 +47,13 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean background_music = true;
-
+	public boolean custom_album = true;
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean custom_album = true;
+	public boolean allow_events = true;
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public boolean vanilla_music = true;
 
 	public enum ButtonPlacement {
 		TOP,
