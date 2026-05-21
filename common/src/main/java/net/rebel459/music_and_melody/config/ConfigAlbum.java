@@ -38,7 +38,7 @@ public final class ConfigAlbum {
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,
-                Component.literal("Custom Album"),
+                Component.literal("Config Album"),
                 Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
                 FILES.keySet().stream().map(Identifier::getPath).toList(),
                 discs
