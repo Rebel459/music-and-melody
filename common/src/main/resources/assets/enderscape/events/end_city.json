@@ -1,0 +1,21 @@
+{
+  "name": "End City",
+  "description": "End City structure-specific music",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "enderscape:music.enderscape.structure.end_city",
+      "conditions": [
+        {
+          "type": "structure",
+          "value": "end_city"
+        }
+      ],
+      "priority": "medium",
+      "sustain": false
+    }
+  ],
+  "dependencies": [
+    "enderscape"
+  ]
+}

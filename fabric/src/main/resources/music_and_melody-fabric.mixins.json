@@ -3,7 +3,9 @@
   "package": "net.rebel459.music_and_melody.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [],
-  "client": [],
+  "client": [
+    "integration.EnderscapeStructureMusicMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
