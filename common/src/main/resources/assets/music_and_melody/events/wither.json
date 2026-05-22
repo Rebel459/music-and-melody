@@ -1,5 +1,6 @@
 {
   "name": "Wither",
+  "description": "Plays certain music when fighting the Wither",
   "entries": [
     {
       "category": "pool",

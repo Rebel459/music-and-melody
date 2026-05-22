@@ -1,5 +1,6 @@
 {
   "name": "Threshold",
+  "description": "Plays certain music when an End Portal is lit",
   "entries": [
     {
       "category": "pool",
