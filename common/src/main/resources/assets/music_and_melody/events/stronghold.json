@@ -9,6 +9,31 @@
         {
           "type": "structure",
           "value": "stronghold"
+        },
+        {
+          "type": "not",
+          "conditions": [
+            {
+              "type": "mod_loaded",
+              "value": "enderscape"
+            }
+          ]
+        }
+      ],
+      "priority": "medium",
+      "sustain": false
+    },
+    {
+      "category": "pool",
+      "music": "enderscape:music.enderscape.structure.stronghold",
+      "conditions": [
+        {
+          "type": "structure",
+          "value": "stronghold"
+        },
+        {
+          "type": "mod_loaded",
+          "value": "enderscape"
         }
       ],
       "priority": "medium",
