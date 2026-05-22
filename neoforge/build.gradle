@@ -8,6 +8,8 @@ dependencies {
 
     compileOnly("maven.modrinth:simple-music-control:$simple_music_control_neoforge")
     compileOnly("maven.modrinth:yacl:$yacl_version-neoforge")
+
+    compileOnly("maven.modrinth:enderscape:$enderscape_neoforge")
 }
 
 neoForge {
