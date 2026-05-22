@@ -5,6 +5,7 @@ import net.bunten.enderscape.client.registry.EnderscapeClientNetworking;
 import net.bunten.enderscape.network.ClientboundStructureChangedPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,7 +17,14 @@ public class EnderscapeStructureMusicMixin {
 
     @Inject(method = "receiveStructureChangedPayload", at = @At(value = "HEAD"), cancellable = true)
     private static void disableEnderscapeStructureMusic(ClientboundStructureChangedPayload payload, ClientPlayNetworking.Context context, CallbackInfo ci) {
-        EnderscapeClient.structureMusic = Optional.empty();
+        clearStructures();
         ci.cancel();
+    }
+
+    @Unique
+    private static void clearStructures() {
+        try {
+            Class.forName("net.bunten.enderscape.client.EnderscapeClient").getField("structureMusic").set(null, Optional.empty());
+        } catch (ReflectiveOperationException ignored) {}
     }
 }
