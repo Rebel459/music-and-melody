@@ -26,6 +26,8 @@ dependencies {
     compileOnly("net.fabricmc:fabric-language-kotlin:$kotlin_fabric") {
         exclude(group: "net.fabricmc", module: "fabric-loader")
     }
+
+    compileOnly("maven.modrinth:enderscape:$enderscape_fabric")
 }
 
 loom {
