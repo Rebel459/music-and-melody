@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -78,9 +78,9 @@ public class PlaylistScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         if (this.playPauseButton != null) {
             this.playPauseButton.setMessage(playPauseMessage());
             this.playPauseButton.active = PlaylistHelper.isQueuePlaying() || PlaylistHelper.hasQueuedSongs();
@@ -182,14 +182,14 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int buttonWidth = this.removeButton == null ? 0 : 122;
             boolean unlocked = this.song == null || MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
             Component rowText = this.song == null ? this.text : this.text.copy().withStyle(unlocked ? ChatFormatting.WHITE : ChatFormatting.GRAY);
             if (this.song != null && PlaylistHelper.isQueuePlaying(this.song)) rowText = rowText.copy().withStyle(ChatFormatting.UNDERLINE);
             FormattedCharSequence line = this.minecraft.font.split(rowText, this.getContentWidth() - buttonWidth).getFirst();
             int textColor = this.song == null ? this.color : unlocked ? 0xFFFFFFFF : 0xFF888888;
-            graphics.text(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textColor);
+            graphics.drawString(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textColor);
             if (this.removeButton != null) {
                 int buttonY = this.getContentYMiddle() - 10;
                 int removeX = this.getContentRight() - 64;
@@ -198,8 +198,8 @@ public class PlaylistScreen extends Screen {
                 this.playButton.setY(buttonY);
                 this.removeButton.setX(removeX);
                 this.removeButton.setY(buttonY);
-                this.playButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-                this.removeButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                this.playButton.render(graphics, mouseX, mouseY, tickDelta);
+                this.removeButton.render(graphics, mouseX, mouseY, tickDelta);
             }
         }
 

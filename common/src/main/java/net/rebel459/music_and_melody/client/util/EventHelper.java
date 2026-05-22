@@ -20,11 +20,13 @@ import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.rebel459.music_and_melody.client.*;
+import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.client.Event;
+import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.screen.AlbumDetailsScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
-import net.rebel459.unified.platform.UnifiedPlatform;
+import net.rebel459.music_and_melody.platform.MaMPlatform;
 
 import java.util.*;
 
@@ -466,7 +468,7 @@ public class EventHelper {
             if (condition.type() == Event.ConditionType.TIME) {
                 shouldBeActive = shouldBeActive && level != null;
                 if (level != null) {
-                    long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
+                    long time = Math.floorMod(level.getDayTime(), 24000L);
                     switch (condition.timeValue().get()) {
                         case DAY -> shouldBeActive = shouldBeActive && time >= 0 && time < 12000;
                         case SUNSET -> shouldBeActive = shouldBeActive && time >= 12000 && time < 13000;
@@ -505,7 +507,7 @@ public class EventHelper {
                 shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
             }
             if (condition.type() == Event.ConditionType.MOD_LOADED) {
-                shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+                shouldBeActive = shouldBeActive && MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get());
             }
             if (condition.type() == Event.ConditionType.RANDOM_CHANCE) {
                 shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= condition.intValue().get());

@@ -1,7 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -58,13 +58,13 @@ class SavePlaylistScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         int fieldX = this.nameField.getX();
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), fieldX, 50, 0xFFAAAAAA);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), fieldX, 92, 0xFFAAAAAA);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), fieldX, 134, 0xFFAAAAAA);
+        graphics.drawString(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), fieldX, 50, 0xFFAAAAAA);
+        graphics.drawString(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), fieldX, 92, 0xFFAAAAAA);
+        graphics.drawString(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), fieldX, 134, 0xFFAAAAAA);
     }
 
     @Override

@@ -11,9 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedEvents;
-import net.rebel459.unified.platform.UnifiedHelpers;
-import net.rebel459.unified.util.EventType;
+import net.rebel459.music_and_melody.platform.MaMPlatform;
+import net.rebel459.music_and_melody.platform.event.ServerEvents;
+import net.rebel459.music_and_melody.platform.util.EventType;
 
 import java.util.*;
 
@@ -25,16 +25,16 @@ public class StructureMusicHandler {
 
     public static void init() {
         if (!MaMServerConfig.get().sync_structures) return;
-        UnifiedHelpers.NETWORKING.registerPlayToClient(StructureMusicPacket.TYPE, StructureMusicPacket.CODEC, (packet, player) -> {
+        MaMPlatform.NETWORKING.registerPlayToClient(StructureMusicPacket.TYPE, StructureMusicPacket.CODEC, (packet, player) -> {
             CURRENT_STRUCTURES = new Info(packet.structures(), packet.tags());
         });
-        UnifiedEvents.Server.onDatapackLoad(server -> {
+        ServerEvents.onDatapackLoad(server -> {
             shouldUpdateStructures = true;
             STRUCTURES.clear();
             LAST_STRUCTURES.clear();
             LAST_POSITION.clear();
         });
-        UnifiedEvents.Server.onTick(EventType.PRE, server -> {
+        ServerEvents.onTick(EventType.PRE, server -> {
             if (++serverTicks < 20) return;
             serverTicks = 0;
             Map<ResourceKey<Level>, List<Holder.Reference<Structure>>> structures = getStructures(server);
@@ -60,7 +60,7 @@ public class StructureMusicHandler {
                     Info info = new Info(structureIds, structureTags);
                     LAST_POSITION.put(playerId, player.blockPosition());
                     if (LAST_STRUCTURES.get(playerId) == null || !LAST_STRUCTURES.get(playerId).equals(info)) {
-                        UnifiedHelpers.NETWORKING.send(new StructureMusicPacket(info.structures, info.tags), player);
+                        MaMPlatform.NETWORKING.send(new StructureMusicPacket(info.structures, info.tags), player);
                         LAST_STRUCTURES.put(playerId, info);
                     }
                 }

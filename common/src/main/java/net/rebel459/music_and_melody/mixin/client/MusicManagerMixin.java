@@ -3,13 +3,11 @@ package net.rebel459.music_and_melody.mixin.client;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.Music;
-import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -52,8 +50,8 @@ public abstract class MusicManagerMixin {
                     target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;showNowPlayingToast()V"
             )
     )
-    private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, @Local(name = "soundEvent") SoundEvent soundEvent) {
-        if (soundEvent.location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
+    private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, Music music) {
+        if (music.sound().value().location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
         original.call(toastManager);
     }
 

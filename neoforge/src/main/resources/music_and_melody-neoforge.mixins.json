@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "net.rebel459.music_and_melody.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [],
   "server": [],

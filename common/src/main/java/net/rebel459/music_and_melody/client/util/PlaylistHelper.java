@@ -32,7 +32,6 @@ public final class PlaylistHelper {
     private static boolean loaded = false;
     private static SoundInstance currentSong = null;
     private static Identifier currentSongId = null;
-    private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
     private static boolean queuePaused = true;
@@ -150,7 +149,6 @@ public final class PlaylistHelper {
         if (sound != null && sound != currentSong) return;
         currentSong = null;
         currentSongId = null;
-        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }
@@ -229,7 +227,6 @@ public final class PlaylistHelper {
         }
         currentSong = null;
         currentSongId = null;
-        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }
@@ -275,7 +272,6 @@ public final class PlaylistHelper {
         RandomSource random = SoundInstance.createUnseededRandom();
         if (sampledVolume != null) volume = sampledVolume.sample(random);
         currentSongId = id;
-        currentSongLooping = loop;
         currentSongFromQueue = fromQueue;
         currentSongFromEvent = fromEvent;
         currentSong = new DirectSoundInstance(
@@ -296,7 +292,6 @@ public final class PlaylistHelper {
         if (result == SoundEngine.PlayResult.NOT_STARTED) {
             currentSong = null;
             currentSongId = null;
-            currentSongLooping = false;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
             return false;
@@ -317,7 +312,6 @@ public final class PlaylistHelper {
         }
         currentSong = null;
         currentSongId = null;
-        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }

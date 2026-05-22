@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody.client.screen;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -53,9 +53,9 @@ public class AlbumScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         if (this.displayButton != null) this.displayButton.setMessage(displayMessage());
     }
 
@@ -179,7 +179,7 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int iconX = this.getContentX() + 1;
             int iconY = this.getContentYMiddle() - ICON_SIZE / 2;
             int textX = iconX + ICON_SIZE + 7;
@@ -192,22 +192,22 @@ public class AlbumScreen extends Screen {
             String details = this.minecraft.font.plainSubstrByWidth(details(), maxTextWidth);
 
             graphics.blit(RenderPipelines.GUI_TEXTURED, this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
-            graphics.text(this.minecraft.font, name, textX, textY, 0xFFFFFFFF);
-            graphics.text(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
-            graphics.text(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
+            graphics.drawString(this.minecraft.font, name, textX, textY, 0xFFFFFFFF);
+            graphics.drawString(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
+            graphics.drawString(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
 
             int buttonX = this.getContentRight() - buttonsWidth;
             this.detailsButton.setX(buttonX);
             this.detailsButton.setY(this.getContentYMiddle() - 10);
-            this.detailsButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.detailsButton.render(graphics, mouseX, mouseY, tickDelta);
             if (this.toggleButton != null) {
                 this.toggleButton.setX(buttonX + BUTTON_WIDTH + BUTTON_GAP);
                 this.toggleButton.setY(this.getContentYMiddle() - 10);
-                this.toggleButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
             } else {
                 Component type = Component.translatable("button.music_and_melody.playlist").withStyle(ChatFormatting.GRAY);
                 int labelX = buttonX + BUTTON_WIDTH + BUTTON_GAP + (BUTTON_WIDTH - this.minecraft.font.width(type)) / 2;
-                graphics.text(this.minecraft.font, type, labelX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
+                graphics.drawString(this.minecraft.font, type, labelX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
             }
         }
 

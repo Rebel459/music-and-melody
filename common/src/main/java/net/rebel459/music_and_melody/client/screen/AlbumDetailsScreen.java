@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -78,12 +78,12 @@ public class AlbumDetailsScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
         int titleX = this.width / 2 - 100;
         graphics.blit(RenderPipelines.GUI_TEXTURED, icon(), titleX, 3, 0.0F, 0.0F, 24, 24, 24, 24);
-        graphics.text(this.font, this.title, titleX + 30, 5, 0xFFFFFFFF);
-        graphics.text(this.font, Component.literal(id().toString()).withStyle(ChatFormatting.GRAY), titleX + 30, 16, 0xFFAAAAAA);
+        graphics.drawString(this.font, this.title, titleX + 30, 5, 0xFFFFFFFF);
+        graphics.drawString(this.font, Component.literal(id().toString()).withStyle(ChatFormatting.GRAY), titleX + 30, 16, 0xFFAAAAAA);
         if (this.actionButton != null) this.actionButton.setMessage(actionMessage());
         if (this.loadButton != null) this.loadButton.active = !queueSongs(this.minecraft).isEmpty();
     }
@@ -343,11 +343,11 @@ public class AlbumDetailsScreen extends Screen {
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int buttonCount = this.playButton == null ? 0 : this.toggleButton == null && this.statusText == null ? 2 : 3;
             int buttonWidth = buttonCount == 0 ? 0 : BUTTON_WIDTH * buttonCount + BUTTON_GAP * (buttonCount - 1) + 8;
             FormattedCharSequence line = this.minecraft.font.split(this.text, this.getContentWidth() - buttonWidth).getFirst();
-            graphics.text(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.color);
+            graphics.drawString(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.color);
             if (this.playButton != null) {
                 int buttonY = this.getContentYMiddle() - 10;
                 int rightX = this.getContentRight() - BUTTON_WIDTH;
@@ -362,13 +362,13 @@ public class AlbumDetailsScreen extends Screen {
                     this.toggleButton.setX(rightX);
                     this.toggleButton.setY(buttonY);
                 }
-                this.playButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-                this.queueButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                this.playButton.render(graphics, mouseX, mouseY, tickDelta);
+                this.queueButton.render(graphics, mouseX, mouseY, tickDelta);
                 if (this.toggleButton != null) {
-                    this.toggleButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                    this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
                 } else if (this.statusText != null) {
                     FormattedCharSequence status = this.minecraft.font.split(this.statusText, BUTTON_WIDTH + 12).getFirst();
-                    graphics.text(this.minecraft.font, status, rightX + (BUTTON_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
+                    graphics.drawString(this.minecraft.font, status, rightX + (BUTTON_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
                 }
             }
         }

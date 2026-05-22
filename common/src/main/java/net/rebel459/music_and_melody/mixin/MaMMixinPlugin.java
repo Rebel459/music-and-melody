@@ -3,7 +3,6 @@ package net.rebel459.music_and_melody.mixin;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,6 +15,15 @@ import java.util.Set;
 public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean registered = false;
+
+    private static boolean classExists(String className) {
+        try {
+            Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -35,7 +43,7 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, @NotNull String mixinClassName) {
-        if (mixinClassName.contains("integration.simple_music_control.")) return UnifiedPlatform.isModLoaded("simple_music_control");
+        if (mixinClassName.contains("integration.simple_music_control.")) return classExists("me.pajic.simple_music_control.SMC");
         return true;
     }
 

@@ -28,10 +28,6 @@ ordering="NONE"
 side="BOTH"
 
 [[dependencies.${mod_id}]]
-modId="unified"
-type="required"
-
-[[dependencies.${mod_id}]]
 modId="cloth_config"
 type="required"
 

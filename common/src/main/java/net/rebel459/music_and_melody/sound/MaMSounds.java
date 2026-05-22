@@ -2,9 +2,8 @@ package net.rebel459.music_and_melody.sound;
 
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
-import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedRegistries;
+import net.rebel459.music_and_melody.platform.MaMPlatform;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,11 +11,9 @@ import java.util.Set;
 
 public class MaMSounds {
 
-	private static final UnifiedRegistries.SoundEvents SOUNDS = UnifiedRegistries.SoundEvents.create(MusicAndMelody.MOD_ID);
-
 	public static HashMap<String, Holder<SoundEvent>> REGISTERED_SOUNDS = new HashMap<>();
 
-	public static final Holder<SoundEvent> MUSIC_DISC_BOUNCE = UnifiedRegistries.SoundEvents.create("minecraft").registerForHolder("music_disc.bounce");
+	public static final Holder<SoundEvent> MUSIC_DISC_BOUNCE = MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.bounce");
 
 	public static void init() {
 		Set<String> sounds = new HashSet<>(MaMServerConfig.get().sound_events);
@@ -34,7 +31,7 @@ public class MaMSounds {
 		);
 		sounds.addAll(builtInSounds);
 		for (String pool : sounds) {
-			Holder<SoundEvent> sound = SOUNDS.registerForHolder(pool);
+			Holder<SoundEvent> sound = MaMPlatform.SOUND_EVENTS.registerForHolder(pool);
 			REGISTERED_SOUNDS.put(pool, sound);
 		}
 	}

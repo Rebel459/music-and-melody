@@ -11,11 +11,14 @@ import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
 import net.rebel459.music_and_melody.config.MaMConfigScreen;
+import net.rebel459.music_and_melody.platform.MaMNeoForgePlatform;
+import net.rebel459.music_and_melody.platform.client.MaMNeoForgeClientPlatform;
 
 @Mod(value = MusicAndMelody.MOD_ID, dist = Dist.CLIENT)
 public class MusicAndMelodyNeoForgeClient {
 
     public MusicAndMelodyNeoForgeClient(IEventBus modEventBus) {
+        MaMNeoForgeClientPlatform.init(modEventBus);
         MusicAndMelodyClient.initRegistries();
         ModLoadingContext.get().registerExtensionPoint(
                 IConfigScreenFactory.class,

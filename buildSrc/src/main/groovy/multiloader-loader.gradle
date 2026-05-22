@@ -18,7 +18,6 @@ dependencies {
             attribute(loaderAttribute, 'common')
         }
     }
-    compileOnly project(path: ':common', configuration: 'commonCompileOnly')
     commonJava project(path: ':common', configuration: 'commonJava')
     commonResources project(path: ':common', configuration: 'commonResources')
 }

@@ -1,6 +1,7 @@
 plugins {
     id 'multiloader-common'
     id 'net.neoforged.moddev'
+    id 'net.fabricmc.fabric-loom-companion'
 }
 
 neoForge {
@@ -20,11 +21,10 @@ dependencies {
     implementation "org.ow2.asm:asm-tree:9.9.1"
 
     compileOnly("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
-    compileOnly("maven.modrinth:unified-api:$unified_version-fabric")
 
-    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-fabric")
-    compileOnly("maven.modrinth:fzzy-config:$fzzy_version")
-    compileOnly("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
+    compileOnly("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
+    compileOnly("maven.modrinth:kotlin-for-forge:$kotlin_neoforge")
 }
 
 configurations {
