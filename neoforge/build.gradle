@@ -7,9 +7,9 @@ dependencies {
     api("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
     api("maven.modrinth:unified-api:$unified_version-neoforge")
 
-    implementation("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
-    implementation("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
-    implementation("maven.modrinth:kotlin-for-forge:$kotlin_neoforge")
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
+    compileOnly("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
+    compileOnly("maven.modrinth:kotlin-for-forge:$kotlin_neoforge")
 }
 
 neoForge {

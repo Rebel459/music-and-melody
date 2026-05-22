@@ -15,9 +15,11 @@ dependencies {
     }
     api("maven.modrinth:unified-api:$unified_version-fabric")
 
-    implementation("maven.modrinth:simple-music-control:$simple_music_control-fabric")
-    implementation("maven.modrinth:fzzy-config:$fzzy_version")
-    implementation("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-fabric")
+    compileOnly("maven.modrinth:fzzy-config:$fzzy_version")
+    compileOnly("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
+
+    compileOnly("net.rebel459.music_and_melody:enderscape-fabric-2.1.1+mc26.1.2")
 }
 
 loom {
