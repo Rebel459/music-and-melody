@@ -10,7 +10,7 @@ import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
@@ -37,15 +37,15 @@ public class Event {
     public static Set<Event> LOW_PRIORITY = new HashSet<>();
     public static Set<Event> VERY_LOW_PRIORITY = new HashSet<>();
 
-    public final Identifier source;
+    public final ResourceLocation source;
     public CategoryType category;
-    public Identifier music;
+    public ResourceLocation music;
     public List<Condition> conditions;
     public PriorityType priority;
     public boolean sustain;
     public int weight;
 
-    public Event(Identifier source, CategoryType category, Identifier music, List<Condition> conditions, PriorityType priority, boolean sustain, int weight) {
+    public Event(ResourceLocation source, CategoryType category, ResourceLocation music, List<Condition> conditions, PriorityType priority, boolean sustain, int weight) {
         this.source = source;
         this.category = category;
         this.music = music;
@@ -63,7 +63,7 @@ public class Event {
         }
     }
 
-    public static synchronized void reloadResourceEvents(Map<Identifier, Record> records) {
+    public static synchronized void reloadResourceEvents(Map<ResourceLocation, Record> records) {
         RESOURCE_SOURCES.clear();
         if (!MaMClientConfig.get().allow_events) {
             clearLoadedEvents();
@@ -93,7 +93,7 @@ public class Event {
 
         Set<String> usedPaths = new HashSet<>();
         for (Path file : configFiles()) {
-            Identifier id = Identifier.fromNamespaceAndPath("config", "events/" + uniquePath(configPath(file), usedPaths));
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("config", "events/" + uniquePath(configPath(file), usedPaths));
             Record record = readRecord(file, shortName(id));
             if (record == null) continue;
             CONFIG_SOURCES.add(new Source(id, record, file));
@@ -177,7 +177,7 @@ public class Event {
 
     public static Optional<Event> create(Record.Entry entry, Source source) {
         CategoryType category = category(entry.category());
-        Identifier music = Identifier.tryParse(entry.music());
+        ResourceLocation music = ResourceLocation.tryParse(entry.music());
         PriorityType priority = priority(entry.priority());
 
         if (category == null || music == null || priority == null) {
@@ -331,7 +331,7 @@ public class Event {
 
         Either<String, Integer> value = condition.value().get();
         Optional<String> stringValue = Optional.empty();
-        Optional<Identifier> idValue = Optional.empty();
+        Optional<ResourceLocation> idValue = Optional.empty();
         Optional<Integer> intValue = Optional.empty();
         Optional<TimeCondition> timeValue = Optional.empty();
         Optional<WeatherCondition> weatherValue = Optional.empty();
@@ -370,7 +370,7 @@ public class Event {
                 if (event == null) return Optional.empty();
                 eventValue = Optional.of(event);
             } else {
-                Identifier id = Identifier.tryParse(string);
+                ResourceLocation id = ResourceLocation.tryParse(string);
                 if (id == null) return Optional.empty();
                 idValue = Optional.of(id);
             }
@@ -509,7 +509,7 @@ public class Event {
         }
     }
 
-    private static String shortName(Identifier id) {
+    private static String shortName(ResourceLocation id) {
         String path = id.getPath();
         int slash = path.lastIndexOf('/');
         return slash < 0 ? path : path.substring(slash + 1);
@@ -585,11 +585,11 @@ public class Event {
     }
 
     public static class Source {
-        public final Identifier id;
+        public final ResourceLocation id;
         public final Record record;
         public final Path path;
 
-        private Source(Identifier id, Record record, Path path) {
+        private Source(ResourceLocation id, Record record, Path path) {
             this.id = id;
             this.record = record;
             this.path = path;
@@ -692,7 +692,7 @@ public class Event {
     public record Condition(
             ConditionType type,
             Optional<String> stringValue,
-            Optional<Identifier> idValue,
+            Optional<ResourceLocation> idValue,
             Optional<Integer> intValue,
             Optional<TimeCondition> timeValue,
             Optional<WeatherCondition> weatherValue,

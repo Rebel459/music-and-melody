@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
 import net.rebel459.music_and_melody.sound.MaMSounds;
@@ -16,7 +16,7 @@ public class MusicAndMelody {
     public static void init() {}
 
     public static final String MOD_ID = "music_and_melody";
-    public static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

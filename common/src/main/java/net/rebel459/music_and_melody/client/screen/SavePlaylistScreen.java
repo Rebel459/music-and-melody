@@ -7,13 +7,13 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.client.Playlist;
 
 class SavePlaylistScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.save_playlist");
-    private static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+    private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png");
 
     private final PlaylistScreen parent;
     private EditBox nameField;
@@ -88,7 +88,7 @@ class SavePlaylistScreen extends Screen {
 
     private boolean iconValid() {
         String icon = this.iconField.getValue().trim();
-        return icon.isEmpty() || Identifier.tryParse(icon) != null;
+        return icon.isEmpty() || ResourceLocation.tryParse(icon) != null;
     }
 
     private Component saveMessage() {

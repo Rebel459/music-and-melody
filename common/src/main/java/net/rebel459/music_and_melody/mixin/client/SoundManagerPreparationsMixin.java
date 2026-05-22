@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.mixin.client;
 
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundEventRegistration;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.client.Album;
@@ -21,13 +21,13 @@ import java.util.*;
 public class SoundManagerPreparationsMixin {
 
     @Shadow
-    private Map<Identifier, Resource> soundCache;
+    private Map<ResourceLocation, Resource> soundCache;
 
     @Unique
-    private static final Set<Identifier> DISABLED_EVENTS = new HashSet<>();
+    private static final Set<ResourceLocation> DISABLED_EVENTS = new HashSet<>();
 
     @Unique
-    private static final Map<Identifier, Identifier> REMAPPED_MUSIC = Map.of();
+    private static final Map<ResourceLocation, ResourceLocation> REMAPPED_MUSIC = Map.of();
 
     @Inject(method = "listResources", at = @At("HEAD"))
     private void clearRawSoundPools(ResourceManager resourceManager, CallbackInfo ci) {
@@ -40,7 +40,7 @@ public class SoundManagerPreparationsMixin {
     }
 
     @Inject(method = "handleRegistration", at = @At("HEAD"), cancellable = true)
-    private void storeRawSoundPool(Identifier eventLocation, SoundEventRegistration soundEventRegistration, CallbackInfo ci) {
+    private void storeRawSoundPool(ResourceLocation eventLocation, SoundEventRegistration soundEventRegistration, CallbackInfo ci) {
         processRaw(soundEventRegistration.getSounds());
 
         soundEventRegistration.getSounds().removeIf(SoundManagerPreparationsMixin::isDisabled);
@@ -52,7 +52,7 @@ public class SoundManagerPreparationsMixin {
 
     @Unique
     private static boolean isDisabled(Sound sound) {
-        Identifier soundLocation = sound.getLocation();
+        ResourceLocation soundLocation = sound.getLocation();
         if (sound.getType() == Sound.Type.FILE) {
             boolean disabled = false;
             for (Album album : Album.ALBUMS) {
@@ -73,15 +73,15 @@ public class SoundManagerPreparationsMixin {
         ListIterator<Sound> iterator = sounds.listIterator();
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
-            Identifier id = sound.getLocation();
+            ResourceLocation id = sound.getLocation();
             PlaylistHelper.STORED_VOLUME.put(id, sound.getVolume());
-            Identifier location = REMAPPED_MUSIC.get(id);
+            ResourceLocation location = REMAPPED_MUSIC.get(id);
             if (location != null) iterator.set(copy(sound, location));
         }
     }
 
     @Unique
-    private static Sound copy(Sound sound, Identifier location) {
+    private static Sound copy(Sound sound, ResourceLocation location) {
         return new Sound(location, sound.getVolume(), sound.getPitch(), sound.getWeight(), sound.getType(), sound.shouldStream(), sound.shouldPreload(), sound.getAttenuationDistance());
     }
 }

@@ -18,14 +18,8 @@ dependencies {
         exclude(group: "net.fabricmc.fabric-api")
     }
 
-    compileOnly("maven.modrinth:simple-music-control:$simple_music_control-fabric")
-    modImplementation("maven.modrinth:fzzy-config:$fzzy_version")
-    modRuntimeOnly("me.lucko:fabric-permissions-api:0.6.1")
-    runtimeOnly("blue.endless:jankson:1.2.3")
-    runtimeOnly("net.peanuuutz.tomlkt:tomlkt-jvm:0.3.7")
-    modImplementation("net.fabricmc:fabric-language-kotlin:$kotlin_fabric") {
-        exclude(group: "net.fabricmc", module: "fabric-loader")
-    }
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control_fabric")
+    compileOnly("maven.modrinth:yacl:$yacl_version-fabric")
 }
 
 loom {

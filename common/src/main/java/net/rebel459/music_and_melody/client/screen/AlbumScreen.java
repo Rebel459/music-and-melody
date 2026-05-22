@@ -7,12 +7,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
@@ -134,7 +131,7 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
@@ -179,53 +176,55 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            int iconX = this.getContentX() + 1;
-            int iconY = this.getContentYMiddle() - ICON_SIZE / 2;
+        public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int contentRight = left + width;
+            int contentYMiddle = top + height / 2;
+            int iconX = left + 1;
+            int iconY = contentYMiddle - ICON_SIZE / 2;
             int textX = iconX + ICON_SIZE + 7;
-            int textY = this.getContentYMiddle() - 15;
+            int textY = contentYMiddle - 15;
             int buttonsWidth = BUTTON_WIDTH * 2 + BUTTON_GAP;
-            int maxTextWidth = this.getContentWidth() - ICON_SIZE - buttonsWidth - 26;
+            int maxTextWidth = width - ICON_SIZE - buttonsWidth - 26;
 
             FormattedCharSequence name = this.minecraft.font.split(this.entry.name(), maxTextWidth).getFirst();
             String id = this.minecraft.font.plainSubstrByWidth(this.entry.id().toString(), maxTextWidth);
             String details = this.minecraft.font.plainSubstrByWidth(details(), maxTextWidth);
 
-            graphics.blit(RenderPipelines.GUI_TEXTURED, this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            graphics.blit(this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             graphics.drawString(this.minecraft.font, name, textX, textY, 0xFFFFFFFF);
             graphics.drawString(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
             graphics.drawString(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
 
-            int buttonX = this.getContentRight() - buttonsWidth;
+            int buttonX = contentRight - buttonsWidth - 4;
             this.detailsButton.setX(buttonX);
-            this.detailsButton.setY(this.getContentYMiddle() - 10);
+            this.detailsButton.setY(contentYMiddle - 10);
             this.detailsButton.render(graphics, mouseX, mouseY, tickDelta);
             if (this.toggleButton != null) {
                 this.toggleButton.setX(buttonX + BUTTON_WIDTH + BUTTON_GAP);
-                this.toggleButton.setY(this.getContentYMiddle() - 10);
+                this.toggleButton.setY(contentYMiddle - 10);
                 this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
             } else {
                 Component type = Component.translatable("button.music_and_melody.playlist").withStyle(ChatFormatting.GRAY);
                 int labelX = buttonX + BUTTON_WIDTH + BUTTON_GAP + (BUTTON_WIDTH - this.minecraft.font.width(type)) / 2;
-                graphics.drawString(this.minecraft.font, type, labelX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
+                graphics.drawString(this.minecraft.font, type, labelX, contentYMiddle - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
             }
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.detailsButton.mouseClicked(event, doubleClick)
-                    || this.toggleButton != null && this.toggleButton.mouseClicked(event, doubleClick)
-                    || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.detailsButton.mouseClicked(mouseX, mouseY, button)
+                    || this.toggleButton != null && this.toggleButton.mouseClicked(mouseX, mouseY, button)
+                    || super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
-        public boolean keyPressed(KeyEvent event) {
-            if (event.isConfirmation() && this.entry.album != null) {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            if ((keyCode == 257 || keyCode == 335 || keyCode == 32) && this.entry.album != null) {
                 this.toggleAlbum();
                 this.toggleButton.setMessage(toggleMessage(this.entry.album));
                 return true;
             }
-            return super.keyPressed(event);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
         private void toggleAlbum() {
@@ -266,11 +265,11 @@ public class AlbumScreen extends Screen {
             return this.album != null ? this.album.name : this.playlist.name;
         }
 
-        Identifier id() {
+        ResourceLocation id() {
             return this.album != null ? this.album.album : this.playlist.playlist;
         }
 
-        Identifier icon() {
+        ResourceLocation icon() {
             return this.album != null ? this.album.icon : this.playlist.icon;
         }
 

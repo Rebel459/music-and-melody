@@ -6,7 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -19,19 +19,19 @@ public class Album {
     public static Set<Album> ALBUMS = new HashSet<>();
     public static Set<Album> DISABLED_ALBUMS = new HashSet<>();
 
-    public Identifier album;
+    public ResourceLocation album;
     public Component name;
-    public Identifier icon;
+    public ResourceLocation icon;
     public List<String> tracks;
     public List<String> discs;
     public Set<String> forcedEnabledTracks;
     public Set<String> forcedUnlockedDiscs;
 
-    public Album(Identifier album, Component name, Identifier icon, List<String> tracks, List<String> discs) {
+    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, List<String> discs) {
         this(album, name, icon, tracks, Set.of(), discs, Set.of());
     }
 
-    public Album(Identifier album, Component name, Identifier icon, List<String> tracks, Set<String> forcedEnabledTracks, List<String> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, Set<String> forcedEnabledTracks, List<String> discs, Set<String> forcedUnlockedDiscs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
@@ -83,8 +83,8 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public Identifier trackId(String song) {
-        return Identifier.fromNamespaceAndPath(this.album.getNamespace(), song);
+    public ResourceLocation trackId(String song) {
+        return ResourceLocation.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {
@@ -113,10 +113,10 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public record Record(Component name, Identifier icon, List<Track> tracks, List<Disc> discs) {
+    public record Record(Component name, ResourceLocation icon, List<Track> tracks, List<Disc> discs) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
-                Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
+                ResourceLocation.CODEC.optionalFieldOf("icon", ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
                 Track.CODEC.listOf().optionalFieldOf("tracks", List.of()).forGetter(Record::tracks),
                 Disc.CODEC.listOf().optionalFieldOf("discs", List.of()).forGetter(Record::discs)
         ).apply(instance, Record::new));

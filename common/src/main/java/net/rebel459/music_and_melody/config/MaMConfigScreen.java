@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.config;
 
-import me.shedaniel.autoconfig.AutoConfigClient;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -21,18 +21,20 @@ public class MaMConfigScreen extends Screen {
 
     @Override
     protected void init() {
+        if (this.minecraft == null) return;
+
         int x = this.width / 2 - 100;
         int y = this.height / 2 - 68;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("text.autoconfig.music_and_melody/client.title"),
-                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())
+                button -> this.minecraft.setScreen(AutoConfig.getConfigScreen(MaMClientConfig.class, this).get())
         ).bounds(x, y, 200, 20).build());
 
         y += 24;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("text.autoconfig.music_and_melody/server.title"),
-                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())
+                button -> this.minecraft.setScreen(AutoConfig.getConfigScreen(MaMServerConfig.class, this).get())
         ).bounds(x, y, 200, 20).build());
 
         y += 48;

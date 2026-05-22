@@ -32,12 +32,6 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean creative_fix = true;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public boolean under_water_fix = true;
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
 	public boolean pool_weight_fix = true;
 
 	@ConfigEntry.Category("config")

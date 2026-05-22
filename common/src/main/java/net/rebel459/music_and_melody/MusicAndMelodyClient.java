@@ -19,7 +19,7 @@ public final class MusicAndMelodyClient {
             "playlist",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
-            KeyMapping.Category.MISC
+            KeyMapping.CATEGORY_MISC
     );
 
     public static void initRegistries() {

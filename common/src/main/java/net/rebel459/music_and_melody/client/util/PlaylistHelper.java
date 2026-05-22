@@ -6,9 +6,8 @@ import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -26,12 +25,12 @@ import java.util.List;
 
 public final class PlaylistHelper {
     public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
-    public static final List<Identifier> QUEUED_SONGS = new ArrayList<>();
-    public static final HashMap<Identifier, SampledFloat> STORED_VOLUME = new HashMap<>();
+    public static final List<ResourceLocation> QUEUED_SONGS = new ArrayList<>();
+    public static final HashMap<ResourceLocation, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
     private static SoundInstance currentSong = null;
-    private static Identifier currentSongId = null;
+    private static ResourceLocation currentSongId = null;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
     private static boolean queuePaused = true;
@@ -41,7 +40,7 @@ public final class PlaylistHelper {
 
     private PlaylistHelper() {}
 
-    public static void add(Identifier song) {
+    public static void add(ResourceLocation song) {
         ensureLoaded();
         if (!QUEUED_SONGS.contains(song)) {
             QUEUED_SONGS.add(song);
@@ -49,10 +48,10 @@ public final class PlaylistHelper {
         }
     }
 
-    public static void addAll(Collection<Identifier> songs) {
+    public static void addAll(Collection<ResourceLocation> songs) {
         ensureLoaded();
         boolean changed = false;
-        for (Identifier song : songs) {
+        for (ResourceLocation song : songs) {
             if (!QUEUED_SONGS.contains(song)) {
                 QUEUED_SONGS.add(song);
                 changed = true;
@@ -61,12 +60,12 @@ public final class PlaylistHelper {
         if (changed) save();
     }
 
-    public static boolean isQueued(Identifier song) {
+    public static boolean isQueued(ResourceLocation song) {
         ensureLoaded();
         return QUEUED_SONGS.contains(song);
     }
 
-    public static List<Identifier> queuedSongs() {
+    public static List<ResourceLocation> queuedSongs() {
         ensureLoaded();
         return List.copyOf(QUEUED_SONGS);
     }
@@ -74,7 +73,7 @@ public final class PlaylistHelper {
     public static void remove(int index) {
         ensureLoaded();
         if (index >= 0 && index < QUEUED_SONGS.size()) {
-            Identifier removed = QUEUED_SONGS.get(index);
+            ResourceLocation removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
             if (currentSongFromQueue && removed.equals(currentSongId)) stop();
@@ -102,11 +101,11 @@ public final class PlaylistHelper {
         return true;
     }
 
-    public static boolean isPlaying(Identifier song) {
+    public static boolean isPlaying(ResourceLocation song) {
         return song.equals(currentSongId) && isPlaying();
     }
 
-    public static boolean isQueuePlaying(Identifier song) {
+    public static boolean isQueuePlaying(ResourceLocation song) {
         return currentSongFromQueue && isPlaying(song);
     }
 
@@ -159,7 +158,7 @@ public final class PlaylistHelper {
 
     public static String getMusicTranslationKey(SoundInstance sound) {
         if (sound == null || sound != currentSong || !isPlaying() || currentSongId == null) return null;
-        Identifier displayId = currentSongId;
+        ResourceLocation displayId = currentSongId;
         Sound currentSound = currentSong.getSound();
         if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
             displayId = currentSound.getLocation();
@@ -182,7 +181,7 @@ public final class PlaylistHelper {
             return false;
         }
         queueIndex = playableIndex;
-        Identifier id = QUEUED_SONGS.get(queueIndex);
+        ResourceLocation id = QUEUED_SONGS.get(queueIndex);
         return playSound(id, false, true, false);
     }
 
@@ -195,7 +194,7 @@ public final class PlaylistHelper {
         int playableIndex = nextPlayableIndex(queueIndex, true);
         if (playableIndex < 0) return false;
         queueIndex = playableIndex;
-        Identifier id = QUEUED_SONGS.get(queueIndex);
+        ResourceLocation id = QUEUED_SONGS.get(queueIndex);
         stop();
         return playSound(id, false, true, false);
     }
@@ -243,7 +242,7 @@ public final class PlaylistHelper {
     }
 
     public static boolean isEmptyMusic(SoundInstance instance) {
-        return instance != null && instance.getIdentifier().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location());
+        return instance != null && instance.getLocation().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().getLocation());
     }
 
     private static int clampQueueIndex(int index) {
@@ -265,7 +264,7 @@ public final class PlaylistHelper {
         return -1;
     }
 
-    private static boolean playSound(Identifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
+    private static boolean playSound(ResourceLocation id, boolean loop, boolean fromQueue, boolean fromEvent) {
         id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
@@ -288,17 +287,17 @@ public final class PlaylistHelper {
                 0.0D,
                 true
         );
-        SoundEngine.PlayResult result = Minecraft.getInstance().getSoundManager().play(currentSong);
-        if (result == SoundEngine.PlayResult.NOT_STARTED) {
+        SoundManager soundManager = Minecraft.getInstance().getSoundManager();
+        WeighedSoundEvents resolved = currentSong.resolve(soundManager);
+        Sound resolvedSound = currentSong.getSound();
+        if (resolved == null || resolvedSound == SoundManager.EMPTY_SOUND || resolvedSound == SoundManager.INTENTIONALLY_EMPTY_SOUND) {
             currentSong = null;
             currentSongId = null;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
             return false;
         }
-        if (result == SoundEngine.PlayResult.STARTED) {
-            Minecraft.getInstance().getToastManager().showNowPlayingToast();
-        }
+        soundManager.play(currentSong);
         return true;
     }
 
@@ -316,13 +315,13 @@ public final class PlaylistHelper {
         currentSongFromEvent = false;
     }
 
-    public static boolean play(Identifier id, boolean loop) {
+    public static boolean play(ResourceLocation id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, false);
     }
 
-    public static boolean playEvent(Identifier id, boolean loop) {
+    public static boolean playEvent(ResourceLocation id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, true);
@@ -348,7 +347,7 @@ public final class PlaylistHelper {
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
         for (String song : config.playlists.queued_songs) {
-            Identifier id = Identifier.tryParse(song);
+            ResourceLocation id = ResourceLocation.tryParse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
     }
@@ -356,7 +355,7 @@ public final class PlaylistHelper {
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
         config.playlists.loop = loop;
-        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(Identifier::toString).toList());
+        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(ResourceLocation::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
@@ -365,7 +364,7 @@ public final class PlaylistHelper {
         private final WeighedSoundEvents soundEvent;
 
         DirectSoundInstance(
-                Identifier location,
+                ResourceLocation location,
                 SoundSource source,
                 float volume,
                 float pitch,
@@ -395,7 +394,7 @@ public final class PlaylistHelper {
 
         @Override
         public WeighedSoundEvents resolve(SoundManager soundManager) {
-            WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
+            WeighedSoundEvents registered = soundManager.getSoundEvent(this.location);
             if (registered != null) {
                 this.sound = registered.getSound(this.random);
                 return registered;

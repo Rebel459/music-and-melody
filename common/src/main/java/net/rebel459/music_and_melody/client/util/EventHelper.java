@@ -4,19 +4,18 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.WinScreen;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.random.WeightedList;
+import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -44,7 +43,7 @@ public class EventHelper {
     private static List<Event.Condition> lastConditions = List.of();
     private static boolean shouldSustain = true;
     private static Event.CategoryType lastCategory;
-    private static Identifier lastMusic;
+    private static ResourceLocation lastMusic;
 
     public static boolean hasWitherBossBar() {
         return Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable("entity.minecraft.wither").getString()));
@@ -52,7 +51,7 @@ public class EventHelper {
 
     public static boolean isEndPortalFilled() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
-        return manager.soundEngine.instanceBySource.values().stream().filter(instance -> SoundEvents.END_PORTAL_SPAWN.location().equals(instance.getIdentifier())).anyMatch(manager::isActive);
+        return manager.soundEngine.instanceBySource.values().stream().filter(instance -> SoundEvents.END_PORTAL_SPAWN.getLocation().equals(instance.getLocation())).anyMatch(manager::isActive);
     }
 
     public static Music processEventMusic() {
@@ -61,14 +60,14 @@ public class EventHelper {
             return null;
         }
 
-        WeightedList.Builder<Event> validEvents = new WeightedList.Builder<>();
+        SimpleWeightedRandomList.Builder<Event> validEvents = new SimpleWeightedRandomList.Builder<>();
         processEvents(validEvents, Event.VERY_HIGH_PRIORITY);
         if (validEvents.build().isEmpty()) processEvents(validEvents, Event.HIGH_PRIORITY);
         if (validEvents.build().isEmpty()) processEvents(validEvents, Event.MEDIUM_PRIORITY);
         if (validEvents.build().isEmpty()) processEvents(validEvents, Event.LOW_PRIORITY);
         if (validEvents.build().isEmpty()) processEvents(validEvents, Event.VERY_LOW_PRIORITY);
 
-        WeightedList<Event> events = validEvents.build();
+        SimpleWeightedRandomList<Event> events = validEvents.build();
         if (finishedFading) {
             return playQueuedEvent();
         }
@@ -77,7 +76,7 @@ public class EventHelper {
         }
         if (fading) {
             if (!events.isEmpty()) {
-                Event event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
+                Event event = events.getRandomValue(SoundInstance.createUnseededRandom()).get();
                 if (queuedEvent == null || event.priority.ordinal() > queuedEvent.event().priority.ordinal()) {
                     queuedEvent = new QueuedEvent(event, true);
                 }
@@ -86,7 +85,7 @@ public class EventHelper {
         }
 
         if (!events.isEmpty()) {
-            Event event = events.getRandomOrThrow(SoundInstance.createUnseededRandom());
+            Event event = events.getRandomValue(SoundInstance.createUnseededRandom()).get();
             boolean activeMusic = hasActiveNonEmptyMusic();
             boolean storedEventActive = isStoredEventMusicActive();
             boolean storedEventStillApplicable = isCurrentEventMusicStillApplicable(storedEventActive);
@@ -241,12 +240,7 @@ public class EventHelper {
     }
 
     public static Pair<Integer, Integer> getMusicFrequency() {
-        MusicManager.MusicFrequency frequency = Minecraft.getInstance().getMusicManager().gameMusicFrequency;
-        return switch (frequency) {
-            case DEFAULT -> Pair.of(600, 1200);
-            case FREQUENT -> Pair.of(300, 600);
-            case CONSTANT -> Pair.of(0, 0);
-        };
+        return Pair.of(300, 600);
     }
 
     private static Music playEvent(Minecraft client, Event event, boolean replaceCurrentMusic) {
@@ -258,7 +252,7 @@ public class EventHelper {
         if (event.category == Event.CategoryType.PLAYLIST) {
             Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music)).findFirst();
             if (!playlist.isEmpty()) {
-                List<Identifier> songs = new ArrayList<>(playlist.get().tracks);
+                List<ResourceLocation> songs = new ArrayList<>(playlist.get().tracks);
                 playlist.get().discs.stream()
                         .map(disc -> MusicDiscHelper.discSoundId(client, disc))
                         .forEach(songs::add);
@@ -266,7 +260,7 @@ public class EventHelper {
             }
         }
         if (event.category == Event.CategoryType.POOL) {
-            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.get(event.music);
+            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.getHolder(event.music);
             if (sound.isEmpty()) return null;
             storeEvent(event);
             return new Music(sound.get(), 0, 0, replaceCurrentMusic);
@@ -351,7 +345,7 @@ public class EventHelper {
 
     private static Music storedEventMusicOrBlocker() {
         if (lastCategory == Event.CategoryType.POOL && lastMusic != null) {
-            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.get(lastMusic);
+            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.getHolder(lastMusic);
             if (sound.isPresent()) {
                 return new Music(sound.get(), 0, 0, false);
             }
@@ -388,7 +382,7 @@ public class EventHelper {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
         for (SoundInstance instance : instances) {
-            if (lastMusic.equals(instance.getIdentifier()) && manager.isActive(instance)) {
+            if (lastMusic.equals(instance.getLocation()) && manager.isActive(instance)) {
                 return true;
             }
         }
@@ -396,7 +390,7 @@ public class EventHelper {
     }
 
     private static boolean isStoredPoolMusic(SoundInstance currentMusic) {
-        return currentMusic != null && lastCategory == Event.CategoryType.POOL && currentMusic.getIdentifier().equals(lastMusic);
+        return currentMusic != null && lastCategory == Event.CategoryType.POOL && currentMusic.getLocation().equals(lastMusic);
     }
 
     public static void clearStoredEvent() {
@@ -415,16 +409,16 @@ public class EventHelper {
         return Math.max(minimumTicks, SoundInstance.createUnseededRandom().nextIntBetweenInclusive(frequency.getFirst(), frequency.getSecond()) * 20);
     }
 
-    private static boolean playRandomEventSong(Minecraft client, List<Identifier> songs) {
-        List<Identifier> playableSongs = songs.stream()
+    private static boolean playRandomEventSong(Minecraft client, List<ResourceLocation> songs) {
+        List<ResourceLocation> playableSongs = songs.stream()
                 .filter(song -> MusicDiscHelper.isSoundUnlocked(client, song))
                 .toList();
         if (playableSongs.isEmpty()) return false;
-        Identifier song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
+        ResourceLocation song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
         return PlaylistHelper.playEvent(song, false);
     }
 
-    private static void processEvents(WeightedList.Builder<Event> validEvents, Set<Event> events) {
+    private static void processEvents(SimpleWeightedRandomList.Builder<Event> validEvents, Set<Event> events) {
         for (Event event : events) {
             boolean shouldBeActive = EventHelper.shouldBeActive(event.conditions);
             if (shouldBeActive) validEvents.add(event, event.weight);
@@ -457,7 +451,7 @@ public class EventHelper {
                 shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
             }
             if (condition.type() == Event.ConditionType.DIMENSION) {
-                shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
+                shouldBeActive = shouldBeActive && level != null && level.dimension().location().equals(condition.idValue().get());
             }
             if (condition.type() == Event.ConditionType.STRUCTURE) {
                 shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());

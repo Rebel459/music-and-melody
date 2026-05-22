@@ -1,7 +1,10 @@
 {
   "pack": {
-    "min_format": 65,
-    "max_format": 84,
-    "description": "Music And Melody"
+    "pack_format": 34,
+    "description": "Music and Melody by Rebel459",
+    "supported_formats": {
+      "min_inclusive": 34,
+      "max_inclusive": 64
+    }
   }
 }

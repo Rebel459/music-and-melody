@@ -13,7 +13,6 @@
     "client.ClientPacketListenerMixin",
     "client.MinecraftMixin",
     "client.MusicManagerMixin",
-    "client.NowPlayingToastMixin",
     "client.SoundEngineMixin",
     "client.SoundEventRegistrationSerializerMixin",
     "client.SoundManagerMixin",

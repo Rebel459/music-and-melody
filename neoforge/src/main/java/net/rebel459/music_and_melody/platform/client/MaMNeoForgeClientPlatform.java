@@ -35,7 +35,7 @@ public class MaMNeoForgeClientPlatform {
         public static List<Supplier<KeyMapping>> MAPPINGS = new ArrayList<>();
 
         @Override
-        public Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, KeyMapping.Category category) {
+        public Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, String category) {
             Supplier<KeyMapping> keyMapping = Suppliers.memoize(() -> new KeyMapping(
                     "key." + MusicAndMelody.MOD_ID + "." + path,
                     type,

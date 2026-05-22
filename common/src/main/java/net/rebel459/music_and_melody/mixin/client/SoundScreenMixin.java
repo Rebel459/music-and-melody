@@ -35,7 +35,7 @@ public abstract class SoundScreenMixin extends Screen {
     @Unique
     private void addButtons() {
         SoundOptionsScreen screen = SoundOptionsScreen.class.cast(this);
-        if (screen.list == null) return;
+        if (screen.list == null || this.minecraft == null) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))

@@ -7,8 +7,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
-import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -18,8 +18,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
@@ -56,8 +56,8 @@ public class MaMFabricPlatform {
         @Override
         public Supplier<SoundEvent> register(String path, float fixedRange) {
             ResourceKey<SoundEvent> key = ResourceKey.create(Registries.SOUND_EVENT, MusicAndMelody.id(path));
-            SoundEvent rangeType = SoundEvent.createVariableRangeEvent(key.identifier());
-            if (fixedRange >= 0F) rangeType = SoundEvent.createFixedRangeEvent(key.identifier(), fixedRange);
+            SoundEvent rangeType = SoundEvent.createVariableRangeEvent(key.location());
+            if (fixedRange >= 0F) rangeType = SoundEvent.createFixedRangeEvent(key.location(), fixedRange);
             SoundEvent finalRangeType = rangeType;
             SoundEvent sound = Registry.register(BuiltInRegistries.SOUND_EVENT, key, finalRangeType);
             Supplier<SoundEvent> supplied = Suppliers.memoize(() -> sound);
@@ -71,7 +71,7 @@ public class MaMFabricPlatform {
         }
         @Override
         public Holder<SoundEvent> registerForHolder(String path, float fixedRange) {
-            Identifier identifier = MusicAndMelody.id(path);
+            ResourceLocation identifier = MusicAndMelody.id(path);
             SoundEvent rangeType = SoundEvent.createVariableRangeEvent(identifier);
             if (fixedRange >= 0F) rangeType = SoundEvent.createFixedRangeEvent(identifier, fixedRange);
             SoundEvent finalRangeType = rangeType;
@@ -80,7 +80,8 @@ public class MaMFabricPlatform {
 
         @Override
         public Holder<SoundEvent> registerVanilla(String path) {
-            Identifier identifier = Identifier.withDefaultNamespace(path);
+            if (FabricLoader.getInstance().isModLoaded("vanillabackport")) return null;
+            ResourceLocation identifier = ResourceLocation.withDefaultNamespace(path);
             return Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, identifier, SoundEvent.createVariableRangeEvent(identifier));
         }
     }
@@ -115,19 +116,20 @@ public class MaMFabricPlatform {
     public static class FabricPackHelper implements PackHelper {
 
         @Override
-        public void add(Identifier id, PackType info) {
+        public void add(ResourceLocation id, PackType info) {
             if (FabricLoader.getInstance().getModContainer(id.getNamespace()).isEmpty()) return;
-            ResourceLoader.registerBuiltinPack(
-                    id, FabricLoader.getInstance().getModContainer(id.getNamespace()).get(),
+            ResourceManagerHelper.registerBuiltinResourcePack(
+                    id,
+                    FabricLoader.getInstance().getModContainer(MusicAndMelody.MOD_ID).get(),
                     Component.translatable("pack." + id.getNamespace() + "." + id.getPath()),
                     getActivationType(info)
             );
         }
 
-        public static PackActivationType getActivationType(PackType info) {
+        public static ResourcePackActivationType getActivationType(PackType info) {
             return switch (info) {
-                case REQUIRED_DATA, REQUIRED_RESOURCES -> PackActivationType.ALWAYS_ENABLED;
-                case OPTIONAL_DATA, OPTIONAL_RESOURCES -> PackActivationType.DEFAULT_ENABLED;
+                case REQUIRED_DATA, REQUIRED_RESOURCES -> ResourcePackActivationType.ALWAYS_ENABLED;
+                case OPTIONAL_DATA, OPTIONAL_RESOURCES -> ResourcePackActivationType.DEFAULT_ENABLED;
             };
         }
     }

@@ -6,10 +6,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
@@ -124,7 +123,7 @@ public class PlaylistScreen extends Screen {
         private void refresh() {
             this.clearEntries();
             for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
-                Identifier id = PlaylistHelper.queuedSongs().get(i);
+                ResourceLocation id = PlaylistHelper.queuedSongs().get(i);
                 this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));
             }
         }
@@ -135,7 +134,7 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
@@ -145,7 +144,7 @@ public class PlaylistScreen extends Screen {
         private final PlaylistScreen screen;
         private final Minecraft minecraft;
         private final int index;
-        private final Identifier song;
+        private final ResourceLocation song;
         private final Component text;
         private final int color;
         private final Button playButton;
@@ -162,7 +161,7 @@ public class PlaylistScreen extends Screen {
             this.removeButton = null;
         }
 
-        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, Identifier song) {
+        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, ResourceLocation song) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.index = index;
@@ -182,17 +181,19 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int contentRight = left + width - 4;
+            int contentYMiddle = top + height / 2;
             int buttonWidth = this.removeButton == null ? 0 : 122;
             boolean unlocked = this.song == null || MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
             Component rowText = this.song == null ? this.text : this.text.copy().withStyle(unlocked ? ChatFormatting.WHITE : ChatFormatting.GRAY);
             if (this.song != null && PlaylistHelper.isQueuePlaying(this.song)) rowText = rowText.copy().withStyle(ChatFormatting.UNDERLINE);
-            FormattedCharSequence line = this.minecraft.font.split(rowText, this.getContentWidth() - buttonWidth).getFirst();
+            FormattedCharSequence line = this.minecraft.font.split(rowText, width - buttonWidth).getFirst();
             int textColor = this.song == null ? this.color : unlocked ? 0xFFFFFFFF : 0xFF888888;
-            graphics.drawString(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textColor);
+            graphics.drawString(this.minecraft.font, line, left + 1, contentYMiddle - this.minecraft.font.lineHeight / 2, textColor);
             if (this.removeButton != null) {
-                int buttonY = this.getContentYMiddle() - 10;
-                int removeX = this.getContentRight() - 64;
+                int buttonY = contentYMiddle - 10;
+                int removeX = contentRight - 64;
                 this.playButton.active = unlocked;
                 this.playButton.setX(removeX - 68);
                 this.playButton.setY(buttonY);
@@ -204,10 +205,10 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.playButton != null && this.playButton.mouseClicked(event, doubleClick)
-                    || this.removeButton != null && this.removeButton.mouseClicked(event, doubleClick)
-                    || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.playButton != null && this.playButton.mouseClicked(mouseX, mouseY, button)
+                    || this.removeButton != null && this.removeButton.mouseClicked(mouseX, mouseY, button)
+                    || super.mouseClicked(mouseX, mouseY, button);
         }
     }
 }

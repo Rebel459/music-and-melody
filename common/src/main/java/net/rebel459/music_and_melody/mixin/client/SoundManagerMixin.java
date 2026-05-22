@@ -34,47 +34,47 @@ public class SoundManagerMixin {
         if (this.currentVolume == -1F) this.currentVolume = targetVolume;
         if (activeJukebox && clientConfig.jukebox_fading) {
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
         } else if (!activeJukebox && EventHelper.isFadingOutCurrentEvent()) {
             if (!EventHelper.shouldContinueCurrentEventFadeOut()) {
                 EventHelper.clearCurrentEventFadeOut();
                 if (this.currentVolume < targetVolume) {
                     this.currentVolume = targetVolume;
-                    manager.updateCategoryVolume(SoundSource.MUSIC, targetVolume);
+                    manager.updateSourceVolume(SoundSource.MUSIC, targetVolume);
                 }
                 return;
             }
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             if (this.currentVolume <= 0.001F) {
                 EventHelper.finishCurrentEventFadeOut();
                 this.currentVolume = 0F;
-                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             }
         } else if (!activeJukebox && EventHelper.isFading()) {
             if (!EventHelper.shouldContinueEventFade()) {
                 EventHelper.clearFadeEvent();
                 if (this.currentVolume < targetVolume) {
                     this.currentVolume = targetVolume;
-                    manager.updateCategoryVolume(SoundSource.MUSIC, targetVolume);
+                    manager.updateSourceVolume(SoundSource.MUSIC, targetVolume);
                 }
                 return;
             }
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             if (this.currentVolume <= 0.001F) {
                 Minecraft.getInstance().getMusicManager().stopPlaying();
                 EventHelper.finishFade();
                 this.currentVolume = 0F;
-                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             }
         } else {
             if (this.currentVolume > targetVolume) {
                 this.currentVolume = targetVolume;
-                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             } else if (this.currentVolume < targetVolume) {
                 this.currentVolume = Math.min(this.currentVolume + fade, targetVolume);
-                manager.updateCategoryVolume(SoundSource.MUSIC, this.currentVolume);
+                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
             }
         }
     }

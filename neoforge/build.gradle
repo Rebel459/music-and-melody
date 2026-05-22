@@ -6,9 +6,8 @@ plugins {
 dependencies {
     api("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
 
-    implementation("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
-    implementation("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
-    implementation("maven.modrinth:kotlin-for-forge:$kotlin_neoforge")
+    compileOnly("maven.modrinth:simple-music-control:$simple_music_control_neoforge")
+    compileOnly("maven.modrinth:yacl:$yacl_version-neoforge")
 }
 
 neoForge {

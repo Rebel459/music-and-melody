@@ -23,7 +23,7 @@ public class MaMFabricClientPlatform {
     public static class FabricKeyMappingRegistry implements KeyMappingRegistry {
 
         @Override
-        public Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, KeyMapping.Category category) {
+        public Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, String category) {
             var keyBind = Suppliers.memoize(() -> KeyBindingHelper.registerKeyBinding(
                     new KeyMapping(
                             "key." + MusicAndMelody.MOD_ID + "." + path,

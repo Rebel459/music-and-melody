@@ -6,5 +6,5 @@ import net.minecraft.client.KeyMapping;
 import java.util.function.Supplier;
 
 public interface KeyMappingRegistry {
-    Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, KeyMapping.Category category);
+    Supplier<KeyMapping> registerKeybind(String path, InputConstants.Type type, Integer key, String category);
 }

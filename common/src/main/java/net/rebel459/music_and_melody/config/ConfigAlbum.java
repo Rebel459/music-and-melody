@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody.config;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
@@ -24,39 +24,39 @@ import java.util.Set;
 
 public final class ConfigAlbum {
 
-    public static final Identifier ALBUM_ID = Identifier.fromNamespaceAndPath("config", "album");
+    public static final ResourceLocation ALBUM_ID = ResourceLocation.fromNamespaceAndPath("config", "album");
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "album");
     private static final String SOUND_PATH = "album/";
-    private static final Map<Identifier, Path> FILES = new LinkedHashMap<>();
-    private static final Map<Identifier, String> NAMES = new HashMap<>();
+    private static final Map<ResourceLocation, Path> FILES = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, String> NAMES = new HashMap<>();
 
     private ConfigAlbum() {}
 
-    public static synchronized Album createAlbum(Set<Identifier> registeredDiscs) {
+    public static synchronized Album createAlbum(Set<ResourceLocation> registeredDiscs) {
         reload();
         List<String> discs = unregisteredDiscs(registeredDiscs);
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,
                 Component.literal("Config Album"),
-                Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
-                FILES.keySet().stream().map(Identifier::getPath).toList(),
+                ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png"),
+                FILES.keySet().stream().map(ResourceLocation::getPath).toList(),
                 discs
         );
     }
 
-    public static synchronized void addSoundResources(Map<Identifier, Resource> soundCache) {
+    public static synchronized void addSoundResources(Map<ResourceLocation, Resource> soundCache) {
         reload();
         FILES.forEach((id, path) -> soundCache.put(Sound.SOUND_LISTER.idToFile(id), new Resource(null, IoSupplier.create(path))));
     }
 
-    public static synchronized String displayName(Identifier id) {
+    public static synchronized String displayName(ResourceLocation id) {
         return NAMES.get(playableId(id));
     }
 
-    public static Identifier playableId(Identifier id) {
+    public static ResourceLocation playableId(ResourceLocation id) {
         if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(SOUND_PATH)) {
-            return Identifier.fromNamespaceAndPath("config", id.getPath());
+            return ResourceLocation.fromNamespaceAndPath("config", id.getPath());
         }
         return id;
     }
@@ -86,7 +86,7 @@ public final class ConfigAlbum {
         for (Path file : files) {
             String fileName = file.getFileName().toString();
             String path = uniquePath(SOUND_PATH + sanitize(stem(fileName)), usedPaths);
-            Identifier id = Identifier.fromNamespaceAndPath("config", path);
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
         }
@@ -96,16 +96,16 @@ public final class ConfigAlbum {
         return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".ogg");
     }
 
-    private static List<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
-        List<Identifier> discs = new ArrayList<>();
-        for (Identifier itemId : BuiltInRegistries.ITEM.keySet()) {
+    private static List<String> unregisteredDiscs(Set<ResourceLocation> registeredDiscs) {
+        List<ResourceLocation> discs = new ArrayList<>();
+        for (ResourceLocation itemId : BuiltInRegistries.ITEM.keySet()) {
             String path = itemId.getPath();
             if (!path.startsWith("music_disc_")) continue;
-            Identifier jukeboxSong = Identifier.fromNamespaceAndPath(itemId.getNamespace(), path.substring("music_disc_".length()));
+            ResourceLocation jukeboxSong = ResourceLocation.fromNamespaceAndPath(itemId.getNamespace(), path.substring("music_disc_".length()));
             if (!registeredDiscs.contains(jukeboxSong)) discs.add(jukeboxSong);
         }
-        discs.sort(Comparator.comparing(Identifier::toString));
-        return discs.stream().map(Identifier::toString).toList();
+        discs.sort(Comparator.comparing(ResourceLocation::toString));
+        return discs.stream().map(ResourceLocation::toString).toList();
     }
 
     private static String stem(String fileName) {

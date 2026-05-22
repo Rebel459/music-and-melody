@@ -1,17 +1,15 @@
 package net.rebel459.music_and_melody.mixin.client;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.Music;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.music_and_melody.sound.MaMSounds;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,7 +17,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MusicManager.class)
 public abstract class MusicManagerMixin {
@@ -34,37 +31,15 @@ public abstract class MusicManagerMixin {
     @Shadow
     private int nextSongDelay;
 
-    @Shadow
-    private float currentGain;
+    @Unique
+    private float currentGain = 1.0F;
 
-    @Inject(method = "getCurrentMusicTranslationKey", at = @At("HEAD"), cancellable = true)
-    private void playlistMusicTranslationKey(CallbackInfoReturnable<String> cir) {
-        String key = PlaylistHelper.getCurrentMusicTranslationKey();
-        if (key != null) cir.setReturnValue(key);
-    }
-
-    @WrapOperation(
-            method = "startPlaying",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;showNowPlayingToast()V"
-            )
-    )
-    private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, Music music) {
-        if (music.sound().value().location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
-        original.call(toastManager);
-    }
-
-    @ModifyExpressionValue(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Minecraft;getMusicVolume()F"
-            )
-    )
-    private float fadeMusic(float volume) {
-        if (EventHelper.shouldFadeCurrentMusic(this.currentMusic)) return 0F;
-        return volume;
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void musicAndMelody$fadeMusic(CallbackInfo ci) {
+        float targetGain = EventHelper.shouldFadeCurrentMusic(this.currentMusic) ? 0F : 1F;
+        if (this.currentMusic != null && this.currentGain != targetGain && !fadePlaying(targetGain)) {
+            ci.cancel();
+        }
     }
 
     @ModifyExpressionValue(
@@ -99,5 +74,35 @@ public abstract class MusicManagerMixin {
         Minecraft.getInstance().getSoundManager().stop(this.currentMusic);
         this.currentMusic = null;
         this.nextSongDelay = Math.max(this.nextSongDelay, 20);
+    }
+
+    @Unique
+    private boolean fadePlaying(float targetGain) {
+        if (this.currentMusic == null) {
+            return false;
+        }
+        if (this.currentGain == targetGain) {
+            return true;
+        }
+        if (this.currentGain < targetGain) {
+            this.currentGain += Mth.clamp(this.currentGain, 5.0E-4F, 0.005F);
+            if (this.currentGain > targetGain) {
+                this.currentGain = targetGain;
+            }
+        } else {
+            this.currentGain = 0.03F * targetGain + 0.97F * this.currentGain;
+            if (Math.abs(this.currentGain - targetGain) < 1.0E-4F || this.currentGain < targetGain) {
+                this.currentGain = targetGain;
+            }
+        }
+        this.currentGain = Mth.clamp(this.currentGain, 0F, 1F);
+        if (this.currentGain <= 1.0E-4F) {
+            SoundInstance stoppedMusic = this.currentMusic;
+            this.stopPlaying();
+            EventHelper.clearStoredEventMusic(stoppedMusic);
+            return false;
+        }
+        Minecraft.getInstance().getSoundManager().updateSourceVolume(SoundSource.MUSIC, this.currentGain);
+        return true;
     }
 }

@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody.network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,12 +47,12 @@ public class StructureMusicHandler {
                     UUID playerId = player.getUUID();
                     BlockPos pos = BlockPos.containing(player.position());
                     if (LAST_POSITION.get(playerId) != null && LAST_POSITION.get(playerId).equals(player.blockPosition())) continue;
-                    HashSet<Identifier> structureIds = new HashSet<>();
-                    HashSet<Identifier> structureTags = new HashSet<>();
+                    HashSet<ResourceLocation> structureIds = new HashSet<>();
+                    HashSet<ResourceLocation> structureTags = new HashSet<>();
                     for (Holder<Structure> structure : levelStructures) {
                         if (structureManager.getStructureWithPieceAt(pos, structure.value()).isValid()) {
                             if (structure.unwrapKey().isEmpty()) continue;
-                            Identifier id = structure.unwrapKey().get().identifier();
+                            ResourceLocation id = structure.unwrapKey().get().location();
                             structureIds.add(id);
                             structure.tags().toList().forEach(tag -> structureTags.add(tag.location()));
                         }
@@ -85,5 +85,5 @@ public class StructureMusicHandler {
         return CURRENT_STRUCTURES;
     }
 
-    public record Info(Set<Identifier> structures, Set<Identifier> tags) {}
+    public record Info(Set<ResourceLocation> structures, Set<ResourceLocation> tags) {}
 }

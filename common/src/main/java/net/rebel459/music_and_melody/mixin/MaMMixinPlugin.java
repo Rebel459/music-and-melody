@@ -43,7 +43,7 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, @NotNull String mixinClassName) {
-        if (mixinClassName.contains("integration.simple_music_control.")) return classExists("me.pajic.simple_music_control.SMC");
+        if (mixinClassName.contains("integration.simple_music_control.")) return classExists("me.pajic.simple_music_control.Main");
         return true;
     }
 

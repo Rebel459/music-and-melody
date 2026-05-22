@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
@@ -93,6 +93,7 @@ public class MaMNeoForgePlatform {
 
         @Override
         public Holder<SoundEvent> registerVanilla(String path) {
+            if (ModList.get().isLoaded("vanillabackport")) return null;
             return VANILLA_SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(MusicAndMelody.id(path)));
         }
     }
@@ -139,7 +140,7 @@ public class MaMNeoForgePlatform {
         @Override
         public boolean isModLoaded(String modId) {
             var modList = ModList.get();
-            boolean loadingModCheck = FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
+            boolean loadingModCheck = FMLLoader.getLoadingModList().getModFileById(modId) != null;
             if (modList == null) return loadingModCheck;
             else return ModList.get().isLoaded(modId) || loadingModCheck;
         }
@@ -147,10 +148,10 @@ public class MaMNeoForgePlatform {
 
     public static class NeoForgePackHelper implements PackHelper {
 
-        public static List<Pair<Identifier, PackType>> PACK_LIST = new ArrayList<>();
+        public static List<Pair<ResourceLocation, PackType>> PACK_LIST = new ArrayList<>();
 
         @Override
-        public void add(Identifier id, PackType info) {
+        public void add(ResourceLocation id, PackType info) {
             PACK_LIST.add(Pair.of(id, info));
         }
 
@@ -170,12 +171,12 @@ public class MaMNeoForgePlatform {
 
         @SubscribeEvent
         public static void addFeaturePacks(AddPackFindersEvent event) {
-            for (Pair<Identifier, PackType> pair : PACK_LIST) {
-                Identifier id = pair.getFirst();
+            for (Pair<ResourceLocation, PackType> pair : PACK_LIST) {
+                ResourceLocation id = pair.getFirst();
                 PackType info = pair.getSecond();
 
                 event.addPackFinders(
-                        Identifier.fromNamespaceAndPath(id.getNamespace(), "resourcepacks/" + id.getPath()),
+                        ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "resourcepacks/" + id.getPath()),
                         getType(info),
                         Component.translatable("pack." + id.getNamespace() + "." + id.getPath()),
                         PackSource.BUILT_IN,
