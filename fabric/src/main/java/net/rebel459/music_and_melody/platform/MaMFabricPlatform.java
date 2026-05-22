@@ -80,6 +80,7 @@ public class MaMFabricPlatform {
 
         @Override
         public Holder<SoundEvent> registerVanilla(String path) {
+            if (FabricLoader.getInstance().isModLoaded("vanillabackport")) return null;
             Identifier identifier = Identifier.withDefaultNamespace(path);
             return Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, identifier, SoundEvent.createVariableRangeEvent(identifier));
         }

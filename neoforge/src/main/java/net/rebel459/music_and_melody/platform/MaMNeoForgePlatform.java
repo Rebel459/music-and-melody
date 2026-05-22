@@ -93,6 +93,7 @@ public class MaMNeoForgePlatform {
 
         @Override
         public Holder<SoundEvent> registerVanilla(String path) {
+            if (ModList.get().isLoaded("vanillabackport")) return null;
             return VANILLA_SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(MusicAndMelody.id(path)));
         }
     }
