@@ -1,6 +1,6 @@
 {
   "name": "C418 Only",
-  "description": "Replaces all music with C418 tracks",
+  "description": "Replicates 1.13-era C418-only music",
   "entries": [
     {
       "category": "playlist",
