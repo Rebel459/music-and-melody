@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.mixin.integration;
+package net.rebel459.music_and_melody.mixin.integration.enderscape;
 
 import net.bunten.enderscape.client.EnderscapeClient;
 import net.bunten.enderscape.client.registry.EnderscapeClientNetworking;
