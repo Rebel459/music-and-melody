@@ -12,10 +12,9 @@ import java.util.Set;
 public class MaMSounds {
 
 	public static HashMap<String, Holder<SoundEvent>> REGISTERED_SOUNDS = new HashMap<>();
-
-	public static final Holder<SoundEvent> MUSIC_DISC_BOUNCE = MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.bounce");
-
+	
 	public static void init() {
+		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.bounce");
 		Set<String> sounds = new HashSet<>(MaMServerConfig.get().sound_events);
 		Set<String> builtInSounds = Set.of(
 				"music.empty",
