@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.unified.platform.UnifiedPlatform;
+import net.rebel459.music_and_melody.platform.MaMPlatform;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -79,7 +79,7 @@ public class Event {
                 .forEach(record -> {
                     boolean shouldLoad = true;
                     for (String mod : record.record.dependencies()) {
-                        if (!UnifiedPlatform.isModLoaded(mod)) {
+                        if (!MaMPlatform.PLATFORM.isModLoaded(mod)) {
                             shouldLoad = false;
                             break;
                         }
@@ -111,7 +111,7 @@ public class Event {
             if (record == null) continue;
             boolean shouldLoad = true;
             for (String mod : record.dependencies()) {
-                if (!UnifiedPlatform.isModLoaded(mod)) {
+                if (!MaMPlatform.PLATFORM.isModLoaded(mod)) {
                     shouldLoad = false;
                     break;
                 }
