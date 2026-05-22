@@ -1,6 +1,9 @@
 package net.rebel459.music_and_melody.client;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
@@ -14,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.rebel459.unified.platform.UnifiedPlatform;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -72,7 +76,16 @@ public class Event {
         records.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().toString(), String.CASE_INSENSITIVE_ORDER))
                 .map(entry -> new Source(entry.getKey(), entry.getValue(), null))
-                .forEach(RESOURCE_SOURCES::add);
+                .forEach(record -> {
+                    boolean shouldLoad = true;
+                    for (String mod : record.record.dependencies()) {
+                        if (!UnifiedPlatform.isModLoaded(mod)) {
+                            shouldLoad = false;
+                            break;
+                        }
+                    }
+                    if (shouldLoad) RESOURCE_SOURCES.add(record);
+                });
         reloadConfigEvents();
     }
 
@@ -96,7 +109,14 @@ public class Event {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("config", "events/" + uniquePath(configPath(file), usedPaths));
             Record record = readRecord(file, shortName(id));
             if (record == null) continue;
-            CONFIG_SOURCES.add(new Source(id, record, file));
+            boolean shouldLoad = true;
+            for (String mod : record.dependencies()) {
+                if (!UnifiedPlatform.isModLoaded(mod)) {
+                    shouldLoad = false;
+                    break;
+                }
+            }
+            if (shouldLoad) CONFIG_SOURCES.add(new Source(id, record, file));
         }
 
         rebuildEvents();
@@ -143,7 +163,7 @@ public class Event {
         Path target = configTarget(trimmedName, pathOverride);
         if (target == null || Files.exists(target)) return null;
         Component descriptionComponent = description.trim().isEmpty() ? CommonComponents.EMPTY : Component.literal(description.trim());
-        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), descriptionComponent, new ArrayList<>()))) return null;
+        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), descriptionComponent, List.of(), new ArrayList<>()))) return null;
         reloadConfigEvents();
         for (Source source : CONFIG_SOURCES) {
             if (source.path.equals(target)) return source;
@@ -153,7 +173,7 @@ public class Event {
 
     public static synchronized boolean saveSourceEntries(Source source, List<Record.Entry> entries) {
         if (source == null || !source.isConfig()) return false;
-        if (!writeConfigRecord(source.path, new Record(source.record.name(), source.record.description(), entries, source.record.defaultState(), source.record.hasName()))) return false;
+        if (!writeConfigRecord(source.path, new Record(source.record.name(), source.record.description(), entries, source.record.dependencies(), source.record.defaultState(), source.record.hasName()))) return false;
         reloadConfigEvents();
         return true;
     }
@@ -253,7 +273,7 @@ public class Event {
         try (Reader reader = Files.newBufferedReader(file)) {
             JsonElement json = JsonParser.parseReader(reader);
             Record record = Record.CODEC.parse(JsonOps.INSTANCE, json).result().orElse(null);
-            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.entries(), record.defaultState(), false);
+            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.entries(), record.dependencies(), record.defaultState(), false);
         } catch (Exception exception) {
             LogUtils.getLogger().warn("Failed to read event music config: " + file, exception);
             return null;
@@ -653,16 +673,17 @@ public class Event {
 
     public record ScreenEntry(Source source, int index, Record.Entry entry) {}
 
-    public record Record(Component name, Component description, List<Entry> entries, String defaultState, boolean hasName) {
+    public record Record(Component name, Component description, List<Entry> entries, List<String> dependencies, String defaultState, boolean hasName) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(record -> record.hasName ? Optional.of(record.name) : Optional.empty()),
                 ComponentSerialization.CODEC.optionalFieldOf("description", CommonComponents.EMPTY).forGetter(Record::description),
                 Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
+                Codec.STRING.listOf().optionalFieldOf("dependencies", List.of()).forGetter(Record::dependencies),
                 Codec.STRING.optionalFieldOf("default", "enabled").forGetter(Record::defaultState)
-        ).apply(instance, (name, description, entries, defaultState) -> new Record(name.orElse(Component.empty()), description, entries, defaultState, name.isPresent())));
+        ).apply(instance, (name, description, entries, dependencies, defaultState) -> new Record(name.orElse(Component.empty()), description, entries, dependencies, defaultState, name.isPresent())));
 
-        public Record(Component name, Component description, List<Entry> entries) {
-            this(name, description, entries, "enabled", true);
+        public Record(Component name, Component description, List<String> dependencies, List<Entry> entries) {
+            this(name, description, entries, dependencies, "enabled", true);
         }
 
         public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, int weight) {
