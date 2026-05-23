@@ -73,6 +73,7 @@
   "screen.music_and_melody.album_details.unlocked": "Unlocked",
   "screen.music_and_melody.album_details.locked": "Locked",
   "screen.music_and_melody.album_details.enabled": "Enabled",
+  "screen.music_and_melody.album_details.disabled": "Disabled",
   "screen.music_and_melody.album_details.custom": "Custom",
   "key.music_and_melody.playlist": "Open Playlist",
 
