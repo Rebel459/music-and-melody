@@ -251,12 +251,14 @@ public class EventHelper {
         boolean playEvent = false;
         if (event.category == Event.CategoryType.ALBUM) {
             Optional<Album> album = Album.ALBUMS.stream().filter(entry -> entry.album.equals(event.music)).findFirst();
-            playEvent = album.filter(value -> playRandomEventSong(client, AlbumDetailsScreen.queueSongs(value, client))).isPresent();
+            playEvent = album.filter(value -> playRandomEventSong(client, eventAlbumSongs(value, client))).isPresent();
         }
         if (event.category == Event.CategoryType.PLAYLIST) {
             Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music)).findFirst();
             if (!playlist.isEmpty()) {
-                List<Identifier> songs = new ArrayList<>(playlist.get().tracks);
+                List<Identifier> songs = new ArrayList<>(playlist.get().tracks.stream()
+                        .filter(EventHelper::isEventTrackEnabled)
+                        .toList());
                 playlist.get().discs.stream()
                         .map(disc -> MusicDiscHelper.discSoundId(client, disc))
                         .forEach(songs::add);
@@ -420,6 +422,38 @@ public class EventHelper {
         if (playableSongs.isEmpty()) return false;
         Identifier song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
         return PlaylistHelper.playEvent(song, false);
+    }
+
+    private static List<Identifier> eventAlbumSongs(Album album, Minecraft client) {
+        List<Identifier> songs = new ArrayList<>();
+        album.tracks.stream()
+                .filter(song -> isEventAlbumTrackEnabled(album, song))
+                .map(album::trackId)
+                .forEach(songs::add);
+        if (album.isEnabled()) {
+            album.discs.stream()
+                    .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
+                    .map(disc -> MusicDiscHelper.discSoundId(client, disc))
+                    .forEach(songs::add);
+        }
+        return songs;
+    }
+
+    private static boolean isEventTrackEnabled(Identifier track) {
+        boolean matchedAlbumTrack = false;
+        boolean enabled = false;
+        for (Album album : Album.ALBUMS) {
+            for (String song : album.tracks) {
+                if (!album.trackId(song).equals(track)) continue;
+                matchedAlbumTrack = true;
+                enabled = enabled || isEventAlbumTrackEnabled(album, song);
+            }
+        }
+        return !matchedAlbumTrack || enabled;
+    }
+
+    private static boolean isEventAlbumTrackEnabled(Album album, String song) {
+        return album.isTrackForcedEnabled(song) || album.isEnabled() && album.isTrackEnabled(song);
     }
 
     private static void processEvents(WeightedList.Builder<Event> validEvents, Set<Event> events) {

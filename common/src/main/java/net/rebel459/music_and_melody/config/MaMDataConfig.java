@@ -13,14 +13,15 @@ import java.util.List;
 @Config(name = MusicAndMelody.MOD_ID + "/" + "data")
 public class MaMDataConfig implements ConfigData {
 
+	private static boolean registered = false;
+
 	public static MaMDataConfig get() {
+		if (!registered) {
+			AutoConfig.register(MaMDataConfig.class, JanksonConfigSerializer::new);
+			registered = true;
+		}
 		return AutoConfig.getConfigHolder(MaMDataConfig.class).getConfig();
 	}
-
-	public static void init() {
-		AutoConfig.register(MaMDataConfig.class, JanksonConfigSerializer::new);
-	}
-
 	public Albums albums = new Albums();
 
 	public static class Albums {

@@ -62,11 +62,10 @@ public class Playlist {
     }
 
     public boolean isFavourite() {
-        return isCustom() || MaMDataConfig.get().playlists.favourites.contains(this.playlist.toString());
+        return MaMDataConfig.get().playlists.favourites.contains(this.playlist.toString());
     }
 
     public void setFavourite(boolean favourite) {
-        if (isCustom()) return;
         String id = this.playlist.toString();
         MaMDataConfig config = MaMDataConfig.get();
 

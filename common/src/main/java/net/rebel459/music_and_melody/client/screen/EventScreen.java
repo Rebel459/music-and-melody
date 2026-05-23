@@ -135,7 +135,7 @@ public class EventScreen extends Screen {
         int listHeight = this.listExpanded ? Math.max(34, this.height - 92) : Math.max(34, this.height - listY - BOTTOM_BUTTON_AREA_HEIGHT);
         this.list = this.addRenderableWidget(new EventList(this, this.minecraft, this.width, listHeight, listY));
 
-        int rowWidth = Math.min(360, this.width - 20);
+        int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
         int rowX = this.width / 2 - rowWidth / 2;
         int topY = this.height - 51;
         int bottomY = this.height - 27;
@@ -670,7 +670,7 @@ public class EventScreen extends Screen {
         @Override
         protected void init() {
             this.list = this.addRenderableWidget(new SourceList(this, this.minecraft, this.width, this.height - 64));
-            int rowWidth = Math.min(360, this.width - 20);
+            int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
             int buttonWidth = (rowWidth - 8) / 3;
             int rowX = this.width / 2 - rowWidth / 2;
             int buttonY = this.height - 27;
@@ -814,7 +814,7 @@ public class EventScreen extends Screen {
         private final Event.Source source;
         private final Button loadButton;
         private final Button toggleButton;
-        private final Button deleteButton;
+        private final IconButton deleteButton;
 
         SourceEntry(EventSourceScreen screen, Minecraft minecraft, Event.Source source) {
             this.screen = screen;
@@ -826,9 +826,7 @@ public class EventScreen extends Screen {
             this.toggleButton = Button.builder(toggleMessage(), button -> toggleSource())
                     .size(BUTTON_WIDTH, 20)
                     .build();
-            this.deleteButton = source.isConfig() ? Button.builder(deleteMessage(), button -> deleteSource())
-                    .size(BUTTON_WIDTH, 20)
-                    .build() : null;
+            this.deleteButton = source.isConfig() ? new IconButton(deleteMessage(), deleteIcon(), button -> deleteSource()) : null;
         }
 
         @Override
@@ -839,13 +837,13 @@ public class EventScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int x = this.getContentX() + 1;
-            int buttonsWidth = BUTTON_WIDTH * 3 + BUTTON_GAP * 2;
+            int buttonsWidth = BUTTON_WIDTH * 2 + IconButton.SIZE + BUTTON_GAP * 2;
             int maxWidth = this.getContentWidth() - buttonsWidth - 12;
             int color = this.screen.isDeletePending(this.source) ? 0xFFFF8888 : this.source.isEnabled() ? 0xFFFFFFFF : 0xFF888888;
             FormattedCharSequence name = this.minecraft.font.split(this.source.record.name(), maxWidth).getFirst();
             graphics.text(this.minecraft.font, name, x, this.getContentYMiddle() - this.minecraft.font.lineHeight - 1, color);
             graphics.text(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(this.source.id.toString(), maxWidth), x, this.getContentYMiddle() + 2, 0xFFAAAAAA);
-            if (hovered && hasDescription()) {
+            if (hovered && hasDescription() && mouseX < this.getContentRight() - buttonsWidth) {
                 graphics.setTooltipForNextFrame(this.minecraft.font, this.minecraft.font.split(this.source.record.description(), 240), mouseX, mouseY);
             }
             renderButtons(graphics, mouseX, mouseY, tickDelta);
@@ -864,7 +862,7 @@ public class EventScreen extends Screen {
         }
 
         private void renderButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-            int buttonX = this.getContentRight() - (BUTTON_WIDTH * 3 + BUTTON_GAP * 2);
+            int buttonX = this.getContentRight() - (BUTTON_WIDTH * 2 + IconButton.SIZE + BUTTON_GAP * 2);
             int buttonY = this.getContentYMiddle() - 10;
             this.loadButton.setX(buttonX);
             this.loadButton.setY(buttonY);
@@ -877,14 +875,12 @@ public class EventScreen extends Screen {
 
             int thirdX = buttonX + (BUTTON_WIDTH + BUTTON_GAP) * 2;
             if (this.deleteButton != null) {
-                this.deleteButton.setMessage(deleteMessage());
+                this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
                 this.deleteButton.setX(thirdX);
                 this.deleteButton.setY(buttonY);
                 this.deleteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             } else if (this.source != null) {
-                Component text = Component.translatable("screen.music_and_melody.events.built_in").withStyle(ChatFormatting.GRAY);
-                int labelX = thirdX + (BUTTON_WIDTH - this.minecraft.font.width(text)) / 2;
-                graphics.text(this.minecraft.font, text, labelX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
+                IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), thirdX, buttonY, Component.translatable("screen.music_and_melody.events.built_in"), mouseX, mouseY);
             }
         }
 
@@ -899,6 +895,10 @@ public class EventScreen extends Screen {
 
         private Component deleteMessage() {
             return Component.translatable(this.screen.isDeletePending(this.source) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+        }
+
+        private Identifier deleteIcon() {
+            return IconButton.icon(this.screen.isDeletePending(this.source) ? "restore" : "delete");
         }
 
         private void toggleSource() {
@@ -946,12 +946,14 @@ public class EventScreen extends Screen {
             updatePathHint();
 
             int buttonY = this.height - 27;
-            int rowX = this.width / 2 - 154;
+            int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+            int rowX = this.width / 2 - rowWidth / 2;
+            int buttonWidth = (rowWidth - 4) / 2;
             this.createButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.create"), button -> create())
-                    .bounds(rowX, buttonY, 152, 20)
+                    .bounds(rowX, buttonY, buttonWidth, 20)
                     .build());
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
-                    .bounds(rowX + 156, buttonY, 152, 20)
+                    .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
                     .build());
             this.setInitialFocus(this.nameField);
             refreshCreateState();

@@ -15,17 +15,8 @@ import java.util.Set;
 
 public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
-    private static boolean registered = false;
-
     @Override
-    public void onLoad(String mixinPackage) {
-        if (!registered) {
-            MaMClientConfig.init();
-            MaMDataConfig.init();
-            MaMServerConfig.init();
-            registered = true;
-        }
-    }
+    public void onLoad(String mixinPackage) {}
 
     @Override
     @Nullable
