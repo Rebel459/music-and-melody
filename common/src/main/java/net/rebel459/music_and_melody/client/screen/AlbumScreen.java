@@ -3,13 +3,16 @@ package net.rebel459.music_and_melody.client.screen;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
@@ -17,15 +20,19 @@ import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AlbumScreen extends Screen {
 
+    static final int MAIN_BUTTON_ROW_WIDTH = 308;
     private static final Component TITLE = Component.translatable("screen.music_and_melody.albums");
     private final Screen parent;
     private AlbumList list;
     private Button displayButton;
     private boolean reloadPending;
+    private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
 
     public AlbumScreen(Screen parent) {
         super(TITLE);
@@ -35,7 +42,7 @@ public class AlbumScreen extends Screen {
     @Override
     protected void init() {
         this.list = this.addRenderableWidget(new AlbumList(this, this.minecraft, this.width, this.height - 64));
-        int rowX = this.width / 2 - 154;
+        int rowX = this.width / 2 - MAIN_BUTTON_ROW_WIDTH / 2;
         int buttonY = this.height - 27;
         this.displayButton = this.addRenderableWidget(Button.builder(displayMessage(), button -> {
                     cycleDisplay();
@@ -45,19 +52,20 @@ public class AlbumScreen extends Screen {
                 .bounds(rowX, buttonY, 152, 20)
                 .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + 156, buttonY, 152, 20)
+                .bounds(rowX + 152 + 4, buttonY, 152, 20)
                 .build());
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-        super.render(graphics, mouseX, mouseY, tickDelta);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         if (this.displayButton != null) this.displayButton.setMessage(displayMessage());
     }
 
     @Override
     public void onClose() {
+        deletePendingPlaylists();
         this.minecraft.setScreen(this.parent);
         if (this.reloadPending) {
             this.minecraft.reloadResourcePacks();
@@ -70,6 +78,30 @@ public class AlbumScreen extends Screen {
 
     public void refreshList() {
         if (this.list != null) this.list.refresh();
+    }
+
+    private boolean isDeletePending(Playlist playlist) {
+        return this.pendingPlaylistDeletes.contains(playlist.playlist);
+    }
+
+    private void toggleDeletePending(Playlist playlist) {
+        if (!playlist.isCustom()) return;
+        if (!this.pendingPlaylistDeletes.remove(playlist.playlist)) {
+            this.pendingPlaylistDeletes.add(playlist.playlist);
+        }
+        refreshList();
+    }
+
+    private void deletePendingPlaylists() {
+        if (this.pendingPlaylistDeletes.isEmpty()) return;
+        boolean changed = false;
+        for (Playlist playlist : List.copyOf(Playlist.PLAYLISTS)) {
+            if (this.pendingPlaylistDeletes.contains(playlist.playlist) && playlist.deleteCustom()) {
+                changed = true;
+            }
+        }
+        this.pendingPlaylistDeletes.clear();
+        if (changed) refreshList();
     }
 
     private static void cycleDisplay() {
@@ -131,7 +163,7 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowRight() + 6;
         }
     }
@@ -139,13 +171,14 @@ public class AlbumScreen extends Screen {
     private static class AlbumEntry extends ObjectSelectionList.Entry<AlbumEntry> {
 
         private static final int ICON_SIZE = 32;
-        private static final int BUTTON_WIDTH = 64;
+        private static final int DETAILS_BUTTON_WIDTH = 64;
         private static final int BUTTON_GAP = 4;
         private final AlbumList list;
         private final AlbumScreen screen;
         private final Minecraft minecraft;
         private final DisplayEntry entry;
-        private final Button toggleButton;
+        private final IconButton favouriteButton;
+        private final IconButton actionButton;
         private final Button detailsButton;
 
         AlbumEntry(AlbumList list, AlbumScreen screen, Minecraft minecraft, DisplayEntry entry) {
@@ -153,15 +186,22 @@ public class AlbumScreen extends Screen {
             this.screen = screen;
             this.minecraft = minecraft;
             this.entry = entry;
-            this.toggleButton = entry.album == null ? null : Button.builder(toggleMessage(entry.album), button -> {
-                toggleAlbum();
-                button.setMessage(toggleMessage(entry.album));
-            }).size(BUTTON_WIDTH, 20).build();
+            this.favouriteButton = new IconButton(favouriteMessage(entry), favouriteIcon(entry), button -> {
+                setFavourite(!isFavourite());
+                IconButton iconButton = (IconButton) button;
+                iconButton.setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
+                this.list.refresh();
+            });
+            this.actionButton = actionMessage(entry) == null ? null : new IconButton(actionMessage(entry), actionIcon(entry), button -> {
+                toggleAction();
+                IconButton iconButton = (IconButton) button;
+                iconButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
+            });
             this.detailsButton = Button.builder(Component.translatable("button.music_and_melody.album_details"), button ->
                     this.minecraft.setScreen(this.entry.album != null
                             ? new AlbumDetailsScreen(this.screen, this.entry.album)
                             : new AlbumDetailsScreen(this.screen, this.entry.playlist))
-            ).size(BUTTON_WIDTH, 20).build();
+            ).size(DETAILS_BUTTON_WIDTH, 20).build();
         }
 
         @Override
@@ -176,60 +216,89 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            int contentRight = left + width;
-            int contentYMiddle = top + height / 2;
-            int iconX = left + 1;
-            int iconY = contentYMiddle - ICON_SIZE / 2;
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int iconX = this.getContentX() + 1;
+            int iconY = this.getContentYMiddle() - ICON_SIZE / 2;
             int textX = iconX + ICON_SIZE + 7;
-            int textY = contentYMiddle - 15;
-            int buttonsWidth = BUTTON_WIDTH * 2 + BUTTON_GAP;
-            int maxTextWidth = width - ICON_SIZE - buttonsWidth - 26;
+            int textY = this.getContentYMiddle() - 15;
+            int buttonCount = this.actionButton == null ? 2 : 3;
+            int buttonsWidth = DETAILS_BUTTON_WIDTH + IconButton.SIZE + BUTTON_GAP * (buttonCount - 1) + (this.actionButton == null ? 0 : IconButton.SIZE);
+            int maxTextWidth = Math.max(1, this.getContentWidth() - ICON_SIZE - buttonsWidth - 26);
 
             FormattedCharSequence name = this.minecraft.font.split(this.entry.name(), maxTextWidth).getFirst();
             String id = this.minecraft.font.plainSubstrByWidth(this.entry.id().toString(), maxTextWidth);
             String details = this.minecraft.font.plainSubstrByWidth(details(), maxTextWidth);
 
-            graphics.blit(this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
-            graphics.drawString(this.minecraft.font, name, textX, textY, 0xFFFFFFFF);
-            graphics.drawString(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
-            graphics.drawString(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            graphics.text(this.minecraft.font, name, textX, textY, nameColor());
+            graphics.text(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
+            graphics.text(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
 
-            int buttonX = contentRight - buttonsWidth - 4;
+            int buttonX = this.getContentRight() - buttonsWidth;
             this.detailsButton.setX(buttonX);
-            this.detailsButton.setY(contentYMiddle - 10);
-            this.detailsButton.render(graphics, mouseX, mouseY, tickDelta);
-            if (this.toggleButton != null) {
-                this.toggleButton.setX(buttonX + BUTTON_WIDTH + BUTTON_GAP);
-                this.toggleButton.setY(contentYMiddle - 10);
-                this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
-            } else {
-                Component type = Component.translatable("button.music_and_melody.playlist").withStyle(ChatFormatting.GRAY);
-                int labelX = buttonX + BUTTON_WIDTH + BUTTON_GAP + (BUTTON_WIDTH - this.minecraft.font.width(type)) / 2;
-                graphics.drawString(this.minecraft.font, type, labelX, contentYMiddle - this.minecraft.font.lineHeight / 2, 0xFFAAAAAA);
+            this.detailsButton.setY(this.getContentYMiddle() - 10);
+            this.detailsButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.favouriteButton.setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
+            this.favouriteButton.setX(buttonX + DETAILS_BUTTON_WIDTH + BUTTON_GAP);
+            this.favouriteButton.setY(this.getContentYMiddle() - 10);
+            this.favouriteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            if (this.actionButton != null) {
+                this.actionButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
+                this.actionButton.setX(this.favouriteButton.getX() + IconButton.SIZE + BUTTON_GAP);
+                this.actionButton.setY(this.getContentYMiddle() - 10);
+                this.actionButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             }
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            return this.detailsButton.mouseClicked(mouseX, mouseY, button)
-                    || this.toggleButton != null && this.toggleButton.mouseClicked(mouseX, mouseY, button)
-                    || super.mouseClicked(mouseX, mouseY, button);
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.detailsButton.mouseClicked(event, doubleClick)
+                    || this.favouriteButton.mouseClicked(event, doubleClick)
+                    || this.actionButton != null && this.actionButton.mouseClicked(event, doubleClick)
+                    || super.mouseClicked(event, doubleClick);
         }
 
         @Override
-        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-            if ((keyCode == 257 || keyCode == 335 || keyCode == 32) && this.entry.album != null) {
+        public boolean keyPressed(KeyEvent event) {
+            if (event.isConfirmation() && this.entry.album != null) {
                 this.toggleAlbum();
-                this.toggleButton.setMessage(toggleMessage(this.entry.album));
+                if (this.actionButton != null) {
+                    this.actionButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
+                }
                 return true;
             }
-            return super.keyPressed(keyCode, scanCode, modifiers);
+            return super.keyPressed(event);
+        }
+
+        private boolean isFavourite() {
+            return this.entry.album != null ? this.entry.album.isFavourite() : this.entry.playlist.isFavourite();
+        }
+
+        private int nameColor() {
+            if (this.entry.playlist != null && this.screen.isDeletePending(this.entry.playlist)) return 0xFFFF8888;
+            if (isFavourite()) return 0xFFD7D272;
+            return 0xFFFFFFFF;
+        }
+
+        private void setFavourite(boolean favourite) {
+            if (this.entry.album != null) {
+                this.entry.album.setFavourite(favourite);
+            } else {
+                this.entry.playlist.setFavourite(favourite);
+            }
         }
 
         private void toggleAlbum() {
             this.entry.album.setEnabled(!this.entry.album.isEnabled());
             this.screen.markReloadPending();
+        }
+
+        private void toggleAction() {
+            if (this.entry.album != null) {
+                toggleAlbum();
+            } else {
+                this.screen.toggleDeletePending(this.entry.playlist);
+            }
         }
 
         private String details() {
@@ -242,8 +311,29 @@ public class AlbumScreen extends Screen {
             return count + " " + (count == 1 ? singular : plural);
         }
 
-        private static Component toggleMessage(Album album) {
-            return CommonComponents.optionStatus(album.isEnabled());
+        private static Component favouriteMessage(DisplayEntry entry) {
+            boolean favourite = entry.album != null ? entry.album.isFavourite() : entry.playlist.isFavourite();
+            return Component.translatable(favourite ? "button.music_and_melody.unfavourite" : "button.music_and_melody.favourite");
+        }
+
+        private static Identifier favouriteIcon(DisplayEntry entry) {
+            boolean favourite = entry.album != null ? entry.album.isFavourite() : entry.playlist.isFavourite();
+            return IconButton.icon(favourite ? "favourited" : "favourite");
+        }
+
+        private Component actionMessage(DisplayEntry entry) {
+            if (entry.album != null) return enabledMessage(entry.album.isEnabled());
+            if (!entry.playlist.isCustom()) return null;
+            return Component.translatable(this.screen.isDeletePending(entry.playlist) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+        }
+
+        private Identifier actionIcon(DisplayEntry entry) {
+            if (entry.album != null) return IconButton.icon(entry.album.isEnabled() ? "enabled" : "disabled");
+            return IconButton.icon(this.screen.isDeletePending(entry.playlist) ? "restore" : "delete");
+        }
+
+        private static Component enabledMessage(boolean enabled) {
+            return Component.translatable(enabled ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled");
         }
     }
 
@@ -265,11 +355,11 @@ public class AlbumScreen extends Screen {
             return this.album != null ? this.album.name : this.playlist.name;
         }
 
-        ResourceLocation id() {
+        Identifier id() {
             return this.album != null ? this.album.album : this.playlist.playlist;
         }
 
-        ResourceLocation icon() {
+        Identifier icon() {
             return this.album != null ? this.album.icon : this.playlist.icon;
         }
 

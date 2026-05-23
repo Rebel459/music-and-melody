@@ -21,10 +21,15 @@ public class MaMServerConfig implements ConfigData {
 		return Path.of("./config/" + MusicAndMelody.MOD_ID + "/server." + (json5 ? "json5" : "json"));
 	}
 
+	private static boolean registered = false;
+
 	public static MaMServerConfig get() {
+		if (!registered) {
+			init();
+			registered = true;
+		}
 		return AutoConfig.getConfigHolder(MaMServerConfig.class).getConfig();
 	}
-
 	public static void init() {
 		Path json5Path = configPath(true);
 		Path jsonPath = configPath(false);

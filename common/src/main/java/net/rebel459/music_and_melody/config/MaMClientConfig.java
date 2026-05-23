@@ -10,7 +10,13 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 @Config(name = MusicAndMelody.MOD_ID + "/" + "client")
 public class MaMClientConfig implements ConfigData {
 
+	private static boolean registered = false;
+
 	public static MaMClientConfig get() {
+		if (!registered) {
+			AutoConfig.register(MaMClientConfig.class, JanksonConfigSerializer::new);
+			registered = true;
+		}
 		return AutoConfig.getConfigHolder(MaMClientConfig.class).getConfig();
 	}
 
