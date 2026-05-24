@@ -1,7 +1,7 @@
 package net.rebel459.music_and_melody.client.util;
 
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.NonNull;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -20,19 +20,19 @@ public class SafeIdentifier {
     }
 
     public static SafeIdentifier withDefaultNamespace(String path) {
-        return fromNamespaceAndPath(Identifier.DEFAULT_NAMESPACE, path);
+        return fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
     }
 
-    public static SafeIdentifier convert(Identifier id) {
+    public static SafeIdentifier convert(ResourceLocation id) {
         return fromNamespaceAndPath(id.getNamespace(), id.getPath());
     }
 
-    public Identifier getId() {
-        return Identifier.fromNamespaceAndPath(this.namespace, this.path);
+    public ResourceLocation getId() {
+        return ResourceLocation.fromNamespaceAndPath(this.namespace, this.path);
     }
 
     @Override
-    public @NonNull String toString() {
+    public @NotNull String toString() {
         return this.namespace + ":" + this.path;
     }
 

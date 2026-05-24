@@ -40,7 +40,7 @@ public final class ConfigAlbum {
         return new Album(
                 ALBUM_ID,
                 Component.literal("Config Album"),
-                Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
+                ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png"),
                 FILES.keySet().stream().map(SafeIdentifier::getPath).collect(Collectors.toSet()),
                 discs
         );
@@ -102,22 +102,18 @@ public final class ConfigAlbum {
         return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".ogg");
     }
 
-    private static Set<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
-        List<Identifier> discs = new ArrayList<>();
-        for (Identifier itemId : BuiltInRegistries.ITEM.keySet()) {
+    private static Set<String> unregisteredDiscs(Set<ResourceLocation> registeredDiscs) {
+        List<ResourceLocation> discs = new ArrayList<>();
+        for (ResourceLocation itemId : BuiltInRegistries.ITEM.keySet()) {
             String path = itemId.getPath();
             if (!path.startsWith("music_disc_")) continue;
             ResourceLocation jukeboxSong = ResourceLocation.fromNamespaceAndPath(itemId.getNamespace(), path.substring("music_disc_".length()));
             if (!registeredDiscs.contains(jukeboxSong)) discs.add(jukeboxSong);
         }
-
         discs.sort(Comparator.comparing(ResourceLocation::toString));
-        return discs.stream().map(ResourceLocation::toString).toList();
-
-        discs.sort(Comparator.comparing(Identifier::toString));
-        return discs.stream().map(Identifier::toString).collect(Collectors.toSet());
-        return fileName.substring(0, fileName.length() - ".ogg".length());
+        return discs.stream().map(ResourceLocation::toString).collect(Collectors.toSet());
     }
+
     private static String sanitize(String value) {
         String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9/._-]", "_");
         if (sanitized.isBlank()) return "disc";
@@ -130,5 +126,9 @@ public final class ConfigAlbum {
             String suffixed = path + "_" + i;
             if (usedPaths.add(suffixed)) return suffixed;
         }
+    }
+
+    private static String stem(String fileName) {
+        return fileName.substring(0, fileName.length() - ".ogg".length());
     }
 }

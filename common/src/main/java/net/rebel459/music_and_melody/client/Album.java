@@ -22,17 +22,17 @@ public class Album {
 
     public ResourceLocation album;
     public Component name;
-    public Identifier icon;
+    public ResourceLocation icon;
     public Set<String> tracks;
     public Set<String> discs;
     public Set<String> forcedEnabledTracks;
     public Set<String> forcedUnlockedDiscs;
 
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> discs) {
+    public Album(ResourceLocation album, Component name, ResourceLocation icon, Set<String> tracks, Set<String> discs) {
         this(album, name, icon, tracks, Set.of(), discs, Set.of());
     }
 
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<String> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(ResourceLocation album, Component name, ResourceLocation icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<String> discs, Set<String> forcedUnlockedDiscs) {
         this.album = album;
         this.name = name;
         this.icon = icon;

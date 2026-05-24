@@ -88,7 +88,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
     }
 
     private static TrackSet expandTracks(
-            Identifier albumId,
+            ResourceLocation albumId,
             List<Album.Track> entries,
             ResourceManager resourceManager
     ) {
@@ -121,7 +121,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
         );
     }
 
-    private static SafeIdentifier trackId(Identifier albumId, String song) {
+    private static SafeIdentifier trackId(ResourceLocation albumId, String song) {
         return song.contains(":")
                 ? SafeIdentifier.parse(song)
                 : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
