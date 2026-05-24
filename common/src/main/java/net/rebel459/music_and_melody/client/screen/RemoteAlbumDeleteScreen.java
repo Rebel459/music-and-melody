@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -39,9 +39,9 @@ public class RemoteAlbumDeleteScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int buttonsWidth = IconButton.SIZE;
             int maxTextWidth = Math.max(1, this.getContentWidth() - buttonsWidth - BUTTON_GAP - 12);
             int color = this.screen.isDeletePending(this.pack) ? 0xFFFF8888 : 0xFFFFFFFF;
@@ -147,7 +147,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
 
             String id = this.minecraft.font.plainSubstrByWidth(this.pack.id().toString(), maxTextWidth);
 
-            graphics.text(
+            graphics.drawString(
                     this.minecraft.font,
                     name,
                     this.getContentX() + 1,
@@ -155,7 +155,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
                     color
             );
 
-            graphics.text(
+            graphics.drawString(
                     this.minecraft.font,
                     Component.literal(id).withStyle(ChatFormatting.GRAY),
                     this.getContentX() + 1,
@@ -166,7 +166,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
             this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
             this.deleteButton.setX(this.getContentRight() - IconButton.SIZE);
             this.deleteButton.setY(this.getContentYMiddle() - 10);
-            this.deleteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.deleteButton.render(graphics, mouseX, mouseY, tickDelta);
         }
 
         @Override
