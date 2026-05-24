@@ -141,29 +141,6 @@ public class AlbumScreen extends Screen {
             MaMDataConfig.Albums filter = MaMDataConfig.get().albums;
             List<DisplayEntry> entries = new ArrayList<>();
 
-            System.out.println("[MaM] remote_albums=" + MaMClientConfig.get().remote_albums);
-            System.out.println("[MaM] remote pack count=" + RemoteAlbumManager.packs().size());
-            System.out.println("[MaM] filters:"
-                    + " inclusive=" + filter.filter_inclusive
-                    + " favourites=" + filter.filter_favourites
-                    + " albums=" + filter.filter_albums
-                    + " playlists=" + filter.filter_playlists
-                    + " downloaded=" + filter.filter_downloaded
-                    + " remote=" + filter.filter_remote
-            );
-
-            for (RemoteAlbumPack pack : RemoteAlbumManager.packs()) {
-                boolean downloaded = isDownloadedRemote(pack);
-                RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
-
-                System.out.println("[MaM] remote pack:"
-                        + " id=" + pack.id()
-                        + " state=" + state
-                        + " downloaded=" + downloaded
-                        + " include=" + includeRemote(pack, filter)
-                );
-            }
-
             Album.ALBUMS.stream()
                     .filter(album -> includeAlbum(album, filter))
                     .map(album -> new DisplayEntry(album, remoteForInstalledAlbum(album)))

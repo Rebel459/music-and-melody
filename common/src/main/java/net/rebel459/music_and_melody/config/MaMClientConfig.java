@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class MaMClientConfig implements ConfigData {
 
 	public static MaMClientConfig get() {
-		ensureRegistered();
+		init();
 		return AutoConfig.getConfigHolder(MaMClientConfig.class).getConfig();
 	}
 
@@ -31,7 +31,9 @@ public class MaMClientConfig implements ConfigData {
 		return Path.of("./config/" + MusicAndMelody.MOD_ID + "/client." + (json5 ? "json5" : "json"));
 	}
 
-	public static void init() {
+	private static void init() {
+		if (MusicAndMelody.registeredClientConfig) return;
+
 		Path json5Path = configPath(true);
 		Path jsonPath = configPath(false);
 
@@ -41,20 +43,14 @@ public class MaMClientConfig implements ConfigData {
 		boolean restoreRemoteRepositories =
 				!hasExistingConfig || !configContainsField(existingConfigPath, "remote_repositories");
 
-		ensureRegistered();
+		AutoConfig.register(MaMClientConfig.class, JanksonConfigSerializer::new);
+		MusicAndMelody.registeredClientConfig = true;
 
 		var holder = AutoConfig.getConfigHolder(MaMClientConfig.class);
 		MaMClientConfig config = holder.getConfig();
 
 		if (config.normalizeDefaults(restoreRemoteRepositories)) {
 			holder.save();
-		}
-	}
-
-	private static void ensureRegistered() {
-		if (!MusicAndMelody.registeredClientConfig) {
-			AutoConfig.register(MaMClientConfig.class, JanksonConfigSerializer::new);
-			MusicAndMelody.registeredClientConfig = true;
 		}
 	}
 
