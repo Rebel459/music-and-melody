@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.volume_alpha"
   },
-  "icon": "music_and_melody:textures/album/volume_alpha.png",
+  "icon": "minecraft:textures/album/volume_alpha.png",
   "tracks": [
     "music/game/clark",
     "music/game/danny",

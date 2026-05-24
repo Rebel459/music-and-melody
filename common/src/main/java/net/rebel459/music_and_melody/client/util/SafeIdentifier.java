@@ -3,12 +3,14 @@ package net.rebel459.music_and_melody.client.util;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Objects;
+
 public class SafeIdentifier {
 
     private final String namespace;
     private final String path;
 
-    public SafeIdentifier(String namespace, String path) {
+    private SafeIdentifier(String namespace, String path) {
         this.namespace = namespace;
         this.path = path;
     }
@@ -29,6 +31,7 @@ public class SafeIdentifier {
         return Identifier.fromNamespaceAndPath(this.namespace, this.path);
     }
 
+    @Override
     public @NonNull String toString() {
         return this.namespace + ":" + this.path;
     }
@@ -58,5 +61,17 @@ public class SafeIdentifier {
 
     public String getPath() {
         return this.path;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof SafeIdentifier other)) return false;
+        return Objects.equals(this.namespace, other.namespace) && Objects.equals(this.path, other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.namespace, this.path);
     }
 }

@@ -4,62 +4,37 @@
   },
   "icon": "music_and_melody:icon.png",
   "tracks": [
-    "music/caves/abyss",
-    "music/caves/extract_one",
-    "music/caves/shelter",
-    "music/creative/lugn",
-    "music/creative/miscible",
-    "music/creative/stolen_grid",
-    "music/end/minecraft_end_remix",
-    "music/end/only_the_beginning",
-    "music/end/sweden_end_remix",
-    "music/end/vacuum_decay",
     {
-      "track": "music/misc/threshold",
-      "enabled": true
+      "path": "music",
+      "folder": true
     },
-    "music/nether/beneath",
-    "music/nether/bubbles",
-    "music/nether/jellyfish",
-    "music/nether/prophet",
-    "music/nether/psilopsychotic",
-    "music/nether/wasteland",
-    "music/overworld/814",
-    "music/overworld/albeit",
-    "music/overworld/alpha",
-    "music/overworld/black_desert_of_endless_stars",
-    "music/overworld/burning_konkrete",
-    "music/overworld/cliff_hanger",
-    "music/overworld/decay",
-    "music/overworld/fall",
-    "music/overworld/hunger",
-    "music/overworld/kall",
-    "music/overworld/mosaic",
-    "music/overworld/mt_reed",
-    "music/overworld/ravine",
-    "music/overworld/shrub",
-    "music/overworld/sunrise_on_the_mesa_2",
-    "music/overworld/tundra",
     {
-      "track": "music/structure/ancient_city/abandoned_halls",
+      "path": "music/misc/threshold",
       "enabled": true
     },
     {
-      "track": "music/structure/ancient_city/echoes",
+      "path": "music/structure/ancient_city/abandoned_halls",
       "enabled": true
     },
     {
-      "track": "music/structure/stronghold/if_we_could_reverse_time",
+      "path": "music/structure/ancient_city/echoes",
       "enabled": true
     },
     {
-      "track": "music/structure/stronghold/voide",
+      "path": "music/structure/stronghold/if_we_could_reverse_time",
       "enabled": true
     },
     {
-      "track": "music/structure/stronghold/worn_away",
+      "path": "music/structure/stronghold/voide",
       "enabled": true
     },
-    "music/under_water/strand_atoll"
+    {
+      "path": "music/structure/stronghold/worn_away",
+      "enabled": true
+    },
+    {
+      "path": "music/misc/wither_storm_theme",
+      "enabled": true
+    }
   ]
 }

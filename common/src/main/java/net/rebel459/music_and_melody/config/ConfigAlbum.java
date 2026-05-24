@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ConfigAlbum {
 
@@ -36,13 +37,13 @@ public final class ConfigAlbum {
 
     public static synchronized Album createAlbum(Set<Identifier> registeredDiscs) {
         reload();
-        List<String> discs = unregisteredDiscs(registeredDiscs);
+        Set<String> discs = unregisteredDiscs(registeredDiscs);
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,
                 Component.literal("Config Album"),
                 Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
-                FILES.keySet().stream().map(SafeIdentifier::getPath).toList(),
+                FILES.keySet().stream().map(SafeIdentifier::getPath).collect(Collectors.toSet()),
                 discs
         );
     }
@@ -103,7 +104,7 @@ public final class ConfigAlbum {
         return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".ogg");
     }
 
-    private static List<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
+    private static Set<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
         List<Identifier> discs = new ArrayList<>();
         for (Identifier itemId : BuiltInRegistries.ITEM.keySet()) {
             String path = itemId.getPath();
@@ -112,7 +113,7 @@ public final class ConfigAlbum {
             if (!registeredDiscs.contains(jukeboxSong)) discs.add(jukeboxSong);
         }
         discs.sort(Comparator.comparing(Identifier::toString));
-        return discs.stream().map(Identifier::toString).toList();
+        return discs.stream().map(Identifier::toString).collect(Collectors.toSet());
     }
 
     private static String stem(String fileName) {

@@ -331,49 +331,47 @@ public class Event {
         }
 
         if (type == ConditionType.ALL_OF || type == ConditionType.ANY_OF || type == ConditionType.NOT) {
-            if (condition.conditions().isEmpty()) {
+            if (!(condition.value instanceof Record.Condition.Value.Conditions(List<Record.Condition> value)) || value.isEmpty()) {
                 LogUtils.getLogger().warn("Missing nested event music conditions: " + condition.type());
                 return Optional.empty();
             }
 
             List<Condition> conditions = new ArrayList<>();
-            for (Record.Condition nested : condition.conditions()) {
+            for (Record.Condition nested : value) {
                 Optional<Condition> parsed = condition(nested);
                 if (parsed.isEmpty()) return Optional.empty();
                 conditions.add(parsed.get());
             }
-            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
+            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
         }
 
-        if (condition.value().isEmpty()) {
-            LogUtils.getLogger().warn("Missing event music condition value: " + condition.type());
-            return Optional.empty();
-        }
-
-        Either<String, Integer> value = condition.value().get();
+        Record.Condition.Value value = condition.value();
         Optional<String> stringValue = Optional.empty();
         Optional<Identifier> idValue = Optional.empty();
         Optional<Integer> intValue = Optional.empty();
+        Optional<Float> floatValue = Optional.empty();
         Optional<TimeCondition> timeValue = Optional.empty();
         Optional<WeatherCondition> weatherValue = Optional.empty();
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<EventCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y || type == ConditionType.RANDOM_CHANCE) {
-            if (value.right().isEmpty()) return Optional.empty();
-            intValue = value.right();
-            if (type == ConditionType.RANDOM_CHANCE && (intValue.get() < 0 || intValue.get() > 100)) {
+        if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y) {
+            if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
+            intValue = Optional.of(integer);
+        }
+        else if (type == ConditionType.RANDOM_CHANCE) {
+            if (!(value instanceof Record.Condition.Value.Float(float conditionFloat))) return Optional.empty();
+            if (conditionFloat < 0F || conditionFloat > 1F) {
                 LogUtils.getLogger().warn("Random chance must be a percentage (0-100%), was: " + intValue.get() + "%");
                 return Optional.empty();
             }
+            floatValue = Optional.of(conditionFloat);
         } else {
-            if (value.left().isEmpty()) return Optional.empty();
-
-            String string = value.left().get();
+            if (!(value instanceof Record.Condition.Value.String(String string))) return Optional.empty();
 
             if (type == ConditionType.MOD_LOADED) {
                 if (string.isBlank()) return Optional.empty();
-                stringValue = value.left();
+                stringValue = Optional.of(string);
             } else if (type == ConditionType.TIME) {
                 TimeCondition time = time(string);
                 if (time == null) return Optional.empty();
@@ -397,7 +395,7 @@ public class Event {
             }
         }
 
-        return Optional.of(new Condition(type, stringValue, idValue, intValue, timeValue, weatherValue, gameModeValue, eventValue, List.of()));
+        return Optional.of(new Condition(type, stringValue, idValue, intValue, floatValue, timeValue, weatherValue, gameModeValue, eventValue, List.of()));
     }
 
     private static CategoryType category(String category) {
@@ -698,15 +696,50 @@ public class Event {
             ).apply(instance, Entry::new));
         }
 
-        public record Condition(String type, Optional<Either<String, Integer>> value, List<Condition> conditions) {
-            private static final Codec<Condition> CODEC = Codec.recursive("EventCondition", self -> RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.STRING.fieldOf("type").forGetter(Condition::type),
-                    Codec.either(Codec.STRING, Codec.INT).optionalFieldOf("value").forGetter(Condition::value),
-                    self.listOf().optionalFieldOf("conditions", List.of()).forGetter(Condition::conditions)
-            ).apply(instance, Condition::new)));
+        public record Condition(String type, Value value) {
+            public static final Codec<Condition> CODEC = Codec.recursive("EventCondition", self -> {
+                Codec<Value> valueCodec = Codec.either(
+                        Codec.either(
+                                Codec.either(Codec.STRING, Codec.INT),
+                                Codec.FLOAT
+                        ),
+                        self.listOf()
+                ).xmap(
+                        either -> either.map(
+                                scalar -> scalar.map(
+                                        stringOrInt -> stringOrInt.map(Value.String::new, Value.Integer::new),
+                                        Value.Float::new
+                                ),
+                                Value.Conditions::new
+                        ),
+                        value -> {
+                            if (value instanceof Value.String(String stringValue)) {
+                                return Either.left(Either.left(Either.left(stringValue)));
+                            }
+                            if (value instanceof Value.Integer(int integerValue)) {
+                                return Either.left(Either.left(Either.right(integerValue)));
+                            }
+                            if (value instanceof Value.Float(float floatValue)) {
+                                return Either.left(Either.right(floatValue));
+                            }
+                            if (value instanceof Value.Conditions(List<Condition> conditionsValue)) {
+                                return Either.right(conditionsValue);
+                            }
+                            throw new IllegalStateException("Unknown condition value: " + value);
+                        }
+                );
 
-            public Condition(String type, Optional<Either<String, Integer>> value) {
-                this(type, value, List.of());
+                return RecordCodecBuilder.create(instance -> instance.group(
+                        Codec.STRING.fieldOf("type").forGetter(Condition::type),
+                        valueCodec.fieldOf("value").forGetter(Condition::value)
+                ).apply(instance, Condition::new));
+            });
+
+            public sealed interface Value permits Value.String, Value.Integer, Value.Float, Value.Conditions {
+                record String(java.lang.String value) implements Value {}
+                record Integer(int value) implements Value {}
+                record Float(float value) implements Value {}
+                record Conditions(List<Condition> value) implements Value {}
             }
         }
     }
@@ -716,6 +749,7 @@ public class Event {
             Optional<String> stringValue,
             Optional<Identifier> idValue,
             Optional<Integer> intValue,
+            Optional<Float> floatValue,
             Optional<TimeCondition> timeValue,
             Optional<WeatherCondition> weatherValue,
             Optional<GameModeCondition> gameModeValue,

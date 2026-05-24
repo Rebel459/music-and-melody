@@ -1,8 +1,8 @@
 {
   "name": {
-    "translate": "album.minecraft.wild_update"
+    "translate": "album.minecraft.the_wild_update"
   },
-  "icon": "music_and_melody:textures/album/wild_update.png",
+  "icon": "minecraft:textures/album/the_wild_update.png",
   "tracks": [
     "music/game/swamp/aerie",
     "music/game/swamp/firebugs",
