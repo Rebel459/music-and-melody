@@ -6,8 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.HashSet;
@@ -19,19 +20,19 @@ public class Album {
     public static Set<Album> ALBUMS = new HashSet<>();
     public static Set<Album> DISABLED_ALBUMS = new HashSet<>();
 
-    public ResourceLocation album;
+    public Identifier album;
     public Component name;
-    public ResourceLocation icon;
+    public Identifier icon;
     public List<String> tracks;
     public List<String> discs;
     public Set<String> forcedEnabledTracks;
     public Set<String> forcedUnlockedDiscs;
 
-    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, List<String> discs) {
+    public Album(Identifier album, Component name, Identifier icon, List<String> tracks, List<String> discs) {
         this(album, name, icon, tracks, Set.of(), discs, Set.of());
     }
 
-    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, Set<String> forcedEnabledTracks, List<String> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(Identifier album, Component name, Identifier icon, List<String> tracks, Set<String> forcedEnabledTracks, List<String> discs, Set<String> forcedUnlockedDiscs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
@@ -83,8 +84,8 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public ResourceLocation trackId(String song) {
-        return ResourceLocation.fromNamespaceAndPath(this.album.getNamespace(), song);
+    public SafeIdentifier trackId(String song) {
+        return SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {
@@ -113,24 +114,25 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public record Record(Component name, ResourceLocation icon, List<Track> tracks, List<Disc> discs) {
+    public record Record(Component name, Identifier icon, List<Track> tracks, List<Disc> discs) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
-                ResourceLocation.CODEC.optionalFieldOf("icon", ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
+                Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
                 Track.CODEC.listOf().optionalFieldOf("tracks", List.of()).forGetter(Record::tracks),
                 Disc.CODEC.listOf().optionalFieldOf("discs", List.of()).forGetter(Record::discs)
         ).apply(instance, Record::new));
     }
 
-    public record Track(String track, boolean enabled) {
+    public record Track(String track, boolean enabled, boolean folder) {
         private static final Codec<Track> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.NON_EMPTY_STRING.fieldOf("track").forGetter(Track::track),
-                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled)
+                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled),
+                Codec.BOOL.optionalFieldOf("folder", false).forGetter(Track::folder)
         ).apply(instance, Track::new));
 
         public static final Codec<Track> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
-                either -> either.map(track -> new Track(track, false), track -> track),
-                track -> track.enabled() ? Either.right(track) : Either.left(track.track())
+                either -> either.map(track -> new Track(track, false, false), track -> track),
+                track -> track.enabled() || track.folder() ? Either.right(track) : Either.left(track.track())
         );
     }
 

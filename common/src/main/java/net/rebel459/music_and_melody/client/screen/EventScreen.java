@@ -651,7 +651,6 @@ public class EventScreen extends Screen {
         private final Screen parent;
         private final Set<Identifier> deletePendingSources = new HashSet<>();
         private SourceList list;
-        private Button filterButton;
 
         public EventSourceScreen(Screen parent) {
             this(new EventScreen(parent), parent);
@@ -674,10 +673,8 @@ public class EventScreen extends Screen {
             int buttonWidth = (rowWidth - 8) / 3;
             int rowX = this.width / 2 - rowWidth / 2;
             int buttonY = this.height - 27;
-            this.filterButton = this.addRenderableWidget(Button.builder(filterMessage(), button -> {
-                        cycleFilter();
-                        button.setMessage(filterMessage());
-                        refreshList();
+            this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.filter"), button -> {
+                        this.minecraft.setScreen(new EventFilterScreen(this));
                     })
                     .bounds(rowX, buttonY, buttonWidth, 20)
                     .build());
@@ -693,7 +690,6 @@ public class EventScreen extends Screen {
         public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
-            if (this.filterButton != null) this.filterButton.setMessage(filterMessage());
         }
 
         @Override
@@ -730,7 +726,7 @@ public class EventScreen extends Screen {
             this.minecraft.setScreen(new NewEventSourceScreen(this));
         }
 
-        private void refreshList() {
+        void refreshList() {
             if (this.list != null) this.list.refresh();
         }
 
@@ -747,30 +743,65 @@ public class EventScreen extends Screen {
             refreshList();
         }
 
-        private void cycleFilter() {
-            MaMDataConfig config = MaMDataConfig.get();
-            config.events.display = switch (config.events.display) {
-                case ALL -> MaMDataConfig.EventDisplay.ENABLED;
-                case ENABLED -> MaMDataConfig.EventDisplay.DISABLED;
-                case DISABLED -> MaMDataConfig.EventDisplay.CUSTOM;
-                case CUSTOM -> MaMDataConfig.EventDisplay.BUILT_IN;
-                case BUILT_IN -> MaMDataConfig.EventDisplay.ALL;
-            };
-            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
-        }
-
-        private Component filterMessage() {
-            return Component.translatable("button.music_and_melody.event_display." + MaMDataConfig.get().events.display.name().toLowerCase(Locale.ROOT));
-        }
-
         private boolean visible(Event.Source source) {
-            return switch (MaMDataConfig.get().events.display) {
-                case ALL -> true;
-                case ENABLED -> source.isEnabled();
-                case DISABLED -> !source.isEnabled();
-                case CUSTOM -> source.isConfig();
-                case BUILT_IN -> !source.isConfig();
+            MaMDataConfig.Events filter = MaMDataConfig.get().events;
+
+            return matches(filter,
+                    matchesCustom(source, filter),
+                    matchesBuiltIn(source, filter),
+                    matchesEnabled(source, filter),
+                    matchesDisabled(source, filter)
+            );
+        }
+
+        private static boolean matches(MaMDataConfig.Events filter, boolean... matches) {
+            return filter.filter_inclusive ? matchesAny(matches) : matchesAllSelected(filter, matches);
+        }
+
+        private static boolean matchesAny(boolean... matches) {
+            for (boolean match : matches) {
+                if (match) return true;
+            }
+            return false;
+        }
+
+        private static boolean matchesAllSelected(MaMDataConfig.Events filter, boolean... matches) {
+            boolean[] selected = selectedFilters(filter);
+
+            boolean anySelected = false;
+            for (int i = 0; i < selected.length; i++) {
+                if (!selected[i]) continue;
+
+                anySelected = true;
+                if (!matches[i]) return false;
+            }
+
+            return anySelected;
+        }
+
+        private static boolean[] selectedFilters(MaMDataConfig.Events filter) {
+            return new boolean[]{
+                    filter.filter_custom,
+                    filter.filter_built_in,
+                    filter.filter_enabled,
+                    filter.filter_disabled
             };
+        }
+
+        private static boolean matchesCustom(Event.Source source, MaMDataConfig.Events filter) {
+            return filter.filter_custom && source.isConfig();
+        }
+
+        private static boolean matchesBuiltIn(Event.Source source, MaMDataConfig.Events filter) {
+            return filter.filter_built_in && !source.isConfig();
+        }
+
+        private static boolean matchesEnabled(Event.Source source, MaMDataConfig.Events filter) {
+            return filter.filter_enabled && source.isEnabled();
+        }
+
+        private static boolean matchesDisabled(Event.Source source, MaMDataConfig.Events filter) {
+            return filter.filter_disabled && !source.isEnabled();
         }
     }
 

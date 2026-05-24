@@ -13,22 +13,33 @@ import java.util.List;
 @Config(name = MusicAndMelody.MOD_ID + "/" + "data")
 public class MaMDataConfig implements ConfigData {
 
-	private static boolean registered = false;
-
 	public static MaMDataConfig get() {
-		if (!registered) {
+		if (!MusicAndMelody.registeredDataConfig) {
 			AutoConfig.register(MaMDataConfig.class, JanksonConfigSerializer::new);
-			registered = true;
+			MusicAndMelody.registeredDataConfig = true;
 		}
 		return AutoConfig.getConfigHolder(MaMDataConfig.class).getConfig();
 	}
 	public Albums albums = new Albums();
 
 	public static class Albums {
-		public AlbumDisplay display = AlbumDisplay.ALL;
+		public boolean filter_inclusive = true;
+		public boolean filter_favourites = true;
+		public boolean filter_albums = true;
+		public boolean filter_playlists = true;
+		public boolean filter_downloaded = true;
+		public boolean filter_remote = true;
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
+		public List<DownloadedAlbumPack> downloads = new ArrayList<>();
+	}
+
+	public static class DownloadedAlbumPack {
+		public String id = "";
+		public String version = "";
+		public String sha256 = "";
+		public String file = "";
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject
@@ -44,23 +55,12 @@ public class MaMDataConfig implements ConfigData {
 	public Events events = new Events();
 
 	public static class Events {
-		public EventDisplay display = EventDisplay.ALL;
+		public boolean filter_inclusive = true;
+		public boolean filter_custom = true;
+		public boolean filter_built_in = true;
+		public boolean filter_enabled = true;
+		public boolean filter_disabled = true;
 		public List<String> disabled_events = new ArrayList<>();
 		public List<String> enabled_events = new ArrayList<>();
-	}
-
-	public enum AlbumDisplay {
-		ALL,
-		ALBUMS,
-		PLAYLISTS,
-		FAVOURITES
-	}
-
-	public enum EventDisplay {
-		ALL,
-		ENABLED,
-		DISABLED,
-		CUSTOM,
-		BUILT_IN
 	}
 }

@@ -12,7 +12,10 @@
   "client": [
     "client.ClientPacketListenerMixin",
     "client.MinecraftMixin",
+    "client.MultiPackResourceManagerMixin",
     "client.MusicManagerMixin",
+    "client.NowPlayingToastMixin",
+    "client.SoundBufferLibraryMixin",
     "client.SoundEngineMixin",
     "client.SoundEventRegistrationSerializerMixin",
     "client.SoundManagerMixin",
