@@ -6,10 +6,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class SafeMusicHelper {
@@ -34,6 +31,7 @@ public final class SafeMusicHelper {
 				Stream<String> albumTracks = flatAlbumTracks(folder.getNamespace(), folderPath);
 				Stream<String> downloadTracks = recursiveDownloadTracks(folder.getNamespace(), folderPath)
 		) {
+
 			return Stream.concat(albumTracks, downloadTracks)
 					.distinct()
 					.sorted(Comparator.naturalOrder())

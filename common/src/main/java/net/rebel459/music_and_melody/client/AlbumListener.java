@@ -15,13 +15,7 @@ import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AlbumListener extends SimpleJsonResourceReloadListener {
@@ -46,18 +40,19 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
             ResourceLocation albumId = entry.getKey();
             Album.Record record = entry.getValue();
 
-            List<String> tracks = expandTracks(albumId, record.tracks(), resourceManager);
-            Set<String> forcedEnabledTracks = forcedEnabledTracks(albumId, record.tracks(), resourceManager);
+            TrackSet trackSet = expandTracks(albumId, record.tracks(), resourceManager);
+            Set<String> tracks = trackSet.tracks();
+            Set<String> forcedEnabledTracks = trackSet.forcedEnabledTracks();
 
-            List<String> discs = record.discs()
+            Set<String> discs = record.discs()
                     .stream()
-                    .map(Album.Disc::disc)
-                    .toList();
+                    .map(Album.Disc::path)
+                    .collect(Collectors.toSet());
 
             Set<String> forcedUnlockedDiscs = record.discs()
                     .stream()
                     .filter(Album.Disc::unlocked)
-                    .map(Album.Disc::disc)
+                    .map(Album.Disc::path)
                     .collect(Collectors.toSet());
 
             for (String disc : discs) {
@@ -92,45 +87,47 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
         }
     }
 
-    private static List<String> expandTracks(
-            ResourceLocation albumId,
+    private static TrackSet expandTracks(
+            Identifier albumId,
             List<Album.Track> entries,
             ResourceManager resourceManager
     ) {
-        LinkedHashSet<String> tracks = new LinkedHashSet<>();
+        LinkedHashMap<String, String> tracksById = new LinkedHashMap<>();
+        Set<String> forcedEnabledTracks = new HashSet<>();
 
         for (Album.Track entry : entries) {
-            if (entry.folder()) {
-                tracks.addAll(folderTracks(albumId.getNamespace(), entry.track(), resourceManager));
-            } else {
-                tracks.add(entry.track());
+            List<String> expandedTracks = entry.folder()
+                    ? folderTracks(albumId.getNamespace(), entry.path(), resourceManager)
+                    : List.of(entry.path());
+
+            for (String song : expandedTracks) {
+                String id = trackId(albumId, song).toString();
+
+                if (entry.enabled()) {
+                    forcedEnabledTracks.add(id);
+
+                    // Forced-enabled version wins if this same resolved track was already added.
+                    tracksById.put(id, song);
+                } else {
+                    // Normal entries do not override forced-enabled entries.
+                    tracksById.putIfAbsent(id, song);
+                }
             }
         }
 
-        return new ArrayList<>(tracks);
+        return new TrackSet(
+                new LinkedHashSet<>(tracksById.values()),
+                forcedEnabledTracks
+        );
     }
 
-    private static Set<String> forcedEnabledTracks(
-            ResourceLocation albumId,
-            List<Album.Track> entries,
-            ResourceManager resourceManager
-    ) {
-        Set<String> tracks = new HashSet<>();
-
-        for (Album.Track entry : entries) {
-            if (!entry.enabled()) {
-                continue;
-            }
-
-            if (entry.folder()) {
-                tracks.addAll(folderTracks(albumId.getNamespace(), entry.track(), resourceManager));
-            } else {
-                tracks.add(entry.track());
-            }
-        }
-
-        return tracks;
+    private static SafeIdentifier trackId(Identifier albumId, String song) {
+        return song.contains(":")
+                ? SafeIdentifier.parse(song)
+                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
     }
+
+    private record TrackSet(Set<String> tracks, Set<String> forcedEnabledTracks) {}
 
     private static List<String> folderTracks(
             String albumNamespace,

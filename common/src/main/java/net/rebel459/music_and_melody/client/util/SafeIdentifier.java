@@ -1,14 +1,16 @@
 package net.rebel459.music_and_melody.client.util;
 
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
+
+import java.util.Objects;
 
 public class SafeIdentifier {
 
     private final String namespace;
     private final String path;
 
-    public SafeIdentifier(String namespace, String path) {
+    private SafeIdentifier(String namespace, String path) {
         this.namespace = namespace;
         this.path = path;
     }
@@ -18,18 +20,19 @@ public class SafeIdentifier {
     }
 
     public static SafeIdentifier withDefaultNamespace(String path) {
-        return fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
+        return fromNamespaceAndPath(Identifier.DEFAULT_NAMESPACE, path);
     }
 
-    public static SafeIdentifier convert(ResourceLocation id) {
+    public static SafeIdentifier convert(Identifier id) {
         return fromNamespaceAndPath(id.getNamespace(), id.getPath());
     }
 
-    public ResourceLocation getId() {
-        return ResourceLocation.fromNamespaceAndPath(this.namespace, this.path);
+    public Identifier getId() {
+        return Identifier.fromNamespaceAndPath(this.namespace, this.path);
     }
 
-    public @NotNull String toString() {
+    @Override
+    public @NonNull String toString() {
         return this.namespace + ":" + this.path;
     }
 
@@ -58,5 +61,17 @@ public class SafeIdentifier {
 
     public String getPath() {
         return this.path;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof SafeIdentifier other)) return false;
+        return Objects.equals(this.namespace, other.namespace) && Objects.equals(this.path, other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.namespace, this.path);
     }
 }

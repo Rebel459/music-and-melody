@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.nether_update"
   },
-  "icon": "music_and_melody:textures/album/nether_update.png",
+  "icon": "minecraft:textures/album/nether_update.png",
   "tracks": [
     "music/game/nether/crimson_forest/chrysopoeia",
     "music/game/nether/nether_wastes/rubedo",

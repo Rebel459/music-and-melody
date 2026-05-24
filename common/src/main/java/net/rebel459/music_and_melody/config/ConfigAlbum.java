@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ConfigAlbum {
 
@@ -34,13 +35,13 @@ public final class ConfigAlbum {
 
     public static synchronized Album createAlbum(Set<ResourceLocation> registeredDiscs) {
         reload();
-        List<String> discs = unregisteredDiscs(registeredDiscs);
+        Set<String> discs = unregisteredDiscs(registeredDiscs);
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,
                 Component.literal("Config Album"),
-                ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png"),
-                FILES.keySet().stream().map(SafeIdentifier::getPath).toList(),
+                Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
+                FILES.keySet().stream().map(SafeIdentifier::getPath).collect(Collectors.toSet()),
                 discs
         );
     }
@@ -101,22 +102,22 @@ public final class ConfigAlbum {
         return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".ogg");
     }
 
-    private static List<String> unregisteredDiscs(Set<ResourceLocation> registeredDiscs) {
-        List<ResourceLocation> discs = new ArrayList<>();
-        for (ResourceLocation itemId : BuiltInRegistries.ITEM.keySet()) {
+    private static Set<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
+        List<Identifier> discs = new ArrayList<>();
+        for (Identifier itemId : BuiltInRegistries.ITEM.keySet()) {
             String path = itemId.getPath();
             if (!path.startsWith("music_disc_")) continue;
             ResourceLocation jukeboxSong = ResourceLocation.fromNamespaceAndPath(itemId.getNamespace(), path.substring("music_disc_".length()));
             if (!registeredDiscs.contains(jukeboxSong)) discs.add(jukeboxSong);
         }
+
         discs.sort(Comparator.comparing(ResourceLocation::toString));
         return discs.stream().map(ResourceLocation::toString).toList();
-    }
 
-    private static String stem(String fileName) {
+        discs.sort(Comparator.comparing(Identifier::toString));
+        return discs.stream().map(Identifier::toString).collect(Collectors.toSet());
         return fileName.substring(0, fileName.length() - ".ogg".length());
     }
-
     private static String sanitize(String value) {
         String sanitized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9/._-]", "_");
         if (sanitized.isBlank()) return "disc";

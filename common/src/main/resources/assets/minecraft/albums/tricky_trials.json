@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.tricky_trials"
   },
-  "icon": "music_and_melody:textures/album/tricky_trials.png",
+  "icon": "minecraft:textures/album/tricky_trials.png",
   "tracks": [
     "music/game/deeper",
     "music/game/eld_unknown",

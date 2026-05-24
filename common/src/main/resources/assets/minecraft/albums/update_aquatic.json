@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.update_aquatic"
   },
-  "icon": "music_and_melody:textures/album/update_aquatic.png",
+  "icon": "minecraft:textures/album/update_aquatic.png",
   "tracks": [
     "music/game/water/axolotl",
     "music/game/water/dragon_fish",

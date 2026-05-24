@@ -22,17 +22,17 @@ public class Album {
 
     public ResourceLocation album;
     public Component name;
-    public ResourceLocation icon;
-    public List<String> tracks;
-    public List<String> discs;
+    public Identifier icon;
+    public Set<String> tracks;
+    public Set<String> discs;
     public Set<String> forcedEnabledTracks;
     public Set<String> forcedUnlockedDiscs;
 
-    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, List<String> discs) {
+    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> discs) {
         this(album, name, icon, tracks, Set.of(), discs, Set.of());
     }
 
-    public Album(ResourceLocation album, Component name, ResourceLocation icon, List<String> tracks, Set<String> forcedEnabledTracks, List<String> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<String> discs, Set<String> forcedUnlockedDiscs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
@@ -85,15 +85,16 @@ public class Album {
     }
 
     public SafeIdentifier trackId(String song) {
-        return SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
+        return song.contains(":") ? SafeIdentifier.parse(song) : SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {
-        return isTrackForcedEnabled(song) || !MaMDataConfig.get().albums.disabled_tracks.contains(trackId(song).toString());
+        String id = trackId(song).toString();
+        return this.forcedEnabledTracks.contains(id) || !MaMDataConfig.get().albums.disabled_tracks.contains(id);
     }
 
     public boolean isTrackForcedEnabled(String song) {
-        return this.forcedEnabledTracks.contains(song);
+        return this.forcedEnabledTracks.contains(trackId(song).toString());
     }
 
     public boolean isDiscForcedUnlocked(String disc) {
@@ -123,28 +124,28 @@ public class Album {
         ).apply(instance, Record::new));
     }
 
-    public record Track(String track, boolean enabled, boolean folder) {
+    public record Track(String path, boolean enabled, boolean folder) {
         private static final Codec<Track> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ExtraCodecs.NON_EMPTY_STRING.fieldOf("track").forGetter(Track::track),
+                ExtraCodecs.NON_EMPTY_STRING.fieldOf("path").forGetter(Track::path),
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled),
                 Codec.BOOL.optionalFieldOf("folder", false).forGetter(Track::folder)
         ).apply(instance, Track::new));
 
         public static final Codec<Track> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
                 either -> either.map(track -> new Track(track, false, false), track -> track),
-                track -> track.enabled() || track.folder() ? Either.right(track) : Either.left(track.track())
+                track -> track.enabled() || track.folder() ? Either.right(track) : Either.left(track.path())
         );
     }
 
-    public record Disc(String disc, boolean unlocked) {
+    public record Disc(String path, boolean unlocked) {
         private static final Codec<Disc> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ExtraCodecs.NON_EMPTY_STRING.fieldOf("disc").forGetter(Disc::disc),
+                ExtraCodecs.NON_EMPTY_STRING.fieldOf("path").forGetter(Disc::path),
                 Codec.BOOL.optionalFieldOf("unlocked", false).forGetter(Disc::unlocked)
         ).apply(instance, Disc::new));
 
         public static final Codec<Disc> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
                 either -> either.map(track -> new Disc(track, false), disc -> disc),
-                disc -> disc.unlocked() ? Either.right(disc) : Either.left(disc.disc())
+                disc -> disc.unlocked() ? Either.right(disc) : Either.left(disc.path())
         );
     }
 }

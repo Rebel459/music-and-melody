@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.chase_the_skies"
   },
-  "icon": "music_and_melody:textures/album/chase_the_skies.png",
+  "icon": "minecraft:textures/album/chase_the_skies.png",
   "tracks": [
     "music/game/below_and_above",
     "music/game/broken_clocks",

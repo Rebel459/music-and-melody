@@ -12,7 +12,7 @@
         },
         {
           "type": "not",
-          "conditions": [
+          "value": [
             {
               "type": "mod_loaded",
               "value": "enderscape"
