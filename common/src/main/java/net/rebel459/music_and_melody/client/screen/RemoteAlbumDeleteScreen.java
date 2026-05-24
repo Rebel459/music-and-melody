@@ -157,7 +157,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
 
             graphics.drawString(
                     this.minecraft.font,
-                    Component.literal(id).withStyle(ChatFormatting.GRAY),
+                    Component.literal(id + " | " + this.pack.version()).withStyle(ChatFormatting.GRAY),
                     this.getContentX() + 1,
                     this.getContentYMiddle() + 2,
                     0xFFAAAAAA
