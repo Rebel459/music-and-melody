@@ -33,7 +33,7 @@ public class EventScreen extends Screen {
     private static final Event.PriorityType[] PRIORITIES = Event.PriorityType.values();
     private static final int CONDITIONS_Y = 114;
     private static final int CONDITIONS_ONE_LINE_HEIGHT = 18;
-    private static final int CONDITIONS_TWO_LINE_HEIGHT = 28;
+    private static final int CONDITIONS_TWO_LINE_HEIGHT = 36;
     private static final int CONDITIONS_LIST_GAP = 12;
     private static final int BOTTOM_BUTTON_AREA_HEIGHT = 60;
 
@@ -128,8 +128,8 @@ public class EventScreen extends Screen {
                     CONDITIONS_Y,
                     fieldWidth,
                     CONDITIONS_ONE_LINE_HEIGHT,
-                    Component.translatable("screen.music_and_melody.event_editor.conditions"),
-                    Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY)
+                    Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY),
+                    CommonComponents.EMPTY
             ));
             this.conditionsField.setValueListener(value -> markDirty());
             this.conditionsField.setValueListener(value -> markDirty());
