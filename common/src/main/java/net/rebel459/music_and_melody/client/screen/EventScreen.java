@@ -34,7 +34,7 @@ public class EventScreen extends Screen {
     private static final int CONDITIONS_Y = 114;
     private static final int CONDITIONS_ONE_LINE_HEIGHT = 18;
     private static final int CONDITIONS_TWO_LINE_HEIGHT = 36;
-    private static final int CONDITIONS_LIST_GAP = 12;
+    private static final int CONDITIONS_LIST_GAP = 4;
     private static final int BOTTOM_BUTTON_AREA_HEIGHT = 60;
 
     private final Screen parent;
