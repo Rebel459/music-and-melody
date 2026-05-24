@@ -2,36 +2,31 @@ package net.rebel459.music_and_melody.client.util;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.SoundEngine;
-import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.locale.Language;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.valueproviders.ConstantFloat;
 import net.minecraft.util.valueproviders.SampledFloat;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public final class PlaylistHelper {
     public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
-    public static final List<Identifier> QUEUED_SONGS = new ArrayList<>();
-    public static final HashMap<Identifier, SampledFloat> STORED_VOLUME = new HashMap<>();
+    public static final List<SafeIdentifier> QUEUED_SONGS = new ArrayList<>();
+    public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
     private static SoundInstance currentSong = null;
-    private static Identifier currentSongId = null;
+    private static SafeIdentifier currentSongId = null;
+    private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
     private static boolean queuePaused = true;
@@ -41,7 +36,7 @@ public final class PlaylistHelper {
 
     private PlaylistHelper() {}
 
-    public static void add(Identifier song) {
+    public static void add(SafeIdentifier song) {
         ensureLoaded();
         if (!QUEUED_SONGS.contains(song)) {
             QUEUED_SONGS.add(song);
@@ -49,10 +44,10 @@ public final class PlaylistHelper {
         }
     }
 
-    public static void addAll(Collection<Identifier> songs) {
+    public static void addAll(Collection<SafeIdentifier> songs) {
         ensureLoaded();
         boolean changed = false;
-        for (Identifier song : songs) {
+        for (SafeIdentifier song : songs) {
             if (!QUEUED_SONGS.contains(song)) {
                 QUEUED_SONGS.add(song);
                 changed = true;
@@ -61,12 +56,12 @@ public final class PlaylistHelper {
         if (changed) save();
     }
 
-    public static boolean isQueued(Identifier song) {
+    public static boolean isQueued(SafeIdentifier song) {
         ensureLoaded();
         return QUEUED_SONGS.contains(song);
     }
 
-    public static List<Identifier> queuedSongs() {
+    public static List<SafeIdentifier> queuedSongs() {
         ensureLoaded();
         return List.copyOf(QUEUED_SONGS);
     }
@@ -74,7 +69,7 @@ public final class PlaylistHelper {
     public static void remove(int index) {
         ensureLoaded();
         if (index >= 0 && index < QUEUED_SONGS.size()) {
-            Identifier removed = QUEUED_SONGS.get(index);
+            SafeIdentifier removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
             if (currentSongFromQueue && removed.equals(currentSongId)) stop();
@@ -102,11 +97,11 @@ public final class PlaylistHelper {
         return true;
     }
 
-    public static boolean isPlaying(Identifier song) {
+    public static boolean isPlaying(SafeIdentifier song) {
         return song.equals(currentSongId) && isPlaying();
     }
 
-    public static boolean isQueuePlaying(Identifier song) {
+    public static boolean isQueuePlaying(SafeIdentifier song) {
         return currentSongFromQueue && isPlaying(song);
     }
 
@@ -149,6 +144,7 @@ public final class PlaylistHelper {
         if (sound != null && sound != currentSong) return;
         currentSong = null;
         currentSongId = null;
+        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }
@@ -159,17 +155,20 @@ public final class PlaylistHelper {
 
     public static String getMusicTranslationKey(SoundInstance sound) {
         if (sound == null || sound != currentSong || !isPlaying() || currentSongId == null) return null;
-        Identifier displayId = currentSongId;
+        SafeIdentifier displayId = currentSongId;
         Sound currentSound = currentSong.getSound();
         if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
-            displayId = currentSound.getLocation();
+            Optional<String> directName = DirectSoundFiles.getName(currentSound.getLocation());
+            if (directName.isPresent()) return directName.get();
+            displayId = SafeIdentifier.convert(currentSound.getLocation());
         }
         String configName = ConfigAlbum.displayName(displayId);
         if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
         var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), displayId);
         if (disc.isPresent()) return MusicDiscHelper.translationKey(disc.get().jukeboxSong());
         String pathKey = displayId.getPath().replace('/', '.');
-        return displayId.getNamespace().equals("minecraft") ? pathKey : displayId.getNamespace() + "." + pathKey;
+        String key = displayId.getNamespace().equals("minecraft") ? pathKey : displayId.getNamespace() + "." + pathKey;
+        return Language.getInstance().has(key) ? key : LITERAL_TRANSLATION_PREFIX + fallbackName(displayId.getPath());
     }
 
     public static boolean playNext() {
@@ -182,7 +181,7 @@ public final class PlaylistHelper {
             return false;
         }
         queueIndex = playableIndex;
-        Identifier id = QUEUED_SONGS.get(queueIndex);
+        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
         return playSound(id, false, true, false);
     }
 
@@ -195,7 +194,7 @@ public final class PlaylistHelper {
         int playableIndex = nextPlayableIndex(queueIndex, true);
         if (playableIndex < 0) return false;
         queueIndex = playableIndex;
-        Identifier id = QUEUED_SONGS.get(queueIndex);
+        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
         stop();
         return playSound(id, false, true, false);
     }
@@ -227,6 +226,7 @@ public final class PlaylistHelper {
         }
         currentSong = null;
         currentSongId = null;
+        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }
@@ -251,6 +251,13 @@ public final class PlaylistHelper {
         return Math.max(0, Math.min(index, QUEUED_SONGS.size() - 1));
     }
 
+    private static String fallbackName(String path) {
+        String normalized = path.replace('\\', '/');
+        int slash = normalized.lastIndexOf('/');
+        String name = slash >= 0 ? normalized.substring(slash + 1) : normalized;
+        return name.endsWith(".ogg") ? name.substring(0, name.length() - ".ogg".length()) : name;
+    }
+
     private static int nextPlayableIndex(int start, boolean wrap) {
         if (QUEUED_SONGS.isEmpty()) return -1;
         int index = clampQueueIndex(start);
@@ -265,13 +272,14 @@ public final class PlaylistHelper {
         return -1;
     }
 
-    private static boolean playSound(Identifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
+    private static boolean playSound(SafeIdentifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
         id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
         RandomSource random = SoundInstance.createUnseededRandom();
         if (sampledVolume != null) volume = sampledVolume.sample(random);
         currentSongId = id;
+        currentSongLooping = loop;
         currentSongFromQueue = fromQueue;
         currentSongFromEvent = fromEvent;
         currentSong = new DirectSoundInstance(
@@ -292,6 +300,7 @@ public final class PlaylistHelper {
         if (result == SoundEngine.PlayResult.NOT_STARTED) {
             currentSong = null;
             currentSongId = null;
+            currentSongLooping = false;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
             return false;
@@ -312,17 +321,18 @@ public final class PlaylistHelper {
         }
         currentSong = null;
         currentSongId = null;
+        currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
     }
 
-    public static boolean play(Identifier id, boolean loop) {
+    public static boolean play(SafeIdentifier id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, false);
     }
 
-    public static boolean playEvent(Identifier id, boolean loop) {
+    public static boolean playEvent(SafeIdentifier id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, true);
@@ -348,7 +358,7 @@ public final class PlaylistHelper {
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
         for (String song : config.playlists.queued_songs) {
-            Identifier id = Identifier.tryParse(song);
+            SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
     }
@@ -356,51 +366,7 @@ public final class PlaylistHelper {
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
         config.playlists.loop = loop;
-        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(Identifier::toString).toList());
+        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
-    }
-
-    private static class DirectSoundInstance extends AbstractSoundInstance {
-
-        private final WeighedSoundEvents soundEvent;
-
-        DirectSoundInstance(
-                Identifier location,
-                SoundSource source,
-                float volume,
-                float pitch,
-                RandomSource random,
-                boolean looping,
-                int delay,
-                SoundInstance.Attenuation attenuation,
-                double x,
-                double y,
-                double z,
-                boolean relative
-        ) {
-            super(location, source, random);
-            this.volume = volume;
-            this.pitch = pitch;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.looping = looping;
-            this.delay = delay;
-            this.attenuation = attenuation;
-            this.relative = relative;
-            this.sound = new Sound(location, ConstantFloat.of(1.0F), ConstantFloat.of(1.0F), 1, Sound.Type.FILE, true, false, 16);
-            this.soundEvent = new WeighedSoundEvents(location, null);
-            this.soundEvent.addSound(this.sound);
-        }
-
-        @Override
-        public WeighedSoundEvents resolve(SoundManager soundManager) {
-            WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
-            if (registered != null) {
-                this.sound = registered.getSound(this.random);
-                return registered;
-            }
-            return this.soundEvent;
-        }
     }
 }

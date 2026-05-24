@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,6 +15,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
+import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
+import net.rebel459.music_and_melody.client.remote.RemoteAlbumPack;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
@@ -30,7 +32,7 @@ public class AlbumScreen extends Screen {
     private static final Component TITLE = Component.translatable("screen.music_and_melody.albums");
     private final Screen parent;
     private AlbumList list;
-    private Button displayButton;
+    private boolean catalogRefreshing;
     private boolean reloadPending;
     private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
 
@@ -41,14 +43,14 @@ public class AlbumScreen extends Screen {
 
     @Override
     protected void init() {
+        RemoteAlbumManager.refreshIfNeeded();
+        this.catalogRefreshing = RemoteAlbumManager.isRefreshing();
         this.list = this.addRenderableWidget(new AlbumList(this, this.minecraft, this.width, this.height - 64));
         int rowX = this.width / 2 - MAIN_BUTTON_ROW_WIDTH / 2;
         int buttonY = this.height - 27;
-        this.displayButton = this.addRenderableWidget(Button.builder(displayMessage(), button -> {
-                    cycleDisplay();
-                    button.setMessage(displayMessage());
-                    refreshList();
-                })
+        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.filter"), button ->
+                        this.minecraft.setScreen(new AlbumFilterScreen(this))
+                )
                 .bounds(rowX, buttonY, 152, 20)
                 .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
@@ -60,7 +62,10 @@ public class AlbumScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
         graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
-        if (this.displayButton != null) this.displayButton.setMessage(displayMessage());
+        if (this.catalogRefreshing && !RemoteAlbumManager.isRefreshing()) {
+            this.catalogRefreshing = false;
+            refreshList();
+        }
     }
 
     @Override
@@ -74,6 +79,15 @@ public class AlbumScreen extends Screen {
 
     public void markReloadPending() {
         this.reloadPending = true;
+    }
+
+    public void reloadResources() {
+        if (this.minecraft == null) return;
+        this.minecraft.reloadResourcePacks().thenRun(() -> {
+            RemoteAlbumManager.markReloaded();
+            this.minecraft.execute(this::refreshList);
+        });
+        refreshList();
     }
 
     public void refreshList() {
@@ -104,21 +118,6 @@ public class AlbumScreen extends Screen {
         if (changed) refreshList();
     }
 
-    private static void cycleDisplay() {
-        MaMDataConfig config = MaMDataConfig.get();
-        config.albums.display = switch (config.albums.display) {
-            case ALL -> MaMDataConfig.AlbumDisplay.ALBUMS;
-            case ALBUMS -> MaMDataConfig.AlbumDisplay.PLAYLISTS;
-            case PLAYLISTS -> MaMDataConfig.AlbumDisplay.FAVOURITES;
-            case FAVOURITES -> MaMDataConfig.AlbumDisplay.ALL;
-        };
-        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
-    }
-
-    private static Component displayMessage() {
-        return Component.translatable("button.music_and_melody.album_display." + MaMDataConfig.get().albums.display.name().toLowerCase());
-    }
-
     private static class AlbumList extends ObjectSelectionList<AlbumEntry> {
 
         private final AlbumScreen screen;
@@ -139,22 +138,163 @@ public class AlbumScreen extends Screen {
         }
 
         private static List<DisplayEntry> entries() {
-            MaMDataConfig.AlbumDisplay display = MaMDataConfig.get().albums.display;
+            MaMDataConfig.Albums filter = MaMDataConfig.get().albums;
             List<DisplayEntry> entries = new ArrayList<>();
-            if (display == MaMDataConfig.AlbumDisplay.ALBUMS || display == MaMDataConfig.AlbumDisplay.ALL || display == MaMDataConfig.AlbumDisplay.FAVOURITES) {
-                Album.ALBUMS.stream()
-                        .filter(album -> display != MaMDataConfig.AlbumDisplay.FAVOURITES || album.isFavourite())
-                        .map(DisplayEntry::new)
-                        .forEach(entries::add);
+
+            System.out.println("[MaM] remote_albums=" + MaMClientConfig.get().remote_albums);
+            System.out.println("[MaM] remote pack count=" + RemoteAlbumManager.packs().size());
+            System.out.println("[MaM] filters:"
+                    + " inclusive=" + filter.filter_inclusive
+                    + " favourites=" + filter.filter_favourites
+                    + " albums=" + filter.filter_albums
+                    + " playlists=" + filter.filter_playlists
+                    + " downloaded=" + filter.filter_downloaded
+                    + " remote=" + filter.filter_remote
+            );
+
+            for (RemoteAlbumPack pack : RemoteAlbumManager.packs()) {
+                boolean downloaded = isDownloadedRemote(pack);
+                RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
+
+                System.out.println("[MaM] remote pack:"
+                        + " id=" + pack.id()
+                        + " state=" + state
+                        + " downloaded=" + downloaded
+                        + " include=" + includeRemote(pack, filter)
+                );
             }
-            if (display == MaMDataConfig.AlbumDisplay.PLAYLISTS || display == MaMDataConfig.AlbumDisplay.ALL || display == MaMDataConfig.AlbumDisplay.FAVOURITES) {
-                Playlist.PLAYLISTS.stream()
-                        .filter(playlist -> !playlist.hidden)
-                        .filter(playlist -> display != MaMDataConfig.AlbumDisplay.FAVOURITES || playlist.isFavourite())
-                        .map(DisplayEntry::new)
-                        .forEach(entries::add);
-            }
+
+            Album.ALBUMS.stream()
+                    .filter(album -> includeAlbum(album, filter))
+                    .map(album -> new DisplayEntry(album, remoteForInstalledAlbum(album)))
+                    .forEach(entries::add);
+
+            Playlist.PLAYLISTS.stream()
+                    .filter(playlist -> includePlaylist(playlist, filter))
+                    .map(DisplayEntry::new)
+                    .forEach(entries::add);
+
+            RemoteAlbumManager.packs().stream()
+                    .filter(pack -> includeRemote(pack, filter))
+                    .map(DisplayEntry::new)
+                    .forEach(entries::add);
+
             return entries;
+        }
+
+        private static RemoteAlbumPack remoteForInstalledAlbum(Album album) {
+            if (!MaMClientConfig.get().remote_albums) return null;
+
+            return RemoteAlbumManager.packs().stream()
+                    .filter(pack -> pack.id().equals(album.album))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        private static boolean includeAlbum(Album album, MaMDataConfig.Albums filter) {
+            return matches(filter,
+                    matchesFavourite(album, filter),
+                    matchesAlbum(true, filter),
+                    matchesPlaylist(false, filter),
+                    matchesDownloaded(true, filter),
+                    matchesRemote(false, filter)
+            );
+        }
+
+        private static boolean includePlaylist(Playlist playlist, MaMDataConfig.Albums filter) {
+            if (playlist.hidden) return false;
+
+            return matches(filter,
+                    matchesFavourite(playlist, filter),
+                    matchesAlbum(false, filter),
+                    matchesPlaylist(true, filter),
+                    matchesDownloaded(true, filter),
+                    matchesRemote(false, filter)
+            );
+        }
+
+        private static boolean includeRemote(RemoteAlbumPack pack, MaMDataConfig.Albums filter) {
+            if (!MaMClientConfig.get().remote_albums) return false;
+            if (isDownloadedRemote(pack)) return false;
+
+            RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
+
+            boolean availableRemote = state != RemoteAlbumManager.State.INSTALLED;
+
+            return matches(filter,
+                    matchesFavourite(false, filter),
+                    matchesAlbum(false, filter),
+                    matchesPlaylist(false, filter),
+                    matchesDownloaded(false, filter),
+                    matchesRemote(availableRemote, filter)
+            );
+        }
+
+        private static boolean isDownloadedRemote(RemoteAlbumPack pack) {
+            return Album.ALBUMS.stream().anyMatch(album -> album.album.equals(pack.id()));
+        }
+
+        private static boolean matches(MaMDataConfig.Albums filter, boolean... matches) {
+            return filter.filter_inclusive ? matchesAny(matches) : matchesAllSelected(filter, matches);
+        }
+
+        private static boolean matchesAny(boolean... matches) {
+            for (boolean match : matches) {
+                if (match) return true;
+            }
+            return false;
+        }
+
+        private static boolean matchesAllSelected(MaMDataConfig.Albums filter, boolean... matches) {
+            boolean[] selected = selectedFilters(filter);
+
+            boolean anySelected = false;
+            for (int i = 0; i < selected.length; i++) {
+                if (!selected[i]) continue;
+
+                anySelected = true;
+                if (!matches[i]) return false;
+            }
+
+            return anySelected;
+        }
+
+        private static boolean[] selectedFilters(MaMDataConfig.Albums filter) {
+            return new boolean[]{
+                    filter.filter_favourites,
+                    filter.filter_albums,
+                    filter.filter_playlists,
+                    filter.filter_downloaded,
+                    filter.filter_remote
+            };
+        }
+
+        private static boolean matchesFavourite(Album album, MaMDataConfig.Albums filter) {
+            return filter.filter_favourites && album.isFavourite();
+        }
+
+        private static boolean matchesFavourite(Playlist playlist, MaMDataConfig.Albums filter) {
+            return filter.filter_favourites && playlist.isFavourite();
+        }
+
+        private static boolean matchesFavourite(boolean favourite, MaMDataConfig.Albums filter) {
+            return filter.filter_favourites && favourite;
+        }
+
+        private static boolean matchesAlbum(boolean album, MaMDataConfig.Albums filter) {
+            return filter.filter_albums && album;
+        }
+
+        private static boolean matchesPlaylist(boolean playlist, MaMDataConfig.Albums filter) {
+            return filter.filter_playlists && playlist;
+        }
+
+        private static boolean matchesDownloaded(boolean downloaded, MaMDataConfig.Albums filter) {
+            return filter.filter_downloaded && downloaded;
+        }
+
+        private static boolean matchesRemote(boolean remote, MaMDataConfig.Albums filter) {
+            return filter.filter_remote && remote;
         }
 
         @Override
@@ -173,6 +313,7 @@ public class AlbumScreen extends Screen {
         private static final int ICON_SIZE = 32;
         private static final int DETAILS_BUTTON_WIDTH = 64;
         private static final int BUTTON_GAP = 4;
+
         private final AlbumList list;
         private final AlbumScreen screen;
         private final Minecraft minecraft;
@@ -180,35 +321,65 @@ public class AlbumScreen extends Screen {
         private final IconButton favouriteButton;
         private final IconButton actionButton;
         private final Button detailsButton;
+        private final IconButton remoteActionButton;
 
         AlbumEntry(AlbumList list, AlbumScreen screen, Minecraft minecraft, DisplayEntry entry) {
             this.list = list;
             this.screen = screen;
             this.minecraft = minecraft;
             this.entry = entry;
+
             this.favouriteButton = new IconButton(favouriteMessage(entry), favouriteIcon(entry), button -> {
+                if (this.entry.isRemote()) return;
+
                 setFavourite(!isFavourite());
                 IconButton iconButton = (IconButton) button;
                 iconButton.setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
                 this.list.refresh();
             });
-            this.actionButton = actionMessage(entry) == null ? null : new IconButton(actionMessage(entry), actionIcon(entry), button -> {
+            this.favouriteButton.active = !entry.isRemote();
+
+            this.actionButton = createActionButton(entry);
+
+            this.detailsButton = Button.builder(this.entry.remote != null ? Component.translatable("button.music_and_melody.album_about") : Component.translatable("button.music_and_melody.album_details"), button ->
+                    this.minecraft.setScreen(this.entry.remote != null
+                            ? new RemoteAlbumDetailsScreen(this.screen, this.entry.remote)
+                            : this.entry.album != null
+                              ? new AlbumDetailsScreen(this.screen, this.entry.album)
+                              : new AlbumDetailsScreen(this.screen, this.entry.playlist))
+            ).size(DETAILS_BUTTON_WIDTH, 20).build();
+
+            this.remoteActionButton = entry.remoteActionPack() != null
+                    ? new IconButton(remoteActionMessage(entry.remoteActionPack()), remoteActionIcon(entry.remoteActionPack()), button -> remoteAction())
+                    : null;
+        }
+
+        private IconButton createActionButton(DisplayEntry entry) {
+            if (entry.isRemote()) {
+                IconButton button = new IconButton(enabledMessage(false), IconButton.icon("disabled"), ignored -> {
+                });
+                button.active = false;
+                return button;
+            }
+
+            Component message = actionMessage(entry);
+            if (message == null) return null;
+
+            return new IconButton(message, actionIcon(entry), button -> {
                 toggleAction();
                 IconButton iconButton = (IconButton) button;
                 iconButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
             });
-            this.detailsButton = Button.builder(Component.translatable("button.music_and_melody.album_details"), button ->
-                    this.minecraft.setScreen(this.entry.album != null
-                            ? new AlbumDetailsScreen(this.screen, this.entry.album)
-                            : new AlbumDetailsScreen(this.screen, this.entry.playlist))
-            ).size(DETAILS_BUTTON_WIDTH, 20).build();
         }
 
         @Override
         public Component getNarration() {
             Component status = this.entry.album == null
-                    ? Component.translatable("button.music_and_melody.playlist")
+                    ? this.entry.playlist == null
+                      ? Component.translatable("screen.music_and_melody.album_filter.remote")
+                      : Component.translatable("button.music_and_melody.playlist")
                     : CommonComponents.optionStatus(this.entry.album.isEnabled());
+
             return Component.empty()
                     .append(this.entry.name())
                     .append(CommonComponents.NARRATION_SEPARATOR)
@@ -221,30 +392,56 @@ public class AlbumScreen extends Screen {
             int iconY = this.getContentYMiddle() - ICON_SIZE / 2;
             int textX = iconX + ICON_SIZE + 7;
             int textY = this.getContentYMiddle() - 15;
-            int buttonCount = this.actionButton == null ? 2 : 3;
-            int buttonsWidth = DETAILS_BUTTON_WIDTH + IconButton.SIZE + BUTTON_GAP * (buttonCount - 1) + (this.actionButton == null ? 0 : IconButton.SIZE);
+
+            int buttonsWidth = buttonsWidth();
             int maxTextWidth = Math.max(1, this.getContentWidth() - ICON_SIZE - buttonsWidth - 26);
 
             FormattedCharSequence name = this.minecraft.font.split(this.entry.name(), maxTextWidth).getFirst();
             String id = this.minecraft.font.plainSubstrByWidth(this.entry.id().toString(), maxTextWidth);
             String details = this.minecraft.font.plainSubstrByWidth(details(), maxTextWidth);
 
-            graphics.blit(RenderPipelines.GUI_TEXTURED, this.entry.icon(), iconX, iconY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    MusicScreenHelper.albumIcon(this.minecraft, this.entry.icon()),
+                    iconX,
+                    iconY,
+                    0.0F,
+                    0.0F,
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE
+            );
+
             graphics.text(this.minecraft.font, name, textX, textY, nameColor());
             graphics.text(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
             graphics.text(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
 
-            int buttonX = this.getContentRight() - buttonsWidth;
-            this.detailsButton.setX(buttonX);
+            int detailsX = detailsButtonX();
+
+            if (this.remoteActionButton != null && this.entry.hasRemoteAction()) {
+                updateRemoteAction();
+                this.remoteActionButton.setX(detailsX - IconButton.SIZE - BUTTON_GAP);
+                this.remoteActionButton.setY(this.getContentYMiddle() - 10);
+                this.remoteActionButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            }
+
+            this.detailsButton.setX(detailsX);
             this.detailsButton.setY(this.getContentYMiddle() - 10);
             this.detailsButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-            this.favouriteButton.setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
-            this.favouriteButton.setX(buttonX + DETAILS_BUTTON_WIDTH + BUTTON_GAP);
-            this.favouriteButton.setY(this.getContentYMiddle() - 10);
-            this.favouriteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+
+            if (this.favouriteButton != null) {
+                this.favouriteButton.setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
+                this.favouriteButton.active = !this.entry.isRemote();
+                this.favouriteButton.setX(detailsX + DETAILS_BUTTON_WIDTH + BUTTON_GAP);
+                this.favouriteButton.setY(this.getContentYMiddle() - 10);
+                this.favouriteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            }
+
             if (this.actionButton != null) {
                 this.actionButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
-                this.actionButton.setX(this.favouriteButton.getX() + IconButton.SIZE + BUTTON_GAP);
+                this.actionButton.active = !this.entry.isRemote();
+                this.actionButton.setX(detailsX + DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE + BUTTON_GAP);
                 this.actionButton.setY(this.getContentYMiddle() - 10);
                 this.actionButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             }
@@ -252,8 +449,9 @@ public class AlbumScreen extends Screen {
 
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.detailsButton.mouseClicked(event, doubleClick)
-                    || this.favouriteButton.mouseClicked(event, doubleClick)
+            return this.remoteActionButton != null && this.entry.hasRemoteAction() && this.remoteActionButton.mouseClicked(event, doubleClick)
+                    || this.detailsButton.mouseClicked(event, doubleClick)
+                    || this.favouriteButton != null && this.favouriteButton.mouseClicked(event, doubleClick)
                     || this.actionButton != null && this.actionButton.mouseClicked(event, doubleClick)
                     || super.mouseClicked(event, doubleClick);
         }
@@ -267,7 +465,27 @@ public class AlbumScreen extends Screen {
                 }
                 return true;
             }
+
             return super.keyPressed(event);
+        }
+
+        private int detailsButtonX() {
+            int normalButtonsWidth = DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE + BUTTON_GAP + IconButton.SIZE;
+            return this.getContentRight() - normalButtonsWidth;
+        }
+
+        private int buttonsWidth() {
+            int normalButtonsWidth = DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE + BUTTON_GAP + IconButton.SIZE;
+
+            if (this.entry.isRemote() || this.entry.hasRemoteAction()) {
+                return IconButton.SIZE + BUTTON_GAP + normalButtonsWidth;
+            }
+
+            if (this.actionButton == null) {
+                return DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE;
+            }
+
+            return normalButtonsWidth;
         }
 
         private boolean isFavourite() {
@@ -275,6 +493,7 @@ public class AlbumScreen extends Screen {
         }
 
         private int nameColor() {
+            if (this.entry.isRemote()) return 0xFFFFFFFF;
             if (this.entry.playlist != null && this.screen.isDeletePending(this.entry.playlist)) return 0xFFFF8888;
             if (isFavourite()) return 0xFFD7D272;
             return 0xFFFFFFFF;
@@ -302,6 +521,10 @@ public class AlbumScreen extends Screen {
         }
 
         private String details() {
+            if (this.entry.remote != null) {
+                return this.entry.remote.repository();
+            }
+
             String tracks = count(this.entry.trackCount(), "track", "tracks");
             String discs = count(this.entry.discCount(), "disc", "discs");
             return tracks + " | " + discs;
@@ -312,22 +535,39 @@ public class AlbumScreen extends Screen {
         }
 
         private static Component favouriteMessage(DisplayEntry entry) {
+            if (entry.isRemote()) {
+                return Component.translatable("button.music_and_melody.favourite");
+            }
+
             boolean favourite = entry.album != null ? entry.album.isFavourite() : entry.playlist.isFavourite();
             return Component.translatable(favourite ? "button.music_and_melody.unfavourite" : "button.music_and_melody.favourite");
         }
 
         private static Identifier favouriteIcon(DisplayEntry entry) {
+            if (entry.isRemote()) {
+                return IconButton.icon("favourite");
+            }
+
             boolean favourite = entry.album != null ? entry.album.isFavourite() : entry.playlist.isFavourite();
             return IconButton.icon(favourite ? "favourited" : "favourite");
         }
 
         private Component actionMessage(DisplayEntry entry) {
+            if (entry.isRemote()) {
+                return enabledMessage(false);
+            }
+
             if (entry.album != null) return enabledMessage(entry.album.isEnabled());
             if (!entry.playlist.isCustom()) return null;
+
             return Component.translatable(this.screen.isDeletePending(entry.playlist) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
         }
 
         private Identifier actionIcon(DisplayEntry entry) {
+            if (entry.isRemote()) {
+                return IconButton.icon("disabled");
+            }
+
             if (entry.album != null) return IconButton.icon(entry.album.isEnabled() ? "enabled" : "disabled");
             return IconButton.icon(this.screen.isDeletePending(entry.playlist) ? "restore" : "delete");
         }
@@ -335,40 +575,143 @@ public class AlbumScreen extends Screen {
         private static Component enabledMessage(boolean enabled) {
             return Component.translatable(enabled ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled");
         }
+
+        private void remoteAction() {
+            RemoteAlbumPack pack = this.entry.remoteActionPack();
+            if (pack == null) return;
+
+            RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
+
+            if (state == RemoteAlbumManager.State.REMOTE
+                    || state == RemoteAlbumManager.State.UPDATE_AVAILABLE
+                    || state == RemoteAlbumManager.State.FAILED) {
+                RemoteAlbumManager.download(pack);
+            } else if (state == RemoteAlbumManager.State.NEEDS_RELOAD) {
+                this.screen.reloadResources();
+            }
+
+            updateRemoteAction();
+        }
+
+        private void updateRemoteAction() {
+            RemoteAlbumPack pack = this.entry.remoteActionPack();
+            if (pack == null) return;
+
+            RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
+
+            this.remoteActionButton.setIconAndTooltip(
+                    remoteActionIcon(pack),
+                    remoteActionMessage(pack)
+            );
+
+            this.remoteActionButton.active = state != RemoteAlbumManager.State.DOWNLOADING
+                    && state != RemoteAlbumManager.State.INSTALLED;
+        }
+
+        private static Component remoteActionMessage(RemoteAlbumPack pack) {
+            return switch (RemoteAlbumManager.state(pack)) {
+                case DOWNLOADING -> Component.translatable("button.music_and_melody.downloading");
+                case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
+                case UPDATE_AVAILABLE -> Component.translatable("button.music_and_melody.update");
+                case FAILED -> Component.translatable("button.music_and_melody.retry");
+                default -> Component.translatable("button.music_and_melody.download");
+            };
+        }
+
+        private static Identifier remoteActionIcon(RemoteAlbumPack pack) {
+            return switch (RemoteAlbumManager.state(pack)) {
+                case DOWNLOADING -> IconButton.icon("downloading");
+                case NEEDS_RELOAD -> IconButton.icon("reload");
+                case UPDATE_AVAILABLE -> IconButton.icon("update");
+                case FAILED -> IconButton.icon("retry_download");
+                default -> IconButton.icon("download");
+            };
+        }
+
+        private static String remoteStateName(RemoteAlbumManager.State state) {
+            return Component.translatable("screen.music_and_melody.remote_album.state." + state.name().toLowerCase()).getString();
+        }
     }
 
     private static class DisplayEntry {
         private final Album album;
         private final Playlist playlist;
+        private final RemoteAlbumPack remote;
+        private final RemoteAlbumPack installedRemote;
 
         DisplayEntry(Album album) {
+            this(album, null);
+        }
+
+        DisplayEntry(Album album, RemoteAlbumPack installedRemote) {
             this.album = album;
             this.playlist = null;
+            this.remote = null;
+            this.installedRemote = installedRemote;
         }
 
         DisplayEntry(Playlist playlist) {
             this.album = null;
             this.playlist = playlist;
+            this.remote = null;
+            this.installedRemote = null;
+        }
+
+        DisplayEntry(RemoteAlbumPack remote) {
+            this.album = null;
+            this.playlist = null;
+            this.remote = remote;
+            this.installedRemote = null;
+        }
+
+        boolean isRemote() {
+            return this.remote != null;
+        }
+
+        boolean hasRemoteAction() {
+            RemoteAlbumPack pack = remoteActionPack();
+            if (pack == null) return false;
+
+            RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
+
+            if (this.remote != null) {
+                return state == RemoteAlbumManager.State.REMOTE
+                        || state == RemoteAlbumManager.State.DOWNLOADING
+                        || state == RemoteAlbumManager.State.NEEDS_RELOAD
+                        || state == RemoteAlbumManager.State.FAILED;
+            }
+
+            return this.installedRemote != null && (
+                    state == RemoteAlbumManager.State.UPDATE_AVAILABLE
+                            || state == RemoteAlbumManager.State.DOWNLOADING
+                            || state == RemoteAlbumManager.State.NEEDS_RELOAD
+                            || state == RemoteAlbumManager.State.FAILED
+            );
+        }
+
+        RemoteAlbumPack remoteActionPack() {
+            if (this.remote != null) return this.remote;
+            return this.installedRemote;
         }
 
         Component name() {
-            return this.album != null ? this.album.name : this.playlist.name;
+            return this.album != null ? this.album.name : this.playlist != null ? this.playlist.name : this.remote.name();
         }
 
         Identifier id() {
-            return this.album != null ? this.album.album : this.playlist.playlist;
+            return this.album != null ? this.album.album : this.playlist != null ? this.playlist.playlist : this.remote.id();
         }
 
         Identifier icon() {
-            return this.album != null ? this.album.icon : this.playlist.icon;
+            return this.album != null ? this.album.icon : this.playlist != null ? this.playlist.icon : this.remote.icon();
         }
 
         int trackCount() {
-            return this.album != null ? this.album.tracks.size() : this.playlist.tracks.size();
+            return this.album != null ? this.album.tracks.size() : this.playlist != null ? this.playlist.tracks.size() : 0;
         }
 
         int discCount() {
-            return this.album != null ? this.album.discs.size() : this.playlist.discs.size();
+            return this.album != null ? this.album.discs.size() : this.playlist != null ? this.playlist.discs.size() : 0;
         }
     }
 }

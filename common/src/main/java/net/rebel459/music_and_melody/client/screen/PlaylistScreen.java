@@ -15,6 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 public class PlaylistScreen extends Screen {
@@ -46,7 +47,7 @@ public class PlaylistScreen extends Screen {
         int rowX = this.width / 2 - rowWidth / 2;
         int iconGroupWidth = IconButton.SIZE * 4 + 4 * 3;
         int iconGroupX = this.width / 2 - iconGroupWidth / 2;
-        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
+        this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.browse"), button ->
                 this.minecraft.setScreen(new AlbumScreen(this))
         ).bounds(rowX, navY, navWidth, 20).build());
         this.playPauseButton = this.addRenderableWidget(new IconButton(playPauseMessage(), playPauseIcon(), button -> {
@@ -84,7 +85,7 @@ public class PlaylistScreen extends Screen {
         int sliderX = iconGroupX + iconGroupWidth + 8;
         this.musicVolumeSlider = this.addRenderableWidget(this.minecraft.options.getSoundSourceOptionInstance(SoundSource.MUSIC)
                 .createButton(this.minecraft.options, sliderX, controlY, Math.max(60, rowX + rowWidth - sliderX)));
-        this.eventsButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.events"), button ->
+        this.eventsButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.playlist_events"), button ->
                 this.minecraft.setScreen(new EventScreen(this, true))
         ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
@@ -147,7 +148,7 @@ public class PlaylistScreen extends Screen {
         private void refresh() {
             this.clearEntries();
             for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
-                Identifier id = PlaylistHelper.queuedSongs().get(i);
+                SafeIdentifier id = PlaylistHelper.queuedSongs().get(i);
                 this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));
             }
         }
@@ -168,7 +169,7 @@ public class PlaylistScreen extends Screen {
         private final PlaylistScreen screen;
         private final Minecraft minecraft;
         private final int index;
-        private final Identifier song;
+        private final SafeIdentifier song;
         private final Component text;
         private final int color;
         private final IconButton playButton;
@@ -185,7 +186,7 @@ public class PlaylistScreen extends Screen {
             this.removeButton = null;
         }
 
-        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, Identifier song) {
+        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, SafeIdentifier song) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.index = index;
@@ -241,11 +242,11 @@ public class PlaylistScreen extends Screen {
                     || super.mouseClicked(event, doubleClick);
         }
 
-        private static Component playMessage(Identifier song) {
+        private static Component playMessage(SafeIdentifier song) {
             return Component.translatable(PlaylistHelper.isQueuePlaying(song) ? "button.music_and_melody.stop" : "button.music_and_melody.play");
         }
 
-        private static Identifier playIcon(Identifier song) {
+        private static Identifier playIcon(SafeIdentifier song) {
             return IconButton.icon(PlaylistHelper.isQueuePlaying(song) ? "pause" : "play");
         }
     }

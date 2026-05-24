@@ -3,11 +3,13 @@ package net.rebel459.music_and_melody.config;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,8 +29,8 @@ public final class ConfigAlbum {
     public static final Identifier ALBUM_ID = Identifier.fromNamespaceAndPath("config", "album");
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "album");
     private static final String SOUND_PATH = "album/";
-    private static final Map<Identifier, Path> FILES = new LinkedHashMap<>();
-    private static final Map<Identifier, String> NAMES = new HashMap<>();
+    private static final Map<SafeIdentifier, Path> FILES = new LinkedHashMap<>();
+    private static final Map<SafeIdentifier, String> NAMES = new HashMap<>();
 
     private ConfigAlbum() {}
 
@@ -40,23 +42,28 @@ public final class ConfigAlbum {
                 ALBUM_ID,
                 Component.literal("Config Album"),
                 Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
-                FILES.keySet().stream().map(Identifier::getPath).toList(),
+                FILES.keySet().stream().map(SafeIdentifier::getPath).toList(),
                 discs
         );
     }
 
-    public static synchronized void addSoundResources(Map<Identifier, Resource> soundCache) {
+    public static synchronized void addSoundResources(Map<SafeIdentifier, Resource> soundCache) {
         reload();
-        FILES.forEach((id, path) -> soundCache.put(Sound.SOUND_LISTER.idToFile(id), new Resource(null, IoSupplier.create(path))));
+        FILES.forEach((id, path) -> soundCache.put(idToFile(id), new Resource(null, IoSupplier.create(path))));
     }
 
-    public static synchronized String displayName(Identifier id) {
+    public static SafeIdentifier idToFile(SafeIdentifier id) {
+        String var10001 = Sound.SOUND_LISTER.prefix();
+        return id.withPath(var10001 + "/" + id.getPath() + Sound.SOUND_LISTER.extension());
+    }
+
+    public static synchronized String displayName(SafeIdentifier id) {
         return NAMES.get(playableId(id));
     }
 
-    public static Identifier playableId(Identifier id) {
+    public static SafeIdentifier playableId(SafeIdentifier id) {
         if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(SOUND_PATH)) {
-            return Identifier.fromNamespaceAndPath("config", id.getPath());
+            return SafeIdentifier.fromNamespaceAndPath("config", id.getPath());
         }
         return id;
     }
@@ -86,7 +93,7 @@ public final class ConfigAlbum {
         for (Path file : files) {
             String fileName = file.getFileName().toString();
             String path = uniquePath(SOUND_PATH + sanitize(stem(fileName)), usedPaths);
-            Identifier id = Identifier.fromNamespaceAndPath("config", path);
+            SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
         }

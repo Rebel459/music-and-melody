@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.mixin.client;
 import net.minecraft.client.gui.components.toasts.NowPlayingToast;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,5 +17,10 @@ public class NowPlayingToastMixin {
         if (currentSongKey != null && currentSongKey.startsWith(PlaylistHelper.LITERAL_TRANSLATION_PREFIX)) {
             cir.setReturnValue(Component.literal(currentSongKey.substring(PlaylistHelper.LITERAL_TRANSLATION_PREFIX.length())));
         }
+    }
+
+    @Inject(method = "getCurrentSongName", at = @At("RETURN"), cancellable = true)
+    private static void hideEmptyToast(CallbackInfoReturnable<String> cir) {
+        if (cir.getReturnValue() != null && cir.getReturnValue().equals("empty")) cir.setReturnValue(null);
     }
 }
