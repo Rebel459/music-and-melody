@@ -24,7 +24,7 @@ public class MaMSounds {
 		Set<String> sounds = new HashSet<>(MaMServerConfig.get().sound_events);
 		Set<String> builtInSounds = Set.of(
 				"music.empty",
-				"music.common",
+				"music.classic",
 				"music.overworld.snowy",
 				"music.overworld.dark_forest",
 				"music.overworld.savanna",
