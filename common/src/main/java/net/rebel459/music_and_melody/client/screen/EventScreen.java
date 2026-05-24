@@ -504,35 +504,48 @@ public class EventScreen extends Screen {
 
     private static Event.Record.Condition parseConditionPart(String part) {
         String lower = part.toLowerCase(Locale.ROOT);
+
         if (lower.startsWith("all_of") || lower.startsWith("any_of") || lower.startsWith("not")) {
             int separator = groupSeparator(part);
             if (separator < 0) return null;
+
             String type = part.substring(0, separator).trim().toLowerCase(Locale.ROOT);
             if (!type.equals("all_of") && !type.equals("any_of") && !type.equals("not")) return null;
+
             String body = part.substring(separator + 1).trim();
             if (!body.startsWith("[") || !body.endsWith("]")) return null;
+
             List<Event.Record.Condition> nested = parseConditionList(body.substring(1, body.length() - 1));
-            return nested == null ? null : new Event.Record.Condition(type, Optional.empty(), nested);
+            return nested == null ? null : new Event.Record.Condition(type, new Event.Record.Condition.Value.Conditions(nested));
         }
 
         int separator = part.indexOf('=');
         String type = (separator < 0 ? part : part.substring(0, separator)).trim().toLowerCase(Locale.ROOT);
         String conditionValue = separator < 0 ? "" : part.substring(separator + 1).trim();
-        Optional<Either<String, Integer>> parsedValue;
-        if (type.equals("above_y") || type.equals("below_y") || type.equals("random_chance")) {
+
+        Event.Record.Condition.Value parsedValue;
+
+        if (type.equals("above_y") || type.equals("below_y")) {
             try {
-                int intValue = Integer.parseInt(conditionValue);
-                if (type.equals("random_chance") && (intValue < 0 || intValue > 100)) return null;
-                parsedValue = Optional.of(Either.right(intValue));
+                parsedValue = new Event.Record.Condition.Value.Integer(Integer.parseInt(conditionValue));
+            } catch (NumberFormatException exception) {
+                return null;
+            }
+        } else if (type.equals("random_chance")) {
+            try {
+                float floatValue = Float.parseFloat(conditionValue);
+                if (floatValue < 0.0F || floatValue > 1.0F) return null;
+                parsedValue = new Event.Record.Condition.Value.Float(floatValue);
             } catch (NumberFormatException exception) {
                 return null;
             }
         } else if (isStringCondition(type) || Identifier.tryParse(conditionValue) != null) {
             if (conditionValue.isEmpty()) return null;
-            parsedValue = Optional.of(Either.left(conditionValue));
+            parsedValue = new Event.Record.Condition.Value.String(conditionValue);
         } else {
             return null;
         }
+
         return new Event.Record.Condition(type, parsedValue);
     }
 
@@ -570,12 +583,16 @@ public class EventScreen extends Screen {
     }
 
     private static String conditionText(Event.Record.Condition condition) {
-        if (condition.type().equalsIgnoreCase("all_of") || condition.type().equalsIgnoreCase("any_of") || condition.type().equalsIgnoreCase("not")) {
-            return condition.type().toLowerCase(Locale.ROOT) + "=[" + conditionsText(condition.conditions()) + "]";
+        if (condition.value() instanceof Event.Record.Condition.Value.Conditions(List<Event.Record.Condition> value)) {
+            return condition.type().toLowerCase(Locale.ROOT) + "=[" + conditionsText(value) + "]";
         }
-        if (condition.value().isEmpty()) return condition.type();
-        Either<String, Integer> value = condition.value().get();
-        return condition.type() + "=" + value.map(left -> left, right -> Integer.toString(right));
+
+        return condition.type() + "=" + switch (condition.value()) {
+            case Event.Record.Condition.Value.String string -> string.value();
+            case Event.Record.Condition.Value.Integer integer -> Integer.toString(integer.value());
+            case Event.Record.Condition.Value.Float floatValue -> Float.toString(floatValue.value());
+            case Event.Record.Condition.Value.Conditions ignored -> throw new IllegalStateException("Handled above");
+        };
     }
 
     private static class EventList extends ObjectSelectionList<EventEntry> {

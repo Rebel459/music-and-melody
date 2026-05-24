@@ -542,7 +542,7 @@ public class EventHelper {
                 shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
             }
             if (condition.type() == Event.ConditionType.RANDOM_CHANCE) {
-                shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextIntBetweenInclusive(1, 100) <= condition.intValue().get());
+                shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
             }
         }
 

@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.chaos_cubed"
   },
-  "icon": "music_and_melody:textures/album/chaos_cubed.png",
+  "icon": "minecraft:textures/album/chaos_cubed.png",
   "tracks": [
     "music/game/ebb",
     "music/game/home",

@@ -504,6 +504,8 @@ public class AlbumScreen extends Screen {
 
             String tracks = count(this.entry.trackCount(), "track", "tracks");
             String discs = count(this.entry.discCount(), "disc", "discs");
+            if (this.entry.discCount() == 0) return tracks;
+            if (this.entry.trackCount() == 0) return discs;
             return tracks + " | " + discs;
         }
 

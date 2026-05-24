@@ -12,20 +12,20 @@
         },
         {
           "type": "not",
-          "conditions": [
+          "value": [
             {
               "type": "any_of",
-              "conditions": [
+              "value": [
                 {
                   "type": "all_of",
-                  "conditions": [
+                  "value": [
                     {
                       "type": "event",
                       "value": "under_water"
                     },
                     {
                       "type": "any_of",
-                      "conditions": [
+                      "value": [
                         {
                           "type": "biome_tag",
                           "value": "is_river"
@@ -96,7 +96,7 @@
         },
         {
           "type": "any_of",
-          "conditions": [
+          "value": [
             {
               "type": "biome_tag",
               "value": "is_river"

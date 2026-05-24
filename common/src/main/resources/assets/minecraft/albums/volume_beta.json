@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.volume_beta"
   },
-  "icon": "music_and_melody:textures/album/volume_beta.png",
+  "icon": "minecraft:textures/album/volume_beta.png",
   "tracks": [
     "music/game/creative/aria_math",
     "music/game/creative/biome_fest",

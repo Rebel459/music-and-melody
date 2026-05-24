@@ -2,7 +2,7 @@
   "name": {
     "translate": "album.minecraft.caves_and_cliffs"
   },
-  "icon": "music_and_melody:textures/album/caves_and_cliffs.png",
+  "icon": "minecraft:textures/album/caves_and_cliffs.png",
   "tracks": [
     "music/game/ancestry",
     "music/game/an_ordinary_day",
