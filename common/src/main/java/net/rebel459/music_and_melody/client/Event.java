@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.unified.platform.UnifiedPlatform;
@@ -43,13 +44,13 @@ public class Event {
 
     public final Identifier source;
     public CategoryType category;
-    public Identifier music;
+    public SafeIdentifier music;
     public List<Condition> conditions;
     public PriorityType priority;
     public boolean sustain;
     public int weight;
 
-    public Event(Identifier source, CategoryType category, Identifier music, List<Condition> conditions, PriorityType priority, boolean sustain, int weight) {
+    public Event(Identifier source, CategoryType category, SafeIdentifier music, List<Condition> conditions, PriorityType priority, boolean sustain, int weight) {
         this.source = source;
         this.category = category;
         this.music = music;
@@ -197,7 +198,7 @@ public class Event {
 
     public static Optional<Event> create(Record.Entry entry, Source source) {
         CategoryType category = category(entry.category());
-        Identifier music = Identifier.tryParse(entry.music());
+        SafeIdentifier music = SafeIdentifier.parse(entry.music());
         PriorityType priority = priority(entry.priority());
 
         if (category == null || music == null || priority == null) {

@@ -28,18 +28,18 @@ public final class MusicDiscHelper {
         return path.contains(":") ? Identifier.parse(path) : Identifier.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
-    public static Optional<Match> matchSound(Minecraft minecraft, Identifier soundId) {
+    public static Optional<Match> matchSound(Minecraft minecraft, SafeIdentifier soundId) {
         for (Album album : Album.ALBUMS) {
             for (String disc : album.discs) {
                 Identifier jukeboxSong = albumEntryId(album, disc);
-                if (discSoundId(minecraft, jukeboxSong).equals(soundId)) {
+                if (discSoundId(minecraft, jukeboxSong).equals(soundId.getId())) {
                     return Optional.of(new Match(album, disc, jukeboxSong));
                 }
             }
         }
         for (Playlist playlist : Playlist.PLAYLISTS) {
             for (Identifier disc : playlist.discs) {
-                if (discSoundId(minecraft, disc).equals(soundId)) {
+                if (discSoundId(minecraft, disc).equals(soundId.getId())) {
                     return Optional.of(new Match(null, disc.toString(), disc));
                 }
             }
@@ -47,7 +47,7 @@ public final class MusicDiscHelper {
         return Optional.empty();
     }
 
-    public static boolean isSoundUnlocked(Minecraft minecraft, Identifier soundId) {
+    public static boolean isSoundUnlocked(Minecraft minecraft, SafeIdentifier soundId) {
         return matchSound(minecraft, soundId)
                 .map(match -> match.album() != null && match.album().isDiscForcedUnlocked(match.disc()) || isDiscUnlocked(minecraft, match.jukeboxSong()))
                 .orElse(true);

@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.screen.AlbumScreen;
 import net.rebel459.music_and_melody.client.screen.EventScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
+import net.rebel459.music_and_melody.client.screen.RemoteAlbumDeleteScreen;
 
 public class MaMConfigScreen extends Screen {
     private final Screen parent;
@@ -22,7 +23,7 @@ public class MaMConfigScreen extends Screen {
     @Override
     protected void init() {
         int x = this.width / 2 - 100;
-        int y = this.height / 2 - 68;
+        int y = this.height / 2 - 92;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("text.autoconfig.music_and_melody/client.title"),
@@ -49,6 +50,11 @@ public class MaMConfigScreen extends Screen {
         this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.playlist"),
                 button -> this.minecraft.setScreen(new PlaylistScreen(this))
+        ).bounds(x, y, 200, 20).build());
+        y += 24;
+        this.addRenderableWidget(Button.builder(
+                Component.translatable("button.music_and_melody.remote_downloads"),
+                button -> this.minecraft.setScreen(new RemoteAlbumDeleteScreen(this))
         ).bounds(x, y, 200, 20).build());
 
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())

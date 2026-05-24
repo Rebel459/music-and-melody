@@ -6,6 +6,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +22,7 @@ import java.util.*;
 public class SoundManagerPreparationsMixin {
 
     @Shadow
-    private Map<Identifier, Resource> soundCache;
+    private Map<SafeIdentifier, Resource> soundCache;
 
     @Unique
     private static final Set<Identifier> DISABLED_EVENTS = new HashSet<>();
@@ -74,7 +75,7 @@ public class SoundManagerPreparationsMixin {
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
             Identifier id = sound.getLocation();
-            PlaylistHelper.STORED_VOLUME.put(id, sound.getVolume());
+            PlaylistHelper.STORED_VOLUME.put(SafeIdentifier.convert(id), sound.getVolume());
             Identifier location = REMAPPED_MUSIC.get(id);
             if (location != null) iterator.set(copy(sound, location));
         }

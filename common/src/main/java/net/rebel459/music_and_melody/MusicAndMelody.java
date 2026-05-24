@@ -7,6 +7,10 @@ import net.rebel459.music_and_melody.sound.MaMSounds;
 
 public class MusicAndMelody {
 
+    public static boolean registeredClientConfig = false;
+    public static boolean registeredDataConfig = false;
+    public static boolean registeredServerConfig = false;
+
 	public static void initRegistries() {
         MaMSounds.init();
         ServerPresenceHandler.init();

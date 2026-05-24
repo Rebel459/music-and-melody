@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.HashSet;
@@ -83,8 +84,8 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public Identifier trackId(String song) {
-        return Identifier.fromNamespaceAndPath(this.album.getNamespace(), song);
+    public SafeIdentifier trackId(String song) {
+        return SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {
@@ -122,15 +123,16 @@ public class Album {
         ).apply(instance, Record::new));
     }
 
-    public record Track(String track, boolean enabled) {
+    public record Track(String track, boolean enabled, boolean folder) {
         private static final Codec<Track> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.NON_EMPTY_STRING.fieldOf("track").forGetter(Track::track),
-                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled)
+                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled),
+                Codec.BOOL.optionalFieldOf("folder", false).forGetter(Track::folder)
         ).apply(instance, Track::new));
 
         public static final Codec<Track> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
-                either -> either.map(track -> new Track(track, false), track -> track),
-                track -> track.enabled() ? Either.right(track) : Either.left(track.track())
+                either -> either.map(track -> new Track(track, false, false), track -> track),
+                track -> track.enabled() || track.folder() ? Either.right(track) : Either.left(track.track())
         );
     }
 
