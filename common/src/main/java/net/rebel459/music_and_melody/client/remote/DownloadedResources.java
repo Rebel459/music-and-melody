@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.client.remote;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 public final class DownloadedResources {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
-    private static final Map<Identifier, Path> RESOURCES = new HashMap<>();
+    private static final Map<ResourceLocation, Path> RESOURCES = new HashMap<>();
     private static long lastScan = Long.MIN_VALUE;
 
     private DownloadedResources() {}
@@ -32,20 +32,20 @@ public final class DownloadedResources {
         return namespaces;
     }
 
-    public static synchronized Optional<Resource> getResource(Identifier id) {
+    public static synchronized Optional<Resource> getResource(ResourceLocation id) {
         reload();
         Path path = RESOURCES.get(id);
         return path == null ? Optional.empty() : Optional.of(resource(path));
     }
 
-    public static synchronized List<Resource> getResourceStack(Identifier id) {
+    public static synchronized List<Resource> getResourceStack(ResourceLocation id) {
         return getResource(id).map(List::of).orElseGet(List::of);
     }
 
-    public static synchronized Map<Identifier, Resource> listResources(String directory, Predicate<Identifier> filter) {
+    public static synchronized Map<ResourceLocation, Resource> listResources(String directory, Predicate<ResourceLocation> filter) {
         reload();
         String prefix = directory + "/";
-        Map<Identifier, Resource> resources = new HashMap<>();
+        Map<ResourceLocation, Resource> resources = new HashMap<>();
         RESOURCES.forEach((id, path) -> {
             if (id.getPath().startsWith(prefix) && filter.test(id)) {
                 resources.put(id, resource(path));
@@ -91,7 +91,7 @@ public final class DownloadedResources {
 
     private static void addResource(Path namespaceDirectory, String namespace, Path file) {
         String path = namespaceDirectory.relativize(file).toString().replace('\\', '/').toLowerCase(Locale.ROOT);
-        Identifier id = Identifier.tryParse(namespace + ":" + path);
+        ResourceLocation id = ResourceLocation.tryParse(namespace + ":" + path);
         if (id != null) {
             RESOURCES.put(id, file);
         }

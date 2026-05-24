@@ -13,7 +13,7 @@ import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
@@ -43,15 +43,15 @@ public class Playlist {
 
     public static Set<Playlist> PLAYLISTS = new HashSet<>();
 
-    public Identifier playlist;
+    public ResourceLocation playlist;
     public Component name;
-    public Identifier icon;
+    public ResourceLocation icon;
     public List<SafeIdentifier> tracks;
-    public List<Identifier> discs;
+    public List<ResourceLocation> discs;
     public boolean hidden;
     public Path source;
 
-    public Playlist(Identifier playlist, Component name, Identifier icon, List<SafeIdentifier> tracks, List<Identifier> discs, boolean hidden, Path source) {
+    public Playlist(ResourceLocation playlist, Component name, ResourceLocation icon, List<SafeIdentifier> tracks, List<ResourceLocation> discs, boolean hidden, Path source) {
         this.playlist = playlist;
         this.name = name;
         this.icon = icon;
@@ -125,7 +125,7 @@ public class Playlist {
         for (Path file : files) {
             Record record = readRecord(file);
             if (record == null) continue;
-            Identifier id = Identifier.fromNamespaceAndPath("config", "playlists/" + uniquePath(sanitize(stem(file)), usedPaths));
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("config", "playlists/" + uniquePath(sanitize(stem(file)), usedPaths));
             Playlist playlist = create(id, record, file);
             CONFIG_PLAYLISTS.add(playlist);
         }
@@ -161,9 +161,9 @@ public class Playlist {
 
         Path path = configTarget(trimmedName, pathOverride);
         if (path == null) return false;
-        Identifier icon = iconPath.isBlank()
-                ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")
-                : Identifier.tryParse(iconPath.trim());
+        ResourceLocation icon = iconPath.isBlank()
+                ? ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png")
+                : ResourceLocation.tryParse(iconPath.trim());
         if (icon == null) return false;
 
         JsonObject root = new JsonObject();
@@ -189,12 +189,12 @@ public class Playlist {
         return true;
     }
 
-    public static Playlist create(Identifier id, Record record, Path source) {
+    public static Playlist create(ResourceLocation id, Record record, Path source) {
         List<SafeIdentifier> tracks = new ArrayList<>();
-        List<Identifier> discs = new ArrayList<>();
+        List<ResourceLocation> discs = new ArrayList<>();
         record.entries().forEach(entry -> {
             entry.tracks().forEach(track -> tracks.add(SafeIdentifier.fromNamespaceAndPath(entry.namespace(), track)));
-            entry.discs().forEach(disc -> discs.add(Identifier.fromNamespaceAndPath(entry.namespace(), disc)));
+            entry.discs().forEach(disc -> discs.add(ResourceLocation.fromNamespaceAndPath(entry.namespace(), disc)));
         });
         return new Playlist(id, record.name(), record.icon(), tracks, discs, record.hidden, source);
     }
@@ -211,7 +211,7 @@ public class Playlist {
     private static Map<String, List<String>> groupTracks(Minecraft minecraft, List<SafeIdentifier> queuedSongs, boolean discs) {
         Map<String, List<String>> grouped = new LinkedHashMap<>();
         for (SafeIdentifier queuedSong : queuedSongs) {
-            Identifier id;
+            ResourceLocation id;
             if (discs) {
                 id = jukeboxSongForSound(minecraft, queuedSong);
                 if (id == null) continue;
@@ -224,11 +224,11 @@ public class Playlist {
         return grouped;
     }
 
-    private static Identifier jukeboxSongForSound(Minecraft minecraft, SafeIdentifier sound) {
+    private static ResourceLocation jukeboxSongForSound(Minecraft minecraft, SafeIdentifier sound) {
         var albumMatch = MusicDiscHelper.matchSound(minecraft, sound);
         if (albumMatch.isPresent()) return albumMatch.get().jukeboxSong();
         for (Playlist playlist : PLAYLISTS) {
-            for (Identifier disc : playlist.discs) {
+            for (ResourceLocation disc : playlist.discs) {
                 if (MusicDiscHelper.discSoundId(minecraft, disc).equals(sound.getId())) return disc;
             }
         }
@@ -298,10 +298,10 @@ public class Playlist {
         }
     }
 
-    public record Record(Component name, Identifier icon, List<Entry> entries, List<String> dependencies, boolean hidden) {
+    public record Record(Component name, ResourceLocation icon, List<Entry> entries, List<String> dependencies, boolean hidden) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
-                Identifier.CODEC.optionalFieldOf("icon", Identifier.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
+                ResourceLocation.CODEC.optionalFieldOf("icon", ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png")).forGetter(Record::icon),
                 Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
                 Codec.STRING.listOf().optionalFieldOf("dependencies", List.of()).forGetter(Record::dependencies),
                 Codec.BOOL.optionalFieldOf("hidden", false).forGetter(Record::hidden)

@@ -1,9 +1,9 @@
 package net.rebel459.music_and_melody.mixin.client;
 
 import com.mojang.blaze3d.audio.SoundBuffer;
+import net.minecraft.Util;
 import net.minecraft.client.sounds.*;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,11 +25,11 @@ public abstract class SoundBufferLibraryMixin {
 
 	@Shadow
 	@Final
-	private Map<Identifier, CompletableFuture<SoundBuffer>> cache;
+	private Map<ResourceLocation, CompletableFuture<SoundBuffer>> cache;
 
 	@Inject(method = "getCompleteBuffer", at = @At("HEAD"), cancellable = true)
 	private void getCompleteDirectBuffer(
-			Identifier location,
+			ResourceLocation location,
 			CallbackInfoReturnable<CompletableFuture<SoundBuffer>> cir
 	) {
 		DirectSoundFiles.get(location).ifPresent(path -> {
@@ -53,7 +53,7 @@ public abstract class SoundBufferLibraryMixin {
 
 	@Inject(method = "getStream", at = @At("HEAD"), cancellable = true)
 	private void music_and_melody$getDirectStream(
-			Identifier location,
+			ResourceLocation location,
 			boolean looping,
 			CallbackInfoReturnable<CompletableFuture<AudioStream>> cir
 	) {

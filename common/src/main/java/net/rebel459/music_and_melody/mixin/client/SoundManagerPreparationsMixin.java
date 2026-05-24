@@ -74,9 +74,9 @@ public class SoundManagerPreparationsMixin {
         ListIterator<Sound> iterator = sounds.listIterator();
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
-            Identifier id = sound.getLocation();
+            ResourceLocation id = sound.getLocation();
             PlaylistHelper.STORED_VOLUME.put(SafeIdentifier.convert(id), sound.getVolume());
-            Identifier location = REMAPPED_MUSIC.get(id);
+            ResourceLocation location = REMAPPED_MUSIC.get(id);
             if (location != null) iterator.set(copy(sound, location));
         }
     }

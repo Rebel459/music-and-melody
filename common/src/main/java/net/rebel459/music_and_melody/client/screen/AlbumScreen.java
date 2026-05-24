@@ -6,12 +6,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
@@ -34,7 +31,7 @@ public class AlbumScreen extends Screen {
     private AlbumList list;
     private boolean catalogRefreshing;
     private boolean reloadPending;
-    private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
+    private final Set<ResourceLocation> pendingPlaylistDeletes = new HashSet<>();
 
     public AlbumScreen(Screen parent) {
         super(TITLE);
@@ -280,12 +277,12 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class AlbumEntry extends ObjectSelectionList.Entry<AlbumEntry> {
+    private static class AlbumEntry extends MusicListEntry<AlbumEntry> {
 
         private static final int ICON_SIZE = 32;
         private static final int DETAILS_BUTTON_WIDTH = 64;
@@ -378,7 +375,6 @@ public class AlbumScreen extends Screen {
             String details = this.minecraft.font.plainSubstrByWidth(details(), maxTextWidth);
 
             graphics.blit(
-                    RenderPipelines.GUI_TEXTURED,
                     MusicScreenHelper.albumIcon(this.minecraft, this.entry.icon()),
                     iconX,
                     iconY,
@@ -425,17 +421,17 @@ public class AlbumScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.remoteActionButton != null && this.entry.hasRemoteAction() && this.remoteActionButton.mouseClicked(event, doubleClick)
-                    || this.detailsButton.mouseClicked(event, doubleClick)
-                    || this.favouriteButton != null && this.favouriteButton.mouseClicked(event, doubleClick)
-                    || this.actionButton != null && this.actionButton.mouseClicked(event, doubleClick)
-                    || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.remoteActionButton != null && this.entry.hasRemoteAction() && this.remoteActionButton.mouseClicked(mouseX, mouseY, button)
+                    || this.detailsButton.mouseClicked(mouseX, mouseY, button)
+                    || this.favouriteButton != null && this.favouriteButton.mouseClicked(mouseX, mouseY, button)
+                    || this.actionButton != null && this.actionButton.mouseClicked(mouseX, mouseY, button)
+                    || super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
-        public boolean keyPressed(KeyEvent event) {
-            if (event.isConfirmation() && this.entry.album != null) {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            if ((keyCode == 257 || keyCode == 335 || keyCode == 32) && this.entry.album != null) {
                 this.toggleAlbum();
                 if (this.actionButton != null) {
                     this.actionButton.setIconAndTooltip(actionIcon(this.entry), actionMessage(this.entry));
@@ -443,7 +439,7 @@ public class AlbumScreen extends Screen {
                 return true;
             }
 
-            return super.keyPressed(event);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
         private int detailsButtonX() {
@@ -520,7 +516,7 @@ public class AlbumScreen extends Screen {
             return Component.translatable(favourite ? "button.music_and_melody.unfavourite" : "button.music_and_melody.favourite");
         }
 
-        private static Identifier favouriteIcon(DisplayEntry entry) {
+        private static ResourceLocation favouriteIcon(DisplayEntry entry) {
             if (entry.isRemote()) {
                 return IconButton.icon("favourite");
             }
@@ -540,7 +536,7 @@ public class AlbumScreen extends Screen {
             return Component.translatable(this.screen.isDeletePending(entry.playlist) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
         }
 
-        private Identifier actionIcon(DisplayEntry entry) {
+        private ResourceLocation actionIcon(DisplayEntry entry) {
             if (entry.isRemote()) {
                 return IconButton.icon("disabled");
             }
@@ -595,7 +591,7 @@ public class AlbumScreen extends Screen {
             };
         }
 
-        private static Identifier remoteActionIcon(RemoteAlbumPack pack) {
+        private static ResourceLocation remoteActionIcon(RemoteAlbumPack pack) {
             return switch (RemoteAlbumManager.state(pack)) {
                 case DOWNLOADING -> IconButton.icon("downloading");
                 case NEEDS_RELOAD -> IconButton.icon("reload");
@@ -675,11 +671,11 @@ public class AlbumScreen extends Screen {
             return this.album != null ? this.album.name : this.playlist != null ? this.playlist.name : this.remote.name();
         }
 
-        Identifier id() {
+        ResourceLocation id() {
             return this.album != null ? this.album.album : this.playlist != null ? this.playlist.playlist : this.remote.id();
         }
 
-        Identifier icon() {
+        ResourceLocation icon() {
             return this.album != null ? this.album.icon : this.playlist != null ? this.playlist.icon : this.remote.icon();
         }
 

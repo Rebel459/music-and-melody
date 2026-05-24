@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.mixin.client;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.client.remote.DownloadedResources;
@@ -28,14 +28,14 @@ public class MultiPackResourceManagerMixin {
     }
 
     @Inject(method = "getResource", at = @At("RETURN"), cancellable = true)
-    private void getDownloadedResource(Identifier location, CallbackInfoReturnable<Optional<Resource>> cir) {
+    private void getDownloadedResource(ResourceLocation location, CallbackInfoReturnable<Optional<Resource>> cir) {
         if (cir.getReturnValue().isEmpty()) {
             cir.setReturnValue(DownloadedResources.getResource(location));
         }
     }
 
     @Inject(method = "getResourceStack", at = @At("RETURN"), cancellable = true)
-    private void getDownloadedResourceStack(Identifier location, CallbackInfoReturnable<List<Resource>> cir) {
+    private void getDownloadedResourceStack(ResourceLocation location, CallbackInfoReturnable<List<Resource>> cir) {
         Optional<Resource> resource = DownloadedResources.getResource(location);
         if (resource.isEmpty()) return;
         List<Resource> stack = new ArrayList<>(cir.getReturnValue());
@@ -44,8 +44,8 @@ public class MultiPackResourceManagerMixin {
     }
 
     @Inject(method = "listResources", at = @At("RETURN"), cancellable = true)
-    private void listDownloadedResources(String directory, Predicate<Identifier> filter, CallbackInfoReturnable<Map<Identifier, Resource>> cir) {
-        Map<Identifier, Resource> resources = DownloadedResources.listResources(directory, filter);
+    private void listDownloadedResources(String directory, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Map<ResourceLocation, Resource>> cir) {
+        Map<ResourceLocation, Resource> resources = DownloadedResources.listResources(directory, filter);
         if (resources.isEmpty()) return;
         resources.putAll(cir.getReturnValue());
         cir.setReturnValue(resources);

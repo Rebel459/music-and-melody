@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.config;
 
-import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -40,7 +39,7 @@ public final class ConfigAlbum {
         return new Album(
                 ALBUM_ID,
                 Component.literal("Config Album"),
-                Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
+                ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png"),
                 FILES.keySet().stream().map(SafeIdentifier::getPath).toList(),
                 discs
         );

@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
@@ -12,9 +12,9 @@ final class MusicScreenHelper {
 
     private MusicScreenHelper() {}
 
-    static final Identifier FALLBACK_ALBUM_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+    static final ResourceLocation FALLBACK_ALBUM_ICON = ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png");
 
-    static Identifier albumIcon(Minecraft minecraft, Identifier icon) {
+    static ResourceLocation albumIcon(Minecraft minecraft, ResourceLocation icon) {
         if (icon == null) return FALLBACK_ALBUM_ICON;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
         return FALLBACK_ALBUM_ICON;

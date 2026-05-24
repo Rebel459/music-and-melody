@@ -6,8 +6,8 @@ import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.locale.Language;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -243,7 +243,7 @@ public final class PlaylistHelper {
     }
 
     public static boolean isEmptyMusic(SoundInstance instance) {
-        return instance != null && instance.getIdentifier().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location());
+        return instance != null && instance.getLocation().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().getLocation());
     }
 
     private static int clampQueueIndex(int index) {
@@ -296,18 +296,17 @@ public final class PlaylistHelper {
                 0.0D,
                 true
         );
-        SoundEngine.PlayResult result = Minecraft.getInstance().getSoundManager().play(currentSong);
-        if (result == SoundEngine.PlayResult.NOT_STARTED) {
+        SoundManager soundManager = Minecraft.getInstance().getSoundManager();
+        WeighedSoundEvents resolved = currentSong.resolve(soundManager);
+        Sound resolvedSound = currentSong.getSound();
+        if (resolved == null || resolvedSound == SoundManager.EMPTY_SOUND || resolvedSound == SoundManager.INTENTIONALLY_EMPTY_SOUND) {
             currentSong = null;
             currentSongId = null;
-            currentSongLooping = false;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
             return false;
         }
-        if (result == SoundEngine.PlayResult.STARTED) {
-            Minecraft.getInstance().getToastManager().showNowPlayingToast();
-        }
+        soundManager.play(currentSong);
         return true;
     }
 

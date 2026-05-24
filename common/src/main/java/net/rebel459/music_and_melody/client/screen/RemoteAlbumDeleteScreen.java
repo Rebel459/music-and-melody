@@ -6,10 +6,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
 
@@ -21,7 +20,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
     private static final Component TITLE = Component.translatable("screen.music_and_melody.remote_downloads");
 
     private final Screen parent;
-    private final Set<Identifier> pendingDeletes = new HashSet<>();
+    private final Set<ResourceLocation> pendingDeletes = new HashSet<>();
     private RemoteAlbumList list;
 
     public RemoteAlbumDeleteScreen(Screen parent) {
@@ -48,7 +47,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
     public void onClose() {
         boolean changed = false;
 
-        for (Identifier id : Set.copyOf(this.pendingDeletes)) {
+        for (ResourceLocation id : Set.copyOf(this.pendingDeletes)) {
             changed |= RemoteAlbumManager.deleteInstalled(id);
         }
 
@@ -101,12 +100,12 @@ public class RemoteAlbumDeleteScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class RemoteAlbumEntry extends ObjectSelectionList.Entry<RemoteAlbumEntry> {
+    private static class RemoteAlbumEntry extends MusicListEntry<RemoteAlbumEntry> {
 
         private static final int BUTTON_GAP = 4;
 
@@ -170,8 +169,8 @@ public class RemoteAlbumDeleteScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.deleteButton.mouseClicked(event, doubleClick) || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.deleteButton.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
         }
 
         private Component deleteMessage() {
@@ -181,7 +180,7 @@ public class RemoteAlbumDeleteScreen extends Screen {
             );
         }
 
-        private Identifier deleteIcon() {
+        private ResourceLocation deleteIcon() {
             return IconButton.icon(this.screen.isDeletePending(this.pack) ? "restore" : "delete");
         }
     }

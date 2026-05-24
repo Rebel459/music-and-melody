@@ -3,10 +3,8 @@ package net.rebel459.music_and_melody.client.screen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
 class IconButton extends Button {
@@ -15,24 +13,23 @@ class IconButton extends Button {
     private static final int ICON_SIZE = 16;
     private static final int ICON_PADDING = (SIZE - ICON_SIZE) / 2;
 
-    private Identifier icon;
+    private ResourceLocation icon;
 
-    IconButton(Component message, Identifier icon, OnPress onPress) {
+    IconButton(Component message, ResourceLocation icon, OnPress onPress) {
         this(0, 0, message, icon, onPress);
     }
 
-    IconButton(int x, int y, Component message, Identifier icon, OnPress onPress) {
+    IconButton(int x, int y, Component message, ResourceLocation icon, OnPress onPress) {
         super(x, y, SIZE, SIZE, message, onPress, DEFAULT_NARRATION);
         setIconAndTooltip(icon, message);
     }
 
-    static Identifier icon(String name) {
-        return Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "textures/gui/" + name + ".png");
+    static ResourceLocation icon(String name) {
+        return ResourceLocation.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "textures/gui/" + name + ".png");
     }
 
-    static void renderIcon(GuiGraphics graphics, Identifier icon, int x, int y) {
+    static void renderIcon(GuiGraphics graphics, ResourceLocation icon, int x, int y) {
         graphics.blit(
-                RenderPipelines.GUI_TEXTURED,
                 icon,
                 x + ICON_PADDING,
                 y + ICON_PADDING,
@@ -45,27 +42,30 @@ class IconButton extends Button {
         );
     }
 
-    static void renderIconWithTooltip(GuiGraphics graphics, Identifier icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
+    static void renderIconWithTooltip(GuiGraphics graphics, ResourceLocation icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
         renderIcon(graphics, icon, x, y);
         if (mouseX >= x && mouseY >= y && mouseX < x + SIZE && mouseY < y + SIZE) {
-            graphics.setTooltipForNextFrame(tooltip, mouseX, mouseY);
+            graphics.renderTooltip(net.minecraft.client.Minecraft.getInstance().font, tooltip, mouseX, mouseY);
         }
     }
 
-    void setIconAndTooltip(Identifier icon, Component message) {
+    void setIconAndTooltip(ResourceLocation icon, Component message) {
         this.icon = icon;
         this.setMessage(message);
         this.setTooltip(Tooltip.create(message));
     }
 
     @Override
-    public void onPress(InputWithModifiers input) {
+    public void onPress() {
         this.onPress.onPress(this);
     }
 
     @Override
-    protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-        this.renderDefaultSprite(graphics);
+    protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        Component message = this.getMessage();
+        this.setMessage(Component.empty());
+        super.renderWidget(graphics, mouseX, mouseY, tickDelta);
+        this.setMessage(message);
         renderIcon(graphics, this.icon, this.getX(), this.getY());
     }
 }

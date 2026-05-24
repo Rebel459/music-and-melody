@@ -1,7 +1,11 @@
 package net.rebel459.music_and_melody.client;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.mojang.logging.LogUtils;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -20,30 +24,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record> {
+public class AlbumListener extends SimpleJsonResourceReloadListener {
 
-    public static final Identifier ID = MusicAndMelody.id("albums");
+    public static final ResourceLocation ID = MusicAndMelody.id("albums");
 
     private final Set<Album> loadedAlbums = new HashSet<>();
 
     public AlbumListener() {
-        super(Album.Record.CODEC, FileToIdConverter.json("albums"));
+        super(new Gson(), "albums");
     }
 
     @Override
-    protected void apply(
-            Map<Identifier, Album.Record> identifierRecordMap,
-            ResourceManager resourceManager,
-            ProfilerFiller profilerFiller
-    ) {
+    protected void apply(Map<ResourceLocation, JsonElement> jsonMap, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
         Album.ALBUMS.removeAll(this.loadedAlbums);
         Album.DISABLED_ALBUMS.removeAll(this.loadedAlbums);
         this.loadedAlbums.clear();
 
-        Set<Identifier> registeredDiscs = new HashSet<>();
-
-        for (Map.Entry<Identifier, Album.Record> entry : identifierRecordMap.entrySet()) {
-            Identifier albumId = entry.getKey();
+        Set<ResourceLocation> registeredDiscs = new HashSet<>();
+        Map<ResourceLocation, Album.Record> recordMap = decode(jsonMap);
+        for (Map.Entry<ResourceLocation, Album.Record> entry : recordMap.entrySet()) {
+            ResourceLocation albumId = entry.getKey();
             Album.Record record = entry.getValue();
 
             List<String> tracks = expandTracks(albumId, record.tracks(), resourceManager);
@@ -61,9 +61,9 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     .collect(Collectors.toSet());
 
             for (String disc : discs) {
-                Identifier discId = disc.contains(":")
-                        ? Identifier.tryParse(disc)
-                        : Identifier.fromNamespaceAndPath(albumId.getNamespace(), disc);
+                ResourceLocation discId = disc.contains(":")
+                        ? ResourceLocation.tryParse(disc)
+                        : ResourceLocation.fromNamespaceAndPath(albumId.getNamespace(), disc);
 
                 if (discId != null) {
                     registeredDiscs.add(discId);
@@ -93,7 +93,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
     }
 
     private static List<String> expandTracks(
-            Identifier albumId,
+            ResourceLocation albumId,
             List<Album.Track> entries,
             ResourceManager resourceManager
     ) {
@@ -111,7 +111,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
     }
 
     private static Set<String> forcedEnabledTracks(
-            Identifier albumId,
+            ResourceLocation albumId,
             List<Album.Track> entries,
             ResourceManager resourceManager
     ) {
@@ -153,7 +153,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             SafeIdentifier folderId,
             ResourceManager resourceManager
     ) {
-        Identifier validFolderId = Identifier.tryParse(folderId.toString());
+        ResourceLocation validFolderId = ResourceLocation.tryParse(folderId.toString());
 
         if (validFolderId == null) {
             return List.of();
@@ -181,5 +181,15 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                 ))
                 .sorted(Comparator.naturalOrder())
                 .toList();
+    }
+
+    private static Map<ResourceLocation, Album.Record> decode(Map<ResourceLocation, JsonElement> jsonMap) {
+        Map<ResourceLocation, Album.Record> recordMap = new java.util.HashMap<>();
+        for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
+            Album.Record.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
+                    .resultOrPartial(error -> LogUtils.getLogger().warn("Failed to parse album {}: {}", entry.getKey(), error))
+                    .ifPresent(record -> recordMap.put(entry.getKey(), record));
+        }
+        return recordMap;
     }
 }

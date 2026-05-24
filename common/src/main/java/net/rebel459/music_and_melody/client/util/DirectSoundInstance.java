@@ -5,7 +5,7 @@ import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
@@ -94,7 +94,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
 	@Override
 	public WeighedSoundEvents resolve(SoundManager soundManager) {
-		WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
+		WeighedSoundEvents registered = soundManager.getSoundEvent(this.location);
 
 		if (registered != null) {
 			this.sound = registered.getSound(this.random);
@@ -108,7 +108,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		return SafeMusicHelper.resolve(location)
 				.map(path -> createDirectFileSound(location, path))
 				.orElseGet(() -> {
-					Identifier id = Identifier.tryParse(location.toString());
+					ResourceLocation id = ResourceLocation.tryParse(location.toString());
 
 					if (id != null) {
 						return new ResolvedSound(id);
@@ -127,9 +127,9 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
 		String playablePath = "direct/" + shortHash(source.toAbsolutePath().normalize().toString()) + "/" + safePath;
 
-		Identifier playableId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, playablePath);
+		ResourceLocation playableId = ResourceLocation.fromNamespaceAndPath(MusicAndMelody.MOD_ID, playablePath);
 
-		Identifier soundResourceId = Identifier.fromNamespaceAndPath(
+		ResourceLocation soundResourceId = ResourceLocation.fromNamespaceAndPath(
 				MusicAndMelody.MOD_ID,
 				"sounds/" + playablePath + ".ogg"
 		);
@@ -165,6 +165,6 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		}
 	}
 
-	private record ResolvedSound(Identifier playableId) {
+	private record ResolvedSound(ResourceLocation playableId) {
 	}
 }

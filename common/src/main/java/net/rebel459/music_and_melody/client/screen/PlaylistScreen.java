@@ -7,10 +7,9 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
@@ -122,7 +121,7 @@ public class PlaylistScreen extends Screen {
         else return Component.translatable("button.music_and_melody.loop");
     }
 
-    private static Identifier loopIcon() {
+    private static ResourceLocation loopIcon() {
         return IconButton.icon(PlaylistHelper.isLoopingQueue() ? "looping" : "loop");
     }
 
@@ -130,7 +129,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isQueuePlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
     }
 
-    private static Identifier playPauseIcon() {
+    private static ResourceLocation playPauseIcon() {
         return IconButton.icon(PlaylistHelper.isQueuePlaying() ? "pause" : "play");
     }
 
@@ -159,12 +158,12 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class QueueEntry extends ObjectSelectionList.Entry<QueueEntry> {
+    private static class QueueEntry extends MusicListEntry<QueueEntry> {
 
         private final PlaylistScreen screen;
         private final Minecraft minecraft;
@@ -236,17 +235,17 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.playButton != null && this.playButton.mouseClicked(event, doubleClick)
-                    || this.removeButton != null && this.removeButton.mouseClicked(event, doubleClick)
-                    || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.playButton != null && this.playButton.mouseClicked(mouseX, mouseY, button)
+                    || this.removeButton != null && this.removeButton.mouseClicked(mouseX, mouseY, button)
+                    || super.mouseClicked(mouseX, mouseY, button);
         }
 
         private static Component playMessage(SafeIdentifier song) {
             return Component.translatable(PlaylistHelper.isQueuePlaying(song) ? "button.music_and_melody.stop" : "button.music_and_melody.play");
         }
 
-        private static Identifier playIcon(SafeIdentifier song) {
+        private static ResourceLocation playIcon(SafeIdentifier song) {
             return IconButton.icon(PlaylistHelper.isQueuePlaying(song) ? "pause" : "play");
         }
     }
