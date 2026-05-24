@@ -52,8 +52,8 @@ public final class ConfigAlbum {
     }
 
     public static SafeIdentifier idToFile(SafeIdentifier id) {
-        String var10001 = Sound.SOUND_LISTER.prefix();
-        return id.withPath(var10001 + "/" + id.getPath() + Sound.SOUND_LISTER.extension());
+        String var10001 = "sounds";
+        return id.withPath(var10001 + "/" + id.getPath() + ".ogg");
     }
 
     public static synchronized String displayName(SafeIdentifier id) {

@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.input.InputWithModifiers;
@@ -30,7 +30,7 @@ class IconButton extends Button {
         return Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "textures/gui/" + name + ".png");
     }
 
-    static void renderIcon(GuiGraphicsExtractor graphics, Identifier icon, int x, int y) {
+    static void renderIcon(GuiGraphics graphics, Identifier icon, int x, int y) {
         graphics.blit(
                 RenderPipelines.GUI_TEXTURED,
                 icon,
@@ -45,7 +45,7 @@ class IconButton extends Button {
         );
     }
 
-    static void renderIconWithTooltip(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
+    static void renderIconWithTooltip(GuiGraphics graphics, Identifier icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
         renderIcon(graphics, icon, x, y);
         if (mouseX >= x && mouseY >= y && mouseX < x + SIZE && mouseY < y + SIZE) {
             graphics.setTooltipForNextFrame(tooltip, mouseX, mouseY);
@@ -64,8 +64,8 @@ class IconButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        this.extractDefaultSprite(graphics);
+    protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        this.renderDefaultSprite(graphics);
         renderIcon(graphics, this.icon, this.getX(), this.getY());
     }
 }

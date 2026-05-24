@@ -1,7 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.Screen;
@@ -41,9 +41,9 @@ public class EventFilterScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
     }
 
     @Override

@@ -1,8 +1,5 @@
 package net.rebel459.music_and_melody.mixin;
 
-import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.music_and_melody.config.MaMServerConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -14,8 +11,6 @@ import java.util.Set;
 
 public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
-    private static boolean registered = false;
-
     private static boolean classExists(String className) {
         try {
             Class.forName(className, false, Thread.currentThread().getContextClassLoader());
@@ -26,14 +21,7 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
     }
 
     @Override
-    public void onLoad(String mixinPackage) {
-        if (!registered) {
-            MaMClientConfig.init();
-            MaMDataConfig.init();
-            MaMServerConfig.init();
-            registered = true;
-        }
-    }
+    public void onLoad(String mixinPackage) {}
 
     @Override
     @Nullable

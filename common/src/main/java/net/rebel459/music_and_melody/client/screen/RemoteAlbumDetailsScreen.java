@@ -1,7 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -41,8 +41,8 @@ public class RemoteAlbumDetailsScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
         int iconSize = 32;
         int maxTextWidth = Math.max(1, this.width - 80);
         FormattedCharSequence title = this.font.split(this.title, maxTextWidth).getFirst();
@@ -52,8 +52,8 @@ public class RemoteAlbumDetailsScreen extends Screen {
         int titleY = 24;
 
         graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.pack.icon()), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        graphics.text(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
-        graphics.text(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
+        graphics.drawString(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
+        graphics.drawString(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
 
         int x = this.width / 2 - AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int y = 76;
@@ -63,7 +63,7 @@ public class RemoteAlbumDetailsScreen extends Screen {
         List<FormattedCharSequence> description = this.font.split(this.pack.description(), AlbumScreen.MAIN_BUTTON_ROW_WIDTH);
         y += 24;
         for (FormattedCharSequence line : description) {
-            graphics.text(this.font, line, x, y, 0xFFCCCCCC);
+            graphics.drawString(this.font, line, x, y, 0xFFCCCCCC);
             y += this.font.lineHeight + 2;
         }
     }
@@ -74,8 +74,8 @@ public class RemoteAlbumDetailsScreen extends Screen {
         this.minecraft.setScreen(this.parent);
     }
 
-    private void line(GuiGraphicsExtractor graphics, Component component, int x, int y) {
-        graphics.text(this.font, component, x, y, 0xFFAAAAAA);
+    private void line(GuiGraphics graphics, Component component, int x, int y) {
+        graphics.drawString(this.font, component, x, y, 0xFFAAAAAA);
     }
 
     private Component remoteActionMessage() {

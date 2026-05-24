@@ -2,7 +2,7 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -12,8 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.Playlist;
+import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
@@ -64,16 +64,16 @@ public class AlbumDetailsScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
         int maxTextWidth = Math.max(1, this.width - 60);
         FormattedCharSequence title = this.font.split(this.title, maxTextWidth).getFirst();
         String id = this.font.plainSubstrByWidth(id().toString(), maxTextWidth);
         int textWidth = Math.max(this.font.width(title), this.font.width(id));
         int titleX = this.width / 2 - (24 + 6 + textWidth) / 2;
         graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, icon()), titleX, 3, 0.0F, 0.0F, 24, 24, 24, 24);
-        graphics.text(this.font, title, titleX + 30, 5, 0xFFFFFFFF);
-        graphics.text(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + 30, 16, 0xFFAAAAAA);
+        graphics.drawString(this.font, title, titleX + 30, 5, 0xFFFFFFFF);
+        graphics.drawString(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + 30, 16, 0xFFAAAAAA);
         if (this.loadButton != null) this.loadButton.active = !queueSongs(this.minecraft).isEmpty();
     }
 
@@ -311,10 +311,10 @@ public class AlbumDetailsScreen extends Screen {
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int controlsWidth = controlsWidth();
             FormattedCharSequence line = this.minecraft.font.split(this.text, this.getContentWidth() - (controlsWidth == 0 ? 0 : controlsWidth + 8)).getFirst();
-            graphics.text(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.color);
+            graphics.drawString(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.color);
             if (this.playButton != null) {
                 int buttonY = this.getContentYMiddle() - 10;
                 int controlX = this.getContentRight() - controlsWidth;
@@ -333,14 +333,14 @@ public class AlbumDetailsScreen extends Screen {
                     int statusX = this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP;
                     IconButton.renderIconWithTooltip(graphics, this.statusIcon, statusX, buttonY, this.statusText, mouseX, mouseY);
                 }
-                this.playButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-                this.queueButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                this.playButton.render(graphics, mouseX, mouseY, tickDelta);
+                this.queueButton.render(graphics, mouseX, mouseY, tickDelta);
                 if (this.toggleButton != null) {
-                    this.toggleButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+                    this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
                 } else if (this.statusText != null && this.statusIcon == null) {
                     int statusX = this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP;
                     FormattedCharSequence status = this.minecraft.font.split(this.statusText, STATUS_WIDTH).getFirst();
-                    graphics.text(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
+                    graphics.drawString(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
                 }
             }
         }
