@@ -7,7 +7,6 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.locale.Language;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -135,8 +134,8 @@ public final class PlaylistHelper {
         return currentSongFromEvent && isPlaying();
     }
 
-    public static SoundInstance getCurrentQueueSound() {
-        return isQueuePlaying() ? currentSong : null;
+    public static SoundInstance getCurrentSong() {
+        return currentSong;
     }
 
     public static void interruptCurrentPlayback(SoundInstance sound) {
