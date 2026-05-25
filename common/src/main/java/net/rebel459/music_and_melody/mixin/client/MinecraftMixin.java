@@ -42,7 +42,7 @@ public abstract class MinecraftMixin {
             )
     )
     private void keepPlaylistMusic(SoundManager soundManager, Operation<Void> original) {
-        SoundInstance currentSong = PlaylistHelper.getCurrentQueueSound();
+        SoundInstance currentSong = PlaylistHelper.getCurrentSong();
         if (currentSong != null && ((SoundEngineStopper) soundManager.soundEngine).stopEverythingExceptPlaylist(currentSong)) {
             return;
         }

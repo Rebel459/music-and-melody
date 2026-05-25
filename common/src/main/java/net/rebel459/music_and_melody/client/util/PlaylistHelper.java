@@ -135,8 +135,8 @@ public final class PlaylistHelper {
         return currentSongFromEvent && isPlaying();
     }
 
-    public static SoundInstance getCurrentQueueSound() {
-        return isQueuePlaying() ? currentSong : null;
+    public static SoundInstance getCurrentSong() {
+        return currentSong;
     }
 
     public static void interruptCurrentPlayback(SoundInstance sound) {
