@@ -102,7 +102,7 @@ public class MaMNeoForgePlatform {
 
         @Override
         public void send(CustomPacketPayload payload, ServerPlayer player) {
-            player.connection.send(new ClientboundCustomPayloadPacket(payload));
+            if (player.connection.hasChannel(payload.type())) player.connection.send(new ClientboundCustomPayloadPacket(payload));
         }
 
         private static final List<HandledToClient<?>> HANDLED_TO_CLIENT_LIST = new ArrayList<>();
@@ -115,7 +115,7 @@ public class MaMNeoForgePlatform {
 
         @SubscribeEvent
         public static void registerWithHandler(RegisterPayloadHandlersEvent event) {
-            final PayloadRegistrar registrar = event.registrar("1");
+            final PayloadRegistrar registrar = event.registrar("1").optional();
 
             for (HandledToClient handled : HANDLED_TO_CLIENT_LIST) {
                 if (handled.play) {

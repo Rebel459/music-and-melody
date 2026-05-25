@@ -101,7 +101,7 @@ public class MaMFabricPlatform {
 
         @Override
         public void send(CustomPacketPayload payload, ServerPlayer player) {
-            ServerPlayNetworking.send(player, payload);
+            if (ServerPlayNetworking.canSend(player, payload.type())) ServerPlayNetworking.send(player, payload);
         }
     }
 
