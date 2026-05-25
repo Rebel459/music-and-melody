@@ -46,9 +46,9 @@ public final class ConfigAlbum {
         );
     }
 
-    public static synchronized void addSoundResources(Map<SafeIdentifier, Resource> soundCache) {
+    public static synchronized void addSoundResources(Map<ResourceLocation, Resource> soundCache) {
         reload();
-        FILES.forEach((id, path) -> soundCache.put(idToFile(id), new Resource(null, IoSupplier.create(path))));
+        FILES.forEach((id, path) -> soundCache.put(idToFile(id).getId(), new Resource(null, IoSupplier.create(path))));
     }
 
     public static SafeIdentifier idToFile(SafeIdentifier id) {
