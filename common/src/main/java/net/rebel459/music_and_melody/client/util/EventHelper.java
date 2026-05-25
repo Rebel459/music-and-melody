@@ -3,9 +3,12 @@ package net.rebel459.music_and_melody.client.util;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.WinScreen;
+import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.Weighted;
+import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -390,7 +393,7 @@ public class EventHelper {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
         for (SoundInstance instance : instances) {
-            if (lastMusic.equals(instance.getIdentifier()) && manager.isActive(instance)) {
+            if (isStoredPoolMusic(instance) && manager.isActive(instance)) {
                 return true;
             }
         }
@@ -398,7 +401,36 @@ public class EventHelper {
     }
 
     private static boolean isStoredPoolMusic(SoundInstance currentMusic) {
-        return currentMusic != null && lastCategory == Event.CategoryType.POOL && currentMusic.getIdentifier().equals(lastMusic);
+        if (currentMusic == null || lastCategory != Event.CategoryType.POOL || lastMusic == null) return false;
+        if (lastMusic.equals(currentMusic.getIdentifier())) return true;
+
+        Sound sound = currentMusic.getSound();
+        if (sound == null || sound == SoundManager.EMPTY_SOUND || sound == SoundManager.INTENTIONALLY_EMPTY_SOUND) {
+            return false;
+        }
+
+        return isSoundInStoredPool(sound.getLocation()) || isSoundInStoredPool(sound.getPath());
+    }
+
+    private static boolean isSoundInStoredPool(Identifier soundId) {
+        if (soundId == null || lastMusic == null) return false;
+
+        WeighedSoundEvents event = Minecraft.getInstance().getSoundManager().getSoundEvent(lastMusic.getId());
+        return event != null && containsSound(event, soundId);
+    }
+
+    private static boolean containsSound(Weighted<Sound> weighted, Identifier soundId) {
+        if (weighted instanceof Sound sound) {
+            return soundId.equals(sound.getLocation()) || soundId.equals(sound.getPath());
+        }
+
+        if (weighted instanceof WeighedSoundEvents event) {
+            for (Weighted<Sound> entry : event.list) {
+                if (containsSound(entry, soundId)) return true;
+            }
+        }
+
+        return false;
     }
 
     public static void clearStoredEvent() {

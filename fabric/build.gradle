@@ -28,6 +28,7 @@ dependencies {
     }
 
     compileOnly("maven.modrinth:enderscape:$enderscape_fabric")
+    compileOnly("maven.modrinth:fancymenu:$fancymenu_version-fabric")
 }
 
 loom {
