@@ -147,6 +147,10 @@ public final class PlaylistHelper {
         return currentSongFromEvent && isPlaying();
     }
 
+    public static boolean isPlaylistOrAlbumPlaying() {
+        return currentSong != null && !currentSongFromEvent && isPlaying();
+    }
+
     public static SoundInstance getCurrentSong() {
         return currentSong;
     }
