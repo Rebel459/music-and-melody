@@ -22,6 +22,9 @@
     "client.SoundManagerPreparationsMixin",
     "client.SoundManagerPreparationsWeightMixin",
     "client.SoundScreenMixin",
+    "integration.fancymenu.AudioElementMixin",
+    "integration.fancymenu.GlobalCustomizationHandlerAccessor",
+    "integration.fancymenu.GlobalCustomizationHandlerMixin",
     "integration.simple_music_control.SimpleMusicDelayMixin",
     "integration.simple_music_control.SimpleMusicWidgetMixin"
   ]

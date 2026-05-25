@@ -20,6 +20,7 @@ dependencies {
     compileOnly("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
 
     compileOnly("net.rebel459.music_and_melody:enderscape-fabric-2.1.1+mc26.1.2")
+    compileOnly("maven.modrinth:fancymenu:$fancymenu_version-fabric")
 }
 
 loom {

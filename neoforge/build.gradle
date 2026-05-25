@@ -10,6 +10,7 @@ dependencies {
     compileOnly("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
     compileOnly("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
     compileOnly("maven.modrinth:kotlin-for-forge:$kotlin_neoforge")
+    compileOnly("maven.modrinth:fancymenu:$fancymenu_version-neoforge")
 }
 
 neoForge {
