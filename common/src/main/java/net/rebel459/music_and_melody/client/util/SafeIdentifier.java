@@ -28,6 +28,7 @@ public class SafeIdentifier {
     }
 
     public Identifier getId() {
+        if (Identifier.tryParse(this.toString()) == null) return Identifier.parse("empty:empty");
         return Identifier.fromNamespaceAndPath(this.namespace, this.path);
     }
 
@@ -67,7 +68,8 @@ public class SafeIdentifier {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (!(object instanceof SafeIdentifier other)) return false;
-        return Objects.equals(this.namespace, other.namespace) && Objects.equals(this.path, other.path);
+        return Objects.equals(this.namespace, other.namespace)
+                && Objects.equals(this.path, other.path);
     }
 
     @Override

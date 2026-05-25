@@ -54,7 +54,7 @@ public class AlbumScreen extends Screen {
                 .bounds(rowX, buttonY, 152, 20)
                 .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + 152 + 4, buttonY, 152, 20)
+                .bounds(rowX + 156, buttonY, 152, 20)
                 .build());
     }
 
@@ -160,7 +160,7 @@ public class AlbumScreen extends Screen {
         }
 
         private static RemoteAlbumPack remoteForInstalledAlbum(Album album) {
-            if (!MaMClientConfig.get().remote_albums) return null;
+            if (!MaMClientConfig.get().remote_downloads) return null;
 
             return RemoteAlbumManager.packs().stream()
                     .filter(pack -> pack.id().equals(album.album))
@@ -169,109 +169,24 @@ public class AlbumScreen extends Screen {
         }
 
         private static boolean includeAlbum(Album album, MaMDataConfig.Albums filter) {
-            return matches(filter,
-                    matchesFavourite(album, filter),
-                    matchesAlbum(true, filter),
-                    matchesPlaylist(false, filter),
-                    matchesDownloaded(true, filter),
-                    matchesRemote(false, filter)
-            );
+            if (filter.favourites_only) return filter.show_albums && album.isFavourite();
+            else return filter.show_albums;
         }
 
         private static boolean includePlaylist(Playlist playlist, MaMDataConfig.Albums filter) {
             if (playlist.hidden) return false;
-
-            return matches(filter,
-                    matchesFavourite(playlist, filter),
-                    matchesAlbum(false, filter),
-                    matchesPlaylist(true, filter),
-                    matchesDownloaded(true, filter),
-                    matchesRemote(false, filter)
-            );
+            if (filter.favourites_only) return filter.show_playlists && playlist.isFavourite();
+            else return filter.show_playlists;
         }
 
         private static boolean includeRemote(RemoteAlbumPack pack, MaMDataConfig.Albums filter) {
-            if (!MaMClientConfig.get().remote_albums) return false;
+            if (!MaMClientConfig.get().remote_downloads || isDownloadedRemote(pack) || filter.favourites_only) return false;
             if (isDownloadedRemote(pack)) return false;
-
-            RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
-
-            boolean availableRemote = state != RemoteAlbumManager.State.INSTALLED;
-
-            return matches(filter,
-                    matchesFavourite(false, filter),
-                    matchesAlbum(false, filter),
-                    matchesPlaylist(false, filter),
-                    matchesDownloaded(false, filter),
-                    matchesRemote(availableRemote, filter)
-            );
+            return filter.show_remote && RemoteAlbumManager.state(pack) != RemoteAlbumManager.State.INSTALLED;
         }
 
         private static boolean isDownloadedRemote(RemoteAlbumPack pack) {
             return Album.ALBUMS.stream().anyMatch(album -> album.album.equals(pack.id()));
-        }
-
-        private static boolean matches(MaMDataConfig.Albums filter, boolean... matches) {
-            return filter.filter_inclusive ? matchesAny(matches) : matchesAllSelected(filter, matches);
-        }
-
-        private static boolean matchesAny(boolean... matches) {
-            for (boolean match : matches) {
-                if (match) return true;
-            }
-            return false;
-        }
-
-        private static boolean matchesAllSelected(MaMDataConfig.Albums filter, boolean... matches) {
-            boolean[] selected = selectedFilters(filter);
-
-            boolean anySelected = false;
-            for (int i = 0; i < selected.length; i++) {
-                if (!selected[i]) continue;
-
-                anySelected = true;
-                if (!matches[i]) return false;
-            }
-
-            return anySelected;
-        }
-
-        private static boolean[] selectedFilters(MaMDataConfig.Albums filter) {
-            return new boolean[]{
-                    filter.filter_favourites,
-                    filter.filter_albums,
-                    filter.filter_playlists,
-                    filter.filter_downloaded,
-                    filter.filter_remote
-            };
-        }
-
-        private static boolean matchesFavourite(Album album, MaMDataConfig.Albums filter) {
-            return filter.filter_favourites && album.isFavourite();
-        }
-
-        private static boolean matchesFavourite(Playlist playlist, MaMDataConfig.Albums filter) {
-            return filter.filter_favourites && playlist.isFavourite();
-        }
-
-        private static boolean matchesFavourite(boolean favourite, MaMDataConfig.Albums filter) {
-            return filter.filter_favourites && favourite;
-        }
-
-        private static boolean matchesAlbum(boolean album, MaMDataConfig.Albums filter) {
-            return filter.filter_albums && album;
-        }
-
-        private static boolean matchesPlaylist(boolean playlist, MaMDataConfig.Albums filter) {
-            return filter.filter_playlists && playlist;
-        }
-
-        private static boolean matchesDownloaded(boolean downloaded, MaMDataConfig.Albums filter) {
-            return filter.filter_downloaded && downloaded;
-        }
-
-        private static boolean matchesRemote(boolean remote, MaMDataConfig.Albums filter) {
-            return filter.filter_remote && remote;
         }
 
         @Override

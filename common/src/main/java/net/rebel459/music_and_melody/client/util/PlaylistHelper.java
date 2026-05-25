@@ -71,7 +71,7 @@ public final class PlaylistHelper {
             SafeIdentifier removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
-            if (currentSongFromQueue && removed.equals(currentSongId)) stop();
+            if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
             queueIndex = clampQueueIndex(queueIndex);
             save();
         }
@@ -97,7 +97,19 @@ public final class PlaylistHelper {
     }
 
     public static boolean isPlaying(SafeIdentifier song) {
-        return song.equals(currentSongId) && isPlaying();
+        if (song == null || currentSong == null || currentSongId == null || !isPlaying()) {
+            return false;
+        }
+
+        SafeIdentifier wanted = ConfigAlbum.playableId(song);
+        SafeIdentifier current = ConfigAlbum.playableId(currentSongId);
+        SafeIdentifier soundInstanceId = SafeIdentifier.convert(currentSong.getIdentifier());
+
+        if (wanted.equals(current)) return true;
+        if (wanted.equals(soundInstanceId)) return true;
+
+        return DirectSoundFiles.samePlayable(wanted, current)
+                || DirectSoundFiles.samePlayable(wanted, soundInstanceId);
     }
 
     public static boolean isQueuePlaying(SafeIdentifier song) {
@@ -210,7 +222,13 @@ public final class PlaylistHelper {
 
     private static void advanceFinishedQueuedSong() {
         if (!currentSongFromQueue || currentSongId == null || isPlaying()) return;
-        int finishedIndex = QUEUED_SONGS.indexOf(currentSongId);
+        int finishedIndex = -1;
+        for (int i = 0; i < QUEUED_SONGS.size(); i++) {
+            if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), currentSongId)) {
+                finishedIndex = i;
+                break;
+            }
+        }
         if (finishedIndex >= 0) {
             int nextIndex = finishedIndex + 1;
             if (nextIndex >= QUEUED_SONGS.size()) {
