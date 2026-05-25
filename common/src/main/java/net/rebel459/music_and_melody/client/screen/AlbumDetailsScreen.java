@@ -391,7 +391,7 @@ public class AlbumDetailsScreen extends Screen {
             return IconButton.icon(album.isTrackEnabled(song) ? "enabled" : "disabled");
         }
 
-        private static ResourceLocation forcedStatusIcon(Album album, String song, Component forcedStatus) {
+        private static Identifier forcedStatusIcon(Album album, String song, Component forcedStatus) {
             if (forcedStatus == null) return null;
             if (album.album.equals(ConfigAlbum.ALBUM_ID)) return IconButton.icon("config");
             return album.isTrackForcedEnabled(song) ? IconButton.icon("always_enabled") : null;
