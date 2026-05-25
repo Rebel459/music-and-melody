@@ -76,7 +76,7 @@
   "screen.music_and_melody.album_details.locked": "Locked",
   "screen.music_and_melody.album_details.enabled": "Enabled",
   "screen.music_and_melody.album_details.disabled": "Disabled",
-  "screen.music_and_melody.album_details.custom": "Custom",
+  "screen.music_and_melody.album_details.config": "Config",
   "screen.music_and_melody.filter": "Filter",
   "screen.music_and_melody.album_filter.favourites_only": "Favourites Only",
   "screen.music_and_melody.album_filter.albums": "Albums",
