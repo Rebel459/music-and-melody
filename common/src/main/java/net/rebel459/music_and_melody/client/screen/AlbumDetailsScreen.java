@@ -151,7 +151,7 @@ public class AlbumDetailsScreen extends Screen {
         }
 
         private static Component trackStatus(Album album, String song) {
-            if (album.album.equals(ConfigAlbum.ALBUM_ID)) return Component.translatable("screen.music_and_melody.album_details.custom");
+            if (album.album.equals(ConfigAlbum.ALBUM_ID)) return Component.translatable("screen.music_and_melody.album_details.config");
             if (album.isTrackForcedEnabled(song)) return Component.translatable("screen.music_and_melody.album_details.enabled");
             return null;
         }
@@ -273,7 +273,7 @@ public class AlbumDetailsScreen extends Screen {
                     color,
                     true,
                     forcedStatus,
-                    forcedStatus != null && album.isTrackForcedEnabled(song) ? IconButton.icon("always_enabled") : null,
+                    forcedStatusIcon(album, song, forcedStatus),
                     0xFFFFFFFF
             );
         }
@@ -404,6 +404,12 @@ public class AlbumDetailsScreen extends Screen {
 
         private static ResourceLocation toggleIcon(Album album, String song) {
             return IconButton.icon(album.isTrackEnabled(song) ? "enabled" : "disabled");
+        }
+
+        private static ResourceLocation forcedStatusIcon(Album album, String song, Component forcedStatus) {
+            if (forcedStatus == null) return null;
+            if (album.album.equals(ConfigAlbum.ALBUM_ID)) return IconButton.icon("config");
+            return album.isTrackForcedEnabled(song) ? IconButton.icon("always_enabled") : null;
         }
     }
 }
