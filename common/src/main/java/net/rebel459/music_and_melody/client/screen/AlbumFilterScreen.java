@@ -28,15 +28,13 @@ public class AlbumFilterScreen extends Screen {
         MaMDataConfig.Albums albums = MaMDataConfig.get().albums;
         int rowX = this.width / 2 - AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int y = 48;
-        addCheckbox("screen.music_and_melody.filter.inclusive", rowX, y, () -> albums.filter_inclusive, value -> albums.filter_inclusive = value);
-        addCheckbox("screen.music_and_melody.album_filter.favourites", rowX, y += 24, () -> albums.filter_favourites, value -> albums.filter_favourites = value);
-        addCheckbox("screen.music_and_melody.album_filter.albums", rowX, y += 24, () -> albums.filter_albums, value -> albums.filter_albums = value);
-        addCheckbox("screen.music_and_melody.album_filter.playlists", rowX, y += 24, () -> albums.filter_playlists, value -> albums.filter_playlists = value);
-        addCheckbox("screen.music_and_melody.album_filter.downloaded", rowX, y += 24, () -> albums.filter_downloaded, value -> albums.filter_downloaded = value);
+        addCheckbox("screen.music_and_melody.album_filter.favourites_only", rowX, y += 24, () -> albums.favourites_only, value -> albums.favourites_only = value);
+        addCheckbox("screen.music_and_melody.album_filter.albums", rowX, y += 24, () -> albums.show_albums, value -> albums.show_albums = value);
+        addCheckbox("screen.music_and_melody.album_filter.playlists", rowX, y += 24, () -> albums.show_playlists, value -> albums.show_playlists = value);
         addCheckbox("screen.music_and_melody.album_filter.remote", rowX, y += 24, () -> {
-            return albums.filter_remote;
+            return albums.show_remote;
         }, value -> {
-            albums.filter_remote = value;
+            albums.show_remote = value;
             if (value) RemoteAlbumManager.refreshIfNeeded();
         });
 

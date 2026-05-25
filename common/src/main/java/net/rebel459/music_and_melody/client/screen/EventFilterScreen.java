@@ -7,8 +7,10 @@ import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -28,16 +30,30 @@ public class EventFilterScreen extends Screen {
         int rowX = this.width / 2 - AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int y = 48;
 
-        addCheckbox("screen.music_and_melody.filter.inclusive", rowX, y, () -> events.filter_inclusive, value -> events.filter_inclusive = value);
-        addCheckbox("screen.music_and_melody.event_filter.custom", rowX, y += 24, () -> events.filter_custom, value -> events.filter_custom = value);
-        addCheckbox("screen.music_and_melody.event_filter.built_in", rowX, y += 24, () -> events.filter_built_in, value -> events.filter_built_in = value);
-        addCheckbox("screen.music_and_melody.event_filter.enabled", rowX, y += 24, () -> events.filter_enabled, value -> events.filter_enabled = value);
-        addCheckbox("screen.music_and_melody.event_filter.disabled", rowX, y += 24, () -> events.filter_disabled, value -> events.filter_disabled = value);
+        this.addRenderableWidget(Button.builder(visibilityMessage(events.visibility), button -> {
+            events.visibility = nextVisibility(events.visibility);
+            button.setMessage(visibilityMessage(events.visibility));
+        }).bounds(rowX, y += 24, 100, 20).build());
+
+        addCheckbox("screen.music_and_melody.event_filter.custom", rowX, y += 24, () -> events.show_custom, value -> events.show_custom = value);
+        addCheckbox("screen.music_and_melody.event_filter.built_in", rowX, y += 24, () -> events.show_built_in, value -> events.show_built_in = value);
 
         int buttonY = this.height - 27;
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 4, buttonY, AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2, 20)
                 .build());
+    }
+
+    private MaMDataConfig.EventVisibility nextVisibility(MaMDataConfig.EventVisibility visibility) {
+        return switch (visibility) {
+            case ALL -> MaMDataConfig.EventVisibility.ENABLED;
+            case ENABLED -> MaMDataConfig.EventVisibility.DISABLED;
+            case DISABLED -> MaMDataConfig.EventVisibility.ALL;
+        };
+    }
+
+    private Component visibilityMessage(MaMDataConfig.EventVisibility visibility) {
+        return Component.translatable("button.music_and_melody.event_filter.visibility." + visibility.name().toLowerCase(Locale.ROOT));
     }
 
     @Override

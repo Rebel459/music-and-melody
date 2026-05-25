@@ -5,10 +5,12 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Config(name = MusicAndMelody.MOD_ID + "/" + "data")
 public class MaMDataConfig implements ConfigData {
@@ -23,12 +25,10 @@ public class MaMDataConfig implements ConfigData {
 	public Albums albums = new Albums();
 
 	public static class Albums {
-		public boolean filter_inclusive = true;
-		public boolean filter_favourites = true;
-		public boolean filter_albums = true;
-		public boolean filter_playlists = true;
-		public boolean filter_downloaded = true;
-		public boolean filter_remote = true;
+		public boolean favourites_only = false;
+		public boolean show_albums = true;
+		public boolean show_playlists = true;
+		public boolean show_remote = true;
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
@@ -55,12 +55,20 @@ public class MaMDataConfig implements ConfigData {
 	public Events events = new Events();
 
 	public static class Events {
-		public boolean filter_inclusive = true;
-		public boolean filter_custom = true;
-		public boolean filter_built_in = true;
-		public boolean filter_enabled = true;
-		public boolean filter_disabled = true;
+		public EventVisibility visibility = EventVisibility.ALL;
+		public boolean show_custom = true;
+		public boolean show_built_in = true;
 		public List<String> disabled_events = new ArrayList<>();
 		public List<String> enabled_events = new ArrayList<>();
+	}
+
+	public enum EventVisibility {
+		ALL,
+		ENABLED,
+		DISABLED;
+
+		public Component component() {
+			return Component.translatable("screen.music_and_melody.event_filter.visibility." + this.name().toLowerCase(Locale.ROOT));
+		}
 	}
 }

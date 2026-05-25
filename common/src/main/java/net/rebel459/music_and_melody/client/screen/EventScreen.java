@@ -1,7 +1,5 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import com.mojang.datafixers.util.Either;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -23,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -763,62 +760,16 @@ public class EventScreen extends Screen {
         private boolean visible(Event.Source source) {
             MaMDataConfig.Events filter = MaMDataConfig.get().events;
 
-            return matches(filter,
-                    matchesCustom(source, filter),
-                    matchesBuiltIn(source, filter),
-                    matchesEnabled(source, filter),
-                    matchesDisabled(source, filter)
-            );
-        }
+            boolean shouldShow = (filter.show_custom && source.isConfig()) || (filter.show_built_in && !source.isConfig());
 
-        private static boolean matches(MaMDataConfig.Events filter, boolean... matches) {
-            return filter.filter_inclusive ? matchesAny(matches) : matchesAllSelected(filter, matches);
-        }
-
-        private static boolean matchesAny(boolean... matches) {
-            for (boolean match : matches) {
-                if (match) return true;
+            if (filter.visibility == MaMDataConfig.EventVisibility.ENABLED) {
+                return source.isEnabled() && shouldShow;
             }
-            return false;
-        }
-
-        private static boolean matchesAllSelected(MaMDataConfig.Events filter, boolean... matches) {
-            boolean[] selected = selectedFilters(filter);
-
-            boolean anySelected = false;
-            for (int i = 0; i < selected.length; i++) {
-                if (!selected[i]) continue;
-
-                anySelected = true;
-                if (!matches[i]) return false;
+            if (filter.visibility == MaMDataConfig.EventVisibility.DISABLED) {
+                return !source.isEnabled() && shouldShow;
             }
 
-            return anySelected;
-        }
-
-        private static boolean[] selectedFilters(MaMDataConfig.Events filter) {
-            return new boolean[]{
-                    filter.filter_custom,
-                    filter.filter_built_in,
-                    filter.filter_enabled,
-                    filter.filter_disabled
-            };
-        }
-
-        private static boolean matchesCustom(Event.Source source, MaMDataConfig.Events filter) {
-            return filter.filter_custom && source.isConfig();
-        }
-
-        private static boolean matchesBuiltIn(Event.Source source, MaMDataConfig.Events filter) {
-            return filter.filter_built_in && !source.isConfig();
-        }
-
-        private static boolean matchesEnabled(Event.Source source, MaMDataConfig.Events filter) {
-            return filter.filter_enabled && source.isEnabled();
-        }
-
-        private static boolean matchesDisabled(Event.Source source, MaMDataConfig.Events filter) {
-            return filter.filter_disabled && !source.isEnabled();
+            return shouldShow;
         }
     }
 
