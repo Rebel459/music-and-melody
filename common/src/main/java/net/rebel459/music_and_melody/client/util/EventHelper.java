@@ -13,6 +13,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -395,7 +396,7 @@ public class EventHelper {
 
     private static boolean isStoredPoolMusic(SoundInstance currentMusic) {
         if (currentMusic == null || lastCategory != Event.CategoryType.POOL || lastMusic == null) return false;
-        if (lastMusic.equals(currentMusic.getIdentifier())) return true;
+        if (lastMusic.equals(currentMusic.getLocation())) return true;
 
         Sound sound = currentMusic.getSound();
         if (sound == null || sound == SoundManager.EMPTY_SOUND || sound == SoundManager.INTENTIONALLY_EMPTY_SOUND) {
@@ -405,14 +406,14 @@ public class EventHelper {
         return isSoundInStoredPool(sound.getLocation()) || isSoundInStoredPool(sound.getPath());
     }
 
-    private static boolean isSoundInStoredPool(Identifier soundId) {
+    private static boolean isSoundInStoredPool(ResourceLocation soundId) {
         if (soundId == null || lastMusic == null) return false;
 
         WeighedSoundEvents event = Minecraft.getInstance().getSoundManager().getSoundEvent(lastMusic.getId());
         return event != null && containsSound(event, soundId);
     }
 
-    private static boolean containsSound(Weighted<Sound> weighted, Identifier soundId) {
+    private static boolean containsSound(Weighted<Sound> weighted, ResourceLocation soundId) {
         if (weighted instanceof Sound sound) {
             return soundId.equals(sound.getLocation()) || soundId.equals(sound.getPath());
         }
