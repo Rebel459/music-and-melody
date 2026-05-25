@@ -48,13 +48,13 @@ public final class ConfigAlbum {
         );
     }
 
-    public static synchronized void addSoundResources(Map<ResourceLocation, Resource> soundCache) {
+    public static synchronized void addSoundResources(Map<Identifier, Resource> soundCache) {
         reload();
         FILES.forEach((id, path) -> soundCache.put(idToFile(id), new Resource(null, IoSupplier.create(path))));
     }
 
-    public static ResourceLocation idToFile(SafeIdentifier id) {
-        return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "sounds/" + id.getPath() + ".ogg");
+    public static Identifier idToFile(SafeIdentifier id) {
+        return Identifier.fromNamespaceAndPath(id.getNamespace(), "sounds/" + id.getPath() + ".ogg");
     }
 
     public static synchronized String displayName(SafeIdentifier id) {

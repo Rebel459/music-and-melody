@@ -22,7 +22,7 @@ import java.util.*;
 public class SoundManagerPreparationsMixin {
 
     @Shadow
-    private Map<ResourceLocation, Resource> soundCache;
+    private Map<Identifier, Resource> soundCache;
 
     @Unique
     private static final Set<Identifier> DISABLED_EVENTS = new HashSet<>();
