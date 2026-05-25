@@ -36,9 +36,9 @@
   "button.music_and_melody.reload": "Reload",
   "button.music_and_melody.retry": "Retry",
   "button.music_and_melody.remote_downloads": "Downloads",
-  "button.music_and_melody.event_filter.visibility.all": "Show All",
-  "button.music_and_melody.event_filter.visibility.enabled": "Enabled Only",
-  "button.music_and_melody.event_filter.visibility.disabled": "Disabled Only",
+  "button.music_and_melody.event_filter.visibility.all": "Visibility: All",
+  "button.music_and_melody.event_filter.visibility.enabled": "Visibility: Enabled",
+  "button.music_and_melody.event_filter.visibility.disabled": "Visibility: Disabled",
 
   "screen.music_and_melody.albums": "Albums & Playlists",
   "screen.music_and_melody.playlist": "Playlist",
