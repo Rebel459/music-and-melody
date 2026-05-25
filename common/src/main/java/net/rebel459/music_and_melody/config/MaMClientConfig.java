@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -90,7 +89,7 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean remote_albums = true;
+	public boolean remote_downloads = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip

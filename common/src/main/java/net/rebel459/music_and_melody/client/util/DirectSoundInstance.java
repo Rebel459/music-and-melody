@@ -138,7 +138,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 				originalLocation.getNamespace(),
 				fileNameOnly(originalLocation.getPath())
 		);
-		DirectSoundFiles.register(soundResourceId, playableId, trackName, source);
+		DirectSoundFiles.register(soundResourceId, playableId, originalLocation, trackName, source);
 
 		return new ResolvedSound(playableId);
 	}

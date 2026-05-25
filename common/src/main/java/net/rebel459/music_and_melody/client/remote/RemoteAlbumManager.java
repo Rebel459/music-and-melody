@@ -71,7 +71,7 @@ public final class RemoteAlbumManager {
     public static synchronized void refresh() {
         loaded = true;
         List<String> repositories = List.copyOf(MaMClientConfig.get().remote_repositories);
-        if (!MaMClientConfig.get().remote_albums || repositories.isEmpty()) {
+        if (!MaMClientConfig.get().remote_downloads || repositories.isEmpty()) {
             PACKS.clear();
             refreshTask = null;
             return;
