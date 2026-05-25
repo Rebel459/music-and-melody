@@ -104,7 +104,7 @@ public final class PlaylistHelper {
 
         SafeIdentifier wanted = ConfigAlbum.playableId(song);
         SafeIdentifier current = ConfigAlbum.playableId(currentSongId);
-        SafeIdentifier soundInstanceId = SafeIdentifier.convert(currentSong.getIdentifier());
+        SafeIdentifier soundInstanceId = SafeIdentifier.convert(currentSong.getLocation());
 
         if (wanted.equals(current)) return true;
         if (wanted.equals(soundInstanceId)) return true;

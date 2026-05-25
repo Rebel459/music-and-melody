@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.client.util;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -9,22 +9,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class DirectSoundFiles {
 
-	private static final Map<Identifier, Path> FILES = new ConcurrentHashMap<>();
+	private static final Map<ResourceLocation, Path> FILES = new ConcurrentHashMap<>();
 
 	// playable id / sound resource id -> display safe id
-	private static final Map<Identifier, SafeIdentifier> DISPLAY_KEYS = new ConcurrentHashMap<>();
+	private static final Map<ResourceLocation, SafeIdentifier> DISPLAY_KEYS = new ConcurrentHashMap<>();
 
 	// safe/menu/display aliases -> playable id
-	private static final Map<SafeIdentifier, Identifier> PLAYABLE_IDS = new ConcurrentHashMap<>();
+	private static final Map<SafeIdentifier, ResourceLocation> PLAYABLE_IDS = new ConcurrentHashMap<>();
 
 	// identifier aliases -> playable id
-	private static final Map<Identifier, Identifier> IDENTIFIER_PLAYABLE_IDS = new ConcurrentHashMap<>();
+	private static final Map<ResourceLocation, ResourceLocation> IDENTIFIER_PLAYABLE_IDS = new ConcurrentHashMap<>();
 
 	private DirectSoundFiles() {}
 
 	public static void register(
-			Identifier soundResourceId,
-			Identifier playableId,
+			ResourceLocation soundResourceId,
+			ResourceLocation playableId,
 			SafeIdentifier originalLocation,
 			SafeIdentifier displayName,
 			Path path
@@ -43,38 +43,38 @@ public final class DirectSoundFiles {
 		registerAlias(SafeIdentifier.convert(soundResourceId), playableId);
 	}
 
-	private static void registerAlias(SafeIdentifier alias, Identifier playableId) {
+	private static void registerAlias(SafeIdentifier alias, ResourceLocation playableId) {
 		if (alias != null) {
 			PLAYABLE_IDS.put(alias, playableId);
 		}
 	}
 
-	public static Optional<Path> get(Identifier soundResourceId) {
+	public static Optional<Path> get(ResourceLocation soundResourceId) {
 		return Optional.ofNullable(FILES.get(soundResourceId));
 	}
 
-	public static Optional<String> getName(Identifier id) {
+	public static Optional<String> getName(ResourceLocation id) {
 		SafeIdentifier display = DISPLAY_KEYS.get(id);
 		return display == null ? Optional.empty() : Optional.of(display.getPath());
 	}
 
-	public static Optional<Identifier> getPlayableId(SafeIdentifier id) {
-		Identifier direct = PLAYABLE_IDS.get(id);
+	public static Optional<ResourceLocation> getPlayableId(SafeIdentifier id) {
+		ResourceLocation direct = PLAYABLE_IDS.get(id);
 		if (direct != null) return Optional.of(direct);
 
-		Identifier parsed = Identifier.tryParse(id.toString());
+		ResourceLocation parsed = ResourceLocation.tryParse(id.toString());
 		if (parsed == null) return Optional.empty();
 
 		return Optional.ofNullable(IDENTIFIER_PLAYABLE_IDS.get(parsed));
 	}
 
-	public static Identifier playableIdOrSelf(SafeIdentifier id) {
-		Identifier playable = PLAYABLE_IDS.get(id);
+	public static ResourceLocation playableIdOrSelf(SafeIdentifier id) {
+		ResourceLocation playable = PLAYABLE_IDS.get(id);
 		if (playable != null) return playable;
 
-		Identifier parsed = Identifier.tryParse(id.toString());
+		ResourceLocation parsed = ResourceLocation.tryParse(id.toString());
 		if (parsed != null) {
-			Identifier fromIdentifier = IDENTIFIER_PLAYABLE_IDS.get(parsed);
+			ResourceLocation fromIdentifier = IDENTIFIER_PLAYABLE_IDS.get(parsed);
 			if (fromIdentifier != null) return fromIdentifier;
 			return parsed;
 		}
@@ -87,7 +87,7 @@ public final class DirectSoundFiles {
 		return playableIdOrSelf(a).equals(playableIdOrSelf(b));
 	}
 
-	public static boolean contains(Identifier soundResourceId) {
+	public static boolean contains(ResourceLocation soundResourceId) {
 		return FILES.containsKey(soundResourceId);
 	}
 }
