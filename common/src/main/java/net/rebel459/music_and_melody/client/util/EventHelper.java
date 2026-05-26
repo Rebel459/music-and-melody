@@ -161,6 +161,10 @@ public class EventHelper {
         musicBreak = 0;
         blockingForEventMusic = false;
         cooldownEmptyMusic = false;
+        if (shouldStopStoredEventMusic()) {
+            fadingOutCurrentEvent = true;
+            return storedEventMusicOrBlocker();
+        }
         clearFadeEvent();
         stopEmptyMusic();
         if (isStoredEventMusicActive()) {
@@ -196,7 +200,7 @@ public class EventHelper {
     public static boolean shouldContinueCurrentEventFadeOut() {
         return isEnabled()
                 && fadingOutCurrentEvent
-                && PlaylistHelper.isEventPlaying()
+                && isStoredEventMusicActive()
                 && !shouldSustain
                 && !lastConditions.isEmpty()
                 && !shouldBeActive(lastConditions, false);
@@ -222,10 +226,10 @@ public class EventHelper {
             stopDisabledEventActivity();
             return;
         }
-        if (lastCategory == null || lastCategory == Event.CategoryType.POOL || shouldSustain || lastConditions.isEmpty()) {
+        if (lastCategory == null || shouldSustain || lastConditions.isEmpty()) {
             return;
         }
-        if (PlaylistHelper.isEventPlaying() && !shouldBeActive(lastConditions, false)) {
+        if (shouldStopStoredEventMusic()) {
             fadingOutCurrentEvent = true;
         }
     }
@@ -235,6 +239,7 @@ public class EventHelper {
     }
 
     public static void finishCurrentEventFadeOut() {
+        stopStoredPoolMusic();
         PlaylistHelper.stopEvent();
         clearStoredEvent();
         fadingOutCurrentEvent = false;
@@ -252,11 +257,11 @@ public class EventHelper {
     private static Music playEvent(Minecraft client, Event event, boolean replaceCurrentMusic) {
         boolean playEvent = false;
         if (event.category == Event.CategoryType.ALBUM) {
-            Optional<Album> album = Album.ALBUMS.stream().filter(entry -> entry.album.equals(event.music)).findFirst();
+            Optional<Album> album = Album.ALBUMS.stream().filter(entry -> entry.album.equals(event.music.getId())).findFirst();
             playEvent = album.filter(value -> playRandomEventSong(client, eventAlbumSongs(value, client))).isPresent();
         }
         if (event.category == Event.CategoryType.PLAYLIST) {
-            Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music)).findFirst();
+            Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music.getId())).findFirst();
             if (!playlist.isEmpty()) {
                 List<SafeIdentifier> songs = new ArrayList<>(playlist.get().tracks.stream()
                         .filter(EventHelper::isEventTrackEnabled)
@@ -319,6 +324,24 @@ public class EventHelper {
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
         for (SoundInstance instance : new ArrayList<>(instances)) {
             if (PlaylistHelper.isEmptyMusic(instance)) manager.stop(instance);
+        }
+    }
+
+    private static boolean shouldStopStoredEventMusic() {
+        return lastCategory != null
+                && isStoredEventMusicActive()
+                && !shouldSustain
+                && !lastConditions.isEmpty()
+                && !shouldBeActive(lastConditions, false);
+    }
+
+    private static void stopStoredPoolMusic() {
+        if (lastCategory != Event.CategoryType.POOL || lastMusic == null) return;
+
+        SoundManager manager = Minecraft.getInstance().getSoundManager();
+        Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
+        for (SoundInstance instance : new ArrayList<>(instances)) {
+            if (isStoredPoolMusic(instance)) manager.stop(instance);
         }
     }
 
@@ -439,7 +462,7 @@ public class EventHelper {
         fadingOutCurrentEvent = false;
     }
 
-    private static int randomMusicBreak() {
+    public static int randomMusicBreak() {
         Pair<Integer, Integer> frequency = getMusicFrequency();
         int minimumTicks = 0;
         if (Minecraft.getInstance().level == null) minimumTicks = 200;

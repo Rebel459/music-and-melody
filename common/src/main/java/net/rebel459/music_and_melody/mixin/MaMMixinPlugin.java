@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class MaMMixinPlugin implements IMixinConfigPlugin {
+    public static final boolean CURSEFORGE_DISTRIBUTION = hasClass("net.rebel459.music_and_melody.CurseForgeDistribution");
 
     @Override
     public void onLoad(String mixinPackage) {}
@@ -30,6 +31,15 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.contains("integration.enderscape.")) return UnifiedPlatform.isModLoaded("enderscape");
         if (mixinClassName.contains("integration.fancymenu.")) return UnifiedPlatform.isModLoaded("fancymenu");
         return true;
+    }
+
+    private static boolean hasClass(String className) {
+        try {
+            Class.forName(className, false, MaMMixinPlugin.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException exception) {
+            return false;
+        }
     }
 
     @Override

@@ -100,6 +100,6 @@ public abstract class MusicManagerMixin {
 
         Minecraft.getInstance().getSoundManager().stop(this.currentMusic);
         this.currentMusic = null;
-        this.nextSongDelay = Math.max(this.nextSongDelay, 20);
+        this.nextSongDelay = Math.max(this.nextSongDelay, EventHelper.randomMusicBreak());
     }
 }

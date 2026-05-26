@@ -33,9 +33,11 @@
   "button.music_and_melody.filter": "Filter...",
   "button.music_and_melody.download": "Download",
   "button.music_and_melody.downloading": "Downloading...",
+  "button.music_and_melody.import": "Import",
   "button.music_and_melody.reload": "Reload",
   "button.music_and_melody.retry": "Retry",
   "button.music_and_melody.remote_downloads": "Downloads",
+  "button.music_and_melody.modrinth": "Modrinth",
   "button.music_and_melody.event_filter.visibility.all": "Visibility: All",
   "button.music_and_melody.event_filter.visibility.enabled": "Visibility: Enabled",
   "button.music_and_melody.event_filter.visibility.disabled": "Visibility: Disabled",
@@ -97,6 +99,9 @@
   "screen.music_and_melody.remote_album.state.failed": "Failed",
   "screen.music_and_melody.remote_downloads.version": "Version: %s",
   "screen.music_and_melody.remote_downloads": "Remote Downloads",
+  "screen.music_and_melody.remote_redirect": "Download Album",
+  "screen.music_and_melody.remote_redirect.description": "CurseForge does not allow automatic file downloads. As such, you can either download Music and Melody from Modrinth, or download remote content manually, then import the downloaded zip file.",
+  "screen.music_and_melody.remote_redirect.import": "Import Album",
 
   "key.music_and_melody.playlist": "Open Playlist",
 

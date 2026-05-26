@@ -4,3 +4,31 @@ plugins {
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
+
+tasks.register('buildCurseForgeFabric', GradleBuild) {
+    group = 'build'
+    description = 'Builds the Fabric jar with CurseForge-safe remote catalog behavior.'
+    tasks = [':fabric:build']
+    startParameter.projectProperties.put('curseforgeBuild', 'true')
+}
+
+tasks.register('buildCurseForgeNeoForge', GradleBuild) {
+    group = 'build'
+    description = 'Builds the NeoForge jar with CurseForge-safe remote catalog behavior.'
+    tasks = [':neoforge:build']
+    startParameter.projectProperties.put('curseforgeBuild', 'true')
+}
+
+tasks.register('runCurseForgeFabricClient', GradleBuild) {
+    group = 'fabric'
+    description = 'Runs the Fabric client with CurseForge-safe remote catalog behavior.'
+    tasks = [':fabric:runClient']
+    startParameter.projectProperties.put('curseforgeBuild', 'true')
+}
+
+tasks.register('runCurseForgeNeoForgeClient', GradleBuild) {
+    group = 'neoforge'
+    description = 'Runs the NeoForge client with CurseForge-safe remote catalog behavior.'
+    tasks = [':neoforge:runClient']
+    startParameter.projectProperties.put('curseforgeBuild', 'true')
+}
