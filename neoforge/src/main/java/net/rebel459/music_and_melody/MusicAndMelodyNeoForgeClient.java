@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
@@ -10,6 +11,7 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
+import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
 import net.rebel459.music_and_melody.config.MaMConfigScreen;
 
 @Mod(value = MusicAndMelody.MOD_ID, dist = Dist.CLIENT)
@@ -17,6 +19,10 @@ public class MusicAndMelodyNeoForgeClient {
 
     public MusicAndMelodyNeoForgeClient(IEventBus modEventBus) {
         MusicAndMelodyClient.initRegistries();
+        JukeboxSongCache.clear();
+        ModList.get().getMods().forEach(mod ->
+                JukeboxSongCache.loadFromRoot(mod.getOwningFile().getFile().getFilePath())
+        );
         ModLoadingContext.get().registerExtensionPoint(
                 IConfigScreenFactory.class,
                 () -> (modContainer, parent) ->

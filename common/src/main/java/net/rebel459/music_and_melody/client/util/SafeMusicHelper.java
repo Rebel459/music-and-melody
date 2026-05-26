@@ -39,6 +39,17 @@ public final class SafeMusicHelper {
 		}
 	}
 
+	public static List<String> downloadTracksInFolder(SafeIdentifier folder) {
+		String folderPath = normalize(folder.getPath());
+
+		try (Stream<String> downloadTracks = recursiveDownloadTracks(folder.getNamespace(), folderPath)) {
+			return downloadTracks
+					.distinct()
+					.sorted(Comparator.naturalOrder())
+					.toList();
+		}
+	}
+
 	private static Optional<Path> findFlatAlbumFile(String wantedStem) {
 		Path root = albumRoot();
 

@@ -6,7 +6,10 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
+import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
@@ -32,6 +35,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         Album.ALBUMS.removeAll(this.loadedAlbums);
         Album.DISABLED_ALBUMS.removeAll(this.loadedAlbums);
         this.loadedAlbums.clear();
+        JukeboxSongCache.clearResolvedSounds();
 
         Set<Identifier> registeredDiscs = new HashSet<>();
 
@@ -96,7 +100,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
 
         for (Album.Track entry : entries) {
             List<String> expandedTracks = entry.folder()
-                    ? folderTracks(albumId.getNamespace(), entry.path(), resourceManager)
+                    ? folderTracks(albumId, entry.path(), resourceManager)
                     : List.of(entry.path());
 
             for (String song : expandedTracks) {
@@ -129,17 +133,20 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
     private record TrackSet(Set<String> tracks, Set<String> forcedEnabledTracks) {}
 
     private static List<String> folderTracks(
-            String albumNamespace,
+            Identifier albumId,
             String folder,
             ResourceManager resourceManager
     ) {
         SafeIdentifier folderId = folder.contains(":")
                 ? SafeIdentifier.parse(folder)
-                : SafeIdentifier.fromNamespaceAndPath(albumNamespace, folder);
+                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), folder);
 
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
+        if (RemoteAlbumManager.isDownloadedAlbum(albumId)) {
+            tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
+        }
 
         return new ArrayList<>(tracks);
     }
