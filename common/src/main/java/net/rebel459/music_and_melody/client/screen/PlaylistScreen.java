@@ -114,7 +114,7 @@ public class PlaylistScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
         super.render(graphics, mouseX, mouseY, tickDelta);
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
         renderContextRow(graphics, mouseX, mouseY, tickDelta);
@@ -143,7 +143,7 @@ public class PlaylistScreen extends Screen {
                 || super.mouseClicked(event, doubleClick);
     }
 
-    private void renderContextRow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+    private void renderContextRow(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
         int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
         int rowX = this.width / 2 - rowWidth / 2;
         int y = 36;
@@ -163,18 +163,18 @@ public class PlaylistScreen extends Screen {
             this.directPlayButton.setIconAndTooltip(directPlayIcon(), directPlayMessage());
             this.directPlayButton.setX(playX);
             this.directPlayButton.setY(buttonY);
-            this.directPlayButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.directPlayButton.render(graphics, mouseX, mouseY, tickDelta);
             this.directRemoveButton.visible = true;
             this.directRemoveButton.active = true;
             this.directRemoveButton.setX(removeX);
             this.directRemoveButton.setY(buttonY);
-            this.directRemoveButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.directRemoveButton.render(graphics, mouseX, mouseY, tickDelta);
             this.directLoopButton.visible = true;
             this.directLoopButton.active = true;
             this.directLoopButton.setIconAndTooltip(directLoopIcon(), directLoopMessage());
             this.directLoopButton.setX(loopX);
             this.directLoopButton.setY(buttonY);
-            this.directLoopButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.directLoopButton.render(graphics, mouseX, mouseY, tickDelta);
         } else {
             this.directPlayButton.visible = false;
             this.directRemoveButton.visible = false;
@@ -189,7 +189,7 @@ public class PlaylistScreen extends Screen {
             int buttonsWidth = this.directPlayButton.visible ? IconButton.SIZE * 3 + 8 : 0;
             int textWidth = rowWidth - buttonsWidth - (buttonsWidth == 0 ? 0 : 8);
             int textCenter = rowX + textWidth / 2;
-            graphics.centeredText(this.font, this.font.plainSubstrByWidth(text.getString(), textWidth), textCenter, y, 0xFFAAAAAA);
+            graphics.drawCenteredString(this.font, this.font.plainSubstrByWidth(text.getString(), textWidth), textCenter, y, 0xFFAAAAAA);
         }
     }
 
