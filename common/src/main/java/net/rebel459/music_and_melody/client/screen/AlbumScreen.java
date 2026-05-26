@@ -472,6 +472,15 @@ public class AlbumScreen extends Screen {
 
             RemoteAlbumManager.State state = RemoteAlbumManager.state(pack);
 
+            if (!RemoteAlbumManager.remoteDownloadsAllowed()) {
+                if (state == RemoteAlbumManager.State.NEEDS_RELOAD) {
+                    this.screen.reloadResources();
+                } else {
+                    this.minecraft.setScreen(new RemoteAlbumDownloadScreen(this.screen, pack));
+                }
+                return;
+            }
+
             if (state == RemoteAlbumManager.State.REMOTE
                     || state == RemoteAlbumManager.State.UPDATE_AVAILABLE
                     || state == RemoteAlbumManager.State.FAILED) {

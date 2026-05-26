@@ -2,8 +2,13 @@ plugins {
     id 'java-library'
 }
 
+def curseforgeBuild = providers.gradleProperty('curseforgeBuild')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+
 base {
-    archivesName = "${rootProject.name}-${mod_version}-${project.name}"
+    archivesName = "${rootProject.name}-${mod_version}-${project.name}${curseforgeBuild ? '-cf' : ''}"
 }
 
 java {

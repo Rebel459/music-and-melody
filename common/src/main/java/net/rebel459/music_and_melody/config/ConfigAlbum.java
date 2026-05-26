@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,11 @@ public final class ConfigAlbum {
 
     public static synchronized String displayName(SafeIdentifier id) {
         return NAMES.get(playableId(id));
+    }
+
+    public static synchronized Optional<Path> file(SafeIdentifier id) {
+        reload();
+        return Optional.ofNullable(FILES.get(playableId(id)));
     }
 
     public static SafeIdentifier playableId(SafeIdentifier id) {

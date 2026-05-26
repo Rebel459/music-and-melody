@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -37,7 +37,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public final class RemoteAlbumManager {
-
     public enum State {
         REMOTE,
         DOWNLOADING,
@@ -47,15 +46,14 @@ public final class RemoteAlbumManager {
         FAILED
     }
 
-    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
-    private static final Path MANIFEST_DIRECTORY = DIRECTORY.resolve(".manifests");
-    private static final Path TEMP_DIRECTORY = DIRECTORY.resolve(".tmp");
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
-    private static final Map<ResourceLocation, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
-    private static final Set<ResourceLocation> DOWNLOADING = ConcurrentHashMap.newKeySet();
+    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
+    private static final Path MANIFEST_DIRECTORY = DIRECTORY.resolve(".manifests");
+    private static final Map<Identifier, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
+    private static final Set<Identifier> DOWNLOADING = ConcurrentHashMap.newKeySet();
     private static final List<RemoteAlbumPack> PACKS = new ArrayList<>();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
@@ -63,7 +61,7 @@ public final class RemoteAlbumManager {
     private RemoteAlbumManager() {}
 
     public static boolean remoteDownloadsAllowed() {
-        return true;
+        return false;
     }
 
     public static synchronized void refreshIfNeeded() {
@@ -117,24 +115,19 @@ public final class RemoteAlbumManager {
         return State.INSTALLED;
     }
 
-    public static boolean isDownloadedAlbum(ResourceLocation id) {
+    public static boolean isDownloadedAlbum(Identifier id) {
         return installed(id) != null;
     }
 
     public static void download(RemoteAlbumPack pack) {
-        if (!DOWNLOADING.add(pack.id())) return;
-        OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
-        CompletableFuture.runAsync(() -> {
-            try {
-                downloadAndExtract(pack);
-                recordInstalled(pack);
-                OVERRIDE_STATES.put(pack.id(), State.NEEDS_RELOAD);
-            } catch (Exception exception) {
-                OVERRIDE_STATES.put(pack.id(), State.FAILED);
-            } finally {
-                DOWNLOADING.remove(pack.id());
-            }
-        });
+    }
+
+    public static void markReloaded() {
+        OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
+    }
+
+    public static String externalDownloadUrl(RemoteAlbumPack pack) {
+        return pack.url();
     }
 
     public static void importLocal(RemoteAlbumPack pack, Path zip) {
@@ -153,17 +146,65 @@ public final class RemoteAlbumManager {
         });
     }
 
-    public static String externalDownloadUrl(RemoteAlbumPack pack) {
-        return pack.url();
+    public record InstalledPack(
+            Component name,
+            Identifier id,
+            String version,
+            String sha256
+    ) {}
+
+    public static synchronized List<InstalledPack> installedPacks() {
+        List<InstalledPack> packs = new ArrayList<>();
+
+        for (MaMDataConfig.DownloadedAlbumPack record : MaMDataConfig.get().albums.downloads) {
+            Identifier id = Identifier.tryParse(record.id);
+            if (id == null) continue;
+
+            packs.add(new InstalledPack(
+                    installedName(id),
+                    id,
+                    record.version,
+                    record.sha256
+            ));
+        }
+
+        packs.sort(Comparator.comparing(pack -> pack.name().getString(), String.CASE_INSENSITIVE_ORDER));
+        return packs;
     }
 
-    public static void markReloaded() {
-        OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
+    public static synchronized boolean deleteInstalled(Identifier id) {
+        if (DOWNLOADING.contains(id)) return false;
+
+        MaMDataConfig config = MaMDataConfig.get();
+        MaMDataConfig.DownloadedAlbumPack record = installed(id);
+        if (record == null) return false;
+
+        boolean deletedFiles = deleteFromManifest(id);
+
+        if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
+            deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+        }
+
+        String idString = id.toString();
+        config.albums.downloads.removeIf(pack -> pack.id.equals(idString));
+        config.albums.disabled_albums.remove(idString);
+        config.albums.favourites.remove(idString);
+
+        if (!hasOtherInstalledPackInNamespace(id)) {
+            String namespacePrefix = id.getNamespace() + ":";
+            config.albums.disabled_tracks.removeIf(track -> track.startsWith(namespacePrefix));
+        }
+
+        OVERRIDE_STATES.remove(id);
+
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        DownloadedResources.invalidate();
+        return true;
     }
 
     private static List<RemoteAlbumPack> loadCatalogs(List<String> repositories) {
         List<RemoteAlbumPack> packs = new ArrayList<>();
-        Set<ResourceLocation> ids = new HashSet<>();
+        Set<Identifier> ids = new HashSet<>();
         for (String repository : repositories) {
             try {
                 packs.addAll(loadCatalog(repository, ids));
@@ -174,7 +215,7 @@ public final class RemoteAlbumManager {
         return packs;
     }
 
-    private static List<RemoteAlbumPack> loadCatalog(String repositoryUrl, Set<ResourceLocation> ids) throws IOException, InterruptedException {
+    private static List<RemoteAlbumPack> loadCatalog(String repositoryUrl, Set<Identifier> ids) throws IOException, InterruptedException {
         URI catalogUri = catalogUri(repositoryUrl);
         HttpRequest request = HttpRequest.newBuilder(catalogUri)
                 .timeout(Duration.ofSeconds(20))
@@ -234,11 +275,11 @@ public final class RemoteAlbumManager {
     }
 
     private static RemoteAlbumPack parsePack(JsonObject object, String repositoryName, URI catalogUri) {
-        ResourceLocation id = object.has("id") ? ResourceLocation.tryParse(object.get("id").getAsString()) : null;
+        Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
         if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size")) {
             return null;
         }
-        ResourceLocation icon = object.has("icon") ? ResourceLocation.tryParse(object.get("icon").getAsString()) : ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png");
+        Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
         return new RemoteAlbumPack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -248,28 +289,8 @@ public final class RemoteAlbumManager {
                 catalogUri.resolve(object.get("url").getAsString()).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
-                icon == null ? ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png") : icon
+                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon
         );
-    }
-
-    private static void downloadAndExtract(RemoteAlbumPack pack) throws IOException, InterruptedException {
-        Files.createDirectories(TEMP_DIRECTORY);
-        Path zip = TEMP_DIRECTORY.resolve(pack.fileName());
-        HttpRequest request = HttpRequest.newBuilder(URI.create(pack.url()))
-                .timeout(Duration.ofMinutes(5))
-                .GET()
-                .build();
-        HttpResponse<Path> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(zip));
-        if (response.statusCode() < 200 || response.statusCode() >= 300) throw new IOException("Download failed: " + response.statusCode());
-        if (Files.size(zip) != pack.size()) throw new IOException("Downloaded size mismatch");
-        String hash = sha256(zip);
-        if (!hash.equalsIgnoreCase(pack.sha256())) throw new IOException("Downloaded hash mismatch");
-        if (installed(pack.id()) != null) {
-            deleteInstalledFiles(pack.id());
-        }
-        List<Path> extracted = extractZip(zip, DIRECTORY);
-        writeManifest(pack.id(), extracted);
-        Files.deleteIfExists(zip);
     }
 
     private static void importAndExtract(RemoteAlbumPack pack, Path zip) throws IOException {
@@ -284,7 +305,7 @@ public final class RemoteAlbumManager {
         writeManifest(pack.id(), extracted);
     }
 
-    private static void deleteInstalledFiles(ResourceLocation id) {
+    private static void deleteInstalledFiles(Identifier id) {
         boolean deletedFiles = deleteFromManifest(id);
 
         if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
@@ -336,7 +357,7 @@ public final class RemoteAlbumManager {
         }
     }
 
-    private static MaMDataConfig.DownloadedAlbumPack installed(ResourceLocation id) {
+    private static MaMDataConfig.DownloadedAlbumPack installed(Identifier id) {
         for (MaMDataConfig.DownloadedAlbumPack pack : MaMDataConfig.get().albums.downloads) {
             if (pack.id.equals(id.toString())) return pack;
         }
@@ -357,33 +378,7 @@ public final class RemoteAlbumManager {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public record InstalledPack(
-            Component name,
-            ResourceLocation id,
-            String version,
-            String sha256
-    ) {}
-
-    public static synchronized List<InstalledPack> installedPacks() {
-        List<InstalledPack> packs = new ArrayList<>();
-
-        for (MaMDataConfig.DownloadedAlbumPack record : MaMDataConfig.get().albums.downloads) {
-            ResourceLocation id = ResourceLocation.tryParse(record.id);
-            if (id == null) continue;
-
-            packs.add(new InstalledPack(
-                    installedName(id),
-                    id,
-                    record.version,
-                    record.sha256
-            ));
-        }
-
-        packs.sort(Comparator.comparing(pack -> pack.name().getString(), String.CASE_INSENSITIVE_ORDER));
-        return packs;
-    }
-
-    private static Component installedName(ResourceLocation id) {
+    private static Component installedName(Identifier id) {
         for (Album album : Album.ALBUMS) {
             if (album.album.equals(id)) {
                 return album.name;
@@ -399,37 +394,7 @@ public final class RemoteAlbumManager {
         return Component.literal(id.toString());
     }
 
-    public static synchronized boolean deleteInstalled(ResourceLocation id) {
-        if (DOWNLOADING.contains(id)) return false;
-
-        MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedAlbumPack record = installed(id);
-        if (record == null) return false;
-
-        boolean deletedFiles = deleteFromManifest(id);
-
-        if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
-            deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
-        }
-
-        String idString = id.toString();
-        config.albums.downloads.removeIf(pack -> pack.id.equals(idString));
-        config.albums.disabled_albums.remove(idString);
-        config.albums.favourites.remove(idString);
-
-        if (!hasOtherInstalledPackInNamespace(id)) {
-            String namespacePrefix = id.getNamespace() + ":";
-            config.albums.disabled_tracks.removeIf(track -> track.startsWith(namespacePrefix));
-        }
-
-        OVERRIDE_STATES.remove(id);
-
-        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
-        DownloadedResources.invalidate();
-        return true;
-    }
-
-    private static void writeManifest(ResourceLocation id, List<Path> extracted) throws IOException {
+    private static void writeManifest(Identifier id, List<Path> extracted) throws IOException {
         Files.createDirectories(MANIFEST_DIRECTORY);
 
         Path manifest = manifestPath(id);
@@ -441,7 +406,7 @@ public final class RemoteAlbumManager {
         Files.write(manifest, lines);
     }
 
-    private static boolean deleteFromManifest(ResourceLocation id) {
+    private static boolean deleteFromManifest(Identifier id) {
         Path manifest = manifestPath(id);
         if (!Files.isRegularFile(manifest)) return false;
 
@@ -501,9 +466,9 @@ public final class RemoteAlbumManager {
         }
     }
 
-    private static boolean hasOtherInstalledPackInNamespace(ResourceLocation id) {
+    private static boolean hasOtherInstalledPackInNamespace(Identifier id) {
         for (MaMDataConfig.DownloadedAlbumPack pack : MaMDataConfig.get().albums.downloads) {
-            ResourceLocation other = ResourceLocation.tryParse(pack.id);
+            Identifier other = Identifier.tryParse(pack.id);
             if (other == null) continue;
             if (other.equals(id)) continue;
             if (other.getNamespace().equals(id.getNamespace())) return true;
@@ -512,7 +477,7 @@ public final class RemoteAlbumManager {
         return false;
     }
 
-    private static Path manifestPath(ResourceLocation id) {
+    private static Path manifestPath(Identifier id) {
         String path = id.getPath().replace('/', '-');
         return MANIFEST_DIRECTORY.resolve(id.getNamespace() + "-" + path + ".txt");
     }

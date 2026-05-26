@@ -10,6 +10,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.config.ConfigAlbum;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -105,7 +106,8 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	private static ResolvedSound resolveSound(SafeIdentifier location) {
-		return SafeMusicHelper.resolve(location)
+		return ConfigAlbum.file(location)
+				.or(() -> SafeMusicHelper.resolve(location))
 				.map(path -> createDirectFileSound(location, path))
 				.orElseGet(() -> {
 					ResourceLocation id = ResourceLocation.tryParse(location.toString());
@@ -134,9 +136,10 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 				"sounds/" + playablePath + ".ogg"
 		);
 
+		String configName = ConfigAlbum.displayName(originalLocation);
 		SafeIdentifier trackName = SafeIdentifier.fromNamespaceAndPath(
 				originalLocation.getNamespace(),
-				fileNameOnly(originalLocation.getPath())
+				configName != null ? configName : fileNameOnly(originalLocation.getPath())
 		);
 		DirectSoundFiles.register(soundResourceId, playableId, originalLocation, trackName, source);
 
