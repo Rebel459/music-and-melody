@@ -13,9 +13,13 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -24,14 +28,18 @@ public final class JukeboxSongCache {
     private static final String DATA_PREFIX = "data/";
     private static final String JUKEBOX_DIRECTORY = "/jukebox_song/";
     private static final String JSON_SUFFIX = ".json";
+    private static final List<Path> ROOTS = new ArrayList<>();
     private static final Map<Identifier, Identifier> SOUND_EVENTS = new HashMap<>();
     private static final Map<Identifier, Identifier> RESOLVED_SOUNDS = new HashMap<>();
+    private static final Set<Identifier> MISSES = new HashSet<>();
 
     private JukeboxSongCache() {}
 
     public static synchronized void clear() {
+        ROOTS.clear();
         SOUND_EVENTS.clear();
         RESOLVED_SOUNDS.clear();
+        MISSES.clear();
     }
 
     public static synchronized void clearResolvedSounds() {
@@ -39,10 +47,8 @@ public final class JukeboxSongCache {
     }
 
     public static synchronized void loadFromRoot(Path root) {
-        if (Files.isDirectory(root)) {
-            loadFromDirectory(root);
-        } else if (Files.isRegularFile(root)) {
-            loadFromZip(root);
+        if ((Files.isDirectory(root) || Files.isRegularFile(root)) && !ROOTS.contains(root)) {
+            ROOTS.add(root);
         }
     }
 
@@ -51,6 +57,10 @@ public final class JukeboxSongCache {
         if (cached != null) return Optional.of(cached);
 
         Identifier soundEvent = SOUND_EVENTS.get(jukeboxSongId);
+        if (soundEvent == null && !MISSES.contains(jukeboxSongId)) {
+            load(jukeboxSongId);
+            soundEvent = SOUND_EVENTS.get(jukeboxSongId);
+        }
         if (soundEvent == null) return Optional.empty();
 
         Identifier resolved = resolveSoundEvent(minecraft, soundEvent).orElse(soundEvent);
@@ -58,73 +68,61 @@ public final class JukeboxSongCache {
         return Optional.of(resolved);
     }
 
-    private static void loadFromDirectory(Path root) {
-        Path data = root.resolve("data");
-        if (!Files.isDirectory(data)) return;
-
-        try (var files = Files.walk(data)) {
-            files.filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(JSON_SUFFIX))
-                    .filter(path -> path.toString().replace('\\', '/').contains(JUKEBOX_DIRECTORY))
-                    .forEach(path -> loadDirectoryFile(data, path));
-        } catch (IOException ignored) {
+    private static void load(Identifier jukeboxSong) {
+        for (int i = ROOTS.size() - 1; i >= 0; i--) {
+            Path root = ROOTS.get(i);
+            boolean loaded = Files.isDirectory(root)
+                    ? loadFromDirectory(root, jukeboxSong)
+                    : Files.isRegularFile(root) && loadFromZip(root, jukeboxSong);
+            if (loaded) return;
         }
+        MISSES.add(jukeboxSong);
     }
 
-    private static void loadDirectoryFile(Path data, Path file) {
-        String relative = data.relativize(file).toString().replace('\\', '/');
-        Identifier jukeboxSong = jukeboxSongId(relative);
-        if (jukeboxSong == null) return;
+    private static boolean loadFromDirectory(Path root, Identifier jukeboxSong) {
+        Path file = root.resolve(jukeboxSongPath(jukeboxSong));
+        if (!Files.isRegularFile(file)) return false;
 
         try (Reader reader = Files.newBufferedReader(file)) {
-            add(jukeboxSong, JsonParser.parseReader(reader));
+            return add(jukeboxSong, JsonParser.parseReader(reader));
         } catch (Exception ignored) {
+            return false;
         }
     }
 
-    private static void loadFromZip(Path file) {
+    private static boolean loadFromZip(Path file, Identifier jukeboxSong) {
         try (ZipFile zip = new ZipFile(file.toFile())) {
-            var entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory()) continue;
-                String name = entry.getName();
-                if (!name.startsWith(DATA_PREFIX) || !name.endsWith(JSON_SUFFIX) || !name.contains(JUKEBOX_DIRECTORY)) {
-                    continue;
-                }
+            ZipEntry entry = zip.getEntry(jukeboxSongPath(jukeboxSong));
+            if (entry == null || entry.isDirectory()) return false;
 
-                Identifier jukeboxSong = jukeboxSongId(name.substring(DATA_PREFIX.length()));
-                if (jukeboxSong == null) continue;
-
-                try (Reader reader = new java.io.InputStreamReader(zip.getInputStream(entry), java.nio.charset.StandardCharsets.UTF_8)) {
-                    add(jukeboxSong, JsonParser.parseReader(reader));
-                } catch (Exception ignored) {
-                }
+            try (Reader reader = new java.io.InputStreamReader(zip.getInputStream(entry), java.nio.charset.StandardCharsets.UTF_8)) {
+                return add(jukeboxSong, JsonParser.parseReader(reader));
+            } catch (Exception ignored) {
+                return false;
             }
         } catch (IOException ignored) {
+            return false;
         }
     }
 
-    private static Identifier jukeboxSongId(String path) {
-        int separator = path.indexOf(JUKEBOX_DIRECTORY);
-        if (separator <= 0 || !path.endsWith(JSON_SUFFIX)) return null;
-
-        String namespace = path.substring(0, separator);
-        String songPath = path.substring(separator + JUKEBOX_DIRECTORY.length(), path.length() - JSON_SUFFIX.length());
-        return Identifier.tryParse(namespace + ":" + songPath);
+    private static String jukeboxSongPath(Identifier jukeboxSong) {
+        return DATA_PREFIX + jukeboxSong.getNamespace() + "/jukebox_song/" + jukeboxSong.getPath() + JSON_SUFFIX;
     }
 
-    private static void add(Identifier jukeboxSong, JsonElement element) {
-        if (!element.isJsonObject()) return;
+    private static boolean add(Identifier jukeboxSong, JsonElement element) {
+        if (!element.isJsonObject()) return false;
         JsonObject json = element.getAsJsonObject();
         JsonElement soundEvent = json.get("sound_event");
-        if (soundEvent == null || !soundEvent.isJsonPrimitive()) return;
+        if (soundEvent == null || !soundEvent.isJsonPrimitive()) return false;
 
         Identifier soundEventId = Identifier.tryParse(soundEvent.getAsString());
         if (soundEventId != null) {
             SOUND_EVENTS.put(jukeboxSong, soundEventId);
             RESOLVED_SOUNDS.remove(jukeboxSong);
+            MISSES.remove(jukeboxSong);
+            return true;
         }
+        return false;
     }
 
     private static Optional<Identifier> resolveSoundEvent(Minecraft minecraft, Identifier eventId) {
