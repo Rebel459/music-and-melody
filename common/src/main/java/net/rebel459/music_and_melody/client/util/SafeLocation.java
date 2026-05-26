@@ -5,25 +5,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class SafeIdentifier {
+public class SafeLocation {
 
     private final String namespace;
     private final String path;
 
-    private SafeIdentifier(String namespace, String path) {
+    private SafeLocation(String namespace, String path) {
         this.namespace = namespace;
         this.path = path;
     }
 
-    public static SafeIdentifier fromNamespaceAndPath(String namespace, String path) {
-        return new SafeIdentifier(namespace, path);
+    public static SafeLocation fromNamespaceAndPath(String namespace, String path) {
+        return new SafeLocation(namespace, path);
     }
 
-    public static SafeIdentifier withDefaultNamespace(String path) {
+    public static SafeLocation withDefaultNamespace(String path) {
         return fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
     }
 
-    public static SafeIdentifier convert(ResourceLocation id) {
+    public static SafeLocation convert(ResourceLocation id) {
         return fromNamespaceAndPath(id.getNamespace(), id.getPath());
     }
 
@@ -37,7 +37,7 @@ public class SafeIdentifier {
         return this.namespace + ":" + this.path;
     }
 
-    public static SafeIdentifier parse(String string) {
+    public static SafeLocation parse(String string) {
         int separatorIndex = string.indexOf(":");
         if (separatorIndex >= 0) {
             String path = string.substring(separatorIndex + 1);
@@ -52,7 +52,7 @@ public class SafeIdentifier {
         }
     }
 
-    public SafeIdentifier withPath(String newPath) {
+    public SafeLocation withPath(String newPath) {
         return fromNamespaceAndPath(this.namespace, newPath);
     }
 
@@ -67,7 +67,7 @@ public class SafeIdentifier {
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (!(object instanceof SafeIdentifier other)) return false;
+        if (!(object instanceof SafeLocation other)) return false;
         return Objects.equals(this.namespace, other.namespace)
                 && Objects.equals(this.path, other.path);
     }

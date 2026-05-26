@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -75,7 +75,7 @@ public class SoundManagerPreparationsMixin {
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
             ResourceLocation id = sound.getLocation();
-            PlaylistHelper.STORED_VOLUME.put(SafeIdentifier.convert(id), sound.getVolume());
+            PlaylistHelper.STORED_VOLUME.put(SafeLocation.convert(id), sound.getVolume());
             ResourceLocation location = REMAPPED_MUSIC.get(id);
             if (location != null) iterator.set(copy(sound, location));
         }

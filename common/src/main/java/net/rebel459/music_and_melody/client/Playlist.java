@@ -18,7 +18,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.io.IOException;
@@ -46,12 +46,12 @@ public class Playlist {
     public ResourceLocation playlist;
     public Component name;
     public ResourceLocation icon;
-    public List<SafeIdentifier> tracks;
+    public List<SafeLocation> tracks;
     public List<ResourceLocation> discs;
     public boolean hidden;
     public Path source;
 
-    public Playlist(ResourceLocation playlist, Component name, ResourceLocation icon, List<SafeIdentifier> tracks, List<ResourceLocation> discs, boolean hidden, Path source) {
+    public Playlist(ResourceLocation playlist, Component name, ResourceLocation icon, List<SafeLocation> tracks, List<ResourceLocation> discs, boolean hidden, Path source) {
         this.playlist = playlist;
         this.name = name;
         this.icon = icon;
@@ -149,7 +149,7 @@ public class Playlist {
     }
 
     public static synchronized boolean saveCurrentQueue(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {
-        List<SafeIdentifier> queuedSongs = PlaylistHelper.queuedSongs();
+        List<SafeLocation> queuedSongs = PlaylistHelper.queuedSongs();
         String trimmedName = playlistName.trim();
         if (queuedSongs.isEmpty() || trimmedName.isEmpty()) return false;
 
@@ -190,10 +190,10 @@ public class Playlist {
     }
 
     public static Playlist create(ResourceLocation id, Record record, Path source) {
-        List<SafeIdentifier> tracks = new ArrayList<>();
+        List<SafeLocation> tracks = new ArrayList<>();
         List<ResourceLocation> discs = new ArrayList<>();
         record.entries().forEach(entry -> {
-            entry.tracks().forEach(track -> tracks.add(SafeIdentifier.fromNamespaceAndPath(entry.namespace(), track)));
+            entry.tracks().forEach(track -> tracks.add(SafeLocation.fromNamespaceAndPath(entry.namespace(), track)));
             entry.discs().forEach(disc -> discs.add(ResourceLocation.fromNamespaceAndPath(entry.namespace(), disc)));
         });
         return new Playlist(id, record.name(), record.icon(), tracks, discs, record.hidden, source);
@@ -208,9 +208,9 @@ public class Playlist {
         }
     }
 
-    private static Map<String, List<String>> groupTracks(Minecraft minecraft, List<SafeIdentifier> queuedSongs, boolean discs) {
+    private static Map<String, List<String>> groupTracks(Minecraft minecraft, List<SafeLocation> queuedSongs, boolean discs) {
         Map<String, List<String>> grouped = new LinkedHashMap<>();
-        for (SafeIdentifier queuedSong : queuedSongs) {
+        for (SafeLocation queuedSong : queuedSongs) {
             ResourceLocation id;
             if (discs) {
                 id = jukeboxSongForSound(minecraft, queuedSong);
@@ -224,7 +224,7 @@ public class Playlist {
         return grouped;
     }
 
-    private static ResourceLocation jukeboxSongForSound(Minecraft minecraft, SafeIdentifier sound) {
+    private static ResourceLocation jukeboxSongForSound(Minecraft minecraft, SafeLocation sound) {
         var albumMatch = MusicDiscHelper.matchSound(minecraft, sound);
         if (albumMatch.isPresent()) return albumMatch.get().jukeboxSong();
         for (Playlist playlist : PLAYLISTS) {

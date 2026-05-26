@@ -1,10 +1,10 @@
 package net.rebel459.music_and_melody.client.remote;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public record RemotePack(
-        Identifier id,
+        ResourceLocation id,
         Component name,
         Component description,
         String repository,
@@ -12,7 +12,7 @@ public record RemotePack(
         String url,
         String sha256,
         long size,
-        Identifier icon
+        ResourceLocation icon
 ) {
     public String fileName() {
         String path = this.id.getPath().replace('/', '-');

@@ -29,7 +29,7 @@ public final class MusicDiscHelper {
         return path.contains(":") ? ResourceLocation.parse(path) : ResourceLocation.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
-    public static Optional<Match> matchSound(Minecraft minecraft, SafeIdentifier soundId) {
+    public static Optional<Match> matchSound(Minecraft minecraft, SafeLocation soundId) {
         for (Album album : Album.ALBUMS) {
             for (String disc : album.discs) {
                 ResourceLocation jukeboxSong = albumEntryId(album, disc);
@@ -48,7 +48,7 @@ public final class MusicDiscHelper {
         return Optional.empty();
     }
 
-    public static boolean isSoundUnlocked(Minecraft minecraft, SafeIdentifier soundId) {
+    public static boolean isSoundUnlocked(Minecraft minecraft, SafeLocation soundId) {
         return matchSound(minecraft, soundId)
                 .map(match -> match.album() != null && match.album().isDiscForcedUnlocked(match.disc()) || isDiscUnlocked(minecraft, match.jukeboxSong()))
                 .orElse(true);
@@ -82,14 +82,14 @@ public final class MusicDiscHelper {
     }
 
     public static ResourceLocation discSoundId(Minecraft minecraft, ResourceLocation jukeboxSongId) {
-        Optional<JukeboxSong> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
+        Optional<Holder<JukeboxSong>> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
         if (jukeboxSong.isEmpty()) {
             Optional<ResourceLocation> cached = JukeboxSongCache.soundId(minecraft, jukeboxSongId);
             return cached.orElseGet(() -> fallbackDiscSoundId(minecraft, jukeboxSongId));
         }
 
-        SoundEvent event = jukeboxSong.get().soundEvent().value();
-        ResourceLocation eventId = event.location();
+        SoundEvent event = jukeboxSong.get().value().soundEvent().value();
+        ResourceLocation eventId = event.getLocation();
         Optional<ResourceLocation> sound = soundFromEvent(minecraft, eventId);
         if (sound.isPresent()) return sound.get();
 

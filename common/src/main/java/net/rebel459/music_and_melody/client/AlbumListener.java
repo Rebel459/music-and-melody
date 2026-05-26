@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -12,7 +11,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -124,22 +123,22 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
         );
     }
 
-    private static SafeIdentifier trackId(ResourceLocation albumId, String song) {
+    private static SafeLocation trackId(ResourceLocation albumId, String song) {
         return song.contains(":")
-                ? SafeIdentifier.parse(song)
-                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
+                ? SafeLocation.parse(song)
+                : SafeLocation.fromNamespaceAndPath(albumId.getNamespace(), song);
     }
 
     private record TrackSet(Set<String> tracks, Set<String> forcedEnabledTracks) {}
 
     private static List<String> folderTracks(
-            Identifier albumId,
+            ResourceLocation albumId,
             String folder,
             ResourceManager resourceManager
     ) {
-        SafeIdentifier folderId = folder.contains(":")
-                ? SafeIdentifier.parse(folder)
-                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), folder);
+        SafeLocation folderId = folder.contains(":")
+                ? SafeLocation.parse(folder)
+                : SafeLocation.fromNamespaceAndPath(albumId.getNamespace(), folder);
 
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
@@ -152,7 +151,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
     }
 
     private static List<String> resourceFolderTracks(
-            SafeIdentifier folderId,
+            SafeLocation folderId,
             ResourceManager resourceManager
     ) {
         ResourceLocation validFolderId = ResourceLocation.tryParse(folderId.toString());

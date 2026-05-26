@@ -1,15 +1,16 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 import java.util.List;
 
@@ -32,7 +33,18 @@ public class RemoteDetailsScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX, buttonY, buttonWidth, 20)
                 .build());
-        MusicScreenHelper.addSocialButtons(this);
+                // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
     }
 
     @Override
@@ -46,7 +58,7 @@ public class RemoteDetailsScreen extends Screen {
         int titleX = this.width / 2 - (iconSize + 6 + textWidth) / 2;
         int titleY = 24;
 
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.pack.icon()), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        graphics.blit(MusicScreenHelper.albumIcon(this.minecraft, this.pack.icon()), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
         graphics.drawString(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
         graphics.drawString(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
 

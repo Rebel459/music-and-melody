@@ -8,12 +8,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.Util;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
@@ -21,6 +19,7 @@ import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,8 +33,8 @@ public class ContentBrowserScreen extends Screen {
     static final int MAIN_BUTTON_ROW_WIDTH = 308;
     private static final Component TITLE = Component.translatable("screen.music_and_melody.albums");
     private final Screen parent;
-    private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
-    private final Set<Identifier> pendingRemoteDeletes = new HashSet<>();
+    private final Set<ResourceLocation> pendingPlaylistDeletes = new HashSet<>();
+    private final Set<ResourceLocation> pendingRemoteDeletes = new HashSet<>();
     private AlbumList list;
     private MaMDataConfig.BrowserTab tab;
     private boolean catalogRefreshing;
@@ -83,7 +82,18 @@ public class ContentBrowserScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + 156, buttonY, 152, 20)
                 .build());
-        MusicScreenHelper.addSocialButtons(this);
+                // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
     }
 
     private void addTabButton(MaMDataConfig.BrowserTab tab, int x, int y, int width) {
@@ -196,7 +206,7 @@ public class ContentBrowserScreen extends Screen {
     private void deletePendingRemotes() {
         if (this.pendingRemoteDeletes.isEmpty()) return;
         boolean changed = false;
-        for (Identifier id : List.copyOf(this.pendingRemoteDeletes)) {
+        for (ResourceLocation id : List.copyOf(this.pendingRemoteDeletes)) {
             if (RemoteContentManager.deleteInstalled(id)) {
                 changed = true;
             }
@@ -299,12 +309,12 @@ public class ContentBrowserScreen extends Screen {
         }
 
         @Override
-        protected int scrollBarX() {
+        protected int getScrollbarPosition() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class AlbumEntry extends ObjectSelectionList.Entry<AlbumEntry> {
+    private static class AlbumEntry extends MusicListEntry<AlbumEntry> {
 
         private static final int ICON_SIZE = 32;
         private static final int DETAILS_BUTTON_WIDTH = 64;
@@ -405,7 +415,6 @@ public class ContentBrowserScreen extends Screen {
             String details = this.minecraft.font.plainSubstrByWidth(this.entry.details(), maxTextWidth);
 
             graphics.blit(
-                    RenderPipelines.GUI_TEXTURED,
                     MusicScreenHelper.albumIcon(this.minecraft, this.entry.icon()),
                     iconX,
                     iconY,
@@ -445,16 +454,16 @@ public class ContentBrowserScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            return this.detailsButton.mouseClicked(event, doubleClick)
-                    || this.secondButton.mouseClicked(event, doubleClick)
-                    || this.thirdButton != null && this.thirdButton.mouseClicked(event, doubleClick)
-                    || super.mouseClicked(event, doubleClick);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return this.detailsButton.mouseClicked(mouseX, mouseY, button)
+                    || this.secondButton.mouseClicked(mouseX, mouseY, button)
+                    || this.thirdButton != null && this.thirdButton.mouseClicked(mouseX, mouseY, button)
+                    || super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
-        public boolean keyPressed(KeyEvent event) {
-            if (event.isConfirmation() && this.entry.album != null) {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_SPACE) && this.entry.album != null) {
                 this.toggleAlbum();
                 if (this.thirdButton != null) {
                     this.thirdButton.setIconAndTooltip(albumEnabledIcon(this.entry.album), albumEnabledMessage(this.entry.album));
@@ -462,7 +471,7 @@ public class ContentBrowserScreen extends Screen {
                 return true;
             }
 
-            return super.keyPressed(event);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
         private int nameColor() {
@@ -532,7 +541,7 @@ public class ContentBrowserScreen extends Screen {
             return Component.translatable(entry.favourite() ? "button.music_and_melody.unfavourite" : "button.music_and_melody.favourite");
         }
 
-        private static Identifier favouriteIcon(DisplayEntry entry) {
+        private static ResourceLocation favouriteIcon(DisplayEntry entry) {
             return IconButton.icon(entry.favourite() ? "favourited" : "favourite");
         }
 
@@ -540,7 +549,7 @@ public class ContentBrowserScreen extends Screen {
             return Component.translatable(album.isEnabled() ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled");
         }
 
-        private static Identifier albumEnabledIcon(Album album) {
+        private static ResourceLocation albumEnabledIcon(Album album) {
             return IconButton.icon(album.isEnabled() ? "enabled" : "disabled");
         }
 
@@ -548,7 +557,7 @@ public class ContentBrowserScreen extends Screen {
             return Component.translatable(this.screen.isDeletePending(playlist) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
         }
 
-        private Identifier playlistDeleteIcon(Playlist playlist) {
+        private ResourceLocation playlistDeleteIcon(Playlist playlist) {
             return IconButton.icon(this.screen.isDeletePending(playlist) ? "restore" : "delete");
         }
 
@@ -562,7 +571,7 @@ public class ContentBrowserScreen extends Screen {
             };
         }
 
-        private static Identifier remoteActionIcon(RemotePack pack) {
+        private static ResourceLocation remoteActionIcon(RemotePack pack) {
             return switch (RemoteContentManager.state(pack)) {
                 case DOWNLOADING -> IconButton.icon("downloading");
                 case NEEDS_RELOAD -> IconButton.icon("reload");
@@ -576,7 +585,7 @@ public class ContentBrowserScreen extends Screen {
             return Component.translatable(screen.isDeletePending(pack) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
         }
 
-        private static Identifier remoteDeleteIcon(ContentBrowserScreen screen, RemotePack pack) {
+        private static ResourceLocation remoteDeleteIcon(ContentBrowserScreen screen, RemotePack pack) {
             return IconButton.icon(screen.isDeletePending(pack) ? "restore" : "delete");
         }
 
@@ -654,11 +663,11 @@ public class ContentBrowserScreen extends Screen {
             return this.album != null ? this.album.name : this.playlist != null ? this.playlist.name : this.remote.name();
         }
 
-        Identifier id() {
+        ResourceLocation id() {
             return this.album != null ? this.album.album : this.playlist != null ? this.playlist.playlist : this.remote.id();
         }
 
-        Identifier icon() {
+        ResourceLocation icon() {
             return this.album != null ? this.album.icon : this.playlist != null ? this.playlist.icon : this.remote.icon();
         }
 

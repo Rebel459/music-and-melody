@@ -7,7 +7,7 @@ import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,8 +29,8 @@ public final class ConfigAlbum {
     public static final ResourceLocation ALBUM_ID = ResourceLocation.fromNamespaceAndPath("config", "album");
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "album");
     private static final String SOUND_PATH = "album/";
-    private static final Map<SafeIdentifier, Path> FILES = new LinkedHashMap<>();
-    private static final Map<SafeIdentifier, String> NAMES = new HashMap<>();
+    private static final Map<SafeLocation, Path> FILES = new LinkedHashMap<>();
+    private static final Map<SafeLocation, String> NAMES = new HashMap<>();
 
     private ConfigAlbum() {}
 
@@ -42,7 +42,7 @@ public final class ConfigAlbum {
                 ALBUM_ID,
                 Component.literal("Config Album"),
                 ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png"),
-                FILES.keySet().stream().map(SafeIdentifier::getPath).collect(Collectors.toSet()),
+                FILES.keySet().stream().map(SafeLocation::getPath).collect(Collectors.toSet()),
                 discs
         );
     }
@@ -52,22 +52,22 @@ public final class ConfigAlbum {
         FILES.forEach((id, path) -> soundCache.put(idToFile(id), new Resource(null, IoSupplier.create(path))));
     }
 
-    public static ResourceLocation idToFile(SafeIdentifier id) {
+    public static ResourceLocation idToFile(SafeLocation id) {
         return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "sounds/" + id.getPath() + ".ogg");
     }
 
-    public static synchronized String displayName(SafeIdentifier id) {
+    public static synchronized String displayName(SafeLocation id) {
         return NAMES.get(playableId(id));
     }
 
-    public static synchronized Optional<Path> file(SafeIdentifier id) {
+    public static synchronized Optional<Path> file(SafeLocation id) {
         reload();
         return Optional.ofNullable(FILES.get(playableId(id)));
     }
 
-    public static SafeIdentifier playableId(SafeIdentifier id) {
+    public static SafeLocation playableId(SafeLocation id) {
         if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(SOUND_PATH)) {
-            return SafeIdentifier.fromNamespaceAndPath("config", id.getPath());
+            return SafeLocation.fromNamespaceAndPath("config", id.getPath());
         }
         return id;
     }
@@ -97,7 +97,7 @@ public final class ConfigAlbum {
         for (Path file : files) {
             String fileName = file.getFileName().toString();
             String path = uniquePath(SOUND_PATH + sanitize(stem(fileName)), usedPaths);
-            SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", path);
+            SafeLocation id = SafeLocation.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
         }

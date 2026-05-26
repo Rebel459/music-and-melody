@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.HashSet;
@@ -84,8 +84,8 @@ public class Album {
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    public SafeIdentifier trackId(String song) {
-        return song.contains(":") ? SafeIdentifier.parse(song) : SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
+    public SafeLocation trackId(String song) {
+        return song.contains(":") ? SafeLocation.parse(song) : SafeLocation.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {

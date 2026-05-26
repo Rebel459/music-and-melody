@@ -23,7 +23,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	private final WeighedSoundEvents soundEvent;
 
 	public DirectSoundInstance(
-			SafeIdentifier location,
+			SafeLocation location,
 			SoundSource source,
 			float volume,
 			float pitch,
@@ -109,7 +109,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		this.looping = looping;
 	}
 
-	private static ResolvedSound resolveSound(SafeIdentifier location) {
+	private static ResolvedSound resolveSound(SafeLocation location) {
 		return ConfigAlbum.file(location)
 				.or(() -> SafeMusicHelper.resolve(location))
 				.map(path -> createDirectFileSound(location, path))
@@ -124,7 +124,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 				});
 	}
 
-	private static ResolvedSound createDirectFileSound(SafeIdentifier originalLocation, Path source) {
+	private static ResolvedSound createDirectFileSound(SafeLocation originalLocation, Path source) {
 		String safePath = SafeMusicHelper.sanitize(originalLocation.getPath());
 
 		if (safePath.isBlank()) {
@@ -141,7 +141,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		);
 
 		String configName = ConfigAlbum.displayName(originalLocation);
-		SafeIdentifier trackName = SafeIdentifier.fromNamespaceAndPath(
+		SafeLocation trackName = SafeLocation.fromNamespaceAndPath(
 				originalLocation.getNamespace(),
 				configName != null ? configName : fileNameOnly(originalLocation.getPath())
 		);

@@ -5,7 +5,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.WinScreen;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.Weighted;
 import net.minecraft.client.sounds.WeighedSoundEvents;
@@ -46,7 +45,7 @@ public class EventHelper {
     private static List<Event.Condition> lastConditions = List.of();
     private static boolean shouldSustain = true;
     private static Event.CategoryType lastCategory;
-    private static SafeIdentifier lastMusic;
+    private static SafeLocation lastMusic;
 
     public static boolean hasWitherBossBar() {
         return Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable("entity.minecraft.wither").getString()));
@@ -259,12 +258,12 @@ public class EventHelper {
         if (event.category == Event.CategoryType.PLAYLIST) {
             Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music.getId())).findFirst();
             if (!playlist.isEmpty()) {
-                List<SafeIdentifier> songs = new ArrayList<>(playlist.get().tracks.stream()
+                List<SafeLocation> songs = new ArrayList<>(playlist.get().tracks.stream()
                         .filter(EventHelper::isEventTrackEnabled)
                         .toList());
                 playlist.get().discs.stream()
                         .map(disc -> MusicDiscHelper.discSoundId(client, disc))
-                        .forEach(id -> songs.add(SafeIdentifier.convert(id)));
+                        .forEach(id -> songs.add(SafeLocation.convert(id)));
                 playEvent = playRandomEventSong(client, songs);
             }
         }
@@ -278,7 +277,7 @@ public class EventHelper {
             playEvent = PlaylistHelper.playEvent(event.music, false);
         }
         if (event.category == Event.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music.getId())) {
-            playEvent = PlaylistHelper.playEvent(SafeIdentifier.convert(MusicDiscHelper.discSoundId(client, event.music.getId())), false);
+            playEvent = PlaylistHelper.playEvent(SafeLocation.convert(MusicDiscHelper.discSoundId(client, event.music.getId())), false);
         }
 
         if (!playEvent) return null;
@@ -471,17 +470,17 @@ public class EventHelper {
         return musicBreak;
     }
 
-    private static boolean playRandomEventSong(Minecraft client, List<SafeIdentifier> songs) {
-        List<SafeIdentifier> playableSongs = songs.stream()
+    private static boolean playRandomEventSong(Minecraft client, List<SafeLocation> songs) {
+        List<SafeLocation> playableSongs = songs.stream()
                 .filter(song -> MusicDiscHelper.isSoundUnlocked(client, song))
                 .toList();
         if (playableSongs.isEmpty()) return false;
-        SafeIdentifier song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
+        SafeLocation song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
         return PlaylistHelper.playEvent(song, false);
     }
 
-    private static List<SafeIdentifier> eventAlbumSongs(Album album, Minecraft client) {
-        List<SafeIdentifier> songs = new ArrayList<>();
+    private static List<SafeLocation> eventAlbumSongs(Album album, Minecraft client) {
+        List<SafeLocation> songs = new ArrayList<>();
         album.tracks.stream()
                 .filter(song -> isEventAlbumTrackEnabled(album, song))
                 .map(album::trackId)
@@ -490,12 +489,12 @@ public class EventHelper {
             album.discs.stream()
                     .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
                     .map(disc -> MusicDiscHelper.discSoundId(client, disc))
-                    .forEach(id -> songs.add(SafeIdentifier.convert(id)));
+                    .forEach(id -> songs.add(SafeLocation.convert(id)));
         }
         return songs;
     }
 
-    private static boolean isEventTrackEnabled(SafeIdentifier track) {
+    private static boolean isEventTrackEnabled(SafeLocation track) {
         boolean matchedAlbumTrack = false;
         boolean enabled = false;
         for (Album album : Album.ALBUMS) {

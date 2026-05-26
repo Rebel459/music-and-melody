@@ -1,15 +1,12 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 import java.net.URI;
 
@@ -32,11 +29,11 @@ final class MusicScreenHelper {
         return trackName(album.trackId(song), fallbackName(song));
     }
 
-    static Component trackName(SafeIdentifier id) {
+    static Component trackName(SafeLocation id) {
         return trackName(id, fallbackName(id.getPath()));
     }
 
-    static Component trackName(SafeIdentifier id, String fallback) {
+    static Component trackName(SafeLocation id, String fallback) {
         String configName = ConfigAlbum.displayName(id);
         if (configName != null) return Component.literal(configName);
         String pathKey = id.getPath().replace('/', '.');
@@ -51,7 +48,7 @@ final class MusicScreenHelper {
         return name.endsWith(".ogg") ? name.substring(0, name.length() - ".ogg".length()) : name;
     }
 
-    static Component playlistName(Minecraft minecraft, SafeIdentifier soundId) {
+    static Component playlistName(Minecraft minecraft, SafeLocation soundId) {
         return MusicDiscHelper.matchSound(minecraft, soundId)
                 .map(match -> MusicDiscHelper.discName(match.jukeboxSong()))
                 .orElseGet(() -> trackName(soundId));

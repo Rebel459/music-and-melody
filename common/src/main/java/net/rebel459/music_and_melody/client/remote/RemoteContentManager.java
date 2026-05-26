@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -54,8 +54,8 @@ public final class RemoteContentManager {
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
-    private static final Map<Identifier, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
-    private static final Set<Identifier> DOWNLOADING = ConcurrentHashMap.newKeySet();
+    private static final Map<ResourceLocation, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
+    private static final Set<ResourceLocation> DOWNLOADING = ConcurrentHashMap.newKeySet();
     private static final List<RemotePack> PACKS = new ArrayList<>();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
@@ -117,7 +117,7 @@ public final class RemoteContentManager {
         return State.INSTALLED;
     }
 
-    public static boolean isDownloadedAlbum(Identifier id) {
+    public static boolean isDownloadedAlbum(ResourceLocation id) {
         return installed(id) != null;
     }
 
@@ -163,7 +163,7 @@ public final class RemoteContentManager {
 
     private static List<RemotePack> loadCatalogs(List<String> repositories) {
         List<RemotePack> packs = new ArrayList<>();
-        Set<Identifier> ids = new HashSet<>();
+        Set<ResourceLocation> ids = new HashSet<>();
         for (String repository : repositories) {
             try {
                 packs.addAll(loadCatalog(repository, ids));
@@ -174,7 +174,7 @@ public final class RemoteContentManager {
         return packs;
     }
 
-    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<Identifier> ids) throws IOException, InterruptedException {
+    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<ResourceLocation> ids) throws IOException, InterruptedException {
         URI catalogUri = catalogUri(repositoryUrl);
         HttpRequest request = HttpRequest.newBuilder(catalogUri)
                 .timeout(Duration.ofSeconds(20))
@@ -234,11 +234,11 @@ public final class RemoteContentManager {
     }
 
     private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri) {
-        Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
+        ResourceLocation id = object.has("id") ? ResourceLocation.tryParse(object.get("id").getAsString()) : null;
         if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size")) {
             return null;
         }
-        Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+        ResourceLocation icon = object.has("icon") ? ResourceLocation.tryParse(object.get("icon").getAsString()) : ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png");
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -248,7 +248,7 @@ public final class RemoteContentManager {
                 catalogUri.resolve(object.get("url").getAsString()).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
-                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon
+                icon == null ? ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png") : icon
         );
     }
 
@@ -284,7 +284,7 @@ public final class RemoteContentManager {
         writeManifest(pack.id(), extracted);
     }
 
-    private static void deleteInstalledFiles(Identifier id) {
+    private static void deleteInstalledFiles(ResourceLocation id) {
         boolean deletedFiles = deleteFromManifest(id);
 
         if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
@@ -336,7 +336,7 @@ public final class RemoteContentManager {
         }
     }
 
-    private static MaMDataConfig.DownloadedPack installed(Identifier id) {
+    private static MaMDataConfig.DownloadedPack installed(ResourceLocation id) {
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
             if (pack.id.equals(id.toString())) return pack;
         }
@@ -359,7 +359,7 @@ public final class RemoteContentManager {
 
     public record InstalledPack(
             Component name,
-            Identifier id,
+            ResourceLocation id,
             String version,
             String sha256
     ) {}
@@ -368,7 +368,7 @@ public final class RemoteContentManager {
         List<InstalledPack> packs = new ArrayList<>();
 
         for (MaMDataConfig.DownloadedPack record : MaMDataConfig.get().albums.downloads) {
-            Identifier id = Identifier.tryParse(record.id);
+            ResourceLocation id = ResourceLocation.tryParse(record.id);
             if (id == null) continue;
 
             packs.add(new InstalledPack(
@@ -383,7 +383,7 @@ public final class RemoteContentManager {
         return packs;
     }
 
-    private static Component installedName(Identifier id) {
+    private static Component installedName(ResourceLocation id) {
         for (Album album : Album.ALBUMS) {
             if (album.album.equals(id)) {
                 return album.name;
@@ -399,7 +399,7 @@ public final class RemoteContentManager {
         return Component.literal(id.toString());
     }
 
-    public static synchronized boolean deleteInstalled(Identifier id) {
+    public static synchronized boolean deleteInstalled(ResourceLocation id) {
         if (DOWNLOADING.contains(id)) return false;
 
         MaMDataConfig config = MaMDataConfig.get();
@@ -429,7 +429,7 @@ public final class RemoteContentManager {
         return true;
     }
 
-    private static void writeManifest(Identifier id, List<Path> extracted) throws IOException {
+    private static void writeManifest(ResourceLocation id, List<Path> extracted) throws IOException {
         Files.createDirectories(MANIFEST_DIRECTORY);
 
         Path manifest = manifestPath(id);
@@ -441,7 +441,7 @@ public final class RemoteContentManager {
         Files.write(manifest, lines);
     }
 
-    private static boolean deleteFromManifest(Identifier id) {
+    private static boolean deleteFromManifest(ResourceLocation id) {
         Path manifest = manifestPath(id);
         if (!Files.isRegularFile(manifest)) return false;
 
@@ -501,9 +501,9 @@ public final class RemoteContentManager {
         }
     }
 
-    private static boolean hasOtherInstalledPackInNamespace(Identifier id) {
+    private static boolean hasOtherInstalledPackInNamespace(ResourceLocation id) {
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
-            Identifier other = Identifier.tryParse(pack.id);
+            ResourceLocation other = ResourceLocation.tryParse(pack.id);
             if (other == null) continue;
             if (other.equals(id)) continue;
             if (other.getNamespace().equals(id.getNamespace())) return true;
@@ -512,7 +512,7 @@ public final class RemoteContentManager {
         return false;
     }
 
-    private static Path manifestPath(Identifier id) {
+    private static Path manifestPath(ResourceLocation id) {
         String path = id.getPath().replace('/', '-');
         return MANIFEST_DIRECTORY.resolve(id.getNamespace() + "-" + path + ".txt");
     }

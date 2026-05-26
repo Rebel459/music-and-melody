@@ -15,7 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 public class PlaylistScreen extends Screen {
@@ -141,17 +141,17 @@ public class PlaylistScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return this.directPlayButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directPlayButton.mouseClicked(event, doubleClick)
+                && this.directPlayButton.mouseClicked(mouseX, mouseY, button)
                 || this.directRemoveButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directRemoveButton.mouseClicked(event, doubleClick)
+                && this.directRemoveButton.mouseClicked(mouseX, mouseY, button)
                 || this.directLoopButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directLoopButton.mouseClicked(event, doubleClick)
-                || super.mouseClicked(event, doubleClick);
+                && this.directLoopButton.mouseClicked(mouseX, mouseY, button)
+                || super.mouseClicked(mouseX, mouseY, button);
     }
 
     private void renderContextRow(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
@@ -234,7 +234,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isDirectPlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
     }
 
-    private static Identifier directPlayIcon() {
+    private static ResourceLocation directPlayIcon() {
         return IconButton.icon(PlaylistHelper.isDirectPlaying() ? "pause" : "play");
     }
 
@@ -242,7 +242,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isDirectSongLooping() ? "button.music_and_melody.looping" : "button.music_and_melody.loop");
     }
 
-    private static Identifier directLoopIcon() {
+    private static ResourceLocation directLoopIcon() {
         return IconButton.icon(PlaylistHelper.isDirectSongLooping() ? "looping" : "loop");
     }
 
@@ -260,7 +260,7 @@ public class PlaylistScreen extends Screen {
         private void refresh() {
             this.clearEntries();
             for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
-                SafeIdentifier id = PlaylistHelper.queuedSongs().get(i);
+                SafeLocation id = PlaylistHelper.queuedSongs().get(i);
                 this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));
             }
         }
@@ -281,7 +281,7 @@ public class PlaylistScreen extends Screen {
         private final PlaylistScreen screen;
         private final Minecraft minecraft;
         private final int index;
-        private final SafeIdentifier song;
+        private final SafeLocation song;
         private final Component text;
         private final int color;
         private final IconButton playButton;
@@ -298,7 +298,7 @@ public class PlaylistScreen extends Screen {
             this.removeButton = null;
         }
 
-        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, SafeIdentifier song) {
+        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, SafeLocation song) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.index = index;
@@ -354,11 +354,11 @@ public class PlaylistScreen extends Screen {
                     || super.mouseClicked(mouseX, mouseY, button);
         }
 
-        private static Component playMessage(SafeIdentifier song) {
+        private static Component playMessage(SafeLocation song) {
             return Component.translatable(PlaylistHelper.isQueuePlaying(song) ? "button.music_and_melody.stop" : "button.music_and_melody.play");
         }
 
-        private static ResourceLocation playIcon(SafeIdentifier song) {
+        private static ResourceLocation playIcon(SafeLocation song) {
             return IconButton.icon(PlaylistHelper.isQueuePlaying(song) ? "pause" : "play");
         }
     }

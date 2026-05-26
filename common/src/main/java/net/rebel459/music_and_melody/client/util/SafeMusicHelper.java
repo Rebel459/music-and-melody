@@ -14,7 +14,7 @@ public final class SafeMusicHelper {
 	private SafeMusicHelper() {
 	}
 
-	public static Optional<Path> resolve(SafeIdentifier id) {
+	public static Optional<Path> resolve(SafeLocation id) {
 		String wantedPath = normalize(id.getPath());
 		String wantedFile = fileName(wantedPath);
 		String wantedStem = stripOgg(wantedFile);
@@ -24,7 +24,7 @@ public final class SafeMusicHelper {
 				.or(() -> findRecursiveDownloadFile(wantedPath, wantedStem));
 	}
 
-	public static List<String> tracksInFolder(SafeIdentifier folder) {
+	public static List<String> tracksInFolder(SafeLocation folder) {
 		String folderPath = normalize(folder.getPath());
 
 		try (
@@ -39,7 +39,7 @@ public final class SafeMusicHelper {
 		}
 	}
 
-	public static List<String> downloadTracksInFolder(SafeIdentifier folder) {
+	public static List<String> downloadTracksInFolder(SafeLocation folder) {
 		String folderPath = normalize(folder.getPath());
 
 		try (Stream<String> downloadTracks = recursiveDownloadTracks(folder.getNamespace(), folderPath)) {

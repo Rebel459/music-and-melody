@@ -1,11 +1,9 @@
 package net.rebel459.music_and_melody.client.util;
 
-import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.locale.Language;
@@ -22,16 +20,16 @@ import java.util.*;
 
 public final class PlaylistHelper {
     public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
-    public static final List<SafeIdentifier> QUEUED_SONGS = new ArrayList<>();
-    public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
+    public static final List<SafeLocation> QUEUED_SONGS = new ArrayList<>();
+    public static final HashMap<SafeLocation, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
     private static SoundInstance currentSong = null;
-    private static SafeIdentifier currentSongId = null;
+    private static SafeLocation currentSongId = null;
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
-    private static SafeIdentifier directSongId = null;
+    private static SafeLocation directSongId = null;
     private static boolean directSongLooping = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
@@ -40,7 +38,7 @@ public final class PlaylistHelper {
 
     private PlaylistHelper() {}
 
-    public static void add(SafeIdentifier song) {
+    public static void add(SafeLocation song) {
         ensureLoaded();
         if (!QUEUED_SONGS.contains(song)) {
             clearQueueSource();
@@ -49,10 +47,10 @@ public final class PlaylistHelper {
         }
     }
 
-    public static void addAll(Collection<SafeIdentifier> songs) {
+    public static void addAll(Collection<SafeLocation> songs) {
         ensureLoaded();
         boolean changed = false;
-        for (SafeIdentifier song : songs) {
+        for (SafeLocation song : songs) {
             if (!QUEUED_SONGS.contains(song)) {
                 QUEUED_SONGS.add(song);
                 changed = true;
@@ -76,12 +74,12 @@ public final class PlaylistHelper {
         return Optional.of(new QueueSource(playlists.queue_source_type, playlists.queue_source_id, playlists.queue_source_name));
     }
 
-    public static boolean isQueued(SafeIdentifier song) {
+    public static boolean isQueued(SafeLocation song) {
         ensureLoaded();
         return QUEUED_SONGS.contains(song);
     }
 
-    public static List<SafeIdentifier> queuedSongs() {
+    public static List<SafeLocation> queuedSongs() {
         ensureLoaded();
         return List.copyOf(QUEUED_SONGS);
     }
@@ -89,7 +87,7 @@ public final class PlaylistHelper {
     public static void remove(int index) {
         ensureLoaded();
         if (index >= 0 && index < QUEUED_SONGS.size()) {
-            SafeIdentifier removed = QUEUED_SONGS.get(index);
+            SafeLocation removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
             if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
@@ -119,14 +117,14 @@ public final class PlaylistHelper {
         return true;
     }
 
-    public static boolean isPlaying(SafeIdentifier song) {
+    public static boolean isPlaying(SafeLocation song) {
         if (song == null || currentSong == null || currentSongId == null || !isPlaying()) {
             return false;
         }
 
-        SafeIdentifier wanted = ConfigAlbum.playableId(song);
-        SafeIdentifier current = ConfigAlbum.playableId(currentSongId);
-        SafeIdentifier soundInstanceId = SafeIdentifier.convert(currentSong.getLocation());
+        SafeLocation wanted = ConfigAlbum.playableId(song);
+        SafeLocation current = ConfigAlbum.playableId(currentSongId);
+        SafeLocation soundInstanceId = SafeLocation.convert(currentSong.getLocation());
 
         if (wanted.equals(current)) return true;
         if (wanted.equals(soundInstanceId)) return true;
@@ -135,7 +133,7 @@ public final class PlaylistHelper {
                 || DirectSoundFiles.samePlayable(wanted, soundInstanceId);
     }
 
-    public static boolean isQueuePlaying(SafeIdentifier song) {
+    public static boolean isQueuePlaying(SafeLocation song) {
         return currentSongFromQueue && isPlaying(song);
     }
 
@@ -173,7 +171,7 @@ public final class PlaylistHelper {
         return directSongId != null;
     }
 
-    public static SafeIdentifier getDirectSongId() {
+    public static SafeLocation getDirectSongId() {
         return directSongId;
     }
 
@@ -204,7 +202,7 @@ public final class PlaylistHelper {
         directSongLooping = false;
     }
 
-    public static SafeIdentifier getCurrentSongId() {
+    public static SafeLocation getCurrentSongId() {
         return currentSongId;
     }
 
@@ -236,12 +234,12 @@ public final class PlaylistHelper {
 
     public static String getMusicTranslationKey(SoundInstance sound) {
         if (sound == null || sound != currentSong || !isPlaying() || currentSongId == null) return null;
-        SafeIdentifier displayId = currentSongId;
+        SafeLocation displayId = currentSongId;
         Sound currentSound = currentSong.getSound();
         if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
             Optional<String> directName = DirectSoundFiles.getName(currentSound.getLocation());
             if (directName.isPresent()) return directName.get();
-            displayId = SafeIdentifier.convert(currentSound.getLocation());
+            displayId = SafeLocation.convert(currentSound.getLocation());
         }
         String configName = ConfigAlbum.displayName(displayId);
         if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
@@ -262,7 +260,7 @@ public final class PlaylistHelper {
             return false;
         }
         queueIndex = playableIndex;
-        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
+        SafeLocation id = QUEUED_SONGS.get(queueIndex);
         return playSound(id, false, true, false);
     }
 
@@ -275,7 +273,7 @@ public final class PlaylistHelper {
         int playableIndex = nextPlayableIndex(queueIndex, true);
         if (playableIndex < 0) return false;
         queueIndex = playableIndex;
-        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
+        SafeLocation id = QUEUED_SONGS.get(queueIndex);
         stop();
         return playSound(id, false, true, false);
     }
@@ -359,7 +357,7 @@ public final class PlaylistHelper {
         return -1;
     }
 
-    private static boolean playSound(SafeIdentifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
+    private static boolean playSound(SafeLocation id, boolean loop, boolean fromQueue, boolean fromEvent) {
         id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
@@ -419,13 +417,13 @@ public final class PlaylistHelper {
         currentSongFromEvent = false;
     }
 
-    public static boolean play(SafeIdentifier id, boolean loop) {
+    public static boolean play(SafeLocation id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, false);
     }
 
-    public static boolean playEvent(SafeIdentifier id, boolean loop) {
+    public static boolean playEvent(SafeLocation id, boolean loop) {
         ensureLoaded();
         stop();
         return playSound(id, loop, false, true);
@@ -451,7 +449,7 @@ public final class PlaylistHelper {
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
         for (String song : config.playlists.queued_songs) {
-            SafeIdentifier id = SafeIdentifier.parse(song);
+            SafeLocation id = SafeLocation.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
     }
@@ -459,7 +457,7 @@ public final class PlaylistHelper {
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
         config.playlists.loop = loop;
-        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeLocation::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
