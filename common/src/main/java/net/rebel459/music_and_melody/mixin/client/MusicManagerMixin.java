@@ -83,17 +83,17 @@ public abstract class MusicManagerMixin {
             EventHelper.clearStoredEventMusic(stoppedMusic);
         }
 
-        musicAndMelody$clearEmptyMusic();
+        clearEmptyMusic();
         return music;
     }
 
     @Inject(method = "tick", at = @At("TAIL"))
-    private void clearEmptyMusic(CallbackInfo ci) {
-        musicAndMelody$clearEmptyMusic();
+    private void tickClearEmptyMusic(CallbackInfo ci) {
+        clearEmptyMusic();
     }
 
     @Unique
-    private void musicAndMelody$clearEmptyMusic() {
+    private void clearEmptyMusic() {
         if (!PlaylistHelper.isEmptyMusic(this.currentMusic) || EventHelper.isCooldownEmptyMusic() || PlaylistHelper.isPlaying() || !MaMClientConfig.get().vanilla_music) {
             return;
         }

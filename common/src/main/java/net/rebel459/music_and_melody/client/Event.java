@@ -48,15 +48,17 @@ public class Event {
     public List<Condition> conditions;
     public PriorityType priority;
     public boolean sustain;
+    public boolean constant;
     public int weight;
 
-    public Event(Identifier source, CategoryType category, SafeIdentifier music, List<Condition> conditions, PriorityType priority, boolean sustain, int weight) {
+    public Event(Identifier source, CategoryType category, SafeIdentifier music, List<Condition> conditions, PriorityType priority, boolean sustain, boolean constant, int weight) {
         this.source = source;
         this.category = category;
         this.music = music;
         this.conditions = conditions;
         this.priority = priority;
         this.sustain = sustain;
+        this.constant = constant;
         this.weight = weight;
 
         switch (priority) {
@@ -213,7 +215,7 @@ public class Event {
             conditions.add(parsed.get());
         }
 
-        return Optional.of(new Event(source.id, category, music, conditions, priority, entry.sustain, Math.max(1, entry.weight())));
+        return Optional.of(new Event(source.id, category, music, conditions, priority, entry.sustain, entry.constant, Math.max(1, entry.weight())));
     }
 
     public static String categoryName(CategoryType category) {
@@ -685,13 +687,14 @@ public class Event {
             this(name, description, entries, dependencies, "enabled", true);
         }
 
-        public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, int weight) {
+        public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, boolean constant, int weight) {
             private static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                     Codec.STRING.fieldOf("category").forGetter(Entry::category),
                     Codec.STRING.fieldOf("music").forGetter(Entry::music),
                     Condition.CODEC.listOf().fieldOf("conditions").forGetter(Entry::conditions),
                     Codec.STRING.optionalFieldOf("priority", "low").forGetter(Entry::priority),
                     Codec.BOOL.optionalFieldOf("sustain", true).forGetter(Entry::sustain),
+                    Codec.BOOL.optionalFieldOf("constant", false).forGetter(Entry::constant),
                     Codec.INT.optionalFieldOf("weight", 1).forGetter(Entry::weight)
             ).apply(instance, Entry::new));
         }
