@@ -28,6 +28,28 @@ dependencies {
     compileOnly("maven.modrinth:fancymenu:$fancymenu_version-neoforge")
 }
 
+def curseforgeBuild = providers.gradleProperty('curseforgeBuild')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+def curseforgeJava = null
+
+if (curseforgeBuild) {
+    curseforgeJava = tasks.register('syncCurseForgeCommonJava', Sync) {
+        into layout.buildDirectory.dir('generated/curseforge/java')
+        from('src/main/java') {
+            exclude 'net/rebel459/music_and_melody/client/remote/RemoteAlbumManager.java'
+        }
+        from('src/curseforge/java')
+    }
+
+    sourceSets.main.java.setSrcDirs([curseforgeJava.map { it.destinationDir }])
+
+    tasks.named('compileJava') {
+        dependsOn(curseforgeJava)
+    }
+}
+
 configurations {
     commonJava {
         canBeResolved = false
@@ -45,7 +67,9 @@ configurations {
 }
 
 artifacts {
-    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonJava(sourceSets.main.java.sourceDirectories.singleFile) {
+        if (curseforgeJava != null) builtBy(curseforgeJava)
+    }
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }
 
