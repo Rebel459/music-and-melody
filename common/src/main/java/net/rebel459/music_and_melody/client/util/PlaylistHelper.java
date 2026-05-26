@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client.util;
 
+import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
@@ -11,6 +12,7 @@ import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.SampledFloat;
+import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
@@ -264,7 +266,7 @@ public final class PlaylistHelper {
     }
 
     public static boolean isEmptyMusic(SoundInstance instance) {
-        return instance != null && instance.getIdentifier().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location());
+        return instance != null && instance.getIdentifier().toString().equals(MusicAndMelody.MOD_ID + ":music.empty");
     }
 
     private static int clampQueueIndex(int index) {
