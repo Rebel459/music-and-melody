@@ -58,6 +58,7 @@
   "screen.music_and_melody.event_editor.priority": "Priority",
   "screen.music_and_melody.event_editor.weight": "Weight",
   "screen.music_and_melody.event_editor.sustain": "Sustain",
+  "screen.music_and_melody.event_editor.constant": "Constant",
   "screen.music_and_melody.event_editor.conditions": "Conditions",
   "screen.music_and_melody.event_editor.category.album": "Album",
   "screen.music_and_melody.event_editor.category.playlist": "Playlist",

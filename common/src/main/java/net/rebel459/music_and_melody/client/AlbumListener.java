@@ -11,7 +11,6 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
-import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
@@ -141,7 +140,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
-        tracks.addAll(SafeMusicHelper.tracksInFolder(folderId));
 
         return new ArrayList<>(tracks);
     }
@@ -156,7 +154,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
             return List.of();
         }
 
-        String normalized = SafeMusicHelper.normalize(validFolderId.getPath());
+        String normalized = normalize(validFolderId.getPath());
 
         if (normalized.isBlank()) {
             return List.of();
@@ -188,5 +186,27 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
                     .ifPresent(record -> recordMap.put(entry.getKey(), record));
         }
         return recordMap;
+    }
+    
+    private static String normalize(String value) {
+        String result = value.replace('\\', '/');
+
+        while (result.startsWith("/")) {
+            result = result.substring(1);
+        }
+
+        while (result.endsWith("/")) {
+            result = result.substring(0, result.length() - 1);
+        }
+
+        if (result.startsWith("sounds/")) {
+            result = result.substring("sounds/".length());
+        }
+
+        while (result.contains("//")) {
+            result = result.replace("//", "/");
+        }
+
+        return result;
     }
 }

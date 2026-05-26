@@ -142,7 +142,8 @@
           "value": "menu"
         }
       ],
-      "sustain": false
+      "sustain": false,
+      "constant": true
     }
   ],
   "default": "disabled"

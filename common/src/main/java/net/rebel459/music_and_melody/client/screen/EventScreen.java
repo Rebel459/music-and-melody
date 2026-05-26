@@ -43,6 +43,7 @@ public class EventScreen extends Screen {
     private Button categoryButton;
     private Button priorityButton;
     private Button sustainButton;
+    private Button constantButton;
     private Button addButton;
     private Button saveButton;
     private Button removeButton;
@@ -52,6 +53,7 @@ public class EventScreen extends Screen {
     private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
     private int priorityIndex = Event.PriorityType.LOW.ordinal();
     private boolean sustain = true;
+    private boolean constant = false;
     private boolean listExpanded;
     private boolean loadingEditor;
     private boolean savedChanges;
@@ -97,7 +99,7 @@ public class EventScreen extends Screen {
 
         int fieldWidth = Math.min(420, this.width - 20);
         int fieldX = this.width / 2 - fieldWidth / 2;
-        int smallWidth = (fieldWidth - 12) / 4;
+        int smallWidth = (fieldWidth - 16) / 5;
 
         if (!this.listExpanded) {
             this.categoryButton = this.addRenderableWidget(Button.builder(categoryMessage(), button -> {
@@ -112,7 +114,11 @@ public class EventScreen extends Screen {
                 this.sustain = !this.sustain;
                 markDirty();
             }).bounds(fieldX + (smallWidth + 4) * 2, 42, smallWidth, 20).build());
-            this.weightField = this.addRenderableWidget(new EditBox(this.font, fieldX + (smallWidth + 4) * 3, 42, smallWidth, 20, Component.translatable("screen.music_and_melody.event_editor.weight")));
+            this.constantButton = this.addRenderableWidget(Button.builder(constantMessage(), button -> {
+                this.constant = !this.constant;
+                markDirty();
+            }).bounds(fieldX + (smallWidth + 4) * 3, 42, smallWidth, 20).build());
+            this.weightField = this.addRenderableWidget(new EditBox(this.font, fieldX + (smallWidth + 4) * 4, 42, smallWidth, 20, Component.translatable("screen.music_and_melody.event_editor.weight")));
             this.weightField.setMaxLength(8);
             this.weightField.setResponder(value -> markDirty());
 
@@ -186,6 +192,7 @@ public class EventScreen extends Screen {
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.type"), fieldX, 30, 0xFFAAAAAA);
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), this.priorityButton.getX(), 30, 0xFFAAAAAA);
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), this.sustainButton.getX(), 30, 0xFFAAAAAA);
+        graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), this.constantButton.getX(), 30, 0xFFAAAAAA);
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), this.weightField.getX(), 30, 0xFFAAAAAA);
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), fieldX, 66, 0xFFAAAAAA);
         graphics.drawString(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), fieldX, 102, 0xFFAAAAAA);
@@ -230,6 +237,7 @@ public class EventScreen extends Screen {
         this.categoryIndex = categoryIndex(entry.category());
         this.priorityIndex = priorityIndex(entry.priority());
         this.sustain = entry.sustain();
+        this.constant = entry.constant();
         if (this.musicField != null) this.musicField.setValue(entry.music());
         if (this.weightField != null) this.weightField.setValue(Integer.toString(entry.weight()));
         if (this.conditionsField != null) this.conditionsField.setValue(conditionsText(entry.conditions()));
@@ -243,6 +251,7 @@ public class EventScreen extends Screen {
         this.categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
         this.priorityIndex = Event.PriorityType.LOW.ordinal();
         this.sustain = true;
+        this.constant = false;
         if (this.musicField != null) this.musicField.setValue("");
         if (this.weightField != null) this.weightField.setValue("1");
         if (this.conditionsField != null) this.conditionsField.setValue("");
@@ -338,6 +347,7 @@ public class EventScreen extends Screen {
                 conditions,
                 Event.priorityName(PRIORITIES[this.priorityIndex]),
                 this.sustain,
+                this.constant,
                 weight
         );
     }
@@ -364,6 +374,7 @@ public class EventScreen extends Screen {
         if (this.categoryButton != null) this.categoryButton.setMessage(categoryMessage());
         if (this.priorityButton != null) this.priorityButton.setMessage(priorityMessage());
         if (this.sustainButton != null) this.sustainButton.setMessage(sustainMessage());
+        if (this.constantButton != null) this.constantButton.setMessage(constantMessage());
         if (this.musicField != null) this.musicField.setHint(Component.literal("eg. " + musicExample()).withStyle(ChatFormatting.DARK_GRAY));
         updateConditionsFieldLayout();
 
@@ -374,6 +385,7 @@ public class EventScreen extends Screen {
         if (this.priorityButton != null) this.priorityButton.active = editable;
         if (this.weightField != null) this.weightField.active = editable;
         if (this.sustainButton != null) this.sustainButton.active = editable;
+        if (this.constantButton != null) this.constantButton.active = editable;
         if (this.musicField != null) this.musicField.active = editable;
         if (this.conditionsField != null) this.conditionsField.active = editable;
         if (this.addButton != null) this.addButton.active = editable;
@@ -455,6 +467,12 @@ public class EventScreen extends Screen {
         return Component.translatable("screen.music_and_melody.event_editor.sustain")
                 .append(": ")
                 .append(CommonComponents.optionStatus(this.sustain));
+    }
+
+    private Component constantMessage() {
+        return Component.translatable("screen.music_and_melody.event_editor.constant")
+                .append(": ")
+                .append(CommonComponents.optionStatus(this.constant));
     }
 
     private Component expandMessage() {
@@ -602,7 +620,7 @@ public class EventScreen extends Screen {
         private final EventScreen screen;
 
         EventList(EventScreen screen, Minecraft minecraft, int width, int height, int y) {
-            super(minecraft, width, height, y, 34);
+            super(minecraft, width, height, y, 46);
             this.screen = screen;
             this.centerListVertically = false;
             refresh();
@@ -649,11 +667,13 @@ public class EventScreen extends Screen {
         public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int color = this.index == this.screen.selectedIndex ? 0xFFFFFF55 : this.row.source().isEnabled() ? 0xFFFFFFFF : 0xFF888888;
             Event.Record.Entry entry = this.row.entry();
-            String first = entry.category() + " | " + entry.music() + " | " + entry.priority() + " | sustain=" + entry.sustain() + " | " + entry.weight();
-            String second = conditionsText(entry.conditions());
+            String first = entry.music() + " (" + entry.category() + ")";
+            String second = "priority=" + entry.priority() + " | sustain=" + entry.sustain() + " | constant=" + entry.constant() + " | weight=" + entry.weight();
+            String third = conditionsText(entry.conditions());
             int maxWidth = this.getContentWidth() - 2;
             graphics.drawString(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(first, maxWidth), this.getContentX() + 1, this.getContentY() + 5, color);
             graphics.drawString(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(second, maxWidth), this.getContentX() + 1, this.getContentY() + 17, 0xFFAAAAAA);
+            graphics.drawString(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(third, maxWidth), this.getContentX() + 1, this.getContentY() + 29, 0xFFAAAAAA);
         }
 
         @Override
