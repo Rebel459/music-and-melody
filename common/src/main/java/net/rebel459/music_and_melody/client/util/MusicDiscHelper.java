@@ -82,17 +82,17 @@ public final class MusicDiscHelper {
 
     public static Identifier discSoundId(Minecraft minecraft, Identifier jukeboxSongId) {
         Optional<JukeboxSong> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
-        if (jukeboxSong.isEmpty()) return fallbackDiscSoundId(jukeboxSongId);
+        if (jukeboxSong.isEmpty()) {
+            Optional<Identifier> cached = JukeboxSongCache.soundId(minecraft, jukeboxSongId);
+            return cached.orElseGet(() -> fallbackDiscSoundId(minecraft, jukeboxSongId));
+        }
 
         SoundEvent event = jukeboxSong.get().soundEvent().value();
         Identifier eventId = event.location();
-        var soundEvent = minecraft.getSoundManager().getSoundEvent(eventId);
-        if (soundEvent != null) {
-            Sound sound = soundEvent.getSound(SoundInstance.createUnseededRandom());
-            if (sound != SoundManager.EMPTY_SOUND) return sound.getLocation();
-        }
+        Optional<Identifier> sound = soundFromEvent(minecraft, eventId);
+        if (sound.isPresent()) return sound.get();
 
-        return fallbackDiscSoundId(eventId);
+        return fallbackDiscSoundId(minecraft, eventId);
     }
 
     private static boolean shouldUseInventoryDiscFallback(Minecraft minecraft) {
@@ -108,10 +108,31 @@ public final class MusicDiscHelper {
                 .flatMap(registry -> registry.getOptional(ResourceKey.create(Registries.JUKEBOX_SONG, id)));
     }
 
-    private static Identifier fallbackDiscSoundId(Identifier id) {
+    private static Identifier fallbackDiscSoundId(Minecraft minecraft, Identifier id) {
+        for (Identifier eventId : fallbackSoundEvents(id)) {
+            Optional<Identifier> sound = soundFromEvent(minecraft, eventId);
+            if (sound.isPresent()) return sound.get();
+        }
+
         String path = id.getPath();
         if (path.startsWith("music_disc.")) path = path.substring("music_disc.".length());
         return Identifier.fromNamespaceAndPath(id.getNamespace(), "records/" + path);
+    }
+
+    private static Optional<Identifier> soundFromEvent(Minecraft minecraft, Identifier eventId) {
+        var soundEvent = minecraft.getSoundManager().getSoundEvent(eventId);
+        if (soundEvent == null) return Optional.empty();
+        Sound sound = soundEvent.getSound(SoundInstance.createUnseededRandom());
+        if (sound == SoundManager.EMPTY_SOUND) return Optional.empty();
+        return Optional.of(sound.getLocation());
+    }
+
+    private static Identifier[] fallbackSoundEvents(Identifier jukeboxSongId) {
+        String path = jukeboxSongId.getPath();
+        return new Identifier[] {
+                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc." + path),
+                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc_" + path)
+        };
     }
 
     public record Match(Album album, String disc, Identifier jukeboxSong) {}
