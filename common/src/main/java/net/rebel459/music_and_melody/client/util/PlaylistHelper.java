@@ -157,7 +157,7 @@ public final class PlaylistHelper {
     }
 
     public static void interruptCurrentPlayback(SoundInstance sound) {
-        if (!currentSongFromQueue || currentSong == null) return;
+        if ((!currentSongFromQueue && !currentSongFromEvent) || currentSong == null) return;
         if (sound != null && sound != currentSong) return;
         currentSong = null;
         currentSongId = null;

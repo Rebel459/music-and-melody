@@ -101,8 +101,7 @@ public class EventHelper {
 
             Event.PriorityType currentPriority = lastCategory != null ? lastPriority : Event.PriorityType.LOW;
             boolean higherPriority = event.priority.ordinal() > currentPriority.ordinal();
-            boolean restoreInactiveStoredEvent = storedEventInactive && event.priority.ordinal() >= currentPriority.ordinal();
-            if (higherPriority || restoreInactiveStoredEvent) {
+            if (higherPriority) {
                 cooldownEmptyMusic = false;
                 if (activeMusic) {
                     queueEventFade(event, true);
@@ -136,7 +135,7 @@ public class EventHelper {
             }
 
             if (!blockingForEventMusic && activeMusic && !isCurrentEventMusicStillApplicable(storedEventActive)) {
-                musicBreak = randomMusicBreak();
+                musicBreak = eventMusicBreak(event);
                 if (musicBreak > 0) {
                     musicBreak--;
                     blockingForEventMusic = true;
@@ -150,7 +149,7 @@ public class EventHelper {
                 return storedEventMusicOrBlocker();
             }
 
-            musicBreak = storedEventInactive ? randomMusicBreak() : randomMusicBreak();
+            musicBreak = eventMusicBreak(event);
             if (musicBreak > 0) {
                 musicBreak--;
                 blockingForEventMusic = true;
@@ -470,6 +469,12 @@ public class EventHelper {
         int minimumTicks = 0;
         if (Minecraft.getInstance().level == null) minimumTicks = 200;
         return Math.max(minimumTicks, SoundInstance.createUnseededRandom().nextIntBetweenInclusive(frequency.getFirst(), frequency.getSecond()) * 20);
+    }
+
+    private static int eventMusicBreak(Event event) {
+        int musicBreak = randomMusicBreak();
+        if (event.constant) return Math.min(SoundInstance.createUnseededRandom().nextIntBetweenInclusive(10, 20) * 20, musicBreak);
+        return musicBreak;
     }
 
     private static boolean playRandomEventSong(Minecraft client, List<SafeIdentifier> songs) {
