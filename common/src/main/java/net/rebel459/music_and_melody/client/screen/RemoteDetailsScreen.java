@@ -8,17 +8,17 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
-import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
-import net.rebel459.music_and_melody.client.remote.RemoteAlbumPack;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemotePack;
 
 import java.util.List;
 
-public class RemoteAlbumDetailsScreen extends Screen {
+public class RemoteDetailsScreen extends Screen {
 
-    private final AlbumScreen parent;
-    private final RemoteAlbumPack pack;
+    private final ContentBrowserScreen parent;
+    private final RemotePack pack;
 
-    public RemoteAlbumDetailsScreen(AlbumScreen parent, RemoteAlbumPack pack) {
+    public RemoteDetailsScreen(ContentBrowserScreen parent, RemotePack pack) {
         super(pack.name());
         this.parent = parent;
         this.pack = pack;
@@ -26,17 +26,11 @@ public class RemoteAlbumDetailsScreen extends Screen {
 
     @Override
     protected void init() {
-        int rowX = this.width / 2 - AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int buttonY = this.height - 27;
-        int buttonWidth = (AlbumScreen.MAIN_BUTTON_ROW_WIDTH - 4) / 2;
-
-        Button loadButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.load"), button -> {})
-                .bounds(rowX, buttonY, buttonWidth, 20)
-                .build());
-        loadButton.active = false;
-
+        int buttonWidth = 152;
+        int rowX = this.width / 2 - buttonWidth / 2;
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + (buttonWidth + 4), buttonY, buttonWidth, 20)
+                .bounds(rowX, buttonY, buttonWidth, 20)
                 .build());
         MusicScreenHelper.addSocialButtons(this);
     }
@@ -56,12 +50,12 @@ public class RemoteAlbumDetailsScreen extends Screen {
         graphics.text(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
         graphics.text(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
 
-        int x = this.width / 2 - AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2;
+        int x = this.width / 2 - ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int y = 76;
         line(graphics, Component.translatable("screen.music_and_melody.remote_album.repository", this.pack.repository()), x, y);
         line(graphics, Component.translatable("screen.music_and_melody.remote_album.version", this.pack.version()), x, y += 14);
 
-        List<FormattedCharSequence> description = this.font.split(this.pack.description(), AlbumScreen.MAIN_BUTTON_ROW_WIDTH);
+        List<FormattedCharSequence> description = this.font.split(this.pack.description(), ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH);
         y += 24;
         for (FormattedCharSequence line : description) {
             graphics.text(this.font, line, x, y, 0xFFCCCCCC);
@@ -80,7 +74,7 @@ public class RemoteAlbumDetailsScreen extends Screen {
     }
 
     private Component remoteActionMessage() {
-        return switch (RemoteAlbumManager.state(this.pack)) {
+        return switch (RemoteContentManager.state(this.pack)) {
             case DOWNLOADING -> Component.translatable("button.music_and_melody.downloading");
             case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
             case UPDATE_AVAILABLE -> Component.translatable("button.music_and_melody.update");
@@ -89,7 +83,7 @@ public class RemoteAlbumDetailsScreen extends Screen {
         };
     }
 
-    private static Component stateName(RemoteAlbumManager.State state) {
+    private static Component stateName(RemoteContentManager.State state) {
         return Component.translatable("screen.music_and_melody.remote_album.state." + state.name().toLowerCase());
     }
 }
