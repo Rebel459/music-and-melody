@@ -31,6 +31,8 @@ public final class PlaylistHelper {
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
+    private static SafeIdentifier directSongId = null;
+    private static boolean directSongLooping = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
 
@@ -41,6 +43,7 @@ public final class PlaylistHelper {
     public static void add(SafeIdentifier song) {
         ensureLoaded();
         if (!QUEUED_SONGS.contains(song)) {
+            clearQueueSource();
             QUEUED_SONGS.add(song);
             save();
         }
@@ -55,7 +58,22 @@ public final class PlaylistHelper {
                 changed = true;
             }
         }
+        if (changed) clearQueueSource();
         if (changed) save();
+    }
+
+    public static void setQueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {
+        MaMDataConfig config = MaMDataConfig.get();
+        config.playlists.queue_source_type = type;
+        config.playlists.queue_source_id = id;
+        config.playlists.queue_source_name = name;
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+    }
+
+    public static Optional<QueueSource> queueSource() {
+        MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
+        if (playlists.queue_source_type == MaMDataConfig.QueueSourceType.NONE || playlists.queue_source_name.isBlank()) return Optional.empty();
+        return Optional.of(new QueueSource(playlists.queue_source_type, playlists.queue_source_id, playlists.queue_source_name));
     }
 
     public static boolean isQueued(SafeIdentifier song) {
@@ -76,6 +94,7 @@ public final class PlaylistHelper {
             if (index < queueIndex) queueIndex--;
             if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
             queueIndex = clampQueueIndex(queueIndex);
+            clearQueueSource();
             save();
         }
     }
@@ -87,6 +106,7 @@ public final class PlaylistHelper {
         QUEUED_SONGS.clear();
         queueIndex = 0;
         queuePaused = true;
+        clearQueueSource();
         save();
     }
 
@@ -143,6 +163,49 @@ public final class PlaylistHelper {
 
     public static boolean isQueuePlaying() {
         return currentSongFromQueue && isPlaying();
+    }
+
+    public static boolean isDirectPlaying() {
+        return currentSong != null && !currentSongFromQueue && !currentSongFromEvent && isPlaying();
+    }
+
+    public static boolean hasDirectSong() {
+        return directSongId != null;
+    }
+
+    public static SafeIdentifier getDirectSongId() {
+        return directSongId;
+    }
+
+    public static boolean isDirectSongLooping() {
+        return directSongLooping;
+    }
+
+    public static void setDirectSongLooping(boolean looping) {
+        directSongLooping = looping;
+        if (isDirectPlaying() && currentSongId != null) {
+            currentSongLooping = looping;
+            if (currentSong instanceof DirectSoundInstance directSound) {
+                directSound.setLooping(looping);
+            }
+        }
+    }
+
+    public static boolean playDirectSong() {
+        if (directSongId == null) return false;
+        return play(directSongId, directSongLooping);
+    }
+
+    public static void removeDirectSong() {
+        if (isDirectPlaying()) {
+            stop();
+        }
+        directSongId = null;
+        directSongLooping = false;
+    }
+
+    public static SafeIdentifier getCurrentSongId() {
+        return currentSongId;
     }
 
     public static boolean isEventPlaying() {
@@ -306,6 +369,13 @@ public final class PlaylistHelper {
         currentSongLooping = loop;
         currentSongFromQueue = fromQueue;
         currentSongFromEvent = fromEvent;
+        if (!fromQueue && !fromEvent) {
+            directSongId = id;
+            directSongLooping = loop;
+        } else {
+            directSongId = null;
+            directSongLooping = false;
+        }
         currentSong = new DirectSoundInstance(
                 id,
                 SoundSource.MUSIC,
@@ -392,4 +462,13 @@ public final class PlaylistHelper {
         config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
+
+    private static void clearQueueSource() {
+        MaMDataConfig config = MaMDataConfig.get();
+        config.playlists.queue_source_type = MaMDataConfig.QueueSourceType.NONE;
+        config.playlists.queue_source_id = "";
+        config.playlists.queue_source_name = "";
+    }
+
+    public record QueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {}
 }

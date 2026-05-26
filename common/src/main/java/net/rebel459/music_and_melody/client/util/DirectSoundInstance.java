@@ -105,6 +105,10 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		return this.soundEvent;
 	}
 
+	public void setLooping(boolean looping) {
+		this.looping = looping;
+	}
+
 	private static ResolvedSound resolveSound(SafeIdentifier location) {
 		return ConfigAlbum.file(location)
 				.or(() -> SafeMusicHelper.resolve(location))

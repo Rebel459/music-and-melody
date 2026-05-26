@@ -1,24 +1,26 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.util.EventHelper;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -32,8 +34,9 @@ public class EventScreen extends Screen {
     private static final Event.PriorityType[] PRIORITIES = Event.PriorityType.values();
     private static final int CONDITIONS_Y = 114;
     private static final int CONDITIONS_ONE_LINE_HEIGHT = 18;
-    private static final int CONDITIONS_TWO_LINE_HEIGHT = 36;
-    private static final int CONDITIONS_LIST_GAP = 4;
+    private static final int CONDITIONS_TWO_LINE_HEIGHT = 28;
+    private static final int CONDITIONS_THREE_LINE_HEIGHT = 38;
+    private static final int CONDITIONS_LIST_GAP = 12;
     private static final int BOTTOM_BUTTON_AREA_HEIGHT = 60;
 
     private final Screen parent;
@@ -62,7 +65,7 @@ public class EventScreen extends Screen {
     private boolean openSourcesOnInit;
     private boolean closeToSources;
     private Screen sourceBrowserParent;
-    private ResourceLocation activeSourceId;
+    private Identifier activeSourceId;
 
     public EventScreen(Screen parent) {
         super(TITLE);
@@ -75,7 +78,7 @@ public class EventScreen extends Screen {
         this.openSourcesOnInit = openSourcesOnInit;
     }
 
-    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, ResourceLocation activeSourceId) {
+    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId) {
         super(TITLE);
         this.parent = parent;
         this.selectedIndex = selectedIndex;
@@ -85,7 +88,7 @@ public class EventScreen extends Screen {
         reloadEntries();
     }
 
-    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, ResourceLocation activeSourceId, boolean closeToSources, Screen sourceBrowserParent) {
+    private EventScreen(Screen parent, int selectedIndex, boolean listExpanded, boolean savedChanges, Identifier activeSourceId, boolean closeToSources, Screen sourceBrowserParent) {
         this(parent, selectedIndex, listExpanded, savedChanges, activeSourceId);
         this.closeToSources = closeToSources;
         this.sourceBrowserParent = sourceBrowserParent;
@@ -95,7 +98,7 @@ public class EventScreen extends Screen {
     protected void init() {
         if (this.openSourcesOnInit) {
             this.openSourcesOnInit = false;
-            this.minecraft.setScreen(new EventSourceScreen(this, this.parent));
+            this.minecraft.setScreen(new EventBrowserScreen(this, this.parent));
             return;
         }
 
@@ -127,16 +130,11 @@ public class EventScreen extends Screen {
             this.musicField = this.addRenderableWidget(new EditBox(this.font, fieldX, 78, fieldWidth, 20, Component.translatable("screen.music_and_melody.event_editor.music")));
             this.musicField.setMaxLength(256);
             this.musicField.setResponder(value -> markDirty());
-            this.conditionsField = this.addRenderableWidget(new MultiLineEditBox(
-                    this.font,
-                    fieldX,
-                    CONDITIONS_Y,
-                    fieldWidth,
-                    CONDITIONS_ONE_LINE_HEIGHT,
-                    Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY),
-                    CommonComponents.EMPTY
-            ));
-            this.conditionsField.setValueListener(value -> markDirty());
+            this.conditionsField = this.addRenderableWidget(MultiLineEditBox.builder()
+                    .setX(fieldX)
+                    .setY(CONDITIONS_Y)
+                    .setPlaceholder(Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY))
+                    .build(this.font, fieldWidth, CONDITIONS_ONE_LINE_HEIGHT, Component.translatable("screen.music_and_melody.event_editor.conditions")));
             this.conditionsField.setValueListener(value -> markDirty());
         }
 
@@ -144,7 +142,7 @@ public class EventScreen extends Screen {
         int listHeight = this.listExpanded ? Math.max(34, this.height - 92) : Math.max(34, this.height - listY - BOTTOM_BUTTON_AREA_HEIGHT);
         this.list = this.addRenderableWidget(new EventList(this, this.minecraft, this.width, listHeight, listY));
 
-        int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+        int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
         int rowX = this.width / 2 - rowWidth / 2;
         int topY = this.height - 51;
         int bottomY = this.height - 27;
@@ -178,18 +176,7 @@ public class EventScreen extends Screen {
         } else {
             clearEditor();
         }
-        // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
-        }
+        MusicScreenHelper.addSocialButtons(this);
         refreshEditorState();
     }
 
@@ -217,7 +204,7 @@ public class EventScreen extends Screen {
         if (this.savedChanges) {
             EventHelper.resetMusicBreak();
         }
-        if (this.closeToSources) this.minecraft.setScreen(new EventSourceScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
+        if (this.closeToSources) this.minecraft.setScreen(new EventBrowserScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
         else this.minecraft.setScreen(this.parent);
     }
 
@@ -301,7 +288,7 @@ public class EventScreen extends Screen {
         }
 
         if (saveSourceEntries(source, sourceEntries)) {
-            ResourceLocation sourceId = source.id;
+            Identifier sourceId = source.id;
             reloadEntries();
             if (!sourceId.equals(this.activeSourceId)) this.activeSourceId = sourceId;
             select(Math.min(nextIndex, this.entries.size() - 1));
@@ -325,10 +312,10 @@ public class EventScreen extends Screen {
     }
 
     private void browseSources() {
-        this.minecraft.setScreen(new EventSourceScreen(this));
+        this.minecraft.setScreen(new EventBrowserScreen(this));
     }
 
-    private void loadSource(ResourceLocation sourceId) {
+    private void loadSource(Identifier sourceId) {
         this.activeSourceId = sourceId;
         this.selectedIndex = -1;
         reloadEntries();
@@ -345,7 +332,7 @@ public class EventScreen extends Screen {
     private Event.Record.Entry editorEntry() {
         if (this.musicField == null || this.weightField == null || this.conditionsField == null) return null;
         String music = this.musicField.getValue().trim();
-        if (ResourceLocation.tryParse(music) == null) return null;
+        if (Identifier.tryParse(music) == null) return null;
         int weight;
         try {
             weight = Math.max(1, Integer.parseInt(this.weightField.getValue().trim()));
@@ -427,9 +414,9 @@ public class EventScreen extends Screen {
         int lines = 0;
         for (String line : value.split("\n", -1)) {
             lines += Math.max(1, this.font.split(Component.literal(line), maxWidth).size());
-            if (lines > 1) return CONDITIONS_TWO_LINE_HEIGHT;
+            if (lines > 2) return CONDITIONS_THREE_LINE_HEIGHT;
         }
-        return CONDITIONS_ONE_LINE_HEIGHT;
+        return lines > 1 ? CONDITIONS_TWO_LINE_HEIGHT : CONDITIONS_ONE_LINE_HEIGHT;
     }
 
     private static int conditionsListY(int conditionsHeight) {
@@ -572,7 +559,7 @@ public class EventScreen extends Screen {
             } catch (NumberFormatException exception) {
                 return null;
             }
-        } else if (isStringCondition(type) || ResourceLocation.tryParse(conditionValue) != null) {
+        } else if (isStringCondition(type) || Identifier.tryParse(conditionValue) != null) {
             if (conditionValue.isEmpty()) return null;
             parsedValue = new Event.Record.Condition.Value.String(conditionValue);
         } else {
@@ -652,12 +639,12 @@ public class EventScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class EventEntry extends MusicListEntry<EventEntry> {
+    private static class EventEntry extends ObjectSelectionList.Entry<EventEntry> {
 
         private final EventScreen screen;
         private final Minecraft minecraft;
@@ -690,29 +677,31 @@ public class EventScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             this.screen.select(this.index);
             return true;
         }
     }
 
-    public static class EventSourceScreen extends Screen {
+    public static class EventBrowserScreen extends Screen {
 
         private static final Component TITLE = Component.translatable("screen.music_and_melody.events");
         private final EventScreen editor;
         private final Screen parent;
-        private final Set<ResourceLocation> deletePendingSources = new HashSet<>();
+        private final Set<Identifier> deletePendingSources = new HashSet<>();
         private SourceList list;
+        private String search = "";
+        private Button sortButton;
 
-        public EventSourceScreen(Screen parent) {
+        public EventBrowserScreen(Screen parent) {
             this(new EventScreen(parent), parent);
         }
 
-        public EventSourceScreen(EventScreen parent) {
+        public EventBrowserScreen(EventScreen parent) {
             this(parent, parent);
         }
 
-        public EventSourceScreen(EventScreen editor, Screen parent) {
+        public EventBrowserScreen(EventScreen editor, Screen parent) {
             super(TITLE);
             this.editor = editor;
             this.parent = parent;
@@ -720,13 +709,32 @@ public class EventScreen extends Screen {
 
         @Override
         protected void init() {
-            this.list = this.addRenderableWidget(new SourceList(this, this.minecraft, this.width, this.height - 64));
-            int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
-            int buttonWidth = (rowWidth - 8) / 3;
+            int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
             int rowX = this.width / 2 - rowWidth / 2;
+            int topY = 31;
+            int halfWidth = (rowWidth - 4) / 2;
+            MaMDataConfig.Events events = MaMDataConfig.get().events;
+
+            addCheckbox("screen.music_and_melody.event.custom", rowX, topY, halfWidth, () -> events.show_custom, value -> events.show_custom = value);
+            addCheckbox("screen.music_and_melody.event.built_in", rowX + halfWidth + 4, topY, halfWidth, () -> events.show_built_in, value -> events.show_built_in = value);
+
+            this.list = this.addRenderableWidget(new SourceList(this, this.minecraft, this.width, this.height - 112));
+
+            int searchY = this.height - 51;
             int buttonY = this.height - 27;
-            this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.filter"), button -> {
-                        this.minecraft.setScreen(new EventFilterScreen(this));
+            EditBox searchField = this.addRenderableWidget(new EditBox(this.font, rowX, searchY, rowWidth, 20, Component.translatable("screen.music_and_melody.search")));
+            searchField.setValue(this.search);
+            searchField.setResponder(value -> {
+                this.search = value;
+                refreshList();
+            });
+
+            int buttonWidth = (rowWidth - 8) / 3;
+            this.sortButton = this.addRenderableWidget(Button.builder(sortMessage(), button -> {
+                        events.enabled_first = !events.enabled_first;
+                        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+                        this.sortButton.setMessage(sortMessage());
+                        refreshList();
                     })
                     .bounds(rowX, buttonY, buttonWidth, 20)
                     .build());
@@ -736,18 +744,26 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                     .bounds(rowX + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
                     .build());
-                    // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
+            MusicScreenHelper.addSocialButtons(this);
         }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
+
+        private Component sortMessage() {
+            return Component.translatable(MaMDataConfig.get().events.enabled_first ? "button.music_and_melody.enabled_first" : "button.music_and_melody.enabled_last");
         }
+
+        private void addCheckbox(String key, int x, int y, int width, java.util.function.Supplier<Boolean> getter, java.util.function.Consumer<Boolean> setter) {
+            Checkbox checkbox = Checkbox.builder(Component.translatable(key), this.font)
+                    .pos(x, y)
+                    .selected(getter.get())
+                    .maxWidth(width)
+                    .onValueChange((changedCheckbox, selected) -> {
+                        setter.accept(selected);
+                        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+                        refreshList();
+                    })
+                    .build();
+            checkbox.setX(x + (width - checkbox.getWidth()) / 2);
+            this.addRenderableWidget(checkbox);
         }
 
         @Override
@@ -779,7 +795,7 @@ public class EventScreen extends Screen {
             this.minecraft.setScreen(this.parent);
         }
 
-        private void choose(ResourceLocation sourceId) {
+        private void choose(Identifier sourceId) {
             this.editor.loadSource(sourceId);
             this.editor.closeToSources = true;
             this.editor.sourceBrowserParent = this.parent;
@@ -787,7 +803,7 @@ public class EventScreen extends Screen {
         }
 
         private void newSource() {
-            this.minecraft.setScreen(new NewEventSourceScreen(this));
+            this.minecraft.setScreen(new NewEventScreen(this));
         }
 
         void refreshList() {
@@ -811,24 +827,21 @@ public class EventScreen extends Screen {
             MaMDataConfig.Events filter = MaMDataConfig.get().events;
 
             boolean shouldShow = (filter.show_custom && source.isConfig()) || (filter.show_built_in && !source.isConfig());
-
-            if (filter.visibility == MaMDataConfig.EventVisibility.ENABLED) {
-                return source.isEnabled() && shouldShow;
-            }
-            if (filter.visibility == MaMDataConfig.EventVisibility.DISABLED) {
-                return !source.isEnabled() && shouldShow;
-            }
-
-            return shouldShow;
+            if (!shouldShow) return false;
+            String query = this.search.trim().toLowerCase(Locale.ROOT);
+            return query.isEmpty()
+                    || source.record.name().getString().toLowerCase(Locale.ROOT).contains(query)
+                    || source.id.toString().toLowerCase(Locale.ROOT).contains(query)
+                    || source.record.description().getString().toLowerCase(Locale.ROOT).contains(query);
         }
     }
 
     private static class SourceList extends ObjectSelectionList<SourceEntry> {
 
-        private final EventSourceScreen screen;
+        private final EventBrowserScreen screen;
 
-        SourceList(EventSourceScreen screen, Minecraft minecraft, int width, int height) {
-            super(minecraft, width, height, 32, 38);
+        SourceList(EventBrowserScreen screen, Minecraft minecraft, int width, int height) {
+            super(minecraft, width, height, 56, 38);
             this.screen = screen;
             this.centerListVertically = false;
             refresh();
@@ -836,11 +849,16 @@ public class EventScreen extends Screen {
 
         private void refresh() {
             this.clearEntries();
-            for (Event.Source source : Event.sources()) {
-                if (this.screen.visible(source)) {
-                    this.addEntry(new SourceEntry(this.screen, this.minecraft, source));
-                }
-            }
+            Comparator<Event.Source> comparator = Comparator
+                    .comparing(Event.Source::isEnabled);
+            if (MaMDataConfig.get().events.enabled_first) comparator = comparator.reversed();
+            comparator = comparator.thenComparing(source -> source.record.name().getString(), String.CASE_INSENSITIVE_ORDER);
+
+            Event.sources().stream()
+                    .filter(this.screen::visible)
+                    .sorted(comparator)
+                    .map(source -> new SourceEntry(this.screen, this.minecraft, source))
+                    .forEach(this::addEntry);
         }
 
         @Override
@@ -849,23 +867,23 @@ public class EventScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class SourceEntry extends MusicListEntry<SourceEntry> {
+    private static class SourceEntry extends ObjectSelectionList.Entry<SourceEntry> {
 
         private static final int BUTTON_WIDTH = 64;
         private static final int BUTTON_GAP = 4;
-        private final EventSourceScreen screen;
+        private final EventBrowserScreen screen;
         private final Minecraft minecraft;
         private final Event.Source source;
         private final Button loadButton;
         private final Button toggleButton;
         private final IconButton deleteButton;
 
-        SourceEntry(EventSourceScreen screen, Minecraft minecraft, Event.Source source) {
+        SourceEntry(EventBrowserScreen screen, Minecraft minecraft, Event.Source source) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.source = source;
@@ -893,7 +911,7 @@ public class EventScreen extends Screen {
             graphics.drawString(this.minecraft.font, name, x, this.getContentYMiddle() - this.minecraft.font.lineHeight - 1, color);
             graphics.drawString(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(this.source.id.toString(), maxWidth), x, this.getContentYMiddle() + 2, 0xFFAAAAAA);
             if (hovered && hasDescription() && mouseX < this.getContentRight() - buttonsWidth) {
-                graphics.renderTooltip(this.minecraft.font, this.minecraft.font.split(this.source.record.description(), 240), mouseX, mouseY);
+                graphics.setTooltipForNextFrame(this.minecraft.font, this.minecraft.font.split(this.source.record.description(), 240), mouseX, mouseY);
             }
             renderButtons(graphics, mouseX, mouseY, tickDelta);
         }
@@ -903,11 +921,11 @@ public class EventScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            return this.loadButton.mouseClicked(mouseX, mouseY, button)
-                    || this.toggleButton.mouseClicked(mouseX, mouseY, button)
-                    || this.deleteButton != null && this.deleteButton.mouseClicked(mouseX, mouseY, button)
-                    || super.mouseClicked(mouseX, mouseY, button);
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.loadButton.mouseClicked(event, doubleClick)
+                    || this.toggleButton.mouseClicked(event, doubleClick)
+                    || this.deleteButton != null && this.deleteButton.mouseClicked(event, doubleClick)
+                    || super.mouseClicked(event, doubleClick);
         }
 
         private void renderButtons(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
@@ -946,7 +964,7 @@ public class EventScreen extends Screen {
             return Component.translatable(this.screen.isDeletePending(this.source) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
         }
 
-        private ResourceLocation deleteIcon() {
+        private Identifier deleteIcon() {
             return IconButton.icon(this.screen.isDeletePending(this.source) ? "restore" : "delete");
         }
 
@@ -963,16 +981,16 @@ public class EventScreen extends Screen {
         }
     }
 
-    private static class NewEventSourceScreen extends Screen {
+    private static class NewEventScreen extends Screen {
 
         private static final Component TITLE = Component.translatable("screen.music_and_melody.create_event");
-        private final EventSourceScreen parent;
+        private final EventBrowserScreen parent;
         private EditBox nameField;
         private EditBox descriptionField;
         private EditBox pathField;
         private Button createButton;
 
-        NewEventSourceScreen(EventSourceScreen parent) {
+        NewEventScreen(EventBrowserScreen parent) {
             super(TITLE);
             this.parent = parent;
         }
@@ -995,7 +1013,7 @@ public class EventScreen extends Screen {
             updatePathHint();
 
             int buttonY = this.height - 27;
-            int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+            int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
             int rowX = this.width / 2 - rowWidth / 2;
             int buttonWidth = (rowWidth - 4) / 2;
             this.createButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.create"), button -> create())
@@ -1004,18 +1022,7 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
                     .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
                     .build());
-                    // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
-        }
+            MusicScreenHelper.addSocialButtons(this);
             this.setInitialFocus(this.nameField);
             refreshCreateState();
         }

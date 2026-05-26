@@ -5,12 +5,10 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
-import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Config(name = MusicAndMelody.MOD_ID + "/" + "data")
 public class MaMDataConfig implements ConfigData {
@@ -25,17 +23,22 @@ public class MaMDataConfig implements ConfigData {
 	public Albums albums = new Albums();
 
 	public static class Albums {
-		public boolean favourites_only = false;
-		public boolean show_albums = true;
-		public boolean show_playlists = true;
-		public boolean show_remote = true;
+		public BrowserTab browser_tab = BrowserTab.ALBUMS;
+		public boolean favourites_first = true;
+		public boolean downloads_first = true;
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
-		public List<DownloadedAlbumPack> downloads = new ArrayList<>();
+		public List<DownloadedPack> downloads = new ArrayList<>();
 	}
 
-	public static class DownloadedAlbumPack {
+	public enum BrowserTab {
+		ALBUMS,
+		PLAYLISTS,
+		REMOTE
+	}
+
+	public static class DownloadedPack {
 		public String id = "";
 		public String version = "";
 		public String sha256 = "";
@@ -47,28 +50,27 @@ public class MaMDataConfig implements ConfigData {
 
 	public static class Playlists {
 		public boolean loop = false;
+		public QueueSourceType queue_source_type = QueueSourceType.NONE;
+		public String queue_source_id = "";
+		public String queue_source_name = "";
 		public List<String> queued_songs = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
+	}
+
+	public enum QueueSourceType {
+		NONE,
+		ALBUM,
+		PLAYLIST
 	}
 
 	@ConfigEntry.Gui.CollapsibleObject
 	public Events events = new Events();
 
 	public static class Events {
-		public EventVisibility visibility = EventVisibility.ALL;
+		public boolean enabled_first = true;
 		public boolean show_custom = true;
 		public boolean show_built_in = true;
 		public List<String> disabled_events = new ArrayList<>();
 		public List<String> enabled_events = new ArrayList<>();
-	}
-
-	public enum EventVisibility {
-		ALL,
-		ENABLED,
-		DISABLED;
-
-		public Component component() {
-			return Component.translatable("screen.music_and_melody.event_filter.visibility." + this.name().toLowerCase(Locale.ROOT));
-		}
 	}
 }

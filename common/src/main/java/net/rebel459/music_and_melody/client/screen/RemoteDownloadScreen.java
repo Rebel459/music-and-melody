@@ -5,25 +5,24 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.util.FormattedCharSequence;
-import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
-import net.rebel459.music_and_melody.client.remote.RemoteAlbumPack;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemotePack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 
-public class RemoteAlbumDownloadScreen extends Screen {
+public class RemoteDownloadScreen extends Screen {
 
     private static final int WIDTH = 308;
-    private final AlbumScreen parent;
-    private final RemoteAlbumPack pack;
+    private final ContentBrowserScreen parent;
+    private final RemotePack pack;
     private Button importButton;
 
-    public RemoteAlbumDownloadScreen(AlbumScreen parent, RemoteAlbumPack pack) {
+    public RemoteDownloadScreen(ContentBrowserScreen parent, RemotePack pack) {
         super(Component.translatable("screen.music_and_melody.remote_redirect"));
         this.parent = parent;
         this.pack = pack;
@@ -43,7 +42,7 @@ public class RemoteAlbumDownloadScreen extends Screen {
                 .build());
 
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.download"), button -> {
-            Util.getPlatform().openUri(URI.create(RemoteAlbumManager.externalDownloadUrl(this.pack)));
+            Util.getPlatform().openUri(URI.create(RemoteContentManager.externalDownloadUrl(this.pack)));
         }).bounds(x, buttonY, buttonWidth, 20).build());
 
         this.importButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.import"), button -> importLocal())
@@ -53,18 +52,7 @@ public class RemoteAlbumDownloadScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(x + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
                 .build());
-        // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
-        }
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override
@@ -99,16 +87,16 @@ public class RemoteAlbumDownloadScreen extends Screen {
         );
         if (path == null || path.isBlank()) return;
 
-        RemoteAlbumManager.importLocal(this.pack, Path.of(path));
+        RemoteContentManager.importLocal(this.pack, Path.of(path));
         updateImportButton();
     }
 
     private void updateImportButton() {
         if (this.importButton != null) {
-            RemoteAlbumManager.State state = RemoteAlbumManager.state(this.pack);
-            this.importButton.active = state != RemoteAlbumManager.State.DOWNLOADING
-                    && state != RemoteAlbumManager.State.NEEDS_RELOAD
-                    && state != RemoteAlbumManager.State.INSTALLED;
+            RemoteContentManager.State state = RemoteContentManager.state(this.pack);
+            this.importButton.active = state != RemoteContentManager.State.DOWNLOADING
+                    && state != RemoteContentManager.State.NEEDS_RELOAD
+                    && state != RemoteContentManager.State.INSTALLED;
         }
     }
 

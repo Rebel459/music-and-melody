@@ -10,7 +10,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.client.remote.RemoteAlbumManager;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
@@ -144,7 +144,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
-        if (RemoteAlbumManager.isDownloadedAlbum(albumId)) {
+        if (RemoteContentManager.isDownloadedAlbum(albumId)) {
             tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
         }
 
