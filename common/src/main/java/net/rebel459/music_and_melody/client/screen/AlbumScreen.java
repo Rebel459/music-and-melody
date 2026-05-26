@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -53,7 +54,18 @@ public class AlbumScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + 156, buttonY, 152, 20)
                 .build());
-        MusicScreenHelper.addSocialButtons(this);
+                // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
     }
 
     @Override

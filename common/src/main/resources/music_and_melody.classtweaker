@@ -6,4 +6,3 @@ accessible field net/minecraft/client/gui/components/BossHealthOverlay events Lj
 accessible field net/minecraft/client/sounds/SoundManager soundEngine Lnet/minecraft/client/sounds/SoundEngine;
 accessible field net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl minecraft Lnet/minecraft/client/Minecraft;
 accessible field net/minecraft/client/gui/screens/options/OptionsSubScreen list Lnet/minecraft/client/gui/components/OptionsList;
-accessible method net/minecraft/client/gui/screens/Screen addRenderableWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;

@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.util.EventHelper;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
@@ -176,7 +178,18 @@ public class EventScreen extends Screen {
         } else {
             clearEditor();
         }
-        MusicScreenHelper.addSocialButtons(this);
+        // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
         refreshEditorState();
     }
 
@@ -723,7 +736,18 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                     .bounds(rowX + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
                     .build());
-            MusicScreenHelper.addSocialButtons(this);
+                    // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
         }
 
         @Override
@@ -980,7 +1004,18 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
                     .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
                     .build());
-            MusicScreenHelper.addSocialButtons(this);
+                    // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
             this.setInitialFocus(this.nameField);
             refreshCreateState();
         }

@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import me.shedaniel.autoconfig.AutoConfig;
+import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.Event;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.Locale;
@@ -42,7 +44,18 @@ public class EventFilterScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 4, buttonY, AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2, 20)
                 .build());
-        MusicScreenHelper.addSocialButtons(this);
+        // SOCIAL BUTTONS
+        int socialButtonY = this.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
+            ));
+        }
     }
 
     private MaMDataConfig.EventVisibility nextVisibility(MaMDataConfig.EventVisibility visibility) {
