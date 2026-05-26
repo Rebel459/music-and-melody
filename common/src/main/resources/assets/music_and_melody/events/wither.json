@@ -12,7 +12,8 @@
         }
       ],
       "priority": "high",
-      "sustain": false
+      "sustain": false,
+      "constant": true
     }
   ]
 }
