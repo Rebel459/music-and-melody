@@ -82,18 +82,18 @@ public final class MusicDiscHelper {
     }
 
     public static ResourceLocation discSoundId(Minecraft minecraft, ResourceLocation jukeboxSongId) {
-        Optional<Holder<JukeboxSong>> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
-        if (jukeboxSong.isEmpty()) return fallbackDiscSoundId(jukeboxSongId);
-
-        SoundEvent event = jukeboxSong.get().value().soundEvent().value();
-        ResourceLocation eventId = event.getLocation();
-        var soundEvent = minecraft.getSoundManager().getSoundEvent(eventId);
-        if (soundEvent != null) {
-            Sound sound = soundEvent.getSound(SoundInstance.createUnseededRandom());
-            if (sound != SoundManager.EMPTY_SOUND) return sound.getLocation();
+        Optional<JukeboxSong> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
+        if (jukeboxSong.isEmpty()) {
+            Optional<ResourceLocation> cached = JukeboxSongCache.soundId(minecraft, jukeboxSongId);
+            return cached.orElseGet(() -> fallbackDiscSoundId(minecraft, jukeboxSongId));
         }
 
-        return fallbackDiscSoundId(eventId);
+        SoundEvent event = jukeboxSong.get().soundEvent().value();
+        ResourceLocation eventId = event.location();
+        Optional<ResourceLocation> sound = soundFromEvent(minecraft, eventId);
+        if (sound.isPresent()) return sound.get();
+
+        return fallbackDiscSoundId(minecraft, eventId);
     }
 
     private static boolean shouldUseInventoryDiscFallback(Minecraft minecraft) {
@@ -109,10 +109,31 @@ public final class MusicDiscHelper {
                 .flatMap(registry -> registry.get(ResourceKey.create(Registries.JUKEBOX_SONG, id)));
     }
 
-    private static ResourceLocation fallbackDiscSoundId(ResourceLocation id) {
+    private static ResourceLocation fallbackDiscSoundId(Minecraft minecraft, ResourceLocation id) {
+        for (ResourceLocation eventId : fallbackSoundEvents(id)) {
+            Optional<ResourceLocation> sound = soundFromEvent(minecraft, eventId);
+            if (sound.isPresent()) return sound.get();
+        }
+
         String path = id.getPath();
         if (path.startsWith("music_disc.")) path = path.substring("music_disc.".length());
         return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "records/" + path);
+    }
+
+    private static Optional<ResourceLocation> soundFromEvent(Minecraft minecraft, ResourceLocation eventId) {
+        var soundEvent = minecraft.getSoundManager().getSoundEvent(eventId);
+        if (soundEvent == null) return Optional.empty();
+        Sound sound = soundEvent.getSound(SoundInstance.createUnseededRandom());
+        if (sound == SoundManager.EMPTY_SOUND) return Optional.empty();
+        return Optional.of(sound.getLocation());
+    }
+
+    private static ResourceLocation[] fallbackSoundEvents(ResourceLocation jukeboxSongId) {
+        String path = jukeboxSongId.getPath();
+        return new ResourceLocation[] {
+                ResourceLocation.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc." + path),
+                ResourceLocation.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc_" + path)
+        };
     }
 
     public record Match(Album album, String disc, ResourceLocation jukeboxSong) {}
