@@ -90,6 +90,7 @@ public class PlaylistScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override

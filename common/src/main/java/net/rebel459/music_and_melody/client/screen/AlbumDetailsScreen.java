@@ -60,6 +60,7 @@ public class AlbumDetailsScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override
@@ -333,9 +334,10 @@ public class AlbumDetailsScreen extends Screen {
             if (this.playButton != null) {
                 int buttonY = contentYMiddle - 10;
                 int controlX = contentRight - controlsWidth - rightPadding;
+                boolean missing = hasMissingStatusIcon();
                 this.playButton.setIconAndTooltip(playIcon(this.playableSong), playMessage(this.playableSong));
-                this.playButton.active = this.playable;
-                this.queueButton.active = this.playable && !PlaylistHelper.isQueued(this.playableSong);
+                this.playButton.active = this.playable && !missing;
+                this.queueButton.active = this.playable && !missing && !PlaylistHelper.isQueued(this.playableSong);
                 this.playButton.setX(controlX);
                 this.playButton.setY(buttonY);
                 this.queueButton.setX(this.playButton.getX() + BUTTON_WIDTH + BUTTON_GAP);
@@ -347,6 +349,9 @@ public class AlbumDetailsScreen extends Screen {
                 } else if (this.statusIcon != null) {
                     int statusX = this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP;
                     IconButton.renderIconWithTooltip(graphics, this.statusIcon, statusX, buttonY, this.statusText, mouseX, mouseY);
+                } else if (hasMissingStatusIcon()) {
+                    int statusX = this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP;
+                    IconButton.renderIconWithTooltip(graphics, IconButton.icon("unknown"), statusX, buttonY, Component.translatable("button.music_and_melody.unknown"), mouseX, mouseY);
                 }
                 this.playButton.render(graphics, mouseX, mouseY, tickDelta);
                 this.queueButton.render(graphics, mouseX, mouseY, tickDelta);
@@ -365,8 +370,13 @@ public class AlbumDetailsScreen extends Screen {
             int width = BUTTON_WIDTH * 2 + BUTTON_GAP;
             if (this.toggleButton != null) return width + BUTTON_GAP + BUTTON_WIDTH;
             if (this.statusIcon != null) return width + BUTTON_GAP + BUTTON_WIDTH;
+            if (hasMissingStatusIcon()) return width + BUTTON_GAP + BUTTON_WIDTH;
             if (this.statusText != null) return width + BUTTON_GAP + STATUS_WIDTH;
             return width;
+        }
+
+        private boolean hasMissingStatusIcon() {
+            return this.playButton != null && this.toggleButton == null && this.statusIcon == null && this.statusText == null;
         }
 
         @Override

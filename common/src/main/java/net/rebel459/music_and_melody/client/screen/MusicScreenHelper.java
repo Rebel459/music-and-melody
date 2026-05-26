@@ -1,12 +1,16 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+
+import java.net.URI;
 
 final class MusicScreenHelper {
 
@@ -14,10 +18,27 @@ final class MusicScreenHelper {
 
     static final ResourceLocation FALLBACK_ALBUM_ICON = ResourceLocation.withDefaultNamespace("textures/misc/unknown_pack.png");
 
-    static ResourceLocation albumIcon(Minecraft minecraft, ResourceLocation icon) {
+    private static final URI DISCORD = URI.create("https://discord.com/invite/TGbBb47Gr5");
+    private static final URI KOFI = URI.create("https://ko-fi.com/rebel459");
+
+    static ResourceLocation albumIcon(Minecraft minecraft, Identifier icon) {
         if (icon == null) return FALLBACK_ALBUM_ICON;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
         return FALLBACK_ALBUM_ICON;
+    }
+
+    static void addSocialButtons(Screen screen) {
+        int y = screen.height - 27;
+        if (MaMClientConfig.get().discord_button) {
+            screen.addRenderableWidget(new IconButton(8, y, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            screen.addRenderableWidget(new IconButton(screen.width - IconButton.SIZE - 8, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(KOFI)
+            ));
+        }
     }
 
     static Component trackName(Album album, String song) {
