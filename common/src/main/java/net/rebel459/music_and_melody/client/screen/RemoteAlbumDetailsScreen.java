@@ -38,6 +38,7 @@ public class RemoteAlbumDetailsScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + (buttonWidth + 4), buttonY, buttonWidth, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override

@@ -1,0 +1,65 @@
+{
+  "name": {
+    "text": "Legacies Soundtrack"
+  },
+  "icon": "legacies:icon.png",
+  "entries": [
+    {
+      "namespace": "bloom",
+      "tracks": [
+        "music/overworld/lock_and_key"
+      ]
+    },
+    {
+      "namespace": "legacies",
+      "tracks": [
+        "music/menu/book_and_quill",
+        "music/overworld/open"
+      ]
+    },
+    {
+      "namespace": "music_and_melody",
+      "tracks": [
+        "music/caves/abyss",
+        "music/caves/extract_one",
+        "music/caves/shelter",
+        "music/creative/lugn",
+        "music/creative/miscible",
+        "music/creative/stolen_grid",
+        "music/end/minecraft_end_remix",
+        "music/end/only_the_beginning",
+        "music/end/sweden_end_remix",
+        "music/end/vacuum_decay",
+        "music/misc/threshold",
+        "music/nether/beneath",
+        "music/nether/bubbles",
+        "music/nether/jellyfish",
+        "music/nether/prophet",
+        "music/nether/psilopsychotic",
+        "music/nether/wasteland",
+        "music/overworld/814",
+        "music/overworld/albeit",
+        "music/overworld/alpha",
+        "music/overworld/black_desert_of_endless_stars",
+        "music/overworld/burning_konkrete",
+        "music/overworld/cliff_hanger",
+        "music/overworld/decay",
+        "music/overworld/fall",
+        "music/overworld/hunger",
+        "music/overworld/kall",
+        "music/overworld/mosaic",
+        "music/overworld/mt_reed",
+        "music/overworld/ravine",
+        "music/overworld/shrub",
+        "music/overworld/sunrise_on_the_mesa_2",
+        "music/overworld/tundra",
+        "music/structure/ancient_city/abandoned_halls",
+        "music/structure/ancient_city/echoes",
+        "music/structure/stronghold/if_we_could_reverse_time",
+        "music/structure/stronghold/voide",
+        "music/structure/stronghold/worn_away",
+        "music/under_water/strand_atoll"
+      ]
+    }
+  ]
+}

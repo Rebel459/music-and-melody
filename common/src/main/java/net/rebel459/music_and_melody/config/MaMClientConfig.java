@@ -97,6 +97,14 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
+	public boolean discord_button = true;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	public boolean kofi_button = true;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
 	public boolean remote_downloads = true;
 
 	@ConfigEntry.Category("config")

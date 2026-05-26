@@ -53,6 +53,7 @@ class SavePlaylistScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
                 .bounds(rowX + 156, buttonY, 152, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
         this.setInitialFocus(this.nameField);
         refreshSaveState();
     }

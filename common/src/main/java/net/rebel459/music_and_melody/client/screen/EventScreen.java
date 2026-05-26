@@ -166,6 +166,7 @@ public class EventScreen extends Screen {
         } else {
             clearEditor();
         }
+        MusicScreenHelper.addSocialButtons(this);
         refreshEditorState();
     }
 
@@ -698,6 +699,7 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                     .bounds(rowX + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
                     .build());
+            MusicScreenHelper.addSocialButtons(this);
         }
 
         @Override
@@ -954,6 +956,7 @@ public class EventScreen extends Screen {
             this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
                     .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
                     .build());
+            MusicScreenHelper.addSocialButtons(this);
             this.setInitialFocus(this.nameField);
             refreshCreateState();
         }

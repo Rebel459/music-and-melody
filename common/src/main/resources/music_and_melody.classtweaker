@@ -7,3 +7,4 @@ accessible field net/minecraft/client/sounds/SoundManager soundEngine Lnet/minec
 accessible field net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl minecraft Lnet/minecraft/client/Minecraft;
 accessible field net/minecraft/client/gui/screens/options/OptionsSubScreen list Lnet/minecraft/client/gui/components/OptionsList;
 accessible field net/minecraft/client/sounds/MusicManager gameMusicFrequency Lnet/minecraft/client/sounds/MusicManager$MusicFrequency;
+accessible method net/minecraft/client/gui/screens/Screen addRenderableWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;

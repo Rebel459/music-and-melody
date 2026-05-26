@@ -56,6 +56,7 @@ public class AlbumScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + 156, buttonY, 152, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override
@@ -336,6 +337,10 @@ public class AlbumScreen extends Screen {
                 this.actionButton.setX(detailsX + DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE + BUTTON_GAP);
                 this.actionButton.setY(this.getContentYMiddle() - 10);
                 this.actionButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            } else if (this.entry.isBuiltInPlaylist()) {
+                int builtInX = detailsX + DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE + BUTTON_GAP;
+                int builtInY = this.getContentYMiddle() - 10;
+                IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), builtInX, builtInY, Component.translatable("screen.music_and_melody.events.built_in"), mouseX, mouseY);
             }
         }
 
@@ -373,7 +378,7 @@ public class AlbumScreen extends Screen {
                 return IconButton.SIZE + BUTTON_GAP + normalButtonsWidth;
             }
 
-            if (this.actionButton == null) {
+            if (this.actionButton == null && !this.entry.isBuiltInPlaylist()) {
                 return DETAILS_BUTTON_WIDTH + BUTTON_GAP + IconButton.SIZE;
             }
 
@@ -569,6 +574,10 @@ public class AlbumScreen extends Screen {
 
         boolean isRemote() {
             return this.remote != null;
+        }
+
+        boolean isBuiltInPlaylist() {
+            return this.playlist != null && !this.playlist.isCustom();
         }
 
         boolean hasRemoteAction() {

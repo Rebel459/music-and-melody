@@ -42,6 +42,7 @@ public class AlbumFilterScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 4, buttonY, AlbumScreen.MAIN_BUTTON_ROW_WIDTH / 2, 20)
                 .build());
+        MusicScreenHelper.addSocialButtons(this);
     }
 
     @Override
