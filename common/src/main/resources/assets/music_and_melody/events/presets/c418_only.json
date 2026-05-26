@@ -119,7 +119,8 @@
         }
       ],
       "priority": "high",
-      "sustain": false
+      "sustain": false,
+      "constant": true
     },
     {
       "category": "playlist",
@@ -131,7 +132,8 @@
         }
       ],
       "priority": "high",
-      "sustain": false
+      "sustain": false,
+      "constant": true
     },
     {
       "category": "playlist",

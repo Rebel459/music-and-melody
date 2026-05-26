@@ -12,7 +12,8 @@
         }
       ],
       "priority": "medium",
-      "sustain": false
+      "sustain": false,
+      "constant": true
     }
   ],
   "dependencies": [
