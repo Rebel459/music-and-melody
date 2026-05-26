@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody.client.remote;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-public record RemoteAlbumPack(
+public record RemotePack(
         Identifier id,
         Component name,
         Component description,

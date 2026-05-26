@@ -27,6 +27,9 @@ public class PlaylistScreen extends Screen {
     private IconButton loopButton;
     private IconButton shuffleButton;
     private IconButton clearButton;
+    private IconButton directPlayButton;
+    private IconButton directRemoveButton;
+    private IconButton directLoopButton;
     private AbstractWidget musicVolumeSlider;
     private Button saveButton;
     private Button eventsButton;
@@ -39,16 +42,16 @@ public class PlaylistScreen extends Screen {
     @Override
     protected void init() {
         MusicDiscHelper.requestStats(this.minecraft);
-        this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 88));
+        this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 112));
         int controlY = this.height - 51;
         int navY = this.height - 27;
-        int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+        int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
         int navWidth = (rowWidth - 8) / 3;
         int rowX = this.width / 2 - rowWidth / 2;
         int iconGroupWidth = IconButton.SIZE * 4 + 4 * 3;
         int iconGroupX = this.width / 2 - iconGroupWidth / 2;
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.browse"), button ->
-                this.minecraft.setScreen(new AlbumScreen(this))
+                this.minecraft.setScreen(new ContentBrowserScreen(this))
         ).bounds(rowX, navY, navWidth, 20).build());
         this.playPauseButton = this.addRenderableWidget(new IconButton(playPauseMessage(), playPauseIcon(), button -> {
             if (PlaylistHelper.isQueuePlaying()) {
@@ -71,6 +74,19 @@ public class PlaylistScreen extends Screen {
             PlaylistHelper.clear();
             this.refreshQueue();
         }));
+        this.directPlayButton = new IconButton(directPlayMessage(), directPlayIcon(), button -> {
+            if (PlaylistHelper.isDirectPlaying()) {
+                PlaylistHelper.stop();
+            } else {
+                PlaylistHelper.playDirectSong();
+            }
+            this.directPlayButton.setIconAndTooltip(directPlayIcon(), directPlayMessage());
+        });
+        this.directRemoveButton = new IconButton(Component.translatable("button.music_and_melody.remove"), IconButton.icon("remove"), button -> PlaylistHelper.removeDirectSong());
+        this.directLoopButton = new IconButton(directLoopMessage(), directLoopIcon(), button -> {
+            PlaylistHelper.setDirectSongLooping(!PlaylistHelper.isDirectSongLooping());
+            this.directLoopButton.setIconAndTooltip(directLoopIcon(), directLoopMessage());
+        });
         this.playPauseButton.setX(iconGroupX);
         this.playPauseButton.setY(controlY);
         this.shuffleButton.setX(iconGroupX + (IconButton.SIZE + 4));
@@ -79,6 +95,9 @@ public class PlaylistScreen extends Screen {
         this.loopButton.setY(controlY);
         this.clearButton.setX(iconGroupX + (IconButton.SIZE + 4) * 3);
         this.clearButton.setY(controlY);
+        this.directPlayButton.visible = false;
+        this.directRemoveButton.visible = false;
+        this.directLoopButton.visible = false;
         this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
                 this.minecraft.setScreen(new SavePlaylistScreen(this))
         ).bounds(rowX, controlY, Math.max(60, Math.min(100, iconGroupX - rowX - 8)), 20).build());
@@ -95,9 +114,10 @@ public class PlaylistScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.render(graphics, mouseX, mouseY, tickDelta);
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+        renderContextRow(graphics, mouseX, mouseY, tickDelta);
         if (this.playPauseButton != null) {
             this.playPauseButton.setIconAndTooltip(playPauseIcon(), playPauseMessage());
             this.playPauseButton.active = PlaylistHelper.isQueuePlaying() || PlaylistHelper.hasQueuedSongs();
@@ -107,6 +127,70 @@ public class PlaylistScreen extends Screen {
         if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
         if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasQueuedSongs();
         if (this.eventsButton != null) this.eventsButton.active = MaMClientConfig.get().allow_events;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return this.directPlayButton != null
+                && PlaylistHelper.hasDirectSong()
+                && this.directPlayButton.mouseClicked(event, doubleClick)
+                || this.directRemoveButton != null
+                && PlaylistHelper.hasDirectSong()
+                && this.directRemoveButton.mouseClicked(event, doubleClick)
+                || this.directLoopButton != null
+                && PlaylistHelper.hasDirectSong()
+                && this.directLoopButton.mouseClicked(event, doubleClick)
+                || super.mouseClicked(event, doubleClick);
+    }
+
+    private void renderContextRow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+        int rowX = this.width / 2 - rowWidth / 2;
+        int y = 36;
+        Component text = null;
+
+        boolean showDirectSong = PlaylistHelper.hasDirectSong()
+                && PlaylistHelper.getDirectSongId() != null
+                && !PlaylistHelper.isQueuePlaying();
+        if (showDirectSong) {
+            text = MusicScreenHelper.playlistName(this.minecraft, PlaylistHelper.getDirectSongId());
+            int buttonY = y - 5;
+            int loopX = rowX + rowWidth - IconButton.SIZE;
+            int removeX = loopX - IconButton.SIZE - 4;
+            int playX = removeX - IconButton.SIZE - 4;
+            this.directPlayButton.visible = true;
+            this.directPlayButton.active = true;
+            this.directPlayButton.setIconAndTooltip(directPlayIcon(), directPlayMessage());
+            this.directPlayButton.setX(playX);
+            this.directPlayButton.setY(buttonY);
+            this.directPlayButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.directRemoveButton.visible = true;
+            this.directRemoveButton.active = true;
+            this.directRemoveButton.setX(removeX);
+            this.directRemoveButton.setY(buttonY);
+            this.directRemoveButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.directLoopButton.visible = true;
+            this.directLoopButton.active = true;
+            this.directLoopButton.setIconAndTooltip(directLoopIcon(), directLoopMessage());
+            this.directLoopButton.setX(loopX);
+            this.directLoopButton.setY(buttonY);
+            this.directLoopButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        } else {
+            this.directPlayButton.visible = false;
+            this.directRemoveButton.visible = false;
+            this.directLoopButton.visible = false;
+            var source = PlaylistHelper.queueSource();
+            if (source.isPresent() && PlaylistHelper.hasQueuedSongs()) {
+                text = Component.literal(source.get().name());
+            }
+        }
+
+        if (text != null) {
+            int buttonsWidth = this.directPlayButton.visible ? IconButton.SIZE * 3 + 8 : 0;
+            int textWidth = rowWidth - buttonsWidth - (buttonsWidth == 0 ? 0 : 8);
+            int textCenter = rowX + textWidth / 2;
+            graphics.centeredText(this.font, this.font.plainSubstrByWidth(text.getString(), textWidth), textCenter, y, 0xFFAAAAAA);
+        }
     }
 
     @Override
@@ -135,12 +219,28 @@ public class PlaylistScreen extends Screen {
         return IconButton.icon(PlaylistHelper.isQueuePlaying() ? "pause" : "play");
     }
 
+    private static Component directPlayMessage() {
+        return Component.translatable(PlaylistHelper.isDirectPlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
+    }
+
+    private static Identifier directPlayIcon() {
+        return IconButton.icon(PlaylistHelper.isDirectPlaying() ? "pause" : "play");
+    }
+
+    private static Component directLoopMessage() {
+        return Component.translatable(PlaylistHelper.isDirectSongLooping() ? "button.music_and_melody.looping" : "button.music_and_melody.loop");
+    }
+
+    private static Identifier directLoopIcon() {
+        return IconButton.icon(PlaylistHelper.isDirectSongLooping() ? "looping" : "loop");
+    }
+
     private static class QueueList extends ObjectSelectionList<QueueEntry> {
 
         private final PlaylistScreen screen;
 
         QueueList(PlaylistScreen screen, Minecraft minecraft, int width, int height) {
-            super(minecraft, width, height, 32, 24);
+            super(minecraft, width, height, 56, 24);
             this.screen = screen;
             this.centerListVertically = false;
             this.refresh();

@@ -17,26 +17,27 @@ import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AlbumDetailsScreen extends Screen {
 
-    private final AlbumScreen parent;
+    private final ContentBrowserScreen parent;
     private final Album album;
     private final Playlist playlist;
     private DetailList list;
     private Button loadButton;
 
-    public AlbumDetailsScreen(AlbumScreen parent, Album album) {
+    public AlbumDetailsScreen(ContentBrowserScreen parent, Album album) {
         super(album.name);
         this.parent = parent;
         this.album = album;
         this.playlist = null;
     }
 
-    public AlbumDetailsScreen(AlbumScreen parent, Playlist playlist) {
+    public AlbumDetailsScreen(ContentBrowserScreen parent, Playlist playlist) {
         super(playlist.name);
         this.parent = parent;
         this.album = null;
@@ -48,13 +49,14 @@ public class AlbumDetailsScreen extends Screen {
         MusicDiscHelper.requestStats(this.minecraft);
         this.list = this.addRenderableWidget(new DetailList(this.parent, this.minecraft, this.width, this.height - 64, this.album, this.playlist));
         int buttonY = this.height - 27;
-        int rowWidth = Math.min(AlbumScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+        int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
         int buttonWidth = (rowWidth - 4) / 2;
         int rowX = this.width / 2 - rowWidth / 2;
 
         this.loadButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.load"), button -> {
                         PlaylistHelper.clear();
                         PlaylistHelper.addAll(queueSongs(this.minecraft));
+            PlaylistHelper.setQueueSource(this.album != null ? MaMDataConfig.QueueSourceType.ALBUM : MaMDataConfig.QueueSourceType.PLAYLIST, id().toString(), this.title.getString());
                     })
                 .bounds(rowX, buttonY, buttonWidth, 20)
                 .build());
@@ -124,9 +126,9 @@ public class AlbumDetailsScreen extends Screen {
 
     private static class DetailList extends ObjectSelectionList<DetailEntry> {
 
-        private final AlbumScreen screen;
+        private final ContentBrowserScreen screen;
 
-        DetailList(AlbumScreen screen, Minecraft minecraft, int width, int height, Album album, Playlist playlist) {
+        DetailList(ContentBrowserScreen screen, Minecraft minecraft, int width, int height, Album album, Playlist playlist) {
             super(minecraft, width, height, 32, 24);
             this.screen = screen;
             this.centerListVertically = false;
@@ -226,7 +228,7 @@ public class AlbumDetailsScreen extends Screen {
         private static final int BUTTON_GAP = 4;
         private static final int STATUS_WIDTH = 54;
         private final Minecraft minecraft;
-        private final AlbumScreen parent;
+        private final ContentBrowserScreen parent;
         private final Album album;
         private final String song;
         private final SafeIdentifier playableSong;
@@ -264,7 +266,7 @@ public class AlbumDetailsScreen extends Screen {
             this(null, minecraft, null, null, playableSong, text, 0xFFAAAAAA, true, null, null, 0xFFFFFFFF);
         }
 
-        DetailEntry(AlbumScreen parent, Minecraft minecraft, Album album, String song, Component text, int color, Component forcedStatus) {
+        DetailEntry(ContentBrowserScreen parent, Minecraft minecraft, Album album, String song, Component text, int color, Component forcedStatus) {
             this(
                     parent,
                     minecraft,
@@ -280,7 +282,7 @@ public class AlbumDetailsScreen extends Screen {
             );
         }
 
-        DetailEntry(AlbumScreen parent, Minecraft minecraft, Album album, String song, SafeIdentifier playableSong, Component text, int color, boolean playable, Component statusText, Identifier statusIcon, int statusColor) {
+        DetailEntry(ContentBrowserScreen parent, Minecraft minecraft, Album album, String song, SafeIdentifier playableSong, Component text, int color, boolean playable, Component statusText, Identifier statusIcon, int statusColor) {
             this.parent = parent;
             this.minecraft = minecraft;
             this.album = album;

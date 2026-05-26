@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public final class RemoteAlbumManager {
+public final class RemoteContentManager {
 
     public enum State {
         REMOTE,
@@ -56,11 +56,11 @@ public final class RemoteAlbumManager {
             .build();
     private static final Map<Identifier, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
     private static final Set<Identifier> DOWNLOADING = ConcurrentHashMap.newKeySet();
-    private static final List<RemoteAlbumPack> PACKS = new ArrayList<>();
+    private static final List<RemotePack> PACKS = new ArrayList<>();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
 
-    private RemoteAlbumManager() {}
+    private RemoteContentManager() {}
 
     public static boolean remoteDownloadsAllowed() {
         return true;
@@ -82,21 +82,21 @@ public final class RemoteAlbumManager {
         }
         refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(repositories))
                 .thenAccept(packs -> {
-                    synchronized (RemoteAlbumManager.class) {
+                    synchronized (RemoteContentManager.class) {
                         PACKS.clear();
                         PACKS.addAll(packs);
                         refreshTask = null;
                     }
                 })
                 .exceptionally(throwable -> {
-                    synchronized (RemoteAlbumManager.class) {
+                    synchronized (RemoteContentManager.class) {
                         refreshTask = null;
                     }
                     return null;
                 });
     }
 
-    public static synchronized List<RemoteAlbumPack> packs() {
+    public static synchronized List<RemotePack> packs() {
         refreshIfNeeded();
         return List.copyOf(PACKS);
     }
@@ -105,11 +105,11 @@ public final class RemoteAlbumManager {
         return refreshTask != null;
     }
 
-    public static State state(RemoteAlbumPack pack) {
+    public static State state(RemotePack pack) {
         if (DOWNLOADING.contains(pack.id())) return State.DOWNLOADING;
         State override = OVERRIDE_STATES.get(pack.id());
         if (override != null) return override;
-        MaMDataConfig.DownloadedAlbumPack installed = installed(pack.id());
+        MaMDataConfig.DownloadedPack installed = installed(pack.id());
         if (installed == null) return State.REMOTE;
         if (!installed.version.equals(pack.version()) || !installed.sha256.equalsIgnoreCase(pack.sha256())) {
             return State.UPDATE_AVAILABLE;
@@ -121,7 +121,7 @@ public final class RemoteAlbumManager {
         return installed(id) != null;
     }
 
-    public static void download(RemoteAlbumPack pack) {
+    public static void download(RemotePack pack) {
         if (!DOWNLOADING.add(pack.id())) return;
         OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
@@ -137,7 +137,7 @@ public final class RemoteAlbumManager {
         });
     }
 
-    public static void importLocal(RemoteAlbumPack pack, Path zip) {
+    public static void importLocal(RemotePack pack, Path zip) {
         if (!DOWNLOADING.add(pack.id())) return;
         OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
@@ -153,7 +153,7 @@ public final class RemoteAlbumManager {
         });
     }
 
-    public static String externalDownloadUrl(RemoteAlbumPack pack) {
+    public static String externalDownloadUrl(RemotePack pack) {
         return pack.url();
     }
 
@@ -161,8 +161,8 @@ public final class RemoteAlbumManager {
         OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
     }
 
-    private static List<RemoteAlbumPack> loadCatalogs(List<String> repositories) {
-        List<RemoteAlbumPack> packs = new ArrayList<>();
+    private static List<RemotePack> loadCatalogs(List<String> repositories) {
+        List<RemotePack> packs = new ArrayList<>();
         Set<Identifier> ids = new HashSet<>();
         for (String repository : repositories) {
             try {
@@ -174,7 +174,7 @@ public final class RemoteAlbumManager {
         return packs;
     }
 
-    private static List<RemoteAlbumPack> loadCatalog(String repositoryUrl, Set<Identifier> ids) throws IOException, InterruptedException {
+    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<Identifier> ids) throws IOException, InterruptedException {
         URI catalogUri = catalogUri(repositoryUrl);
         HttpRequest request = HttpRequest.newBuilder(catalogUri)
                 .timeout(Duration.ofSeconds(20))
@@ -187,10 +187,10 @@ public final class RemoteAlbumManager {
         JsonArray array = root.getAsJsonArray("packs");
         if (array == null) return List.of();
 
-        List<RemoteAlbumPack> packs = new ArrayList<>();
+        List<RemotePack> packs = new ArrayList<>();
         for (JsonElement element : array) {
             if (!element.isJsonObject()) continue;
-            RemoteAlbumPack pack = parsePack(element.getAsJsonObject(), repositoryName, catalogUri);
+            RemotePack pack = parsePack(element.getAsJsonObject(), repositoryName, catalogUri);
             if (pack == null || !ids.add(pack.id())) continue;
             packs.add(pack);
         }
@@ -233,13 +233,13 @@ public final class RemoteAlbumManager {
         return fallback;
     }
 
-    private static RemoteAlbumPack parsePack(JsonObject object, String repositoryName, URI catalogUri) {
+    private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri) {
         Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
         if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size")) {
             return null;
         }
         Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
-        return new RemoteAlbumPack(
+        return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
                 Component.literal(object.has("description") ? object.get("description").getAsString() : ""),
@@ -252,7 +252,7 @@ public final class RemoteAlbumManager {
         );
     }
 
-    private static void downloadAndExtract(RemoteAlbumPack pack) throws IOException, InterruptedException {
+    private static void downloadAndExtract(RemotePack pack) throws IOException, InterruptedException {
         Files.createDirectories(TEMP_DIRECTORY);
         Path zip = TEMP_DIRECTORY.resolve(pack.fileName());
         HttpRequest request = HttpRequest.newBuilder(URI.create(pack.url()))
@@ -272,7 +272,7 @@ public final class RemoteAlbumManager {
         Files.deleteIfExists(zip);
     }
 
-    private static void importAndExtract(RemoteAlbumPack pack, Path zip) throws IOException {
+    private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
         if (!Files.isRegularFile(zip)) throw new IOException("Import file missing: " + zip);
         if (Files.size(zip) != pack.size()) throw new IOException("Imported size mismatch");
         String hash = sha256(zip);
@@ -336,18 +336,18 @@ public final class RemoteAlbumManager {
         }
     }
 
-    private static MaMDataConfig.DownloadedAlbumPack installed(Identifier id) {
-        for (MaMDataConfig.DownloadedAlbumPack pack : MaMDataConfig.get().albums.downloads) {
+    private static MaMDataConfig.DownloadedPack installed(Identifier id) {
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
             if (pack.id.equals(id.toString())) return pack;
         }
         return null;
     }
 
-    private static void recordInstalled(RemoteAlbumPack pack) {
+    private static void recordInstalled(RemotePack pack) {
         MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedAlbumPack record = installed(pack.id());
+        MaMDataConfig.DownloadedPack record = installed(pack.id());
         if (record == null) {
-            record = new MaMDataConfig.DownloadedAlbumPack();
+            record = new MaMDataConfig.DownloadedPack();
             config.albums.downloads.add(record);
         }
         record.id = pack.id().toString();
@@ -367,7 +367,7 @@ public final class RemoteAlbumManager {
     public static synchronized List<InstalledPack> installedPacks() {
         List<InstalledPack> packs = new ArrayList<>();
 
-        for (MaMDataConfig.DownloadedAlbumPack record : MaMDataConfig.get().albums.downloads) {
+        for (MaMDataConfig.DownloadedPack record : MaMDataConfig.get().albums.downloads) {
             Identifier id = Identifier.tryParse(record.id);
             if (id == null) continue;
 
@@ -390,7 +390,7 @@ public final class RemoteAlbumManager {
             }
         }
 
-        for (RemoteAlbumPack pack : PACKS) {
+        for (RemotePack pack : PACKS) {
             if (pack.id().equals(id)) {
                 return pack.name();
             }
@@ -403,7 +403,7 @@ public final class RemoteAlbumManager {
         if (DOWNLOADING.contains(id)) return false;
 
         MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedAlbumPack record = installed(id);
+        MaMDataConfig.DownloadedPack record = installed(id);
         if (record == null) return false;
 
         boolean deletedFiles = deleteFromManifest(id);
@@ -502,7 +502,7 @@ public final class RemoteAlbumManager {
     }
 
     private static boolean hasOtherInstalledPackInNamespace(Identifier id) {
-        for (MaMDataConfig.DownloadedAlbumPack pack : MaMDataConfig.get().albums.downloads) {
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
             Identifier other = Identifier.tryParse(pack.id);
             if (other == null) continue;
             if (other.equals(id)) continue;

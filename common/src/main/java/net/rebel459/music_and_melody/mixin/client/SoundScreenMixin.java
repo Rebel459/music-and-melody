@@ -4,7 +4,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.SoundOptionsScreen;
 import net.minecraft.network.chat.Component;
-import net.rebel459.music_and_melody.client.screen.AlbumScreen;
+import net.rebel459.music_and_melody.client.screen.ContentBrowserScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,7 +38,7 @@ public abstract class SoundScreenMixin extends Screen {
         if (screen.list == null) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
-                this.minecraft.setScreen(new AlbumScreen(this))
+                this.minecraft.setScreen(new ContentBrowserScreen(this))
         ).size(150, 20).build();
 
         Button playlistButton = Button.builder(Component.translatable("button.music_and_melody.playlist"), button ->
