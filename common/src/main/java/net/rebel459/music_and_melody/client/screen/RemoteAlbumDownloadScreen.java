@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -55,15 +55,15 @@ public class RemoteAlbumDownloadScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        super.render(graphics, mouseX, mouseY, tickDelta);
 
         int y = 48;
-        graphics.centeredText(this.font, this.pack.name(), this.width / 2, y, 0xFFFFFFFF);
+        graphics.drawCenteredString(this.font, this.pack.name(), this.width / 2, y, 0xFFFFFFFF);
 
         y += 28;
         for (var line : descriptionLines()) {
-            graphics.centeredText(this.font, line, this.width / 2, y, 0xFFCCCCCC);
+            graphics.drawCenteredString(this.font, line, this.width / 2, y, 0xFFCCCCCC);
             y += this.font.lineHeight + 2;
         }
 
