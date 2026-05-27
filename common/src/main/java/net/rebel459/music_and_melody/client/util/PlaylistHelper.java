@@ -35,6 +35,7 @@ public final class PlaylistHelper {
     private static boolean stoppingCurrentSong = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
+    private static int currentQueueIndex = -1;
 
     public static final Music EMPTY = new Music(MaMSounds.REGISTERED_SOUNDS.get("music.empty"), 0, 0, true);
 
@@ -92,6 +93,7 @@ public final class PlaylistHelper {
             SafeIdentifier removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
+            if (index < currentQueueIndex) currentQueueIndex--;
             if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
             queueIndex = clampQueueIndex(queueIndex);
             clearQueueSource();
@@ -105,6 +107,7 @@ public final class PlaylistHelper {
         if (currentSongFromQueue) stop();
         QUEUED_SONGS.clear();
         queueIndex = 0;
+        currentQueueIndex = -1;
         queuePaused = true;
         clearQueueSource();
         save();
@@ -115,6 +118,7 @@ public final class PlaylistHelper {
         if (QUEUED_SONGS.size() < 2) return false;
         Collections.shuffle(QUEUED_SONGS);
         queueIndex = 0;
+        currentQueueIndex = currentSongFromQueue ? findCurrentQueueIndex() : -1;
         save();
         return true;
     }
@@ -232,6 +236,7 @@ public final class PlaylistHelper {
         currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
+        currentQueueIndex = -1;
     }
 
     public static String getCurrentMusicTranslationKey() {
@@ -275,7 +280,7 @@ public final class PlaylistHelper {
         if (QUEUED_SONGS.isEmpty()) return false;
         queuePaused = false;
         if (currentSongFromQueue && currentSongId != null && isPlaying()) {
-            queueIndex = nextQueueIndex(queueIndex);
+            queueIndex = nextQueueIndex(currentQueueIndex >= 0 ? currentQueueIndex : queueIndex);
         } else {
             advanceFinishedQueuedSong(true);
         }
@@ -300,13 +305,9 @@ public final class PlaylistHelper {
 
     private static void advanceFinishedQueuedSong(boolean requireInactive) {
         if (!currentSongFromQueue || currentSongId == null || (requireInactive && isPlaying())) return;
-        int finishedIndex = -1;
-        for (int i = 0; i < QUEUED_SONGS.size(); i++) {
-            if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), currentSongId)) {
-                finishedIndex = i;
-                break;
-            }
-        }
+        int finishedIndex = currentQueueIndex >= 0 && currentQueueIndex < QUEUED_SONGS.size()
+                ? currentQueueIndex
+                : findCurrentQueueIndex();
         if (finishedIndex >= 0) {
             queueIndex = nextQueueIndex(finishedIndex);
         }
@@ -315,6 +316,14 @@ public final class PlaylistHelper {
         currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
+        currentQueueIndex = -1;
+    }
+
+    private static int findCurrentQueueIndex() {
+        for (int i = 0; i < QUEUED_SONGS.size(); i++) {
+            if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), currentSongId)) return i;
+        }
+        return -1;
     }
 
     private static int nextQueueIndex(int index) {
@@ -381,6 +390,7 @@ public final class PlaylistHelper {
         currentSongLooping = loop;
         currentSongFromQueue = fromQueue;
         currentSongFromEvent = fromEvent;
+        currentQueueIndex = fromQueue ? queueIndex : -1;
         if (!fromQueue && !fromEvent) {
             directSongId = id;
             directSongLooping = loop;
@@ -409,6 +419,7 @@ public final class PlaylistHelper {
             currentSongLooping = false;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
+            currentQueueIndex = -1;
             return false;
         }
         if (result == SoundEngine.PlayResult.STARTED) {
@@ -435,6 +446,7 @@ public final class PlaylistHelper {
         currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
+        currentQueueIndex = -1;
     }
 
     public static boolean play(SafeIdentifier id, boolean loop) {
