@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 public final class JukeboxSongCache {
 
@@ -91,18 +91,22 @@ public final class JukeboxSongCache {
     }
 
     private static boolean loadFromZip(Path file, Identifier jukeboxSong) {
-        try (ZipFile zip = new ZipFile(file.toFile())) {
-            ZipEntry entry = zip.getEntry(jukeboxSongPath(jukeboxSong));
-            if (entry == null || entry.isDirectory()) return false;
-
-            try (Reader reader = new java.io.InputStreamReader(zip.getInputStream(entry), java.nio.charset.StandardCharsets.UTF_8)) {
-                return add(jukeboxSong, JsonParser.parseReader(reader));
-            } catch (Exception ignored) {
-                return false;
+        String target = jukeboxSongPath(jukeboxSong);
+        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(file))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (!entry.isDirectory() && entry.getName().equals(target)) {
+                    try (Reader reader = new java.io.InputStreamReader(zip, java.nio.charset.StandardCharsets.UTF_8)) {
+                        return add(jukeboxSong, JsonParser.parseReader(reader));
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                }
             }
         } catch (IOException ignored) {
             return false;
         }
+        return false;
     }
 
     private static String jukeboxSongPath(Identifier jukeboxSong) {
