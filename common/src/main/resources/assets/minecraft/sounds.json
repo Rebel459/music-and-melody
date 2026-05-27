@@ -1,0 +1,10 @@
+{
+  "music_disc.bounce": {
+    "sounds": [
+      {
+        "name": "minecraft:records/bounce",
+        "stream": true
+      }
+    ]
+  }
+}
