@@ -87,7 +87,7 @@ public class AlbumDetailsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
         super.render(graphics, mouseX, mouseY, tickDelta);
         int iconSize = 36;
         int gap = 7;
