@@ -6,5 +6,21 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.lava_chicken": {
+    "sounds": [
+      {
+        "name": "minecraft:records/lava_chicken",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.tears": {
+    "sounds": [
+      {
+        "name": "minecraft:records/tears",
+        "stream": true
+      }
+    ]
   }
 }
