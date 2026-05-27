@@ -217,7 +217,8 @@ public class Playlist {
                 if (id == null) continue;
             } else {
                 if (jukeboxSongForSound(minecraft, queuedSong) != null) continue;
-                id = queuedSong.getId();
+                grouped.computeIfAbsent(queuedSong.getNamespace(), namespace -> new ArrayList<>()).add(queuedSong.getPath());
+                continue;
             }
             grouped.computeIfAbsent(id.getNamespace(), namespace -> new ArrayList<>()).add(id.getPath());
         }
