@@ -53,7 +53,6 @@ public class EventScreen extends Screen {
     private Button addButton;
     private Button saveButton;
     private Button removeButton;
-    private Button browseButton;
     private Button expandButton;
     private int selectedIndex = -1;
     private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
@@ -152,7 +151,7 @@ public class EventScreen extends Screen {
         int topY = this.height - 51;
         int bottomY = this.height - 27;
         int topWidth = (rowWidth - 8) / 3;
-        int bottomWidth = (rowWidth - 8) / 3;
+        int bottomWidth = (rowWidth - 4) / 2;
 
         this.addButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.add"), button -> addEntry())
                 .bounds(rowX, topY, topWidth, 20)
@@ -164,14 +163,11 @@ public class EventScreen extends Screen {
                 .bounds(rowX + (topWidth + 4) * 2, topY, topWidth, 20)
                 .build());
 
-        this.browseButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.browse"), button -> browseSources())
+        this.expandButton = this.addRenderableWidget(Button.builder(expandMessage(), button -> toggleExpanded())
                 .bounds(rowX, bottomY, bottomWidth, 20)
                 .build());
-        this.expandButton = this.addRenderableWidget(Button.builder(expandMessage(), button -> toggleExpanded())
-                .bounds(rowX + bottomWidth + 4, bottomY, bottomWidth, 20)
-                .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + (bottomWidth + 4) * 2, bottomY, bottomWidth, 20)
+                .bounds(rowX + bottomWidth + 4, bottomY, bottomWidth, 20)
                 .build());
 
         if (this.listExpanded) {
@@ -328,7 +324,7 @@ public class EventScreen extends Screen {
     }
 
     private void browseSources() {
-        this.minecraft.setScreen(new EventBrowserScreen(this));
+        this.minecraft.setScreen(new EventBrowserScreen(this, this.parent));
     }
 
     private void loadSource(ResourceLocation sourceId) {
@@ -714,7 +710,7 @@ public class EventScreen extends Screen {
         }
 
         public EventBrowserScreen(EventScreen parent) {
-            this(parent, parent);
+            this(parent, parent.parent);
         }
 
         public EventBrowserScreen(EventScreen editor, Screen parent) {

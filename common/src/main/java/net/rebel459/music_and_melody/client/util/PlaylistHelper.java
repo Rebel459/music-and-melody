@@ -292,6 +292,27 @@ public final class PlaylistHelper {
         return playSound(id, false, true, false);
     }
 
+    public static boolean canSkipQueue() {
+        ensureLoaded();
+        if (QUEUED_SONGS.size() < 2) return false;
+        int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
+        return loop || index < QUEUED_SONGS.size() - 1;
+    }
+
+    public static boolean skipQueue() {
+        ensureLoaded();
+        if (!canSkipQueue()) return false;
+        queuePaused = false;
+        int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
+        queueIndex = index + 1 >= QUEUED_SONGS.size() ? 0 : index + 1;
+        int playableIndex = nextPlayableIndex(queueIndex, loop);
+        if (playableIndex < 0) return false;
+        queueIndex = playableIndex;
+        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
+        stop();
+        return playSound(id, false, true, false);
+    }
+
     public static boolean playNow(int index) {
         ensureLoaded();
         if (index < 0 || index >= QUEUED_SONGS.size()) return false;

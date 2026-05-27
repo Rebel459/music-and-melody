@@ -1,23 +1,24 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeLocation;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
@@ -30,6 +31,12 @@ public class AlbumDetailsScreen extends Screen {
     private final Playlist playlist;
     private DetailList list;
     private Button loadButton;
+    private Button queueAllButton;
+    private IconButton searchButton;
+    private EditBox searchField;
+    private boolean searching;
+    private boolean focusSearchAfterClick;
+    private String search = "";
 
     public AlbumDetailsScreen(ContentBrowserScreen parent, Album album) {
         super(album.name);
@@ -48,48 +55,60 @@ public class AlbumDetailsScreen extends Screen {
     @Override
     protected void init() {
         MusicDiscHelper.requestStats(this.minecraft);
-        this.list = this.addRenderableWidget(new DetailList(this.parent, this.minecraft, this.width, this.height - 64, this.album, this.playlist));
-        int buttonY = this.height - 27;
         int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
-        int buttonWidth = (rowWidth - 4) / 2;
         int rowX = this.width / 2 - rowWidth / 2;
+        this.list = this.addRenderableWidget(new DetailList(this.parent, this.minecraft, this.width, this.height - 112, 56, this.album, this.playlist, this.search));
+        int actionY = this.height - 51;
+        int leftWidth = (rowWidth - 4) / 2;
+        int rightX = rowX + leftWidth + 4;
+        this.searchButton = this.addRenderableWidget(new IconButton(Component.translatable("screen.music_and_melody.search"), IconButton.icon("search"), button -> toggleSearch()));
+        this.searchButton.setX(rowX);
+        this.searchButton.setY(actionY);
+        this.searchField = this.addRenderableWidget(new EditBox(this.font, rowX + IconButton.SIZE + 4, actionY, rowWidth - IconButton.SIZE - 4, 20, Component.translatable("screen.music_and_melody.search")));
+        this.searchField.setValue(this.search);
+        this.searchField.setResponder(value -> {
+            this.search = value;
+            refreshList();
+        });
+        int buttonY = this.height - 27;
+        int doneWidth = Math.min(152, rowWidth);
 
-        this.loadButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.load"), button -> {
-                        PlaylistHelper.clear();
-                        PlaylistHelper.addAll(queueSongs(this.minecraft));
-            PlaylistHelper.setQueueSource(this.album != null ? MaMDataConfig.QueueSourceType.ALBUM : MaMDataConfig.QueueSourceType.PLAYLIST, id().toString(), this.title.getString());
-                    })
-                .bounds(rowX, buttonY, buttonWidth, 20)
+        this.loadButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.load"), button -> loadAll())
+                .bounds(rowX + IconButton.SIZE + 4, actionY, leftWidth - IconButton.SIZE - 4, 20)
+                .build());
+        this.queueAllButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.queue_all"), button -> queueAll())
+                .bounds(rightX, actionY, leftWidth, 20)
                 .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
+                .bounds(this.width / 2 - doneWidth / 2, buttonY, doneWidth, 20)
                 .build());
-                // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
-        }
+        MusicScreenHelper.addSocialButtons(this);
+        updateSearchRow();
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.render(graphics, mouseX, mouseY, tickDelta);
-        int maxTextWidth = Math.max(1, this.width - 60);
+        int iconSize = 36;
+        int gap = 7;
+        int maxTextWidth = Math.max(1, this.width - iconSize - gap - 40);
         FormattedCharSequence title = this.font.split(this.title, maxTextWidth).getFirst();
         String id = this.font.plainSubstrByWidth(id().toString(), maxTextWidth);
-        int textWidth = Math.max(this.font.width(title), this.font.width(id));
-        int titleX = this.width / 2 - (24 + 6 + textWidth) / 2;
-        graphics.blit(MusicScreenHelper.albumIcon(this.minecraft, icon()), titleX, 3, 0.0F, 0.0F, 24, 24, 24, 24);
-        graphics.drawString(this.font, title, titleX + 30, 5, 0xFFFFFFFF);
-        graphics.drawString(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + 30, 16, 0xFFAAAAAA);
-        if (this.loadButton != null) this.loadButton.active = !queueSongs(this.minecraft).isEmpty();
+        String counts = countText();
+        int textWidth = Math.max(Math.max(this.font.width(title), this.font.width(id)), this.font.width(counts));
+        int titleX = this.width / 2 - (iconSize + gap + textWidth) / 2;
+        int titleY = 12;
+        int textX = titleX + iconSize + gap;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, icon()), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        graphics.drawString(this.font, title, textX, titleY + 2, 0xFFFFFFFF);
+        graphics.drawString(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, titleY + 14, 0xFFAAAAAA);
+        graphics.drawString(this.font, Component.literal(counts).withStyle(ChatFormatting.GRAY), textX, titleY + 26, 0xFFAAAAAA);
+        List<SafeIdentifier> songs = queueSongs(this.minecraft);
+        boolean hasSongs = !songs.isEmpty();
+        if (this.loadButton != null) this.loadButton.active = hasSongs && !songs.equals(PlaylistHelper.queuedSongs());
+        if (this.queueAllButton != null) this.queueAllButton.active = hasQueueableSongs(songs);
+        updateSearchRow();
+        focusSearchAfterClick();
     }
 
     @Override
@@ -97,34 +116,107 @@ public class AlbumDetailsScreen extends Screen {
         this.minecraft.setScreen(this.parent);
     }
 
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        boolean clicked = super.mouseClicked(event, doubleClick);
+        focusSearchAfterClick();
+        return clicked;
+    }
+
     public void onStatsUpdated() {
         if (this.list != null) {
-            this.list.refresh(this.album, this.playlist);
+            this.list.refresh(this.album, this.playlist, this.search);
         }
     }
 
-    private ResourceLocation id() {
+    private void refreshList() {
+        if (this.list != null) {
+            this.list.refresh(this.album, this.playlist, this.search);
+        }
+    }
+
+    private void loadAll() {
+        PlaylistHelper.clear();
+        PlaylistHelper.addAll(queueSongs(this.minecraft));
+        PlaylistHelper.setQueueSource(this.album != null ? MaMDataConfig.QueueSourceType.ALBUM : MaMDataConfig.QueueSourceType.PLAYLIST, id().toString(), this.title.getString());
+    }
+
+    private void queueAll() {
+        PlaylistHelper.addAll(queueSongs(this.minecraft));
+    }
+
+    private boolean hasQueueableSongs(List<SafeIdentifier> songs) {
+        for (SafeIdentifier song : songs) {
+            if (!PlaylistHelper.isQueued(song)) return true;
+        }
+        return false;
+    }
+
+    private void toggleSearch() {
+        this.searching = !this.searching;
+        if (this.searching) {
+            focusSearchField();
+        } else {
+            this.search = "";
+            this.searchField.setValue("");
+            refreshList();
+            updateSearchRow();
+        }
+    }
+
+    private void focusSearchField() {
+        updateSearchRow();
+        this.focusSearchAfterClick = true;
+    }
+
+    private void focusSearchAfterClick() {
+        if (!this.focusSearchAfterClick || this.searchField == null || !this.searching) return;
+        this.setFocused(this.searchField);
+        this.setInitialFocus(this.searchField);
+        this.searchField.setFocused(true);
+        this.focusSearchAfterClick = false;
+    }
+
+    private void updateSearchRow() {
+        boolean controlsVisible = !this.searching;
+        if (this.searchField != null) {
+            this.searchField.visible = this.searching;
+            this.searchField.active = this.searching;
+        }
+        if (this.loadButton != null) this.loadButton.visible = controlsVisible;
+        if (this.queueAllButton != null) this.queueAllButton.visible = controlsVisible;
+    }
+
+    private Identifier id() {
         return this.album != null ? this.album.album : this.playlist.playlist;
     }
 
-    private ResourceLocation icon() {
+    private Identifier icon() {
         return this.album != null ? this.album.icon : this.playlist.icon;
     }
 
-    public static List<SafeLocation> queueSongs(Album album, Minecraft minecraft) {
-        List<SafeLocation> songs = new ArrayList<>();
+    private String countText() {
+        int tracks = this.album != null ? this.album.tracks.size() : this.playlist.tracks.size();
+        int discs = this.album != null ? this.album.discs.size() : this.playlist.discs.size();
+        String trackText = tracks + " " + (tracks == 1 ? "track" : "tracks");
+        String discText = discs + " " + (discs == 1 ? "disc" : "discs");
+        return discs == 0 ? trackText : tracks == 0 ? discText : trackText + " | " + discText;
+    }
+
+    public static List<SafeIdentifier> queueSongs(Album album, Minecraft minecraft) {
+        List<SafeIdentifier> songs = new ArrayList<>();
         album.tracks.stream()
                 .map(album::trackId)
                 .forEach(songs::add);
         album.discs.stream()
                 .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
                 .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
-                .forEach(id -> songs.add(SafeLocation.convert(id)));
+                .forEach(id -> songs.add(SafeIdentifier.convert(id)));
         return songs;
     }
 
-    private List<SafeLocation> queueSongs(Minecraft minecraft) {
-        List<SafeLocation> songs = new ArrayList<>();
+    private List<SafeIdentifier> queueSongs(Minecraft minecraft) {
+        List<SafeIdentifier> songs = new ArrayList<>();
         if (album != null) {
             return queueSongs(this.album, minecraft);
         }
@@ -132,7 +224,7 @@ public class AlbumDetailsScreen extends Screen {
         songs.addAll(this.playlist.tracks);
         this.playlist.discs.stream()
                 .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
-                .forEach(id -> songs.add(SafeLocation.convert(id)));
+                .forEach(id -> songs.add(SafeIdentifier.convert(id)));
         return songs;
     }
 
@@ -140,30 +232,33 @@ public class AlbumDetailsScreen extends Screen {
 
         private final ContentBrowserScreen screen;
 
-        DetailList(ContentBrowserScreen screen, Minecraft minecraft, int width, int height, Album album, Playlist playlist) {
-            super(minecraft, width, height, 32, 24);
+        DetailList(ContentBrowserScreen screen, Minecraft minecraft, int width, int height, int y, Album album, Playlist playlist, String search) {
+            super(minecraft, width, height, y, 24);
             this.screen = screen;
             this.centerListVertically = false;
-            refresh(album, playlist);
+            refresh(album, playlist, search);
         }
 
-        private void refresh(Album album, Playlist playlist) {
+        private void refresh(Album album, Playlist playlist, String search) {
             this.clearEntries();
             if (album != null) {
-                addAlbumTracks(album);
-                addAlbumDiscs(album);
+                addAlbumTracks(album, search);
+                addAlbumDiscs(album, search);
             } else {
-                addPlaylistTracks(playlist);
-                addPlaylistDiscs(playlist);
+                addPlaylistTracks(playlist, search);
+                addPlaylistDiscs(playlist, search);
             }
         }
 
-        private void addAlbumTracks(Album album) {
+        private void addAlbumTracks(Album album, String search) {
             if (album.tracks.isEmpty()) return;
-            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
-            album.tracks.stream()
+            List<DetailEntry> entries = album.tracks.stream()
+                    .filter(song -> matches(search, MusicScreenHelper.trackName(album, song), album.trackId(song).toString()))
                     .map(song -> new DetailEntry(this.screen, this.minecraft, album, song, MusicScreenHelper.trackName(album, song).copy().withStyle(ChatFormatting.GRAY), 0xFFAAAAAA, trackStatus(album, song)))
-                    .forEach(this::addEntry);
+                    .toList();
+            if (entries.isEmpty()) return;
+            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
+            entries.forEach(this::addEntry);
         }
 
         private static Component trackStatus(Album album, String song) {
@@ -172,23 +267,29 @@ public class AlbumDetailsScreen extends Screen {
             return null;
         }
 
-        private void addAlbumDiscs(Album album) {
+        private void addAlbumDiscs(Album album, String search) {
             if (album.discs.isEmpty()) return;
-            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.discs").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
-            album.discs.stream()
+            List<DetailEntry> entries = album.discs.stream()
+                    .filter(disc -> {
+                        Identifier id = MusicDiscHelper.albumEntryId(album, disc);
+                        return matches(search, MusicDiscHelper.discName(id), id.toString());
+                    })
                     .map(disc -> {
-                        ResourceLocation id = MusicDiscHelper.albumEntryId(album, disc);
+                        Identifier id = MusicDiscHelper.albumEntryId(album, disc);
                         Component name = MusicDiscHelper.discName(id);
                         boolean unlocked = album.isDiscForcedUnlocked(disc) || MusicDiscHelper.isDiscUnlocked(this.minecraft, id);
-                        return new DetailEntry(this.minecraft, SafeLocation.convert(MusicDiscHelper.discSoundId(this.minecraft, id)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
+                        return new DetailEntry(this.minecraft, SafeIdentifier.convert(MusicDiscHelper.discSoundId(this.minecraft, id)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
                     })
-                    .forEach(this::addEntry);
+                    .toList();
+            if (entries.isEmpty()) return;
+            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.discs").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
+            entries.forEach(this::addEntry);
         }
 
-        private void addPlaylistTracks(Playlist playlist) {
+        private void addPlaylistTracks(Playlist playlist, String search) {
             if (playlist.tracks.isEmpty()) return;
-            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
-            playlist.tracks.stream()
+            List<DetailEntry> entries = playlist.tracks.stream()
+                    .filter(track -> matches(search, MusicScreenHelper.trackName(track), track.toString()))
                     .map(track -> {
                         Component name = MusicScreenHelper.trackName(track).copy().withStyle(ChatFormatting.GRAY);
                         AlbumTrack albumTrack = findAlbumTrack(track);
@@ -197,10 +298,13 @@ public class AlbumDetailsScreen extends Screen {
                         }
                         return new DetailEntry(this.minecraft, track, name);
                     })
-                    .forEach(this::addEntry);
+                    .toList();
+            if (entries.isEmpty()) return;
+            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
+            entries.forEach(this::addEntry);
         }
 
-        private static AlbumTrack findAlbumTrack(SafeLocation track) {
+        private static AlbumTrack findAlbumTrack(SafeIdentifier track) {
             for (Album album : Album.ALBUMS) {
                 for (String song : album.tracks) {
                     if (album.trackId(song).equals(track)) return new AlbumTrack(album, song);
@@ -209,16 +313,26 @@ public class AlbumDetailsScreen extends Screen {
             return null;
         }
 
-        private void addPlaylistDiscs(Playlist playlist) {
+        private void addPlaylistDiscs(Playlist playlist, String search) {
             if (playlist.discs.isEmpty()) return;
-            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.discs").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
-            playlist.discs.stream()
+            List<DetailEntry> entries = playlist.discs.stream()
+                    .filter(disc -> matches(search, MusicDiscHelper.discName(disc), disc.toString()))
                     .map(disc -> {
                         Component name = MusicDiscHelper.discName(disc);
                         boolean unlocked = MusicDiscHelper.isDiscUnlocked(this.minecraft, disc);
-                        return new DetailEntry(this.minecraft, SafeLocation.convert(MusicDiscHelper.discSoundId(this.minecraft, disc)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
+                        return new DetailEntry(this.minecraft, SafeIdentifier.convert(MusicDiscHelper.discSoundId(this.minecraft, disc)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
                     })
-                    .forEach(this::addEntry);
+                    .toList();
+            if (entries.isEmpty()) return;
+            this.addEntry(new DetailEntry(this.minecraft, Component.translatable("screen.music_and_melody.album_details.discs").withStyle(ChatFormatting.BOLD), 0xFFFFFFFF));
+            entries.forEach(this::addEntry);
+        }
+
+        private static boolean matches(String search, Component name, String id) {
+            String query = search.trim().toLowerCase(java.util.Locale.ROOT);
+            return query.isEmpty()
+                    || name.getString().toLowerCase(java.util.Locale.ROOT).contains(query)
+                    || id.toLowerCase(java.util.Locale.ROOT).contains(query);
         }
 
         @Override
@@ -227,14 +341,14 @@ public class AlbumDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowRight() + 6;
         }
 
         private record AlbumTrack(Album album, String song) {}
     }
 
-    private static class DetailEntry extends MusicListEntry<DetailEntry> {
+    private static class DetailEntry extends ObjectSelectionList.Entry<DetailEntry> {
 
         private static final int BUTTON_WIDTH = IconButton.SIZE;
         private static final int BUTTON_GAP = 4;
@@ -243,14 +357,14 @@ public class AlbumDetailsScreen extends Screen {
         private final ContentBrowserScreen parent;
         private final Album album;
         private final String song;
-        private final SafeLocation playableSong;
+        private final SafeIdentifier playableSong;
         private final Component text;
         private final int color;
         private final IconButton playButton;
         private final IconButton queueButton;
         private final IconButton toggleButton;
         private final Component statusText;
-        private final ResourceLocation statusIcon;
+        private final Identifier statusIcon;
         private final int statusColor;
         private final boolean playable;
 
@@ -258,7 +372,7 @@ public class AlbumDetailsScreen extends Screen {
             this(null, minecraft, null, null, null, text, color, true, null, null, 0xFFFFFFFF);
         }
 
-        DetailEntry(Minecraft minecraft, SafeLocation playableSong, Component text, boolean unlocked) {
+        DetailEntry(Minecraft minecraft, SafeIdentifier playableSong, Component text, boolean unlocked) {
             this(
                     null,
                     minecraft,
@@ -274,7 +388,7 @@ public class AlbumDetailsScreen extends Screen {
             );
         }
 
-        DetailEntry(Minecraft minecraft, SafeLocation playableSong, Component text) {
+        DetailEntry(Minecraft minecraft, SafeIdentifier playableSong, Component text) {
             this(null, minecraft, null, null, playableSong, text, 0xFFAAAAAA, true, null, null, 0xFFFFFFFF);
         }
 
@@ -294,7 +408,7 @@ public class AlbumDetailsScreen extends Screen {
             );
         }
 
-        DetailEntry(ContentBrowserScreen parent, Minecraft minecraft, Album album, String song, SafeLocation playableSong, Component text, int color, boolean playable, Component statusText, ResourceLocation statusIcon, int statusColor) {
+        DetailEntry(ContentBrowserScreen parent, Minecraft minecraft, Album album, String song, SafeIdentifier playableSong, Component text, int color, boolean playable, Component statusText, Identifier statusIcon, int statusColor) {
             this.parent = parent;
             this.minecraft = minecraft;
             this.album = album;
@@ -379,11 +493,11 @@ public class AlbumDetailsScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            return this.playButton != null && this.playButton.mouseClicked(mouseX, mouseY, button)
-                    || this.queueButton != null && this.queueButton.mouseClicked(mouseX, mouseY, button)
-                    || this.toggleButton != null && this.toggleButton.mouseClicked(mouseX, mouseY, button)
-                    || super.mouseClicked(mouseX, mouseY, button);
+        public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+            return this.playButton != null && this.playButton.mouseClicked(event, doubleClick)
+                    || this.queueButton != null && this.queueButton.mouseClicked(event, doubleClick)
+                    || this.toggleButton != null && this.toggleButton.mouseClicked(event, doubleClick)
+                    || super.mouseClicked(event, doubleClick);
         }
 
         private void playTrack() {
@@ -399,11 +513,11 @@ public class AlbumDetailsScreen extends Screen {
             this.parent.markReloadPending();
         }
 
-        private static Component playMessage(SafeLocation song) {
+        private static Component playMessage(SafeIdentifier song) {
             return Component.translatable(PlaylistHelper.isPlaying(song) ? "button.music_and_melody.stop" : "button.music_and_melody.play");
         }
 
-        private static ResourceLocation playIcon(SafeLocation song) {
+        private static Identifier playIcon(SafeIdentifier song) {
             return IconButton.icon(PlaylistHelper.isPlaying(song) ? "pause" : "play");
         }
 
@@ -411,11 +525,11 @@ public class AlbumDetailsScreen extends Screen {
             return Component.translatable(album.isTrackEnabled(song) ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled");
         }
 
-        private static ResourceLocation toggleIcon(Album album, String song) {
+        private static Identifier toggleIcon(Album album, String song) {
             return IconButton.icon(album.isTrackEnabled(song) ? "enabled" : "disabled");
         }
 
-        private static ResourceLocation forcedStatusIcon(Album album, String song, Component forcedStatus) {
+        private static Identifier forcedStatusIcon(Album album, String song, Component forcedStatus) {
             if (forcedStatus == null) return null;
             if (album.album.equals(ConfigAlbum.ALBUM_ID)) return IconButton.icon("config");
             return album.isTrackForcedEnabled(song) ? IconButton.icon("always_enabled") : null;

@@ -1,21 +1,21 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeLocation;
+import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 public class PlaylistScreen extends Screen {
@@ -24,15 +24,20 @@ public class PlaylistScreen extends Screen {
     private final Screen parent;
     private QueueList list;
     private IconButton playPauseButton;
+    private IconButton skipButton;
     private IconButton loopButton;
     private IconButton shuffleButton;
     private IconButton clearButton;
+    private IconButton saveIconButton;
+    private IconButton searchButton;
     private IconButton directPlayButton;
     private IconButton directRemoveButton;
     private IconButton directLoopButton;
-    private AbstractWidget musicVolumeSlider;
-    private Button saveButton;
+    private EditBox searchField;
     private Button eventsButton;
+    private boolean searching;
+    private boolean focusSearchAfterClick;
+    private String search = "";
 
     public PlaylistScreen(Screen parent) {
         super(TITLE);
@@ -42,6 +47,9 @@ public class PlaylistScreen extends Screen {
     @Override
     protected void init() {
         MusicDiscHelper.requestStats(this.minecraft);
+        this.searching = false;
+        this.focusSearchAfterClick = false;
+        this.search = "";
         this.list = this.addRenderableWidget(new QueueList(this, this.minecraft, this.width, this.height - 112));
         int controlY = this.height - 51;
         int navY = this.height - 27;
@@ -53,12 +61,23 @@ public class PlaylistScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.browse"), button ->
                 this.minecraft.setScreen(new ContentBrowserScreen(this))
         ).bounds(rowX, navY, navWidth, 20).build());
+        this.searchButton = this.addRenderableWidget(new IconButton(Component.translatable("screen.music_and_melody.search"), IconButton.icon("search"), button -> toggleSearch()));
+        this.searchField = this.addRenderableWidget(new EditBox(this.font, rowX + IconButton.SIZE + 4, controlY, rowWidth - IconButton.SIZE - 4, 20, Component.translatable("screen.music_and_melody.search")));
+        this.searchField.setValue(this.search);
+        this.searchField.setResponder(value -> {
+            this.search = value;
+            refreshQueue();
+        });
         this.playPauseButton = this.addRenderableWidget(new IconButton(playPauseMessage(), playPauseIcon(), button -> {
             if (PlaylistHelper.isQueuePlaying()) {
                 PlaylistHelper.pauseQueue();
             } else {
                 PlaylistHelper.playNextNow();
             }
+            this.playPauseButton.setIconAndTooltip(playPauseIcon(), playPauseMessage());
+        }));
+        this.skipButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.skip"), IconButton.icon("next"), button -> {
+            PlaylistHelper.skipQueue();
             this.playPauseButton.setIconAndTooltip(playPauseIcon(), playPauseMessage());
         }));
         this.shuffleButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.shuffle"), IconButton.icon("shuffle"), button -> {
@@ -70,10 +89,13 @@ public class PlaylistScreen extends Screen {
             PlaylistHelper.setLoopingQueue(!PlaylistHelper.isLoopingQueue());
             this.loopButton.setIconAndTooltip(loopIcon(), loopMessage());
         }));
-        this.clearButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.clear_all"), IconButton.icon("clear"), button -> {
+        this.clearButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.clear"), IconButton.icon("clear"), button -> {
             PlaylistHelper.clear();
             this.refreshQueue();
         }));
+        this.saveIconButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.save"), IconButton.icon("save"), button ->
+                this.minecraft.setScreen(new SavePlaylistScreen(this))
+        ));
         this.directPlayButton = new IconButton(directPlayMessage(), directPlayIcon(), button -> {
             if (PlaylistHelper.isDirectPlaying()) {
                 PlaylistHelper.stop();
@@ -87,41 +109,31 @@ public class PlaylistScreen extends Screen {
             PlaylistHelper.setDirectSongLooping(!PlaylistHelper.isDirectSongLooping());
             this.directLoopButton.setIconAndTooltip(directLoopIcon(), directLoopMessage());
         });
+        this.searchButton.setX(rowX);
+        this.searchButton.setY(controlY);
         this.playPauseButton.setX(iconGroupX);
         this.playPauseButton.setY(controlY);
-        this.shuffleButton.setX(iconGroupX + (IconButton.SIZE + 4));
+        this.skipButton.setX(iconGroupX + (IconButton.SIZE + 4));
+        this.skipButton.setY(controlY);
+        this.shuffleButton.setX(iconGroupX + (IconButton.SIZE + 4) * 2);
         this.shuffleButton.setY(controlY);
-        this.loopButton.setX(iconGroupX + (IconButton.SIZE + 4) * 2);
+        this.loopButton.setX(iconGroupX + (IconButton.SIZE + 4) * 3);
         this.loopButton.setY(controlY);
-        this.clearButton.setX(iconGroupX + (IconButton.SIZE + 4) * 3);
+        this.clearButton.setX(rowX + rowWidth - IconButton.SIZE);
         this.clearButton.setY(controlY);
+        this.saveIconButton.setX(this.clearButton.getX() - IconButton.SIZE - 4);
+        this.saveIconButton.setY(controlY);
         this.directPlayButton.visible = false;
         this.directRemoveButton.visible = false;
         this.directLoopButton.visible = false;
-        this.saveButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.save"), button ->
-                this.minecraft.setScreen(new SavePlaylistScreen(this))
-        ).bounds(rowX, controlY, Math.max(60, Math.min(100, iconGroupX - rowX - 8)), 20).build());
-        int sliderX = iconGroupX + iconGroupWidth + 8;
-        this.musicVolumeSlider = this.addRenderableWidget(this.minecraft.options.getSoundSourceOptionInstance(SoundSource.MUSIC)
-                .createButton(this.minecraft.options, sliderX, controlY, Math.max(60, rowX + rowWidth - sliderX)));
         this.eventsButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.playlist_events"), button ->
                 this.minecraft.setScreen(new EventScreen(this, true))
         ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20)
                 .build());
-        // SOCIAL BUTTONS
-        int socialButtonY = this.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            this.addRenderableWidget(new IconButton(this.width - IconButton.SIZE - 8, socialButtonY, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(MusicScreenHelper.KOFI)
-            ));
-        }
+        MusicScreenHelper.addSocialButtons(this);
+        updateSearchRow();
     }
 
     @Override
@@ -134,24 +146,29 @@ public class PlaylistScreen extends Screen {
             this.playPauseButton.active = PlaylistHelper.isQueuePlaying() || PlaylistHelper.hasQueuedSongs();
         }
         if (this.loopButton != null) this.loopButton.setIconAndTooltip(loopIcon(), loopMessage());
+        if (this.skipButton != null) this.skipButton.active = PlaylistHelper.isQueuePlaying() && PlaylistHelper.canSkipQueue();
         if (this.shuffleButton != null) this.shuffleButton.active = PlaylistHelper.queuedSongs().size() > 1;
         if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
-        if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasQueuedSongs();
+        if (this.saveIconButton != null) this.saveIconButton.active = PlaylistHelper.hasQueuedSongs();
         if (this.eventsButton != null) this.eventsButton.active = MaMClientConfig.get().allow_events;
+        updateSearchRow();
+        focusSearchAfterClick();
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return this.directPlayButton != null
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        boolean clicked = this.directPlayButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directPlayButton.mouseClicked(mouseX, mouseY, button)
+                && this.directPlayButton.mouseClicked(event, doubleClick)
                 || this.directRemoveButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directRemoveButton.mouseClicked(mouseX, mouseY, button)
+                && this.directRemoveButton.mouseClicked(event, doubleClick)
                 || this.directLoopButton != null
                 && PlaylistHelper.hasDirectSong()
-                && this.directLoopButton.mouseClicked(mouseX, mouseY, button)
-                || super.mouseClicked(mouseX, mouseY, button);
+                && this.directLoopButton.mouseClicked(event, doubleClick)
+                || super.mouseClicked(event, doubleClick);
+        focusSearchAfterClick();
+        return clicked;
     }
 
     private void renderContextRow(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
@@ -213,12 +230,51 @@ public class PlaylistScreen extends Screen {
         if (this.list != null) this.list.refresh();
     }
 
+    private void toggleSearch() {
+        this.searching = !this.searching;
+        if (this.searching) {
+            focusSearchField();
+        } else {
+            this.search = "";
+            this.searchField.setValue("");
+            refreshQueue();
+            updateSearchRow();
+        }
+    }
+
+    private void focusSearchField() {
+        updateSearchRow();
+        this.focusSearchAfterClick = true;
+    }
+
+    private void focusSearchAfterClick() {
+        if (!this.focusSearchAfterClick || this.searchField == null || !this.searching) return;
+        this.setFocused(this.searchField);
+        this.setInitialFocus(this.searchField);
+        this.searchField.setFocused(true);
+        this.focusSearchAfterClick = false;
+    }
+
+    private void updateSearchRow() {
+        boolean controlsVisible = !this.searching;
+        if (this.searchField != null) {
+            this.searchField.visible = this.searching;
+            this.searchField.active = this.searching;
+        }
+        if (this.playPauseButton != null) this.playPauseButton.visible = controlsVisible;
+        if (this.skipButton != null) this.skipButton.visible = controlsVisible;
+        if (this.shuffleButton != null) this.shuffleButton.visible = controlsVisible;
+        if (this.loopButton != null) this.loopButton.visible = controlsVisible;
+        if (this.clearButton != null) this.clearButton.visible = controlsVisible;
+        if (this.saveIconButton != null) this.saveIconButton.visible = controlsVisible;
+    }
+
     private static Component loopMessage() {
         if (PlaylistHelper.isLoopingQueue()) return Component.translatable("button.music_and_melody.looping");
         else return Component.translatable("button.music_and_melody.loop");
     }
 
-    private static ResourceLocation loopIcon() {
+    private static Identifier loopIcon() {
         return IconButton.icon(PlaylistHelper.isLoopingQueue() ? "looping" : "loop");
     }
 
@@ -226,7 +282,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isQueuePlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
     }
 
-    private static ResourceLocation playPauseIcon() {
+    private static Identifier playPauseIcon() {
         return IconButton.icon(PlaylistHelper.isQueuePlaying() ? "pause" : "play");
     }
 
@@ -234,7 +290,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isDirectPlaying() ? "button.music_and_melody.stop" : "button.music_and_melody.play");
     }
 
-    private static ResourceLocation directPlayIcon() {
+    private static Identifier directPlayIcon() {
         return IconButton.icon(PlaylistHelper.isDirectPlaying() ? "pause" : "play");
     }
 
@@ -242,7 +298,7 @@ public class PlaylistScreen extends Screen {
         return Component.translatable(PlaylistHelper.isDirectSongLooping() ? "button.music_and_melody.looping" : "button.music_and_melody.loop");
     }
 
-    private static ResourceLocation directLoopIcon() {
+    private static Identifier directLoopIcon() {
         return IconButton.icon(PlaylistHelper.isDirectSongLooping() ? "looping" : "loop");
     }
 
@@ -260,9 +316,17 @@ public class PlaylistScreen extends Screen {
         private void refresh() {
             this.clearEntries();
             for (int i = 0; i < PlaylistHelper.queuedSongs().size(); i++) {
-                SafeLocation id = PlaylistHelper.queuedSongs().get(i);
+                SafeIdentifier id = PlaylistHelper.queuedSongs().get(i);
+                if (!matchesSearch(id)) continue;
                 this.addEntry(new QueueEntry(this.screen, this.minecraft, i, id));
             }
+        }
+
+        private boolean matchesSearch(SafeIdentifier id) {
+            String query = this.screen.search.trim().toLowerCase(java.util.Locale.ROOT);
+            if (query.isEmpty()) return true;
+            return id.toString().toLowerCase(java.util.Locale.ROOT).contains(query)
+                    || MusicScreenHelper.playlistName(this.minecraft, id).getString().toLowerCase(java.util.Locale.ROOT).contains(query);
         }
 
         @Override
@@ -271,17 +335,17 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowRight() + 6;
         }
     }
 
-    private static class QueueEntry extends MusicListEntry<QueueEntry> {
+    private static class QueueEntry extends ObjectSelectionList.Entry<QueueEntry> {
 
         private final PlaylistScreen screen;
         private final Minecraft minecraft;
         private final int index;
-        private final SafeLocation song;
+        private final SafeIdentifier song;
         private final Component text;
         private final int color;
         private final IconButton playButton;
@@ -298,7 +362,7 @@ public class PlaylistScreen extends Screen {
             this.removeButton = null;
         }
 
-        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, SafeLocation song) {
+        QueueEntry(PlaylistScreen screen, Minecraft minecraft, int index, SafeIdentifier song) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.index = index;
@@ -348,17 +412,17 @@ public class PlaylistScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            return this.playButton != null && this.playButton.mouseClicked(mouseX, mouseY, button)
-                    || this.removeButton != null && this.removeButton.mouseClicked(mouseX, mouseY, button)
-                    || super.mouseClicked(mouseX, mouseY, button);
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.playButton != null && this.playButton.mouseClicked(event, doubleClick)
+                    || this.removeButton != null && this.removeButton.mouseClicked(event, doubleClick)
+                    || super.mouseClicked(event, doubleClick);
         }
 
-        private static Component playMessage(SafeLocation song) {
+        private static Component playMessage(SafeIdentifier song) {
             return Component.translatable(PlaylistHelper.isQueuePlaying(song) ? "button.music_and_melody.stop" : "button.music_and_melody.play");
         }
 
-        private static ResourceLocation playIcon(SafeLocation song) {
+        private static Identifier playIcon(SafeIdentifier song) {
             return IconButton.icon(PlaylistHelper.isQueuePlaying(song) ? "pause" : "play");
         }
     }
