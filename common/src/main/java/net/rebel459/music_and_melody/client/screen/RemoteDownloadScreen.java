@@ -53,7 +53,8 @@ public class RemoteDownloadScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(x + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
                 .build());
-                // SOCIAL BUTTONS
+
+        // SOCIAL BUTTONS
         int socialButtonY = this.height - 27;
         if (MaMClientConfig.get().discord_button) {
             this.addRenderableWidget(new IconButton(8, socialButtonY, Component.literal("Discord"), IconButton.icon("discord"), button ->

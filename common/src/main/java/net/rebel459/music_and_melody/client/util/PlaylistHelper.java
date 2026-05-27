@@ -308,7 +308,7 @@ public final class PlaylistHelper {
         int playableIndex = nextPlayableIndex(queueIndex, loop);
         if (playableIndex < 0) return false;
         queueIndex = playableIndex;
-        SafeIdentifier id = QUEUED_SONGS.get(queueIndex);
+        SafeLocation id = QUEUED_SONGS.get(queueIndex);
         stop();
         return playSound(id, false, true, false);
     }
