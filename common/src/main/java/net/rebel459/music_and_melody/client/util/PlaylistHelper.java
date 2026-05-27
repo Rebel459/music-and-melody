@@ -32,6 +32,7 @@ public final class PlaylistHelper {
     private static boolean currentSongFromEvent = false;
     private static SafeIdentifier directSongId = null;
     private static boolean directSongLooping = false;
+    private static boolean stoppingCurrentSong = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
 
@@ -222,6 +223,10 @@ public final class PlaylistHelper {
     public static void interruptCurrentPlayback(SoundInstance sound) {
         if ((!currentSongFromQueue && !currentSongFromEvent) || currentSong == null) return;
         if (sound != null && sound != currentSong) return;
+        if (sound != null && currentSongFromQueue && !stoppingCurrentSong) {
+            advanceFinishedQueuedSong(false);
+            return;
+        }
         currentSong = null;
         currentSongId = null;
         currentSongLooping = false;
@@ -253,7 +258,7 @@ public final class PlaylistHelper {
 
     public static boolean playNext() {
         ensureLoaded();
-        advanceFinishedQueuedSong();
+        advanceFinishedQueuedSong(true);
         if (queuePaused || QUEUED_SONGS.isEmpty() || hasActiveMusic()) return false;
         int playableIndex = nextPlayableIndex(queueIndex, loop);
         if (playableIndex < 0) {
@@ -267,9 +272,13 @@ public final class PlaylistHelper {
 
     public static boolean playNextNow() {
         ensureLoaded();
-        advanceFinishedQueuedSong();
         if (QUEUED_SONGS.isEmpty()) return false;
         queuePaused = false;
+        if (currentSongFromQueue && currentSongId != null && isPlaying()) {
+            queueIndex = nextQueueIndex(queueIndex);
+        } else {
+            advanceFinishedQueuedSong(true);
+        }
         queueIndex = clampQueueIndex(queueIndex);
         int playableIndex = nextPlayableIndex(queueIndex, true);
         if (playableIndex < 0) return false;
@@ -289,8 +298,8 @@ public final class PlaylistHelper {
         return playSound(QUEUED_SONGS.get(queueIndex), false, true, false);
     }
 
-    private static void advanceFinishedQueuedSong() {
-        if (!currentSongFromQueue || currentSongId == null || isPlaying()) return;
+    private static void advanceFinishedQueuedSong(boolean requireInactive) {
+        if (!currentSongFromQueue || currentSongId == null || (requireInactive && isPlaying())) return;
         int finishedIndex = -1;
         for (int i = 0; i < QUEUED_SONGS.size(); i++) {
             if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), currentSongId)) {
@@ -299,22 +308,26 @@ public final class PlaylistHelper {
             }
         }
         if (finishedIndex >= 0) {
-            int nextIndex = finishedIndex + 1;
-            if (nextIndex >= QUEUED_SONGS.size()) {
-                if (loop) {
-                    nextIndex = 0;
-                } else {
-                    nextIndex = 0;
-                    queuePaused = true;
-                }
-            }
-            queueIndex = nextIndex;
+            queueIndex = nextQueueIndex(finishedIndex);
         }
         currentSong = null;
         currentSongId = null;
         currentSongLooping = false;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
+    }
+
+    private static int nextQueueIndex(int index) {
+        int nextIndex = index + 1;
+        if (nextIndex >= QUEUED_SONGS.size()) {
+            if (loop) {
+                nextIndex = 0;
+            } else {
+                nextIndex = 0;
+                queuePaused = true;
+            }
+        }
+        return nextIndex;
     }
 
     public static boolean hasActiveMusic() {
@@ -407,10 +420,15 @@ public final class PlaylistHelper {
     public static void stop() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
-        if (instances != null) {
-            for(SoundInstance instance : instances) {
-                manager.stop(instance);
+        stoppingCurrentSong = true;
+        try {
+            if (instances != null) {
+                for(SoundInstance instance : instances) {
+                    manager.stop(instance);
+                }
             }
+        } finally {
+            stoppingCurrentSong = false;
         }
         currentSong = null;
         currentSongId = null;
