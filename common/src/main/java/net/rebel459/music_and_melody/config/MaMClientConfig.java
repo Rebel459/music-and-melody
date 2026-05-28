@@ -76,7 +76,7 @@ public class MaMClientConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean config_album = true;
+	public boolean automatic_discs = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
