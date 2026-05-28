@@ -5,15 +5,11 @@ import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.JukeboxSong;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.network.ServerHelper;
@@ -28,18 +24,24 @@ public final class MusicDiscHelper {
         return path.contains(":") ? Identifier.parse(path) : Identifier.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
+    public static Identifier albumEntryId(Album album, Album.StoredDisc disc) {
+        return albumEntryId(album, disc.path());
+    }
+
     public static Optional<Match> matchSound(Minecraft minecraft, SafeIdentifier soundId) {
         for (Album album : Album.ALBUMS) {
-            for (String disc : album.discs) {
+            for (Album.StoredDisc disc : album.discs) {
                 Identifier jukeboxSong = albumEntryId(album, disc);
-                if (discSoundId(minecraft, jukeboxSong).equals(soundId.getId())) {
-                    return Optional.of(new Match(album, disc, jukeboxSong));
+                Optional<Identifier> sound = discSoundId(minecraft, album, disc);
+                if (sound.isPresent() && sound.get().equals(soundId.getId())) {
+                    return Optional.of(new Match(album, disc.path(), jukeboxSong));
                 }
             }
         }
         for (Playlist playlist : Playlist.PLAYLISTS) {
             for (Identifier disc : playlist.discs) {
-                if (discSoundId(minecraft, disc).equals(soundId.getId())) {
+                Optional<Identifier> sound = discSoundId(minecraft, disc);
+                if (sound.isPresent() && sound.get().equals(soundId.getId())) {
                     return Optional.of(new Match(null, disc.toString(), disc));
                 }
             }
@@ -55,6 +57,10 @@ public final class MusicDiscHelper {
 
     public static Component discName(Identifier jukeboxSong) {
         return Component.translatableWithFallback(translationKey(jukeboxSong), jukeboxSong.toString());
+    }
+
+    public static Component discName(Identifier jukeboxSong, Album.StoredDisc disc) {
+        return disc.description().orElseGet(() -> discName(jukeboxSong));
     }
 
     public static String translationKey(Identifier jukeboxSong) {
@@ -80,43 +86,23 @@ public final class MusicDiscHelper {
         }
     }
 
-    public static Identifier discSoundId(Minecraft minecraft, Identifier jukeboxSongId) {
-        Optional<JukeboxSong> jukeboxSong = jukeboxSong(minecraft, jukeboxSongId);
-        if (jukeboxSong.isEmpty()) {
-            Optional<Identifier> cached = JukeboxSongCache.soundId(minecraft, jukeboxSongId);
-            return cached.orElseGet(() -> fallbackDiscSoundId(minecraft, jukeboxSongId));
-        }
-
-        SoundEvent event = jukeboxSong.get().soundEvent().value();
-        Identifier eventId = event.location();
-        Optional<Identifier> sound = soundFromEvent(minecraft, eventId);
-        if (sound.isPresent()) return sound.get();
-
-        return fallbackDiscSoundId(minecraft, eventId);
+    public static Optional<Identifier> discSoundId(Minecraft minecraft, Album album, Album.StoredDisc disc) {
+        Optional<Identifier> explicitEvent = disc.soundEvent().map(Identifier::tryParse);
+        if (explicitEvent.isPresent()) return soundFromEvent(minecraft, explicitEvent.get());
+        return discSoundId(minecraft, albumEntryId(album, disc));
     }
 
     private static boolean shouldUseInventoryDiscFallback(Minecraft minecraft) {
         return minecraft.getConnection() != null && (ServerHelper.isAbsent() || !ServerHelper.countDiscUses);
     }
 
-    private static Optional<JukeboxSong> jukeboxSong(Minecraft minecraft, Identifier id) {
-        var access = minecraft.getConnection() != null
-                ? minecraft.getConnection().registryAccess()
-                : minecraft.level != null ? minecraft.level.registryAccess() : null;
-        if (access == null) return Optional.empty();
-        return access.lookup(Registries.JUKEBOX_SONG)
-                .flatMap(registry -> registry.getOptional(ResourceKey.create(Registries.JUKEBOX_SONG, id)));
-    }
-
-    private static Identifier fallbackDiscSoundId(Minecraft minecraft, Identifier id) {
+    public static Optional<Identifier> discSoundId(Minecraft minecraft, Identifier id) {
         for (Identifier eventId : fallbackSoundEvents(id)) {
             Optional<Identifier> sound = soundFromEvent(minecraft, eventId);
-            if (sound.isPresent()) return sound.get();
+            if (sound.isPresent()) return sound;
         }
 
-        String path = id.getPath();
-        if (path.startsWith("music_disc.")) path = path.substring("music_disc.".length());
-        return Identifier.fromNamespaceAndPath(id.getNamespace(), "records/" + path);
+        return Optional.empty();
     }
 
     private static Optional<Identifier> soundFromEvent(Minecraft minecraft, Identifier eventId) {
@@ -130,8 +116,8 @@ public final class MusicDiscHelper {
     private static Identifier[] fallbackSoundEvents(Identifier jukeboxSongId) {
         String path = jukeboxSongId.getPath();
         return new Identifier[] {
-                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc." + path),
-                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc_" + path)
+                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc_" + path),
+                Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc." + path)
         };
     }
 
