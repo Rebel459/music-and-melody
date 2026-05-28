@@ -7,7 +7,6 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
-import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
@@ -35,7 +34,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         Album.ALBUMS.removeAll(this.loadedAlbums);
         Album.DISABLED_ALBUMS.removeAll(this.loadedAlbums);
         this.loadedAlbums.clear();
-        JukeboxSongCache.clearResolvedSounds();
 
         Set<Identifier> registeredDiscs = new HashSet<>();
 
@@ -47,9 +45,9 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             Set<String> tracks = trackSet.tracks();
             Set<String> forcedEnabledTracks = trackSet.forcedEnabledTracks();
 
-            Set<String> discs = record.discs()
+            Set<Album.StoredDisc> discs = record.discs()
                     .stream()
-                    .map(Album.Disc::path)
+                    .map(disc -> new Album.StoredDisc(disc.path(), disc.soundEvent(), disc.description()))
                     .collect(Collectors.toSet());
 
             Set<String> forcedUnlockedDiscs = record.discs()
@@ -58,10 +56,10 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     .map(Album.Disc::path)
                     .collect(Collectors.toSet());
 
-            for (String disc : discs) {
-                Identifier discId = disc.contains(":")
-                        ? Identifier.tryParse(disc)
-                        : Identifier.fromNamespaceAndPath(albumId.getNamespace(), disc);
+            for (Album.StoredDisc disc : discs) {
+                Identifier discId = disc.path().contains(":")
+                        ? Identifier.tryParse(disc.path())
+                        : Identifier.fromNamespaceAndPath(albumId.getNamespace(), disc.path());
 
                 if (discId != null) {
                     registeredDiscs.add(discId);
@@ -108,11 +106,8 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
 
                 if (entry.enabled()) {
                     forcedEnabledTracks.add(id);
-
-                    // Forced-enabled version wins if this same resolved track was already added.
                     tracksById.put(id, song);
                 } else {
-                    // Normal entries do not override forced-enabled entries.
                     tracksById.putIfAbsent(id, song);
                 }
             }

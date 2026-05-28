@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class Playlist {
@@ -230,7 +231,8 @@ public class Playlist {
         if (albumMatch.isPresent()) return albumMatch.get().jukeboxSong();
         for (Playlist playlist : PLAYLISTS) {
             for (Identifier disc : playlist.discs) {
-                if (MusicDiscHelper.discSoundId(minecraft, disc).equals(sound.getId())) return disc;
+                Optional<Identifier> discSound = MusicDiscHelper.discSoundId(minecraft, disc);
+                if (discSound.isPresent() && discSound.get().equals(sound.getId())) return disc;
             }
         }
         return null;

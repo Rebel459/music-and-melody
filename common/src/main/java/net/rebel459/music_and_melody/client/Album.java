@@ -13,6 +13,7 @@ import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class Album {
@@ -24,15 +25,15 @@ public class Album {
     public Component name;
     public Identifier icon;
     public Set<String> tracks;
-    public Set<String> discs;
+    public Set<StoredDisc> discs;
     public Set<String> forcedEnabledTracks;
     public Set<String> forcedUnlockedDiscs;
 
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> discs) {
+    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<StoredDisc> discs) {
         this(album, name, icon, tracks, Set.of(), discs, Set.of());
     }
 
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<String> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<StoredDisc> discs, Set<String> forcedUnlockedDiscs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
@@ -101,6 +102,10 @@ public class Album {
         return this.forcedUnlockedDiscs.contains(disc);
     }
 
+    public boolean isDiscForcedUnlocked(StoredDisc disc) {
+        return isDiscForcedUnlocked(disc.path());
+    }
+
     public void setTrackEnabled(String song, boolean enabled) {
         if (isTrackForcedEnabled(song)) return;
         String id = trackId(song).toString();
@@ -114,6 +119,8 @@ public class Album {
 
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
+
+    public record StoredDisc(String path, Optional<String> soundEvent, Optional<Component> description) {}
 
     public record Record(Component name, Identifier icon, List<Track> tracks, List<Disc> discs) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -137,15 +144,17 @@ public class Album {
         );
     }
 
-    public record Disc(String path, boolean unlocked) {
+    public record Disc(String path, Optional<String> soundEvent, Optional<Component> description, boolean unlocked) {
         private static final Codec<Disc> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.NON_EMPTY_STRING.fieldOf("path").forGetter(Disc::path),
+                ExtraCodecs.NON_EMPTY_STRING.optionalFieldOf("sound_event").forGetter(Disc::soundEvent),
+                ComponentSerialization.CODEC.optionalFieldOf("description").forGetter(Disc::description),
                 Codec.BOOL.optionalFieldOf("unlocked", false).forGetter(Disc::unlocked)
         ).apply(instance, Disc::new));
 
         public static final Codec<Disc> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
-                either -> either.map(track -> new Disc(track, false), disc -> disc),
-                disc -> disc.unlocked() ? Either.right(disc) : Either.left(disc.path())
+                either -> either.map(track -> new Disc(track, Optional.empty(), Optional.empty(), false), disc -> disc),
+                disc -> disc.soundEvent().isPresent() || disc.description().isPresent() || disc.unlocked() ? Either.right(disc) : Either.left(disc.path())
         );
     }
 }
