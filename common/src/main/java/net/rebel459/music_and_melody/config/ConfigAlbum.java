@@ -36,7 +36,9 @@ public final class ConfigAlbum {
 
     public static synchronized Album createAlbum(Set<ResourceLocation> registeredDiscs) {
         reload();
-        Set<String> discs = unregisteredDiscs(registeredDiscs);
+        Set<Album.StoredDisc> discs = unregisteredDiscs(registeredDiscs).stream()
+                .map(path -> new Album.StoredDisc(path, Optional.empty(), Optional.empty()))
+                .collect(Collectors.toSet());
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,

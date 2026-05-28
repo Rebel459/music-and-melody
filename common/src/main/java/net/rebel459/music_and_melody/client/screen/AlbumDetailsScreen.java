@@ -222,8 +222,8 @@ public class AlbumDetailsScreen extends Screen {
                 .map(album::trackId)
                 .forEach(songs::add);
         album.discs.stream()
-                .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
-                .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
+                .map(disc -> MusicDiscHelper.discSoundId(minecraft, album, disc))
+                .flatMap(java.util.Optional::stream)
                 .forEach(id -> songs.add(SafeLocation.convert(id)));
         return songs;
     }
@@ -237,6 +237,7 @@ public class AlbumDetailsScreen extends Screen {
         songs.addAll(this.playlist.tracks);
         this.playlist.discs.stream()
                 .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
+                .flatMap(java.util.Optional::stream)
                 .forEach(id -> songs.add(SafeLocation.convert(id)));
         return songs;
     }
@@ -285,13 +286,15 @@ public class AlbumDetailsScreen extends Screen {
             List<DetailEntry> entries = album.discs.stream()
                     .filter(disc -> {
                         ResourceLocation id = MusicDiscHelper.albumEntryId(album, disc);
-                        return matches(search, MusicDiscHelper.discName(id), id.toString());
+                        return matches(search, MusicDiscHelper.discName(id, disc), id.toString());
                     })
                     .map(disc -> {
                         ResourceLocation id = MusicDiscHelper.albumEntryId(album, disc);
-                        Component name = MusicDiscHelper.discName(id);
+                        Component name = MusicDiscHelper.discName(id, disc);
                         boolean unlocked = album.isDiscForcedUnlocked(disc) || MusicDiscHelper.isDiscUnlocked(this.minecraft, id);
-                        return new DetailEntry(this.minecraft, SafeLocation.convert(MusicDiscHelper.discSoundId(this.minecraft, id)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
+                        return MusicDiscHelper.discSoundId(this.minecraft, album, disc)
+                                .map(sound -> new DetailEntry(this.minecraft, SafeLocation.convert(sound), name.copy().withStyle(ChatFormatting.GRAY), unlocked))
+                                .orElseGet(() -> new DetailEntry(this.minecraft, name.copy().withStyle(ChatFormatting.GRAY), Component.translatable("button.music_and_melody.unknown"), IconButton.icon("unknown")));
                     })
                     .toList();
             if (entries.isEmpty()) return;
@@ -333,7 +336,9 @@ public class AlbumDetailsScreen extends Screen {
                     .map(disc -> {
                         Component name = MusicDiscHelper.discName(disc);
                         boolean unlocked = MusicDiscHelper.isDiscUnlocked(this.minecraft, disc);
-                        return new DetailEntry(this.minecraft, SafeLocation.convert(MusicDiscHelper.discSoundId(this.minecraft, disc)), name.copy().withStyle(ChatFormatting.GRAY), unlocked);
+                        return MusicDiscHelper.discSoundId(this.minecraft, disc)
+                                .map(sound -> new DetailEntry(this.minecraft, SafeLocation.convert(sound), name.copy().withStyle(ChatFormatting.GRAY), unlocked))
+                                .orElseGet(() -> new DetailEntry(this.minecraft, name.copy().withStyle(ChatFormatting.GRAY), Component.translatable("button.music_and_melody.unknown"), IconButton.icon("unknown")));
                     })
                     .toList();
             if (entries.isEmpty()) return;
@@ -383,6 +388,10 @@ public class AlbumDetailsScreen extends Screen {
 
         DetailEntry(Minecraft minecraft, Component text, int color) {
             this(null, minecraft, null, null, null, text, color, true, null, null, 0xFFFFFFFF);
+        }
+
+        DetailEntry(Minecraft minecraft, Component text, Component statusText, ResourceLocation statusIcon) {
+            this(null, minecraft, null, null, null, text, 0xFFAAAAAA, false, statusText, statusIcon, 0xFF888888);
         }
 
         DetailEntry(Minecraft minecraft, SafeLocation playableSong, Component text, boolean unlocked) {
@@ -457,6 +466,10 @@ public class AlbumDetailsScreen extends Screen {
             int controlsWidth = controlsWidth();
             FormattedCharSequence line = this.minecraft.font.split(this.text, this.getContentWidth() - (controlsWidth == 0 ? 0 : controlsWidth + 8)).getFirst();
             graphics.drawString(this.minecraft.font, line, this.getContentX() + 1, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.color);
+            if (this.playButton == null) {
+                renderStatus(graphics, controlsWidth, mouseX, mouseY);
+                return;
+            }
             if (this.playButton != null) {
                 int buttonY = this.getContentYMiddle() - 10;
                 int controlX = this.getContentRight() - controlsWidth;
@@ -484,15 +497,17 @@ public class AlbumDetailsScreen extends Screen {
                 if (this.toggleButton != null) {
                     this.toggleButton.render(graphics, mouseX, mouseY, tickDelta);
                 } else if (this.statusText != null && this.statusIcon == null) {
-                    int statusX = this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP;
-                    FormattedCharSequence status = this.minecraft.font.split(this.statusText, STATUS_WIDTH).getFirst();
-                    graphics.drawString(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
+                    renderStatusText(graphics, this.queueButton.getX() + BUTTON_WIDTH + BUTTON_GAP);
                 }
             }
         }
 
         private int controlsWidth() {
-            if (this.playButton == null) return 0;
+            if (this.playButton == null) {
+                if (this.statusIcon != null) return BUTTON_WIDTH;
+                if (this.statusText != null) return STATUS_WIDTH;
+                return 0;
+            }
             int width = BUTTON_WIDTH * 2 + BUTTON_GAP;
             if (this.toggleButton != null) return width + BUTTON_GAP + BUTTON_WIDTH;
             if (this.statusIcon != null) return width + BUTTON_GAP + BUTTON_WIDTH;
@@ -503,6 +518,22 @@ public class AlbumDetailsScreen extends Screen {
 
         private boolean hasMissingStatusIcon() {
             return this.playButton != null && this.toggleButton == null && this.statusIcon == null && this.statusText == null;
+        }
+
+        private void renderStatus(GuiGraphicsExtractor graphics, int controlsWidth, int mouseX, int mouseY) {
+            if (controlsWidth == 0) return;
+            int statusX = this.getContentRight() - controlsWidth;
+            int statusY = this.getContentYMiddle() - 10;
+            if (this.statusIcon != null) {
+                IconButton.renderIconWithTooltip(graphics, this.statusIcon, statusX, statusY, this.statusText, mouseX, mouseY);
+            } else if (this.statusText != null) {
+                renderStatusText(graphics, statusX);
+            }
+        }
+
+        private void renderStatusText(GuiGraphicsExtractor graphics, int statusX) {
+            FormattedCharSequence status = this.minecraft.font.split(this.statusText, STATUS_WIDTH).getFirst();
+            graphics.text(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
         }
 
         @Override

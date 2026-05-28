@@ -9,8 +9,6 @@ import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
 import net.rebel459.music_and_melody.platform.client.MaMFabricClientPlatform;
-import net.rebel459.music_and_melody.client.util.JukeboxSongCache;
-import net.fabricmc.loader.api.FabricLoader;
 
 public class MusicAndMelodyFabricClient implements ClientModInitializer {
 
@@ -18,10 +16,6 @@ public class MusicAndMelodyFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         MaMFabricClientPlatform.init();
         MusicAndMelodyClient.initRegistries();
-        JukeboxSongCache.clear();
-        FabricLoader.getInstance().getAllMods().forEach(mod ->
-                mod.getRootPaths().forEach(JukeboxSongCache::loadFromRoot)
-        );
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new FabricAlbumListener());
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new FabricPlaylistListener());
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new FabricEventListener());

@@ -263,6 +263,7 @@ public class EventHelper {
                         .toList());
                 playlist.get().discs.stream()
                         .map(disc -> MusicDiscHelper.discSoundId(client, disc))
+                        .flatMap(Optional::stream)
                         .forEach(id -> songs.add(SafeLocation.convert(id)));
                 playEvent = playRandomEventSong(client, songs);
             }
@@ -277,7 +278,9 @@ public class EventHelper {
             playEvent = PlaylistHelper.playEvent(event.music, false);
         }
         if (event.category == Event.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music.getId())) {
-            playEvent = PlaylistHelper.playEvent(SafeLocation.convert(MusicDiscHelper.discSoundId(client, event.music.getId())), false);
+            playEvent = MusicDiscHelper.discSoundId(client, event.music.getId())
+                    .map(sound -> PlaylistHelper.playEvent(SafeLocation.convert(sound), false))
+                    .orElse(false);
         }
 
         if (!playEvent) return null;
@@ -487,8 +490,8 @@ public class EventHelper {
                 .forEach(songs::add);
         if (album.isEnabled()) {
             album.discs.stream()
-                    .map(disc -> MusicDiscHelper.albumEntryId(album, disc))
-                    .map(disc -> MusicDiscHelper.discSoundId(client, disc))
+                    .map(disc -> MusicDiscHelper.discSoundId(client, album, disc))
+                    .flatMap(Optional::stream)
                     .forEach(id -> songs.add(SafeLocation.convert(id)));
         }
         return songs;
