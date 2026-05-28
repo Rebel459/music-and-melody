@@ -520,7 +520,7 @@ public class AlbumDetailsScreen extends Screen {
             return this.playButton != null && this.toggleButton == null && this.statusIcon == null && this.statusText == null;
         }
 
-        private void renderStatus(GuiGraphicsExtractor graphics, int controlsWidth, int mouseX, int mouseY) {
+        private void renderStatus(GuiGraphics graphics, int controlsWidth, int mouseX, int mouseY) {
             if (controlsWidth == 0) return;
             int statusX = this.getContentRight() - controlsWidth;
             int statusY = this.getContentYMiddle() - 10;
@@ -531,9 +531,9 @@ public class AlbumDetailsScreen extends Screen {
             }
         }
 
-        private void renderStatusText(GuiGraphicsExtractor graphics, int statusX) {
+        private void renderStatusText(GuiGraphics graphics, int statusX) {
             FormattedCharSequence status = this.minecraft.font.split(this.statusText, STATUS_WIDTH).getFirst();
-            graphics.text(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
+            graphics.drawString(this.minecraft.font, status, statusX + (STATUS_WIDTH - this.minecraft.font.width(status)) / 2, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, this.statusColor);
         }
 
         @Override

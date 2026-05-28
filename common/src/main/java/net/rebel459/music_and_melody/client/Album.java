@@ -8,8 +8,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
-import net.rebel459.music_and_melody.client.Album.Record.Disc;
-import net.rebel459.music_and_melody.client.Album.Record.StoredDisc;
 import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 

@@ -25,7 +25,7 @@ public final class MusicDiscHelper {
         return path.contains(":") ? ResourceLocation.parse(path) : ResourceLocation.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
-    public static Identifier albumEntryId(Album album, Album.StoredDisc disc) {
+    public static ResourceLocation albumEntryId(Album album, Album.StoredDisc disc) {
         return albumEntryId(album, disc.path());
     }
 
