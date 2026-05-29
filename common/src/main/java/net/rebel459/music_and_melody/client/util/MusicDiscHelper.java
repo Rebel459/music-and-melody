@@ -13,7 +13,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.item.Item;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
-import net.rebel459.music_and_melody.network.ServerHelper;
+import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 
 import java.util.Optional;
 
@@ -73,12 +73,13 @@ public final class MusicDiscHelper {
     }
 
     public static boolean isDiscUnlocked(Minecraft minecraft, ResourceLocation jukeboxSong) {
-        if (minecraft.player == null || minecraft.player.isCreative()) return true;
-        ResourceLocation discItemId = discItemId(jukeboxSong);
-        if (!BuiltInRegistries.ITEM.containsKey(discItemId)) return true;
-        Item item = BuiltInRegistries.ITEM.get(discItemId);
-        if (minecraft.player.getStats().getValue(Stats.ITEM_USED, item) > 0) return true;
-        return shouldUseInventoryDiscFallback(minecraft) && minecraft.player.getInventory().contains(stack -> !stack.isEmpty() && stack.getItem() == item);
+        if (ServerPresenceHandler.discUnlocking) {
+            if (minecraft.player == null || minecraft.player.isCreative()) return true;
+            ResourceLocation discItemId = discItemId(jukeboxSong);
+            if (!BuiltInRegistries.ITEM.containsKey(discItemId)) return true;
+            return minecraft.player.getStats().getValue(Stats.ITEM_USED, BuiltInRegistries.ITEM.getValue(discItemId)) > 0;
+        }
+        return true;
     }
 
     public static void requestStats(Minecraft minecraft) {
@@ -91,10 +92,6 @@ public final class MusicDiscHelper {
         Optional<ResourceLocation> explicitEvent = disc.soundEvent().map(ResourceLocation::tryParse);
         if (explicitEvent.isPresent()) return soundFromEvent(minecraft, explicitEvent.get());
         return discSoundId(minecraft, albumEntryId(album, disc));
-    }
-
-    private static boolean shouldUseInventoryDiscFallback(Minecraft minecraft) {
-        return minecraft.getConnection() != null && (ServerHelper.isAbsent() || !ServerHelper.countDiscUses);
     }
 
     public static Optional<ResourceLocation> discSoundId(Minecraft minecraft, ResourceLocation id) {
