@@ -25,15 +25,7 @@ public class SoundManagerPreparationsMixin {
     private Map<Identifier, Resource> soundCache;
 
     @Unique
-    private static final Set<Identifier> DISABLED_EVENTS = new HashSet<>();
-
-    @Unique
     private static final Map<Identifier, Identifier> REMAPPED_MUSIC = Map.of();
-
-    @Inject(method = "listResources", at = @At("HEAD"))
-    private void clearRawSoundPools(ResourceManager resourceManager, CallbackInfo ci) {
-        DISABLED_EVENTS.clear();
-    }
 
     @Inject(method = "listResources", at = @At("RETURN"))
     private void addConfigAlbumSounds(ResourceManager resourceManager, CallbackInfo ci) {
@@ -43,30 +35,6 @@ public class SoundManagerPreparationsMixin {
     @Inject(method = "handleRegistration", at = @At("HEAD"), cancellable = true)
     private void storeRawSoundPool(Identifier eventLocation, SoundEventRegistration soundEventRegistration, CallbackInfo ci) {
         processRaw(soundEventRegistration.getSounds());
-
-        soundEventRegistration.getSounds().removeIf(SoundManagerPreparationsMixin::isDisabled);
-        if (soundEventRegistration.getSounds().isEmpty()) {
-            DISABLED_EVENTS.add(eventLocation);
-            ci.cancel();
-        }
-    }
-
-    @Unique
-    private static boolean isDisabled(Sound sound) {
-        Identifier soundLocation = sound.getLocation();
-        if (sound.getType() == Sound.Type.FILE) {
-            boolean disabled = false;
-            for (Album album : Album.ALBUMS) {
-                if (!album.isEnabled()) {
-                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackForcedEnabled(soundLocation.getPath()));
-                }
-                if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
-                    disabled = true;
-                }
-            }
-            return disabled;
-        }
-        return sound.getType() == Sound.Type.SOUND_EVENT && DISABLED_EVENTS.contains(soundLocation);
     }
 
     @Unique
