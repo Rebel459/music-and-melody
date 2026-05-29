@@ -44,7 +44,7 @@ public class MaMServerConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean count_disc_uses = true;
+	public boolean disc_unlocking = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip

@@ -6,13 +6,14 @@ import net.rebel459.music_and_melody.platform.event.PlayerEvents;
 
 public final class ServerPresenceHandler {
 
+    public static boolean discUnlocking = false;
+
     private ServerPresenceHandler() {}
 
     public static void init() {
         MaMPlatform.NETWORKING.registerPlayToClient(ServerPresencePacket.TYPE, ServerPresencePacket.CODEC, (packet, player) -> {
-            ServerHelper.countDiscUses = MaMServerConfig.get().count_disc_uses;
-            ServerHelper.markPresent();
+            discUnlocking = packet.discUnlocking();
         });
-        PlayerEvents.onJoin(player -> MaMPlatform.NETWORKING.send(new ServerPresencePacket(), player));
+        PlayerEvents.onJoin(player -> MaMPlatform.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking), player));
     }
 }
