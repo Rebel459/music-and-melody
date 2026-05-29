@@ -50,12 +50,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     .map(disc -> new Album.StoredDisc(disc.path(), disc.soundEvent(), disc.description()))
                     .collect(Collectors.toSet());
 
-            Set<String> forcedUnlockedDiscs = record.discs()
-                    .stream()
-                    .filter(Album.Disc::unlocked)
-                    .map(Album.Disc::path)
-                    .collect(Collectors.toSet());
-
             for (Album.StoredDisc disc : discs) {
                 Identifier discId = disc.path().contains(":")
                         ? Identifier.tryParse(disc.path())
@@ -72,8 +66,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     record.icon(),
                     tracks,
                     forcedEnabledTracks,
-                    discs,
-                    forcedUnlockedDiscs
+                    discs
             );
 
             this.loadedAlbums.add(album);

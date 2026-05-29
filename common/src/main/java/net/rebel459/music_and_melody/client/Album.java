@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
+import net.rebel459.music_and_melody.client.Album.Disc;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -27,20 +28,18 @@ public class Album {
     public Set<String> tracks;
     public Set<StoredDisc> discs;
     public Set<String> forcedEnabledTracks;
-    public Set<String> forcedUnlockedDiscs;
 
     public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<StoredDisc> discs) {
-        this(album, name, icon, tracks, Set.of(), discs, Set.of());
+        this(album, name, icon, tracks, Set.of(), discs);
     }
 
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<StoredDisc> discs, Set<String> forcedUnlockedDiscs) {
+    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<StoredDisc> discs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
         this.tracks = tracks;
         this.discs = discs;
         this.forcedEnabledTracks = Set.copyOf(forcedEnabledTracks);
-        this.forcedUnlockedDiscs = Set.copyOf(forcedUnlockedDiscs);
         ALBUMS.add(this);
         if (!isEnabled()) DISABLED_ALBUMS.add(this);
     }
@@ -96,14 +95,6 @@ public class Album {
 
     public boolean isTrackForcedEnabled(String song) {
         return this.forcedEnabledTracks.contains(trackId(song).toString());
-    }
-
-    public boolean isDiscForcedUnlocked(String disc) {
-        return this.forcedUnlockedDiscs.contains(disc);
-    }
-
-    public boolean isDiscForcedUnlocked(StoredDisc disc) {
-        return isDiscForcedUnlocked(disc.path());
     }
 
     public void setTrackEnabled(String song, boolean enabled) {
