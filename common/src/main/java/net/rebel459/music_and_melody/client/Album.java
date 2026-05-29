@@ -144,17 +144,16 @@ public class Album {
         );
     }
 
-    public record Disc(String path, Optional<String> soundEvent, Optional<Component> description, boolean unlocked) {
+    public record Disc(String path, Optional<String> soundEvent, Optional<Component> description) {
         private static final Codec<Disc> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.NON_EMPTY_STRING.fieldOf("path").forGetter(Disc::path),
                 ExtraCodecs.NON_EMPTY_STRING.optionalFieldOf("sound_event").forGetter(Disc::soundEvent),
-                ComponentSerialization.CODEC.optionalFieldOf("description").forGetter(Disc::description),
-                Codec.BOOL.optionalFieldOf("unlocked", false).forGetter(Disc::unlocked)
+                ComponentSerialization.CODEC.optionalFieldOf("description").forGetter(Disc::description)
         ).apply(instance, Disc::new));
 
         public static final Codec<Disc> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
-                either -> either.map(track -> new Disc(track, Optional.empty(), Optional.empty(), false), disc -> disc),
-                disc -> disc.soundEvent().isPresent() || disc.description().isPresent() || disc.unlocked() ? Either.right(disc) : Either.left(disc.path())
+                either -> either.map(track -> new Disc(track, Optional.empty(), Optional.empty()), disc -> disc),
+                disc -> disc.soundEvent().isPresent() || disc.description().isPresent() ? Either.right(disc) : Either.left(disc.path())
         );
     }
 }
