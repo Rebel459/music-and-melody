@@ -77,7 +77,7 @@ public final class MusicDiscHelper {
             if (minecraft.player == null || minecraft.player.isCreative()) return true;
             ResourceLocation discItemId = discItemId(jukeboxSong);
             if (!BuiltInRegistries.ITEM.containsKey(discItemId)) return true;
-            return minecraft.player.getStats().getValue(Stats.ITEM_USED, BuiltInRegistries.ITEM.getValue(discItemId)) > 0;
+            return minecraft.player.getStats().getValue(Stats.ITEM_USED, BuiltInRegistries.ITEM.get(discItemId)) > 0;
         }
         return true;
     }
