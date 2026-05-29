@@ -3,7 +3,7 @@ package net.rebel459.music_and_melody.mixin.client;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.client.sounds.Weighted;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.rebel459.music_and_melody.client.Album;
 import org.spongepowered.asm.mixin.*;
@@ -28,7 +28,7 @@ public abstract class WeighedSoundEventsMixin {
 
     @Unique
     private static boolean isDisabled(Sound sound) {
-        Identifier soundLocation = sound.getLocation();
+        ResourceLocation soundLocation = sound.getLocation();
         if (sound.getType() == Sound.Type.FILE) {
             boolean disabled = false;
             for (Album album : Album.ALBUMS) {
