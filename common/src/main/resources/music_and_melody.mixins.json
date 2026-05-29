@@ -21,6 +21,7 @@
     "client.SoundManagerPreparationsMixin",
     "client.SoundManagerPreparationsWeightMixin",
     "client.SoundScreenMixin",
+    "client.WeighedSoundEventsMixin",
     "integration.fancymenu.AudioElementMixin",
     "integration.fancymenu.GlobalCustomizationHandlerAccessor",
     "integration.fancymenu.GlobalCustomizationHandlerMixin",
