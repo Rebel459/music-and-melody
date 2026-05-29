@@ -51,7 +51,7 @@ public final class MusicDiscHelper {
 
     public static boolean isSoundUnlocked(Minecraft minecraft, SafeIdentifier soundId) {
         return matchSound(minecraft, soundId)
-                .map(match -> match.album() != null && match.album().isDiscForcedUnlocked(match.disc()) || isDiscUnlocked(minecraft, match.jukeboxSong()))
+                .map(match -> isDiscUnlocked(minecraft, match.jukeboxSong()))
                 .orElse(true);
     }
 

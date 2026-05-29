@@ -278,7 +278,7 @@ public class AlbumDetailsScreen extends Screen {
                     .map(disc -> {
                         Identifier id = MusicDiscHelper.albumEntryId(album, disc);
                         Component name = MusicDiscHelper.discName(id, disc);
-                        boolean unlocked = album.isDiscForcedUnlocked(disc) || MusicDiscHelper.isDiscUnlocked(this.minecraft, id);
+                        boolean unlocked = MusicDiscHelper.isDiscUnlocked(this.minecraft, id);
                         return MusicDiscHelper.discSoundId(this.minecraft, album, disc)
                                 .map(sound -> new DetailEntry(this.minecraft, SafeIdentifier.convert(sound), name.copy().withStyle(ChatFormatting.GRAY), unlocked))
                                 .orElseGet(() -> new DetailEntry(this.minecraft, name.copy().withStyle(ChatFormatting.GRAY), Component.translatable("button.music_and_melody.unknown"), IconButton.icon("unknown")));
