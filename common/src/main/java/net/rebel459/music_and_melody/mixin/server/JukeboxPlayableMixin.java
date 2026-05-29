@@ -22,7 +22,7 @@ public abstract class JukeboxPlayableMixin {
             )
     )
     private static ItemStack trackDiscUses(ItemStack stack, int amount, LivingEntity owner, Operation<ItemStack> original) {
-        if (MaMServerConfig.get().count_disc_uses && owner instanceof Player player) player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+        if (MaMServerConfig.get().disc_unlocking && owner instanceof Player player) player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
         return original.call(stack, amount, owner);
     }
 }

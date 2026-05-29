@@ -6,13 +6,14 @@ import net.rebel459.unified.platform.UnifiedHelpers;
 
 public final class ServerPresenceHandler {
 
+    public static boolean discUnlocking = false;
+
     private ServerPresenceHandler() {}
 
     public static void init() {
         UnifiedHelpers.NETWORKING.registerPlayToClient(ServerPresencePacket.TYPE, ServerPresencePacket.CODEC, (packet, player) -> {
-            ServerHelper.countDiscUses = MaMServerConfig.get().count_disc_uses;
-            ServerHelper.markPresent();
+            discUnlocking = packet.discUnlocking();
         });
-        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(), player));
+        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking), player));
     }
 }
