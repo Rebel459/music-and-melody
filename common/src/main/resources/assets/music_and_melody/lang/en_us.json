@@ -213,5 +213,5 @@
   "text.autoconfig.music_and_melody/server.option.sync_structures": "Sync Structures",
   "text.autoconfig.music_and_melody/server.option.sync_structures.@Tooltip": "Whether the server should send the client a list of structures for the player's position. Required by Event structure conditions",
   "text.autoconfig.music_and_melody/server.option.sound_events": "Sound Events",
-  "text.autoconfig.music_and_melody/server.option.sound_events.@Tooltip": "A list of custom sound events to register. All sound events are registered under the music_and_melody namespace"
+  "text.autoconfig.music_and_melody/server.option.sound_events.@Tooltip": "A list of custom sound events to register under specified identifiers. This list must be identical between the client and server"
 }
