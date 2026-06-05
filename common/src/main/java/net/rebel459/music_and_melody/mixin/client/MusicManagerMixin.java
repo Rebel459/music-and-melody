@@ -53,7 +53,7 @@ public abstract class MusicManagerMixin {
             )
     )
     private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, @Local(name = "soundEvent") SoundEvent soundEvent) {
-        if (soundEvent.location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
+        if (soundEvent.location().equals(MaMSounds.BUILT_IN_SOUNDS.get("music.empty").value().location())) return;
         original.call(toastManager);
     }
 

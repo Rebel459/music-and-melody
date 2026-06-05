@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.client.util;
 
-import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
@@ -37,7 +36,7 @@ public final class PlaylistHelper {
     private static int queueIndex = 0;
     private static int currentQueueIndex = -1;
 
-    public static final Music EMPTY = new Music(MaMSounds.REGISTERED_SOUNDS.get("music.empty"), 0, 0, true);
+    public static final Music EMPTY = new Music(MaMSounds.BUILT_IN_SOUNDS.get("music.empty"), 0, 0, true);
 
     private PlaylistHelper() {}
 
