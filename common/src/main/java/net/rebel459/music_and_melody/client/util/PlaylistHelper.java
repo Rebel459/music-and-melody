@@ -36,7 +36,7 @@ public final class PlaylistHelper {
     private static int queueIndex = 0;
     private static int currentQueueIndex = -1;
 
-    public static final Music EMPTY = new Music(MaMSounds.REGISTERED_SOUNDS.get("music.empty"), 0, 0, true);
+    public static final Music EMPTY = new Music(MaMSounds.BUILT_IN_SOUNDS.get("music.empty"), 0, 0, true);
 
     private PlaylistHelper() {}
 
