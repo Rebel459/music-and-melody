@@ -42,7 +42,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener {
             TrackSet trackSet = expandTracks(albumId, record.tracks(), resourceManager);
             Set<String> tracks = new HashSet<>();
             for (String track : trackSet.tracks()) {
-                tracks.add(SafeIdentifier.parse(track).getPath());
+                tracks.add(SafeLocation.parse(track).getPath());
             }
             Set<String> forcedEnabledTracks = trackSet.forcedEnabledTracks();
 

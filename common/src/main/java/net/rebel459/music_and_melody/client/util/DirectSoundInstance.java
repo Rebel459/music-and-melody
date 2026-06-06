@@ -11,7 +11,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -24,16 +24,16 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	private final WeighedSoundEvents soundEvent;
 	private final Type type;
 
-	public static DirectSoundInstance createTracksOnly(SafeIdentifier id, float volume, boolean loop) {
+	public static DirectSoundInstance createTracksOnly(SafeLocation id, float volume, boolean loop) {
 		return create(id, volume, loop, Type.TRACKS);
 	}
 
-	public static DirectSoundInstance createPoolsOnly(SafeIdentifier id, float volume, boolean loop) {
+	public static DirectSoundInstance createPoolsOnly(SafeLocation id, float volume, boolean loop) {
 		return create(id, volume, loop, Type.POOLS);
 	}
 
-	private static DirectSoundInstance create(SafeIdentifier id, float volume, boolean loop, Type type) {
-		Identifier actualId = Identifier.tryParse(id.toString());
+	private static DirectSoundInstance create(SafeLocation id, float volume, boolean loop, Type type) {
+		ResourceLocation actualId = ResourceLocation.tryParse(id.toString());
 		if (actualId == null) throw new IllegalArgumentException("Could not resolve sound '" + id + "'.");
 		return new DirectSoundInstance(new ResolvedSound(actualId), SoundSource.MUSIC, volume, 1.0F, SoundInstance.createUnseededRandom(), loop, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true, type);
 	}
@@ -117,13 +117,13 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	@Override
-	public WeighedSoundEvents resolve(@NonNull SoundManager soundManager) {
+	public WeighedSoundEvents resolve(@NotNull SoundManager soundManager) {
 		if (this.type == Type.TRACKS) return this.soundEvent;
 
-		WeighedSoundEvents registered = soundManager.getSoundEvent(identifier);
+		WeighedSoundEvents registered = soundManager.getSoundEvent(this.location);
 		if (registered == null) {
 			if (this.type == Type.ALL) return this.soundEvent;
-			throw new IllegalArgumentException("Sound event " + identifier + " does not exist");
+			throw new IllegalArgumentException("Sound event " + this.location + " does not exist");
 		}
 
 		this.sound = registered.getSound(random);
@@ -197,7 +197,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		}
 	}
 
-	private record ResolvedSound(Identifier playableId) {}
+	private record ResolvedSound(ResourceLocation playableId) {}
 
 	public enum Type {
 		ALL,
