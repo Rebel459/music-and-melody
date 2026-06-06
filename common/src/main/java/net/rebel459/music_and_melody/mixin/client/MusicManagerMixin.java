@@ -51,7 +51,7 @@ public abstract class MusicManagerMixin {
             )
     )
     private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, Music music) {
-        if (music.sound().value().location().equals(MaMSounds.REGISTERED_SOUNDS.get("music.empty").value().location())) return;
+        if (music.sound().value().location().equals(MaMSounds.EMPTY.value().location())) return;
         original.call(toastManager);
     }
 

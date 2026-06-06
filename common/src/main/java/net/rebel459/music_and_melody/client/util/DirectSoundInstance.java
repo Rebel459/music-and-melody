@@ -11,6 +11,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
+import org.jspecify.annotations.NonNull;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -21,6 +22,21 @@ import java.util.Locale;
 public class DirectSoundInstance extends AbstractSoundInstance {
 
 	private final WeighedSoundEvents soundEvent;
+	private final Type type;
+
+	public static DirectSoundInstance createTracksOnly(SafeIdentifier id, float volume, boolean loop) {
+		return create(id, volume, loop, Type.TRACKS);
+	}
+
+	public static DirectSoundInstance createPoolsOnly(SafeIdentifier id, float volume, boolean loop) {
+		return create(id, volume, loop, Type.POOLS);
+	}
+
+	private static DirectSoundInstance create(SafeIdentifier id, float volume, boolean loop, Type type) {
+		Identifier actualId = Identifier.tryParse(id.toString());
+		if (actualId == null) throw new IllegalArgumentException("Could not resolve sound '" + id + "'.");
+		return new DirectSoundInstance(new ResolvedSound(actualId), SoundSource.MUSIC, volume, 1.0F, SoundInstance.createUnseededRandom(), loop, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true, type);
+	}
 
 	public DirectSoundInstance(
 			SafeIdentifier location,
@@ -48,7 +64,8 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 				x,
 				y,
 				z,
-				relative
+				relative,
+				Type.ALL
 		);
 	}
 
@@ -64,7 +81,8 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 			double x,
 			double y,
 			double z,
-			boolean relative
+			boolean relative,
+			Type type
 	) {
 		super(resolved.playableId(), source, random);
 
@@ -77,32 +95,39 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		this.delay = delay;
 		this.attenuation = attenuation;
 		this.relative = relative;
+		this.type = type;
 
-		this.sound = new Sound(
-				resolved.playableId(),
-				ConstantFloat.of(1.0F),
-				ConstantFloat.of(1.0F),
-				1,
-				Sound.Type.FILE,
-				true,
-				false,
-				16
-		);
-
-		this.soundEvent = new WeighedSoundEvents(resolved.playableId(), null);
-		this.soundEvent.addSound(this.sound);
+		if (type == Type.POOLS) {
+			this.soundEvent = null;
+		}
+		else {
+			this.sound = new Sound(
+					resolved.playableId(),
+					ConstantFloat.of(1.0F),
+					ConstantFloat.of(1.0F),
+					1,
+					Sound.Type.FILE,
+					true,
+					false,
+					16
+			);
+			this.soundEvent = new WeighedSoundEvents(resolved.playableId(), null);
+			this.soundEvent.addSound(this.sound);
+		}
 	}
 
 	@Override
-	public WeighedSoundEvents resolve(SoundManager soundManager) {
-		WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
+	public WeighedSoundEvents resolve(@NonNull SoundManager soundManager) {
+		if (this.type == Type.TRACKS) return this.soundEvent;
 
-		if (registered != null) {
-			this.sound = registered.getSound(this.random);
-			return registered;
+		WeighedSoundEvents registered = soundManager.getSoundEvent(identifier);
+		if (registered == null) {
+			if (this.type == Type.ALL) return this.soundEvent;
+			throw new IllegalArgumentException("Sound event " + identifier + " does not exist");
 		}
 
-		return this.soundEvent;
+		this.sound = registered.getSound(random);
+		return registered;
 	}
 
 	public void setLooping(boolean looping) {
@@ -131,7 +156,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 			safePath = "sound";
 		}
 
-		String playablePath = "direct/" + shortHash(source.toAbsolutePath().normalize().toString()) + "/" + safePath;
+		String playablePath = "type/" + shortHash(source.toAbsolutePath().normalize().toString()) + "/" + safePath;
 
 		Identifier playableId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, playablePath);
 
@@ -172,6 +197,11 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 		}
 	}
 
-	private record ResolvedSound(Identifier playableId) {
+	private record ResolvedSound(Identifier playableId) {}
+
+	public enum Type {
+		ALL,
+		POOLS,
+		TRACKS
 	}
 }
