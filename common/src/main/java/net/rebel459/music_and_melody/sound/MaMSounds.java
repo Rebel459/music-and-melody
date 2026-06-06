@@ -10,5 +10,7 @@ public class MaMSounds {
 
 	public static void init() {
 		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.bounce");
+		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.lava_chicken");
+		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.tears");
 	}
 }
