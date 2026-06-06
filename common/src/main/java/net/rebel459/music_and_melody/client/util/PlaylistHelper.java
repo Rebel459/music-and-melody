@@ -36,7 +36,7 @@ public final class PlaylistHelper {
     private static int queueIndex = 0;
     private static int currentQueueIndex = -1;
 
-    public static final Music EMPTY = new Music(MaMSounds.BUILT_IN_SOUNDS.get("music.empty"), 0, 0, true);
+    public static final Music EMPTY = new Music(MaMSounds.EMPTY, 0, 0, true);
 
     private PlaylistHelper() {}
 
@@ -401,6 +401,10 @@ public final class PlaylistHelper {
     }
 
     private static boolean playSound(SafeLocation id, boolean loop, boolean fromQueue, boolean fromEvent) {
+        return playSound(id, loop, fromQueue, fromEvent, DirectSoundInstance.Type.ALL);
+    }
+
+    private static boolean playSound(SafeLocation id, boolean loop, boolean fromQueue, boolean fromEvent, DirectSoundInstance.Type type) {
         id = ConfigAlbum.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
@@ -418,7 +422,9 @@ public final class PlaylistHelper {
             directSongId = null;
             directSongLooping = false;
         }
-        currentSong = new DirectSoundInstance(
+        if (type == DirectSoundInstance.Type.TRACKS) currentSong = DirectSoundInstance.createTracksOnly(id, volume, loop);
+        else if (type == DirectSoundInstance.Type.POOLS) currentSong = DirectSoundInstance.createPoolsOnly(id, volume, loop);
+        else currentSong = new DirectSoundInstance(
                 id,
                 SoundSource.MUSIC,
                 volume,
@@ -475,9 +481,13 @@ public final class PlaylistHelper {
     }
 
     public static boolean playEvent(SafeLocation id, boolean loop) {
+        return playEvent(id, loop, DirectSoundInstance.Type.ALL);
+    }
+
+    public static boolean playEvent(SafeLocation id, boolean loop, DirectSoundInstance.Type type) {
         ensureLoaded();
         stop();
-        return playSound(id, loop, false, true);
+        return playSound(id, loop, false, true, type);
     }
 
     public static void stopEvent() {

@@ -12,32 +12,9 @@ import java.util.Set;
 
 public class MaMSounds {
 
-	public static HashMap<String, Holder<SoundEvent>> BUILT_IN_SOUNDS = new HashMap<>();
+	public static Holder<SoundEvent> EMPTY = MaMPlatform.SOUND_EVENTS.registerForHolder("music.empty");
 
 	public static void init() {
 		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.bounce");
-		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.lava_chicken");
-		MaMPlatform.SOUND_EVENTS.registerVanilla("music_disc.tears");
-		Set<String> sounds = new HashSet<>(MaMServerConfig.get().sound_events);
-		Set<String> builtInSounds = Set.of(
-				"music.empty",
-				"music.common",
-				"music.overworld.snowy",
-				"music.overworld.dark_forest",
-				"music.overworld.savanna",
-				"music.end.main_island",
-				"music.structure.stronghold",
-				"music.structure.ancient_city",
-				"music.wither",
-				"music.threshold"
-		);
-		for (String pool : builtInSounds) {
-			Holder<SoundEvent> sound = MaMPlatform.SOUND_EVENTS.registerForHolder(pool);
-			BUILT_IN_SOUNDS.put(pool, sound);
-		}
-		for (String pool : sounds) {
-			Identifier id = Identifier.parse(pool);
-			UnifiedRegistries.SoundEvents.create(id.getNamespace()).registerForHolder(id.getPath());
-		}
 	}
 }
