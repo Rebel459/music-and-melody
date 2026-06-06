@@ -23,23 +23,10 @@ public class MaMServerConfig implements ConfigData {
 
 	public static MaMServerConfig get() {
 		if (!MusicAndMelody.registeredServerConfig) {
-			init();
+			AutoConfig.register(MaMServerConfig.class, JanksonConfigSerializer::new);
 			MusicAndMelody.registeredServerConfig = true;
 		}
 		return AutoConfig.getConfigHolder(MaMServerConfig.class).getConfig();
-	}
-	public static void init() {
-		Path json5Path = configPath(true);
-		Path jsonPath = configPath(false);
-		Path existingConfigPath = Files.exists(json5Path) ? json5Path : jsonPath;
-		boolean hasExistingConfig = Files.exists(existingConfigPath);
-		boolean restoreSoundEvents = !hasExistingConfig || !configContainsField(existingConfigPath, "sound_events");
-		AutoConfig.register(MaMServerConfig.class, JanksonConfigSerializer::new);
-		var holder = AutoConfig.getConfigHolder(MaMServerConfig.class);
-		MaMServerConfig config = holder.getConfig();
-		if (config.normalizeDefaults(restoreSoundEvents)) {
-			holder.save();
-		}
 	}
 
 	@ConfigEntry.Category("config")
@@ -49,37 +36,4 @@ public class MaMServerConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean sync_structures = true;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
-	public List<String> sound_events = new ArrayList<>();
-
-	private static boolean configContainsField(Path path, String fieldName) {
-		try {
-			return Files.readString(path).contains("\"" + fieldName + "\"");
-		} catch (Exception ignored) {
-			return true;
-		}
-	}
-
-	private boolean normalizeDefaults(boolean restoreSoundEvents) {
-		boolean changed = false;
-
-		if (restoreSoundEvents && this.sound_events.isEmpty()) {
-			this.sound_events.addAll(defaultSoundEvents());
-			changed = true;
-		}
-
-		List<String> normalizedDisabledEnchantments = new ArrayList<>(new LinkedHashSet<>(this.sound_events));
-		if (!normalizedDisabledEnchantments.equals(this.sound_events)) {
-			this.sound_events = normalizedDisabledEnchantments;
-			changed = true;
-		}
-
-		return changed;
-	}
-
-	private static List<String> defaultSoundEvents() {
-		return List.of();
-	}
 }

@@ -275,13 +275,10 @@ public class EventHelper {
             }
         }
         if (event.category == Event.CategoryType.POOL) {
-            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.get(event.music.getId());
-            if (sound.isEmpty()) return null;
-            storeEvent(event);
-            return new Music(sound.get(), 0, 0, replaceCurrentMusic);
+            playEvent = PlaylistHelper.playEvent(event.music, false, DirectSoundInstance.Type.POOLS);
         }
         if (event.category == Event.CategoryType.TRACK) {
-            playEvent = PlaylistHelper.playEvent(event.music, false);
+            playEvent = PlaylistHelper.playEvent(event.music, false, DirectSoundInstance.Type.TRACKS);
         }
         if (event.category == Event.CategoryType.DISC && MusicDiscHelper.isDiscUnlocked(client, event.music.getId())) {
             playEvent = MusicDiscHelper.discSoundId(client, event.music.getId())
