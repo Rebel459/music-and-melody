@@ -120,13 +120,13 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	public WeighedSoundEvents resolve(@NonNull SoundManager soundManager) {
 		if (this.type == Type.TRACKS) return this.soundEvent;
 
-		WeighedSoundEvents registered = soundManager.getSoundEvent(identifier);
+		WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);
 		if (registered == null) {
 			if (this.type == Type.ALL) return this.soundEvent;
-			throw new IllegalArgumentException("Sound event " + identifier + " does not exist");
+			throw new IllegalArgumentException("Sound event " + this.identifier + " does not exist");
 		}
 
-		this.sound = registered.getSound(random);
+		this.sound = registered.getSound(this.random);
 		return registered;
 	}
 
