@@ -126,7 +126,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 			throw new IllegalArgumentException("Sound event " + this.location + " does not exist");
 		}
 
-		this.sound = registered.getSound(random);
+		this.sound = registered.getSound(this.random);
 		return registered;
 	}
 
