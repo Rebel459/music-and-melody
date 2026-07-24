@@ -423,6 +423,10 @@
     "replace": true,
     "sounds": [
       {
+        "name": "music_and_melody:music/overworld/squid",
+        "stream": true
+      },
+      {
         "name": "music/game/below_and_above",
         "stream": true,
         "volume": 0.4

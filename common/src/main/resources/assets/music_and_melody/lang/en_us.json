@@ -160,6 +160,7 @@
   "music_and_melody.music.overworld.decay": "F7c82 - Decay",
   "music_and_melody.music.overworld.hunger": "F7c82 - Hunger",
   "music_and_melody.music.overworld.mt_reed": "Freja Nelson - Mt Reed",
+  "music_and_melody.music.overworld.squid": "RedWolf - Squid",
   "music_and_melody.music.under_water.strand_atoll": "F7c82 - Strand Atoll",
 
   "music.game.ebb": "fingerspit - Ebb",
@@ -174,6 +175,9 @@
   "music_and_melody.music.structure.stronghold.if_we_could_reverse_time": "Freja Nelson - If We Could Reverse Time",
   "music_and_melody.music.structure.stronghold.voide": "solunary - voide",
   "music_and_melody.music.structure.stronghold.worn_away": "Freja Nelson - Worn Away",
+  "music_and_melody.music.structure.stronghold.farlands": "RedWolf - Farlands",
+  "music_and_melody.music.structure.trial_chambers.bat": "RedWolf - Bat",
+  "music_and_melody.music.structure.trial_chambers.lochan": "Soul_ - Lochan",
 
   "text.autoconfig.music_and_melody.title": "Music and Melody",
 
