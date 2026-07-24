@@ -115,6 +115,10 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/overworld/squid",
+        "stream": true
+      },
+      {
         "name": "music_and_melody:music.classic",
         "type": "event"
       },
@@ -358,6 +362,10 @@
       {
         "name": "music_and_melody:music/structure/stronghold/voide",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/stronghold/farlands",
+        "stream": true
       }
     ]
   },
@@ -373,6 +381,23 @@
       },
       {
         "name": "music_and_melody:music/structure/ancient_city/echoes",
+        "stream": true
+      }
+    ]
+  },
+  "music.structure.trial_chambers": {
+    "sounds": [
+      {
+        "name": "music/game/pokopoko",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/structure/trial_chambers/bat",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/trial_chambers/lochan",
         "stream": true
       }
     ]

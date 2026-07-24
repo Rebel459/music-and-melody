@@ -1,0 +1,16 @@
+{
+  "name": "Trial Chambers",
+  "description": "Trial Chambers structure-specific music",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.structure.trial_chambers",
+      "conditions": [
+        {
+          "type": "structure",
+          "value": "trial_chambers"
+        }
+      ]
+    }
+  ]
+}
