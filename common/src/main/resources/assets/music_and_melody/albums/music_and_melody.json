@@ -33,6 +33,18 @@
       "enabled": true
     },
     {
+      "path": "music/structure/stronghold/farlands",
+      "enabled": true
+    },
+    {
+      "path": "music/structure/trial_chambers/bat",
+      "enabled": true
+    },
+    {
+      "path": "music/structure/trial_chambers/lochan",
+      "enabled": true
+    },
+    {
       "path": "music/misc/wither_storm_theme",
       "enabled": true
     }

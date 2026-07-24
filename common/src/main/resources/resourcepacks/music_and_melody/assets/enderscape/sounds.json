@@ -148,5 +148,18 @@
         "weight": 1
       }
     ]
+  },
+  "music.enderscape.structure.stronghold": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music_and_melody:music.structure.stronghold",
+        "type": "event"
+      },
+      {
+        "name": "enderscape:music/structure/stronghold/prelude",
+        "stream": true
+      }
+    ]
   }
 }
