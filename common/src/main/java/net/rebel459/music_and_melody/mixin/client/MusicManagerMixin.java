@@ -3,11 +3,14 @@ package net.rebel459.music_and_melody.mixin.client;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
+import net.minecraft.core.Holder;
 import net.minecraft.sounds.Music;
+import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -43,6 +46,22 @@ public abstract class MusicManagerMixin {
         if (key != null) cir.setReturnValue(key);
     }
 
+    @Unique
+    private SoundEvent toastSoundEvent = null;
+
+    @WrapOperation(
+            method = "startPlaying",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/sounds/Music;sound()Lnet/minecraft/core/Holder;"
+            )
+    )
+    private Holder<SoundEvent> getToastEvent(Music music, Operation<Holder<SoundEvent>> original) {
+        Holder<SoundEvent> event = original.call(music);
+        this.toastSoundEvent = event.value();
+        return event;
+    }
+
     @WrapOperation(
             method = "startPlaying",
             at = @At(
@@ -50,8 +69,8 @@ public abstract class MusicManagerMixin {
                     target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;showNowPlayingToast()V"
             )
     )
-    private void hideEmptyToast(ToastManager toastManager, Operation<Void> original, Music music) {
-        if (music.sound().value().location().equals(MaMSounds.EMPTY.value().location())) return;
+    private void hideEmptyToast(ToastManager toastManager, Operation<Void> original) {
+        if (this.toastSoundEvent != null && this.toastSoundEvent.location().equals(MaMSounds.EMPTY.value().location())) return;
         original.call(toastManager);
     }
 
