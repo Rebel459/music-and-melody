@@ -11,6 +11,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.rebel459.unified.util.VanillaVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,13 +25,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -82,7 +77,14 @@ public final class RemoteContentManager {
                 .thenAccept(packs -> {
                     synchronized (RemoteContentManager.class) {
                         PACKS.clear();
-                        PACKS.addAll(packs);
+                        List<RemotePack> validPacks = new ArrayList<>();
+                        VanillaVersion version = VanillaVersion.getVanillaVersion();
+                        for  (RemotePack pack : packs) {
+                            boolean withinMaxExclusive = pack.maxExclusive().isEmpty() || VanillaVersion.parse(pack.maxExclusive()).compareTo(version) > 0;
+                            boolean withinMinInclusive = pack.minInclusive().isEmpty() || VanillaVersion.parse(pack.minInclusive()).compareTo(version) <= 0;
+                            if (withinMaxExclusive && withinMinInclusive) validPacks.add(pack);
+                        }
+                        PACKS.addAll(validPacks);
                         refreshTask = null;
                     }
                 })
@@ -280,6 +282,8 @@ public final class RemoteContentManager {
             return null;
         }
         Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+        String minInclusive = object.has("min_inclusive") ? object.get("min_inclusive").getAsString() : "";
+        String maxExclusive = object.has("max_exclusive") ? object.get("max_exclusive").getAsString() : "";
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -289,7 +293,9 @@ public final class RemoteContentManager {
                 catalogUri.resolve(object.get("url").getAsString()).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
-                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon
+                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon,
+                minInclusive,
+                maxExclusive
         );
     }
 
