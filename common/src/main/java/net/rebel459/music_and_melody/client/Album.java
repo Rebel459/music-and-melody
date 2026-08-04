@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
+import net.rebel459.music_and_melody.client.Album.Disc;
 import net.rebel459.music_and_melody.client.util.SafeLocation;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -20,6 +21,8 @@ public class Album {
 
     public static Set<Album> ALBUMS = new HashSet<>();
     public static Set<Album> DISABLED_ALBUMS = new HashSet<>();
+
+    public static Set<ResourceLocation> LOADED_ALBUMS = new HashSet<>();
 
     public ResourceLocation album;
     public Component name;
@@ -41,6 +44,7 @@ public class Album {
         this.forcedEnabledTracks = Set.copyOf(forcedEnabledTracks);
         ALBUMS.add(this);
         if (!isEnabled()) DISABLED_ALBUMS.add(this);
+        else LOADED_ALBUMS.add(album);
     }
 
     public boolean isEnabled() {

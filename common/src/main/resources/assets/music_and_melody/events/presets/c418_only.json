@@ -20,7 +20,7 @@
                   "type": "all_of",
                   "value": [
                     {
-                      "type": "event",
+                      "type": "special",
                       "value": "under_water"
                     },
                     {
@@ -91,7 +91,7 @@
           "value": "overworld"
         },
         {
-          "type": "event",
+          "type": "special",
           "value": "under_water"
         },
         {
@@ -114,8 +114,8 @@
       "music": "music_and_melody:presets/c418/dragon",
       "conditions": [
         {
-          "type": "event",
-          "value": "dragon"
+          "type": "bossbar",
+          "value": "entity.minecraft.ender_dragon"
         }
       ],
       "priority": "high",
@@ -127,7 +127,7 @@
       "music": "music_and_melody:presets/c418/credits",
       "conditions": [
         {
-          "type": "event",
+          "type": "special",
           "value": "credits"
         }
       ],
@@ -140,7 +140,7 @@
       "music": "music_and_melody:presets/c418/menu",
       "conditions": [
         {
-          "type": "event",
+          "type": "special",
           "value": "menu"
         }
       ],

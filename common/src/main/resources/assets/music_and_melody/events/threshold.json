@@ -7,7 +7,7 @@
       "music": "music_and_melody:music.threshold",
       "conditions": [
         {
-          "type": "event",
+          "type": "special",
           "value": "end_portal"
         }
       ],

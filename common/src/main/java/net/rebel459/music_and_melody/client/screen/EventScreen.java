@@ -585,8 +585,11 @@ public class EventScreen extends Screen {
         return type.equals("time")
                 || type.equals("weather")
                 || type.equals("game_mode")
-                || type.equals("event")
-                || type.equals("mod_loaded");
+                || type.equals("special")
+                || type.equals("mod_loaded")
+                || type.equals("bossbar")
+                || type.equals("at_least_version")
+                || type.equals("below_version");
     }
 
     private static List<String> splitConditionParts(String value) {

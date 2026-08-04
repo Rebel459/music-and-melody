@@ -47,10 +47,6 @@ public class EventHelper {
     private static Event.CategoryType lastCategory;
     private static SafeLocation lastMusic;
 
-    public static boolean hasWitherBossBar() {
-        return Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable("entity.minecraft.wither").getString()));
-    }
-
     public static boolean isEndPortalFilled() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         return manager.soundEngine.instanceBySource.values().stream().filter(instance -> SoundEvents.END_PORTAL_SPAWN.getLocation().equals(instance.getLocation())).anyMatch(manager::isActive);
@@ -577,12 +573,10 @@ public class EventHelper {
             if (condition.type() == Event.ConditionType.GAME_MODE) {
                 shouldBeActive = shouldBeActive && client.gameMode != null && matchesGameMode(client.gameMode.getPlayerMode(), condition.gameModeValue().get());
             }
-            if (condition.type() == Event.ConditionType.EVENT) {
+            if (condition.type() == Event.ConditionType.SPECIAL) {
                 switch (condition.eventValue().get()) {
                     case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
                     case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
-                    case DRAGON -> shouldBeActive = shouldBeActive && level != null && level.dimension() == Level.END && client.gui.getBossOverlay().shouldPlayMusic();
-                    case WITHER -> shouldBeActive = shouldBeActive && EventHelper.hasWitherBossBar();
                     case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
                     case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
                 }
@@ -593,8 +587,20 @@ public class EventHelper {
             if (condition.type() == Event.ConditionType.BELOW_Y) {
                 shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
             }
+            if (condition.type() == Event.ConditionType.AT_LEAST_VERSION) {
+                shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
+            }
+            if (condition.type() == Event.ConditionType.BELOW_VERSION) {
+                shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
+            }
+            if (condition.type() == Event.ConditionType.BOSSBAR) {
+                shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
+            }
             if (condition.type() == Event.ConditionType.MOD_LOADED) {
                 shouldBeActive = shouldBeActive && MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get());
+            }
+            if (condition.type() == Event.ConditionType.ALBUM_LOADED) {
+                shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
             }
             if (condition.type() == Event.ConditionType.RANDOM_CHANCE) {
                 shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());

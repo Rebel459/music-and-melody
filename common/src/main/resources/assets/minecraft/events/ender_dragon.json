@@ -6,8 +6,8 @@
       "music": "minecraft:music.dragon",
       "conditions": [
         {
-          "type": "event",
-          "value": "dragon"
+          "type": "bossbar",
+          "value": "entity.minecraft.ender_dragon"
         }
       ],
       "priority": "very_high",

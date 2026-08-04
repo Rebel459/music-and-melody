@@ -6,7 +6,7 @@
       "music": "minecraft:music.credits",
       "conditions": [
         {
-          "type": "event",
+          "type": "special",
           "value": "credits"
         }
       ],
