@@ -9,13 +9,10 @@ import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.client.sounds.Weighted;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -372,12 +369,6 @@ public class EventHelper {
     }
 
     private static Music storedEventMusicOrBlocker() {
-        if (lastCategory == Event.CategoryType.POOL && lastMusic != null) {
-            Optional<Holder.Reference<SoundEvent>> sound = BuiltInRegistries.SOUND_EVENT.get(lastMusic.getId());
-            if (sound.isPresent()) {
-                return new Music(sound.get(), 0, 0, false);
-            }
-        }
         if (lastCategory != null) {
             return PlaylistHelper.EMPTY;
         }
