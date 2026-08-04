@@ -47,7 +47,13 @@ public class EventHelper {
 
     public static boolean isEndPortalFilled() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
-        return manager.soundEngine.instanceBySource.values().stream().filter(instance -> SoundEvents.END_PORTAL_SPAWN.location().equals(instance.getIdentifier())).anyMatch(manager::isActive);
+        Collection<SoundInstance> blockSounds = manager.soundEngine.instanceBySource.get(SoundSource.BLOCKS);
+        for (SoundInstance instance : new ArrayList<>(blockSounds)) {
+            if (SoundEvents.END_PORTAL_SPAWN.location().equals(instance.location()) && manager.isActive(instance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Music processEventMusic() {
