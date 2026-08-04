@@ -11,7 +11,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.unified.util.VanillaVersion;
+import net.rebel459.unified.api.util.VanillaVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
