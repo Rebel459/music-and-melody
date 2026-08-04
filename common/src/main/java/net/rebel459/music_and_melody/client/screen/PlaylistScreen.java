@@ -58,7 +58,7 @@ public class PlaylistScreen extends Screen {
         int iconGroupWidth = IconButton.SIZE * 4 + 4 * 3;
         int iconGroupX = this.width / 2 - iconGroupWidth / 2;
         this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.browse"), button ->
-                this.minecraft.setScreen(new ContentBrowserScreen(this))
+                this.minecraft.gui.setScreen(new ContentBrowserScreen(this))
         ).bounds(rowX, navY, navWidth, 20).build());
         this.searchButton = this.addRenderableWidget(new IconButton(Component.translatable("screen.music_and_melody.search"), IconButton.icon("search"), button -> toggleSearch()));
         this.searchField = this.addRenderableWidget(new EditBox(this.font, rowX + IconButton.SIZE + 4, controlY, rowWidth - IconButton.SIZE - 4, 20, Component.translatable("screen.music_and_melody.search")));
@@ -93,7 +93,7 @@ public class PlaylistScreen extends Screen {
             this.refreshQueue();
         }));
         this.saveIconButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.save"), IconButton.icon("save"), button ->
-                this.minecraft.setScreen(new SavePlaylistScreen(this))
+                this.minecraft.gui.setScreen(new SavePlaylistScreen(this))
         ));
         this.directPlayButton = new IconButton(directPlayMessage(), directPlayIcon(), button -> {
             if (PlaylistHelper.isDirectPlaying()) {
@@ -126,7 +126,7 @@ public class PlaylistScreen extends Screen {
         this.directRemoveButton.visible = false;
         this.directLoopButton.visible = false;
         this.eventsButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.playlist_events"), button ->
-                this.minecraft.setScreen(new EventScreen(this, true))
+                this.minecraft.gui.setScreen(new EventScreen(this, true))
         ).bounds(rowX + navWidth + 4, navY, navWidth, 20).build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds(rowX + (navWidth + 4) * 2, navY, navWidth, 20)
@@ -222,7 +222,7 @@ public class PlaylistScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 
     void refreshQueue() {

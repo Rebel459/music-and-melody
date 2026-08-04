@@ -6,8 +6,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.unified.platform.UnifiedHelpers;
-import net.rebel459.unified.platform.UnifiedPlatform;
+import net.rebel459.unified.api.core.UnifiedInstance;
 
 import java.util.*;
 
@@ -29,7 +28,7 @@ public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.
         for (Map.Entry<Identifier, Playlist.Record> entry : identifierRecordMap.entrySet()) {
             boolean shouldLoad = true;
             for (String mod : entry.getValue().dependencies()) {
-                if (!UnifiedPlatform.isModLoaded(mod)) {
+                if (!UnifiedInstance.isModLoaded(mod)) {
                     shouldLoad = false;
                     break;
                 }

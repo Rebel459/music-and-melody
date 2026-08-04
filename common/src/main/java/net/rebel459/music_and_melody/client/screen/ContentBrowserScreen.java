@@ -134,7 +134,7 @@ public class ContentBrowserScreen extends Screen {
     public void onClose() {
         deletePendingPlaylists();
         deletePendingRemotes();
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
         if (this.reloadPending) {
             this.minecraft.reloadResourcePacks();
         }
@@ -332,7 +332,7 @@ public class ContentBrowserScreen extends Screen {
         }
 
         private void openDetails() {
-            this.minecraft.setScreen(this.entry.remote != null
+            this.minecraft.gui.setScreen(this.entry.remote != null
                     ? new RemoteDetailsScreen(this.screen, this.entry.remote)
                     : this.entry.album != null
                       ? new AlbumDetailsScreen(this.screen, this.entry.album)
@@ -493,7 +493,7 @@ public class ContentBrowserScreen extends Screen {
                 if (state == RemoteContentManager.State.NEEDS_RELOAD) {
                     this.screen.reloadResources();
                 } else {
-                    this.minecraft.setScreen(new RemoteDownloadScreen(this.screen, pack));
+                    this.minecraft.gui.setScreen(new RemoteDownloadScreen(this.screen, pack));
                 }
                 return;
             }

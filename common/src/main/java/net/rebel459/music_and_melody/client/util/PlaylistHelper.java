@@ -449,7 +449,7 @@ public final class PlaylistHelper {
             return false;
         }
         if (result == SoundEngine.PlayResult.STARTED) {
-            Minecraft.getInstance().getToastManager().showNowPlayingToast();
+            Minecraft.getInstance().gui.toastManager().showNowPlayingToast();
         }
         return true;
     }

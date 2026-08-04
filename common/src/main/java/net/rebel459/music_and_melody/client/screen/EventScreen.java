@@ -97,7 +97,7 @@ public class EventScreen extends Screen {
     protected void init() {
         if (this.openSourcesOnInit) {
             this.openSourcesOnInit = false;
-            this.minecraft.setScreen(new EventBrowserScreen(this, this.parent));
+            this.minecraft.gui.setScreen(new EventBrowserScreen(this, this.parent));
             return;
         }
 
@@ -200,8 +200,8 @@ public class EventScreen extends Screen {
         if (this.savedChanges) {
             EventHelper.resetMusicBreak();
         }
-        if (this.closeToSources) this.minecraft.setScreen(new EventBrowserScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
-        else this.minecraft.setScreen(this.parent);
+        if (this.closeToSources) this.minecraft.gui.setScreen(new EventBrowserScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
+        else this.minecraft.gui.setScreen(this.parent);
     }
 
     private void reloadEntries() {
@@ -255,7 +255,7 @@ public class EventScreen extends Screen {
     }
 
     private void toggleExpanded() {
-        this.minecraft.setScreen(new EventScreen(this.parent, this.selectedIndex, !this.listExpanded, this.savedChanges, this.activeSourceId, this.closeToSources, this.sourceBrowserParent));
+        this.minecraft.gui.setScreen(new EventScreen(this.parent, this.selectedIndex, !this.listExpanded, this.savedChanges, this.activeSourceId, this.closeToSources, this.sourceBrowserParent));
     }
 
     private void addEntry() {
@@ -308,7 +308,7 @@ public class EventScreen extends Screen {
     }
 
     private void browseSources() {
-        this.minecraft.setScreen(new EventBrowserScreen(this, this.parent));
+        this.minecraft.gui.setScreen(new EventBrowserScreen(this, this.parent));
     }
 
     private void loadSource(Identifier sourceId) {
@@ -791,18 +791,18 @@ public class EventScreen extends Screen {
             if (this.editor.savedChanges) {
                 EventHelper.resetMusicBreak();
             }
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
         }
 
         private void choose(Identifier sourceId) {
             this.editor.loadSource(sourceId);
             this.editor.closeToSources = true;
             this.editor.sourceBrowserParent = this.parent;
-            this.minecraft.setScreen(this.editor);
+            this.minecraft.gui.setScreen(this.editor);
         }
 
         private void newSource() {
-            this.minecraft.setScreen(new NewEventScreen(this));
+            this.minecraft.gui.setScreen(new NewEventScreen(this));
         }
 
         void refreshList() {
@@ -1038,7 +1038,7 @@ public class EventScreen extends Screen {
 
         @Override
         public void onClose() {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
         }
 
         private void create() {
@@ -1048,7 +1048,7 @@ public class EventScreen extends Screen {
             this.parent.editor.loadSource(source.id);
             this.parent.editor.closeToSources = true;
             this.parent.editor.sourceBrowserParent = this.parent.parent;
-            this.minecraft.setScreen(this.parent.editor);
+            this.minecraft.gui.setScreen(this.parent.editor);
         }
 
         private void refreshCreateState() {

@@ -14,7 +14,7 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleAwardStats", at = @At("TAIL"))
     private void refreshAlbumDetailsStats(ClientboundAwardStatsPacket packet, CallbackInfo ci) {
         ClientPacketListener listener = ClientPacketListener.class.cast(this);
-        if (listener.minecraft.screen instanceof AlbumDetailsScreen screen) {
+        if (listener.minecraft.gui.screen() instanceof AlbumDetailsScreen screen) {
             screen.onStatsUpdated();
         }
     }

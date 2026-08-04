@@ -1,16 +1,9 @@
 package net.rebel459.music_and_melody.sound;
 
 import net.minecraft.core.Holder;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedPlatform;
-import net.rebel459.unified.platform.UnifiedRegistries;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import net.rebel459.unified.api.core.UnifiedRegistries;
 
 public class MaMSounds {
 
@@ -18,9 +11,5 @@ public class MaMSounds {
 
 	public static Holder<SoundEvent> EMPTY = SOUNDS.registerForHolder("music.empty");
 
-	public static void init() {
-		if (!UnifiedPlatform.isModLoaded("vanillabackport")) {
-			UnifiedRegistries.SoundEvents.create("minecraft").registerForHolder("music_disc.bounce");
-		}
-	}
+	public static void init() {}
 }

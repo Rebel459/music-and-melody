@@ -37,10 +37,6 @@ public abstract class MinecraftMixin {
     @Shadow @Nullable public LocalPlayer player;
 
     @Shadow
-    @Nullable
-    public Screen screen;
-
-    @Shadow
     @Final
     public Gui gui;
 

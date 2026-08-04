@@ -66,7 +66,7 @@ public class RemoteDetailsScreen extends Screen {
     @Override
     public void onClose() {
         this.parent.refreshList();
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 
     private void line(GuiGraphicsExtractor graphics, Component component, int x, int y) {

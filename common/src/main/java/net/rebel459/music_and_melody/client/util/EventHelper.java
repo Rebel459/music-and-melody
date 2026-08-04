@@ -25,8 +25,8 @@ import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
-import net.rebel459.unified.platform.UnifiedPlatform;
-import net.rebel459.unified.util.VanillaVersion;
+import net.rebel459.unified.api.core.UnifiedInstance;
+import net.rebel459.unified.api.util.VanillaVersion;
 
 import java.util.*;
 
@@ -579,8 +579,8 @@ public class EventHelper {
             }
             if (condition.type() == Event.ConditionType.SPECIAL) {
                 switch (condition.eventValue().get()) {
-                    case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
-                    case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
+                    case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.gui.screen() instanceof WinScreen);
+                    case CREDITS -> shouldBeActive = shouldBeActive && client.gui.screen() instanceof WinScreen;
                     case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
                     case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
                 }
@@ -598,10 +598,10 @@ public class EventHelper {
                 shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
             }
             if (condition.type() == Event.ConditionType.BOSSBAR) {
-                shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
+                shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.hud.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
             }
             if (condition.type() == Event.ConditionType.MOD_LOADED) {
-                shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+                shouldBeActive = shouldBeActive && UnifiedInstance.isModLoaded(condition.stringValue().get());
             }
             if (condition.type() == Event.ConditionType.ALBUM_LOADED) {
                 shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());

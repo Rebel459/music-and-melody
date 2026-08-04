@@ -11,9 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedEvents;
-import net.rebel459.unified.platform.UnifiedHelpers;
-import net.rebel459.unified.util.EventType;
+import net.rebel459.unified.api.core.UnifiedEvents;
+import net.rebel459.unified.api.core.UnifiedHelpers;
+import net.rebel459.unified.api.event.EventTiming;
 
 import java.util.*;
 
@@ -34,7 +34,7 @@ public class StructureMusicHandler {
             LAST_STRUCTURES.clear();
             LAST_POSITION.clear();
         });
-        UnifiedEvents.Server.onTick(EventType.PRE, server -> {
+        UnifiedEvents.Server.onTick(EventTiming.PRE, server -> {
             if (++serverTicks < 20) return;
             serverTicks = 0;
             Map<ResourceKey<Level>, List<Holder.Reference<Structure>>> structures = getStructures(server);

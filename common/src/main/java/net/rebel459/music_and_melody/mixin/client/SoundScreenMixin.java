@@ -38,11 +38,11 @@ public abstract class SoundScreenMixin extends Screen {
         if (screen.list == null) return;
 
         Button albumsButton = Button.builder(Component.translatable("button.music_and_melody.albums"), button ->
-                this.minecraft.setScreen(new ContentBrowserScreen(this))
+                this.minecraft.gui.setScreen(new ContentBrowserScreen(this))
         ).size(150, 20).build();
 
         Button playlistButton = Button.builder(Component.translatable("button.music_and_melody.playlist"), button ->
-                this.minecraft.setScreen(new PlaylistScreen(this))
+                this.minecraft.gui.setScreen(new PlaylistScreen(this))
         ).size(150, 20).build();
 
         screen.list.addSmall(List.of(albumsButton, playlistButton));

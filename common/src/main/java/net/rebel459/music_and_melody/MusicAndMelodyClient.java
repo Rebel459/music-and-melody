@@ -4,11 +4,11 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.unified.platform.UnifiedHelpers;
-import net.rebel459.unified.platform.client.UnifiedClientEvents;
-import net.rebel459.unified.platform.client.UnifiedClientRegistries;
-import net.rebel459.unified.util.EventType;
-import net.rebel459.unified.util.PackType;
+import net.rebel459.unified.api.client.core.UnifiedClientEvents;
+import net.rebel459.unified.api.client.core.UnifiedClientHelpers;
+import net.rebel459.unified.api.client.core.UnifiedClientRegistries;
+import net.rebel459.unified.api.core.UnifiedHelpers;
+import net.rebel459.unified.api.event.EventTiming;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Supplier;
@@ -26,14 +26,14 @@ public final class MusicAndMelodyClient {
 
     public static void initRegistries() {
         if (MaMClientConfig.get().music_rebalance) {
-            UnifiedHelpers.PACKS.add(MusicAndMelody.id("music_and_melody"), PackType.REQUIRED_RESOURCES);
+            UnifiedClientHelpers.RESOURCE_PACKS.addRequired(MusicAndMelody.id("music_and_melody"));
         }
     }
 
     public static void init() {
-        UnifiedClientEvents.Instance.onTick(EventType.POST, client -> {
+        UnifiedClientEvents.Instance.onTick(EventTiming.POST, client -> {
             while (PLAYLIST_KEY.get().consumeClick()) {
-                client.setScreen(new PlaylistScreen(client.screen));
+                client.gui.setScreen(new PlaylistScreen(client.gui.screen()));
             }
         });
     }
