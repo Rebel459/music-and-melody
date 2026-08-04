@@ -27,9 +27,9 @@
         "stream": true
       },
       {
-        "name": "music.game",
-        "type": "event",
-        "weight": 1
+        "name": "music_and_melody:music/overworld/ravine",
+        "stream": true,
+        "volume": 0.5
       },
       {
         "name": "music/game/creative/biome_fest",
@@ -252,49 +252,25 @@
         "volume": 0.4
       },
       {
-        "name": "music/game/ebb",
-        "stream": true,
-        "volume": 0.4
-      },
-      {
-        "name": "music/game/home",
-        "stream": true,
-        "volume": 0.4
-      },
-      {
         "name": "music/game/memories",
         "stream": true,
         "volume": 0.4
       },
       {
-        "name": "music/game/nightly",
-        "stream": true,
-        "volume": 0.4
-      },
-      {
-        "name": "music/game/shores",
-        "stream": true,
-        "volume": 0.4
-      },
-      {
         "name": "music/menu/beginning_2",
-        "stream": true,
-        "weight": 2
+        "stream": true
       },
       {
         "name": "music/menu/floating_trees",
-        "stream": true,
-        "weight": 2
+        "stream": true
       },
       {
         "name": "music/menu/moog_city_2",
-        "stream": true,
-        "weight": 2
+        "stream": true
       },
       {
         "name": "music/menu/mutation",
-        "stream": true,
-        "weight": 2
+        "stream": true
       }
     ]
   },
