@@ -7,8 +7,8 @@
       "music": "music_and_melody:music.wither",
       "conditions": [
         {
-          "type": "event",
-          "value": "wither"
+          "type": "bossbar",
+          "value": "entity.minecraft.wither"
         }
       ],
       "priority": "high",

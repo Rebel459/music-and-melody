@@ -235,11 +235,6 @@ public class Event {
         }
     }
 
-    public static Optional<String> recordConditionsJson(List<Record.Condition> conditions) {
-        JsonElement json = Record.Condition.CODEC.listOf().encodeStart(JsonOps.INSTANCE, conditions).result().orElse(null);
-        return json == null ? Optional.empty() : Optional.of(GSON.toJson(json));
-    }
-
     private static void rebuildEvents() {
         VERY_HIGH_PRIORITY.clear();
         HIGH_PRIORITY.clear();
@@ -355,7 +350,7 @@ public class Event {
         Optional<TimeCondition> timeValue = Optional.empty();
         Optional<WeatherCondition> weatherValue = Optional.empty();
         Optional<GameModeCondition> gameModeValue = Optional.empty();
-        Optional<EventCondition> eventValue = Optional.empty();
+        Optional<SpecialCondition> eventValue = Optional.empty();
 
         if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
@@ -371,7 +366,7 @@ public class Event {
         } else {
             if (!(value instanceof Record.Condition.Value.String(String string))) return Optional.empty();
 
-            if (type == ConditionType.MOD_LOADED) {
+            if (type == ConditionType.MOD_LOADED || type == ConditionType.BOSSBAR || type == ConditionType.AT_LEAST_VERSION || type == ConditionType.BELOW_VERSION) {
                 if (string.isBlank()) return Optional.empty();
                 stringValue = Optional.of(string);
             } else if (type == ConditionType.TIME) {
@@ -386,8 +381,8 @@ public class Event {
                 GameModeCondition gameMode = gameMode(string);
                 if (gameMode == null) return Optional.empty();
                 gameModeValue = Optional.of(gameMode);
-            } else if (type == ConditionType.EVENT) {
-                EventCondition event = event(string);
+            } else if (type == ConditionType.SPECIAL) {
+                SpecialCondition event = event(string);
                 if (event == null) return Optional.empty();
                 eventValue = Optional.of(event);
             } else {
@@ -440,7 +435,7 @@ public class Event {
             case "time" -> ConditionType.TIME;
             case "weather" -> ConditionType.WEATHER;
             case "game_mode" -> ConditionType.GAME_MODE;
-            case "event" -> ConditionType.EVENT;
+            case "special" -> ConditionType.SPECIAL;
             case "all_of" -> ConditionType.ALL_OF;
             case "any_of" -> ConditionType.ANY_OF;
             case "not" -> ConditionType.NOT;
@@ -448,6 +443,10 @@ public class Event {
             case "above_y" -> ConditionType.ABOVE_Y;
             case "mod_loaded" -> ConditionType.MOD_LOADED;
             case "random_chance" -> ConditionType.RANDOM_CHANCE;
+            case "bossbar" -> ConditionType.BOSSBAR;
+            case "at_least_version" -> ConditionType.AT_LEAST_VERSION;
+            case "below_version" -> ConditionType.BELOW_VERSION;
+            case "album_loaded" -> ConditionType.ALBUM_LOADED;
             default -> null;
         };
     }
@@ -481,14 +480,12 @@ public class Event {
         };
     }
 
-    private static EventCondition event(String event) {
+    private static SpecialCondition event(String event) {
         return switch (event.toLowerCase(Locale.ROOT)) {
-            case "menu" -> EventCondition.MENU;
-            case "credits" -> EventCondition.CREDITS;
-            case "dragon" -> EventCondition.DRAGON;
-            case "wither" -> EventCondition.WITHER;
-            case "end_portal" -> EventCondition.END_PORTAL;
-            case "under_water" -> EventCondition.UNDER_WATER;
+            case "menu" -> SpecialCondition.MENU;
+            case "credits" -> SpecialCondition.CREDITS;
+            case "end_portal" -> SpecialCondition.END_PORTAL;
+            case "under_water" -> SpecialCondition.UNDER_WATER;
             default -> null;
         };
     }
@@ -563,12 +560,16 @@ public class Event {
         GAME_MODE,
         BELOW_Y,
         ABOVE_Y,
-        EVENT,
+        SPECIAL,
         ALL_OF,
         ANY_OF,
         NOT,
         MOD_LOADED,
-        RANDOM_CHANCE
+        RANDOM_CHANCE,
+        BOSSBAR,
+        AT_LEAST_VERSION,
+        BELOW_VERSION,
+        ALBUM_LOADED
     }
 
     private enum DefaultState {
@@ -596,11 +597,9 @@ public class Event {
         SPECTATOR
     }
 
-    public enum EventCondition {
+    public enum SpecialCondition {
         MENU,
         CREDITS,
-        DRAGON,
-        WITHER,
         END_PORTAL,
         UNDER_WATER
     }
@@ -700,7 +699,7 @@ public class Event {
         }
 
         public record Condition(String type, Value value) {
-            public static final Codec<Condition> CODEC = Codec.recursive("EventCondition", self -> {
+            public static final Codec<Condition> CODEC = Codec.recursive("SpecialCondition", self -> {
                 Codec<Value> valueCodec = Codec.either(
                         Codec.either(
                                 Codec.either(Codec.STRING, Codec.INT),
@@ -756,7 +755,7 @@ public class Event {
             Optional<TimeCondition> timeValue,
             Optional<WeatherCondition> weatherValue,
             Optional<GameModeCondition> gameModeValue,
-            Optional<EventCondition> eventValue,
+            Optional<SpecialCondition> eventValue,
             List<Condition> conditions
     ) {}
 }

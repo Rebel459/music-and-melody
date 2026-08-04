@@ -22,6 +22,8 @@ public class Album {
     public static Set<Album> ALBUMS = new HashSet<>();
     public static Set<Album> DISABLED_ALBUMS = new HashSet<>();
 
+    public static Set<Identifier> LOADED_ALBUMS = new HashSet<>();
+
     public Identifier album;
     public Component name;
     public Identifier icon;
@@ -42,6 +44,7 @@ public class Album {
         this.forcedEnabledTracks = Set.copyOf(forcedEnabledTracks);
         ALBUMS.add(this);
         if (!isEnabled()) DISABLED_ALBUMS.add(this);
+        else LOADED_ALBUMS.add(album);
     }
 
     public boolean isEnabled() {
