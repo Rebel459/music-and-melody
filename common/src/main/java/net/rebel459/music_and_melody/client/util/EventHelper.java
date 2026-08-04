@@ -49,7 +49,7 @@ public class EventHelper {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> blockSounds = manager.soundEngine.instanceBySource.get(SoundSource.BLOCKS);
         for (SoundInstance instance : new ArrayList<>(blockSounds)) {
-            if (SoundEvents.END_PORTAL_SPAWN.location().equals(instance.location()) && manager.isActive(instance)) {
+            if (SoundEvents.END_PORTAL_SPAWN.location().equals(instance.getIdentifier()) && manager.isActive(instance)) {
                 return true;
             }
         }
