@@ -568,7 +568,7 @@ public final class RemoteContentManager {
         return MANIFEST_DIRECTORY.resolve(id.getNamespace() + "-" + path + ".txt");
     }
 
-    static Path packDirectory(Identifier id) {
+    static Path packDirectory(ResourceLocation id) {
         String name = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
         return PACK_DIRECTORY.resolve(name);

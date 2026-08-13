@@ -90,7 +90,7 @@ public final class DownloadedResources {
     private static void scanPackDirectories() {
         Set<Path> scanned = new HashSet<>();
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
-            Identifier id = Identifier.tryParse(pack.id);
+            ResourceLocation id = ResourceLocation.tryParse(pack.id);
             if (id == null) continue;
             Path directory = RemoteContentManager.packDirectory(id);
             if (scanned.add(directory)) scanPack(directory);
