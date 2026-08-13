@@ -44,7 +44,6 @@ public final class RemoteContentManager {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
     private static final Path MANIFEST_DIRECTORY = DIRECTORY.resolve(".manifests");
-    private static final Path TEMP_DIRECTORY = DIRECTORY.resolve(".tmp");
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
@@ -58,7 +57,7 @@ public final class RemoteContentManager {
     private RemoteContentManager() {}
 
     public static boolean remoteDownloadsAllowed() {
-        return true;
+        return PlatformContentManager.allowRemoteDownloads();
     }
 
     public static synchronized void refreshIfNeeded() {
@@ -117,16 +116,25 @@ public final class RemoteContentManager {
     }
 
     public static void download(RemotePack pack) {
+        if (!remoteDownloadsAllowed()) return;
         if (!DOWNLOADING.add(pack.id())) return;
         OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
+            Path zip = null;
             try {
-                downloadAndExtract(pack);
+                zip = PlatformContentManager.download(pack);
+                importAndExtract(pack, zip);
                 recordInstalled(pack);
                 OVERRIDE_STATES.put(pack.id(), State.NEEDS_RELOAD);
             } catch (Exception exception) {
                 OVERRIDE_STATES.put(pack.id(), State.FAILED);
             } finally {
+                if (zip != null) {
+                    try {
+                        Files.deleteIfExists(zip);
+                    } catch (IOException ignored) {
+                    }
+                }
                 DOWNLOADING.remove(pack.id());
             }
         });
@@ -280,26 +288,6 @@ public final class RemoteContentManager {
                 atLeastVersion,
                 belowVersion
         );
-    }
-
-    private static void downloadAndExtract(RemotePack pack) throws IOException, InterruptedException {
-        Files.createDirectories(TEMP_DIRECTORY);
-        Path zip = TEMP_DIRECTORY.resolve(pack.fileName());
-        HttpRequest request = HttpRequest.newBuilder(URI.create(pack.url()))
-                .timeout(Duration.ofMinutes(5))
-                .GET()
-                .build();
-        HttpResponse<Path> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(zip));
-        if (response.statusCode() < 200 || response.statusCode() >= 300) throw new IOException("Download failed: " + response.statusCode());
-        if (Files.size(zip) != pack.size()) throw new IOException("Downloaded size mismatch");
-        String hash = sha256(zip);
-        if (!hash.equalsIgnoreCase(pack.sha256())) throw new IOException("Downloaded hash mismatch");
-        if (installed(pack.id()) != null) {
-            deleteInstalledFiles(pack.id());
-        }
-        List<Path> extracted = extractZip(zip, DIRECTORY);
-        writeManifest(pack.id(), extracted);
-        Files.deleteIfExists(zip);
     }
 
     private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
