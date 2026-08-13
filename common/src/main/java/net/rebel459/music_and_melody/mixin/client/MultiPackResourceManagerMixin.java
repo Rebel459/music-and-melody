@@ -42,10 +42,10 @@ public class MultiPackResourceManagerMixin {
 
     @Inject(method = "getResourceStack", at = @At("RETURN"), cancellable = true)
     private void getDownloadedResourceStack(Identifier location, CallbackInfoReturnable<List<Resource>> cir) {
-        Optional<Resource> resource = DownloadedResources.getResource(location);
-        if (resource.isEmpty()) return;
+        List<Resource> resources = DownloadedResources.getResourceStack(location);
+        if (resources.isEmpty()) return;
         List<Resource> stack = new ArrayList<>(cir.getReturnValue());
-        stack.add(resource.get());
+        stack.addAll(resources);
         cir.setReturnValue(stack);
     }
 

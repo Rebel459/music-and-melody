@@ -4,10 +4,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +22,8 @@ import java.util.function.Predicate;
 public final class DownloadedResources {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
-    private static final Map<Identifier, Path> RESOURCES = new HashMap<>();
+    private static final Path PACK_DIRECTORY = DIRECTORY.resolve(".packs");
+    private static final Map<Identifier, List<Path>> RESOURCES = new HashMap<>();
     private static boolean dirty = true;
 
     private DownloadedResources() {}
@@ -34,21 +37,25 @@ public final class DownloadedResources {
 
     public static synchronized Optional<Resource> getResource(Identifier id) {
         reload();
-        Path path = RESOURCES.get(id);
-        return path == null ? Optional.empty() : Optional.of(resource(path));
+        List<Path> paths = RESOURCES.get(id);
+        return paths == null || paths.isEmpty()
+                ? Optional.empty()
+                : Optional.of(resource(paths.getLast()));
     }
 
     public static synchronized List<Resource> getResourceStack(Identifier id) {
-        return getResource(id).map(List::of).orElseGet(List::of);
+        reload();
+        List<Path> paths = RESOURCES.get(id);
+        return paths == null ? List.of() : paths.stream().map(DownloadedResources::resource).toList();
     }
 
     public static synchronized Map<Identifier, Resource> listResources(String directory, Predicate<Identifier> filter) {
         reload();
         String prefix = directory + "/";
         Map<Identifier, Resource> resources = new HashMap<>();
-        RESOURCES.forEach((id, path) -> {
+        RESOURCES.forEach((id, paths) -> {
             if (id.getPath().startsWith(prefix) && filter.test(id)) {
-                resources.put(id, resource(path));
+                resources.put(id, resource(paths.getLast()));
             }
         });
         return resources;
@@ -76,6 +83,36 @@ public final class DownloadedResources {
                     .forEach(DownloadedResources::scanNamespace);
         } catch (IOException ignored) {
         }
+
+        scanPackDirectories();
+    }
+
+    private static void scanPackDirectories() {
+        Set<Path> scanned = new HashSet<>();
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
+            Identifier id = Identifier.tryParse(pack.id);
+            if (id == null) continue;
+            Path directory = RemoteContentManager.packDirectory(id);
+            if (scanned.add(directory)) scanPack(directory);
+        }
+
+        if (!Files.isDirectory(PACK_DIRECTORY)) return;
+        try (var directories = Files.list(PACK_DIRECTORY)) {
+            directories.filter(Files::isDirectory)
+                    .sorted()
+                    .filter(scanned::add)
+                    .forEach(DownloadedResources::scanPack);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static void scanPack(Path packDirectory) {
+        if (!Files.isDirectory(packDirectory)) return;
+        try (var namespaces = Files.list(packDirectory)) {
+            namespaces.filter(Files::isDirectory)
+                    .forEach(DownloadedResources::scanNamespace);
+        } catch (IOException ignored) {
+        }
     }
 
     private static void scanNamespace(Path namespaceDirectory) {
@@ -92,7 +129,7 @@ public final class DownloadedResources {
         String path = namespaceDirectory.relativize(file).toString().replace('\\', '/').toLowerCase(Locale.ROOT);
         Identifier id = Identifier.tryParse(namespace + ":" + path);
         if (id != null) {
-            RESOURCES.put(id, file);
+            RESOURCES.computeIfAbsent(id, ignored -> new ArrayList<>()).add(file);
         }
     }
 
