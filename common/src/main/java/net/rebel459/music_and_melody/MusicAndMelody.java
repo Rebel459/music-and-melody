@@ -14,8 +14,6 @@ public class MusicAndMelody {
     public static boolean registeredDataConfig = false;
     public static boolean registeredServerConfig = false;
 
-    public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
-
 	public static void initRegistries() {
         MaMSounds.init();
         ServerPresenceHandler.init();
