@@ -539,7 +539,7 @@ public class EventHelper {
                 case TIME -> {
                     shouldBeActive = shouldBeActive && level != null;
                     if (level != null) {
-                        long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
+                        long time = Math.floorMod(level.getDayTime(), 24000L);
                         switch (condition.timeValue().get()) {
                             case DAY -> shouldBeActive = shouldBeActive && time >= 0 && time < 12000;
                             case SUNSET -> shouldBeActive = shouldBeActive && time >= 12000 && time < 13000;
@@ -583,7 +583,7 @@ public class EventHelper {
                 case AT_LEAST_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
                 case BELOW_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
                 case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
-                case MOD_LOADED -> shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+                case MOD_LOADED -> shouldBeActive = shouldBeActive && MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get());
                 case ALBUM_LOADED -> shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
                 case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
             }
