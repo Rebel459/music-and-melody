@@ -15,14 +15,14 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 
-public class RemoteDownloadScreen extends Screen {
+public class PlatformDownloadScreen extends Screen {
 
     private static final int WIDTH = 308;
     private final ContentBrowserScreen parent;
     private final RemotePack pack;
     private Button importButton;
 
-    public RemoteDownloadScreen(ContentBrowserScreen parent, RemotePack pack) {
+    public PlatformDownloadScreen(ContentBrowserScreen parent, RemotePack pack) {
         super(Component.translatable("screen.music_and_melody.remote_redirect"));
         this.parent = parent;
         this.pack = pack;

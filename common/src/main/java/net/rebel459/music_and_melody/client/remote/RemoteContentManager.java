@@ -274,7 +274,9 @@ public final class RemoteContentManager {
         if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size")) {
             return null;
         }
-        Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+        String icon = object.has("icon")
+                ? object.get("icon").getAsString()
+                : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png").toString();
         String atLeastVersion = object.has("at_least_version") ? object.get("at_least_version").getAsString() : "";
         String belowVersion = object.has("below_version") ? object.get("below_version").getAsString() : "";
         return new RemotePack(
@@ -286,7 +288,7 @@ public final class RemoteContentManager {
                 catalogUri.resolve(object.get("url").getAsString()).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
-                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon,
+                icon,
                 atLeastVersion,
                 belowVersion
         );
