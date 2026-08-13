@@ -79,14 +79,7 @@ public final class RemoteContentManager {
                 .thenAccept(packs -> {
                     synchronized (RemoteContentManager.class) {
                         PACKS.clear();
-                        List<RemotePack> validPacks = new ArrayList<>();
-                        VanillaVersion version = VanillaVersion.getVanillaVersion();
-                        for  (RemotePack pack : packs) {
-                            boolean withinMaxExclusive = pack.belowVersion().isEmpty() || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
-                            boolean withinMinInclusive = pack.atLeastVersion().isEmpty() || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
-                            if (withinMaxExclusive && withinMinInclusive) validPacks.add(pack);
-                        }
-                        PACKS.addAll(validPacks);
+                        PACKS.addAll(packs);
                         refreshTask = null;
                     }
                 })
@@ -185,6 +178,7 @@ public final class RemoteContentManager {
         HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
         JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+        if (!isSupportedCatalogSchema(root)) return List.of();
         String repositoryName = repositoryName(root, repositoryUrl);
         JsonArray array = root.getAsJsonArray("packs");
         if (array == null) return List.of();
@@ -193,10 +187,32 @@ public final class RemoteContentManager {
         for (JsonElement element : array) {
             if (!element.isJsonObject()) continue;
             RemotePack pack = parsePack(element.getAsJsonObject(), repositoryName, catalogUri);
-            if (pack == null || !ids.add(pack.id())) continue;
+            if (pack == null || !supportsCurrentVersion(pack) || !ids.add(pack.id())) continue;
             packs.add(pack);
         }
         return packs;
+    }
+
+    private static boolean isSupportedCatalogSchema(JsonObject root) {
+        JsonElement schema = root.get("schema");
+        if (schema == null || !schema.isJsonPrimitive() || !schema.getAsJsonPrimitive().isNumber()) {
+            return false;
+        }
+
+        try {
+            return MusicAndMelody.SUPPORTED_REMOTE_SCHEMAS.contains(schema.getAsBigDecimal().intValueExact());
+        } catch (ArithmeticException exception) {
+            return false;
+        }
+    }
+
+    private static boolean supportsCurrentVersion(RemotePack pack) {
+        VanillaVersion version = VanillaVersion.getVanillaVersion();
+        boolean withinMaxExclusive = pack.belowVersion().isEmpty()
+                || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
+        boolean withinMinInclusive = pack.atLeastVersion().isEmpty()
+                || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
+        return withinMaxExclusive && withinMinInclusive;
     }
 
     private static URI catalogUri(String repositoryUrl) {
@@ -208,25 +224,33 @@ public final class RemoteContentManager {
                 String owner = parts[0];
                 String repo = parts[1];
                 String branch = "main";
-                boolean blob = false;
                 StringBuilder path = new StringBuilder();
                 if (parts.length >= 4 && ("tree".equals(parts[2]) || "blob".equals(parts[2]))) {
-                    blob = "blob".equals(parts[2]);
                     branch = parts[3];
                     for (int i = 4; i < parts.length; i++) {
                         if (!path.isEmpty()) path.append('/');
                         path.append(parts[i]);
                     }
+                    if ("blob".equals(parts[2])) {
+                        return URI.create("https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + path);
+                    }
                 }
-                if (!blob && (path.isEmpty() || value.endsWith("/") || !path.toString().endsWith(".json"))) {
-                    if (!path.isEmpty()) path.append('/');
-                    path.append("catalog.json");
-                }
+                if (isJsonCatalogUrl(uri)) return uri;
+                if (!path.isEmpty()) path.append('/');
+                path.append("catalog.json");
                 return URI.create("https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + path);
             }
         }
-        if (value.endsWith("/")) return uri.resolve("catalog.json");
-        return uri;
+        if (isJsonCatalogUrl(uri)) return uri;
+
+        String path = uri.getPath();
+        if (path == null || path.isEmpty() || path.endsWith("/")) return uri.resolve("catalog.json");
+        return uri.resolve(path.substring(path.lastIndexOf('/') + 1) + "/catalog.json");
+    }
+
+    private static boolean isJsonCatalogUrl(URI uri) {
+        String path = uri.getPath();
+        return path != null && path.toLowerCase(Locale.ROOT).endsWith(".json");
     }
 
     private static String repositoryName(JsonObject root, String fallback) {
