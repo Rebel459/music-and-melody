@@ -33,6 +33,14 @@ def curseforgeBuild = providers.gradleProperty('curseforgeBuild')
         .get()
 def curseforgeJava = null
 
+sourceSets {
+    curseforge {
+        java.srcDir 'src/curseforge/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 if (curseforgeBuild) {
     curseforgeJava = tasks.register('syncCurseForgeCommonJava', Sync) {
         into layout.buildDirectory.dir('generated/curseforge/java')
