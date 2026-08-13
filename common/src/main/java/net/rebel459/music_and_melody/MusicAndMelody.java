@@ -5,11 +5,16 @@ import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class MusicAndMelody {
 
     public static boolean registeredClientConfig = false;
     public static boolean registeredDataConfig = false;
     public static boolean registeredServerConfig = false;
+
+    public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
 
 	public static void initRegistries() {
         MaMSounds.init();
