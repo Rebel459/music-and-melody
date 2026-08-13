@@ -22,6 +22,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -43,6 +44,7 @@ public final class RemoteContentManager {
     }
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
+    private static final Path PACK_DIRECTORY = DIRECTORY.resolve(".packs");
     private static final Path MANIFEST_DIRECTORY = DIRECTORY.resolve(".manifests");
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -298,15 +300,18 @@ public final class RemoteContentManager {
         if (installed(pack.id()) != null) {
             deleteInstalledFiles(pack.id());
         }
-        List<Path> extracted = extractZip(zip, DIRECTORY);
+        List<Path> extracted = extractZip(zip, packDirectory(pack.id()));
         writeManifest(pack.id(), extracted);
     }
 
     private static void deleteInstalledFiles(ResourceLocation id) {
         boolean deletedFiles = deleteFromManifest(id);
 
-        if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
-            deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+        if (!deletedFiles) {
+            deleteDirectory(packDirectory(id));
+            if (!hasOtherInstalledPackInNamespace(id)) {
+                deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+            }
         }
 
         DownloadedResources.invalidate();
@@ -327,7 +332,7 @@ public final class RemoteContentManager {
 
                 Files.createDirectories(target.getParent());
                 Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
-                extracted.add(root.relativize(target));
+                extracted.add(target);
             }
         }
 
@@ -426,8 +431,11 @@ public final class RemoteContentManager {
 
         boolean deletedFiles = deleteFromManifest(id);
 
-        if (!deletedFiles && !hasOtherInstalledPackInNamespace(id)) {
-            deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+        if (!deletedFiles) {
+            deleteDirectory(packDirectory(id));
+            if (!hasOtherInstalledPackInNamespace(id)) {
+                deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+            }
         }
 
         String idString = id.toString();
@@ -451,8 +459,9 @@ public final class RemoteContentManager {
         Files.createDirectories(MANIFEST_DIRECTORY);
 
         Path manifest = manifestPath(id);
+        Path root = DIRECTORY.toAbsolutePath().normalize();
         List<String> lines = extracted.stream()
-                .map(path -> path.toString().replace('\\', '/'))
+                .map(path -> root.relativize(path.toAbsolutePath().normalize()).toString().replace('\\', '/'))
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList();
 
@@ -464,7 +473,7 @@ public final class RemoteContentManager {
         if (!Files.isRegularFile(manifest)) return false;
 
         Path root = DIRECTORY.toAbsolutePath().normalize();
-        boolean deletedAny = false;
+        Set<Path> otherPackFiles = filesOwnedByOtherManifests(manifest, root);
 
         try {
             List<Path> paths = Files.readAllLines(manifest).stream()
@@ -474,7 +483,8 @@ public final class RemoteContentManager {
                     .toList();
 
             for (Path path : paths) {
-                deletedAny |= Files.deleteIfExists(path);
+                if (otherPackFiles.contains(path)) continue;
+                Files.deleteIfExists(path);
                 deleteEmptyParents(path.getParent(), root);
             }
 
@@ -483,7 +493,28 @@ public final class RemoteContentManager {
         } catch (IOException ignored) {
         }
 
-        return deletedAny;
+        return true;
+    }
+
+    private static Set<Path> filesOwnedByOtherManifests(Path excludedManifest, Path root) {
+        Set<Path> paths = new HashSet<>();
+        if (!Files.isDirectory(MANIFEST_DIRECTORY)) return paths;
+
+        try (var manifests = Files.list(MANIFEST_DIRECTORY)) {
+            for (Path manifest : manifests.filter(Files::isRegularFile).toList()) {
+                if (manifest.equals(excludedManifest)) continue;
+                try {
+                    Files.readAllLines(manifest).stream()
+                            .map(line -> root.resolve(line).normalize())
+                            .filter(path -> path.startsWith(root))
+                            .forEach(paths::add);
+                } catch (IOException ignored) {
+                }
+            }
+        } catch (IOException ignored) {
+        }
+
+        return paths;
     }
 
     private static void deleteDirectory(Path directory) {
@@ -533,5 +564,11 @@ public final class RemoteContentManager {
     private static Path manifestPath(ResourceLocation id) {
         String path = id.getPath().replace('/', '-');
         return MANIFEST_DIRECTORY.resolve(id.getNamespace() + "-" + path + ".txt");
+    }
+
+    static Path packDirectory(Identifier id) {
+        String name = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
+        return PACK_DIRECTORY.resolve(name);
     }
 }
