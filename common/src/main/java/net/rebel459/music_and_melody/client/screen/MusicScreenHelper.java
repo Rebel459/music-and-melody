@@ -8,6 +8,7 @@ import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
+import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 
@@ -24,6 +25,7 @@ final class MusicScreenHelper {
 
     static Identifier albumIcon(Minecraft minecraft, Identifier icon) {
         if (icon == null) return FALLBACK_ALBUM_ICON;
+        if (RemoteIconManager.isDynamic(icon)) return icon;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
         return FALLBACK_ALBUM_ICON;
     }

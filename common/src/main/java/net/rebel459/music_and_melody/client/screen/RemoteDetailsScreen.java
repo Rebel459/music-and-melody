@@ -9,6 +9,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class RemoteDetailsScreen extends Screen {
         int titleX = this.width / 2 - (iconSize + 6 + textWidth) / 2;
         int titleY = 24;
 
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.pack.icon()), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(this.pack)), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
         graphics.text(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
         graphics.text(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
 

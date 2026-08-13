@@ -18,6 +18,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
@@ -493,7 +494,7 @@ public class ContentBrowserScreen extends Screen {
                 if (state == RemoteContentManager.State.NEEDS_RELOAD) {
                     this.screen.reloadResources();
                 } else {
-                    this.minecraft.gui.setScreen(new RemoteDownloadScreen(this.screen, pack));
+                    this.minecraft.gui.setScreen(new PlatformDownloadScreen(this.screen, pack));
                 }
                 return;
             }
@@ -659,7 +660,7 @@ public class ContentBrowserScreen extends Screen {
         }
 
         Identifier icon() {
-            return this.album != null ? this.album.icon : this.playlist != null ? this.playlist.icon : this.remote.icon();
+            return this.album != null ? this.album.icon : this.playlist != null ? this.playlist.icon : RemoteIconManager.icon(this.remote);
         }
 
         String details() {

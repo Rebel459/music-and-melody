@@ -12,7 +12,7 @@ public record RemotePack(
         String url,
         String sha256,
         long size,
-        Identifier icon,
+        String icon,
         String atLeastVersion,
         String belowVersion
 ) {
