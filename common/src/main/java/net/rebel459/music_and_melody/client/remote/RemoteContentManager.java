@@ -34,6 +34,8 @@ import java.util.zip.ZipInputStream;
 
 public final class RemoteContentManager {
 
+    public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
+
     public enum State {
         REMOTE,
         DOWNLOADING,
@@ -210,7 +212,7 @@ public final class RemoteContentManager {
         }
 
         try {
-            return MusicAndMelody.SUPPORTED_REMOTE_SCHEMAS.contains(schema.getAsBigDecimal().intValueExact());
+            return SUPPORTED_REMOTE_SCHEMAS.contains(schema.getAsBigDecimal().intValueExact());
         } catch (ArithmeticException exception) {
             return false;
         }
