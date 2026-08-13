@@ -352,7 +352,7 @@ public class Event {
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<SpecialCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.ABOVE_Y || type == ConditionType.BELOW_Y) {
+        if (type == ConditionType.AT_LEAST_Y || type == ConditionType.BELOW_Y) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
             intValue = Optional.of(integer);
         }
@@ -440,7 +440,7 @@ public class Event {
             case "any_of" -> ConditionType.ANY_OF;
             case "not" -> ConditionType.NOT;
             case "below_y" -> ConditionType.BELOW_Y;
-            case "above_y" -> ConditionType.ABOVE_Y;
+            case "at_least_y" -> ConditionType.AT_LEAST_Y;
             case "mod_loaded" -> ConditionType.MOD_LOADED;
             case "random_chance" -> ConditionType.RANDOM_CHANCE;
             case "bossbar" -> ConditionType.BOSSBAR;
@@ -559,7 +559,7 @@ public class Event {
         WEATHER,
         GAME_MODE,
         BELOW_Y,
-        ABOVE_Y,
+        AT_LEAST_Y,
         SPECIAL,
         ALL_OF,
         ANY_OF,

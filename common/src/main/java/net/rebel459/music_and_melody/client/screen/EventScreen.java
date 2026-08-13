@@ -557,7 +557,7 @@ public class EventScreen extends Screen {
 
         Event.Record.Condition.Value parsedValue;
 
-        if (type.equals("above_y") || type.equals("below_y")) {
+        if (type.equals("at_least_y") || type.equals("below_y")) {
             try {
                 parsedValue = new Event.Record.Condition.Value.Integer(Integer.parseInt(conditionValue));
             } catch (NumberFormatException exception) {
