@@ -282,8 +282,8 @@ public final class RemoteContentManager {
             return null;
         }
         Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
-        String minInclusive = object.has("min_inclusive") ? object.get("min_inclusive").getAsString() : "";
-        String maxExclusive = object.has("max_exclusive") ? object.get("max_exclusive").getAsString() : "";
+        String atLeastVersion = object.has("at_least_version") ? object.get("at_least_version").getAsString() : "";
+        String belowVersion = object.has("below_version") ? object.get("below_version").getAsString() : "";
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -294,8 +294,8 @@ public final class RemoteContentManager {
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
                 icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon,
-                minInclusive,
-                maxExclusive
+                atLeastVersion,
+                belowVersion
         );
     }
 
