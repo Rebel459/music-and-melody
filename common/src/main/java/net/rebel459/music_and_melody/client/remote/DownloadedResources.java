@@ -21,7 +21,7 @@ public final class DownloadedResources {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
     private static final Map<Identifier, Path> RESOURCES = new HashMap<>();
-    private static long lastScan = Long.MIN_VALUE;
+    private static boolean dirty = true;
 
     private DownloadedResources() {}
 
@@ -59,9 +59,8 @@ public final class DownloadedResources {
     }
 
     private static void reload() {
-        long modified = modifiedTime(DIRECTORY);
-        if (modified == lastScan) return;
-        lastScan = modified;
+        if (!dirty) return;
+        dirty = false;
         RESOURCES.clear();
         try {
             Files.createDirectories(DIRECTORY);
@@ -97,21 +96,6 @@ public final class DownloadedResources {
         }
     }
 
-    private static long modifiedTime(Path path) {
-        if (!Files.exists(path)) return Long.MIN_VALUE;
-        final long[] modified = {0L};
-        try (var files = Files.walk(path)) {
-            files.forEach(file -> {
-                try {
-                    modified[0] = Math.max(modified[0], Files.getLastModifiedTime(file).toMillis());
-                } catch (IOException ignored) {
-                }
-            });
-        } catch (IOException ignored) {
-        }
-        return modified[0];
-    }
-
     private static boolean isValidNamespace(String namespace) {
         if (namespace.isBlank()) return false;
         for (int i = 0; i < namespace.length(); i++) {
@@ -124,7 +108,7 @@ public final class DownloadedResources {
     }
 
     public static synchronized void invalidate() {
-        lastScan = Long.MIN_VALUE;
+        dirty = true;
         RESOURCES.clear();
     }
 }
