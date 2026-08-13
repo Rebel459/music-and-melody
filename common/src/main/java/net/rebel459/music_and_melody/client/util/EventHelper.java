@@ -573,8 +573,8 @@ public class EventHelper {
                 }
                 case SPECIAL -> {
                     switch (condition.eventValue().get()) {
-                        case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
-                        case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
+                        case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.gui.screen() instanceof WinScreen);
+                        case CREDITS -> shouldBeActive = shouldBeActive && client.gui.screen() instanceof WinScreen;
                         case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
                         case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
                     }
@@ -583,8 +583,8 @@ public class EventHelper {
                 case BELOW_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
                 case AT_LEAST_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
                 case BELOW_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
-                case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
-                case MOD_LOADED -> shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+                case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.hud.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
+                case MOD_LOADED -> shouldBeActive = shouldBeActive && UnifiedInstance.isModLoaded(condition.stringValue().get());
                 case ALBUM_LOADED -> shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
                 case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
             }
