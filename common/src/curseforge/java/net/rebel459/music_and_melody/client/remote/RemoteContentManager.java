@@ -80,8 +80,8 @@ public final class RemoteContentManager {
                         List<RemotePack> validPacks = new ArrayList<>();
                         VanillaVersion version = VanillaVersion.getVanillaVersion();
                         for  (RemotePack pack : packs) {
-                            boolean withinMaxExclusive = pack.maxExclusive().isEmpty() || VanillaVersion.parse(pack.maxExclusive()).compareTo(version) > 0;
-                            boolean withinMinInclusive = pack.minInclusive().isEmpty() || VanillaVersion.parse(pack.minInclusive()).compareTo(version) <= 0;
+                            boolean withinMaxExclusive = pack.belowVersion().isEmpty() || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
+                            boolean withinMinInclusive = pack.atLeastVersion().isEmpty() || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
                             if (withinMaxExclusive && withinMinInclusive) validPacks.add(pack);
                         }
                         PACKS.addAll(validPacks);
