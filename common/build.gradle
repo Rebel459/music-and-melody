@@ -46,7 +46,7 @@ if (curseforgeBuild) {
     curseforgeJava = tasks.register('syncCurseForgeCommonJava', Sync) {
         into layout.buildDirectory.dir('generated/curseforge/java')
         from('src/main/java') {
-            exclude 'net/rebel459/music_and_melody/client/remote/RemoteContentManager.java'
+            exclude 'net/rebel459/music_and_melody/client/remote/PlatformContentManager.java'
         }
         from('src/curseforge/java')
     }
