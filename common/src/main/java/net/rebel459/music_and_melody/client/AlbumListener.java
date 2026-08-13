@@ -32,6 +32,9 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
     ) {
         Album.ALBUMS.removeAll(this.loadedAlbums);
         Album.DISABLED_ALBUMS.removeAll(this.loadedAlbums);
+        this.loadedAlbums.stream()
+                .map(album -> album.album)
+                .forEach(Album.LOADED_ALBUMS::remove);
         this.loadedAlbums.clear();
 
         Set<Identifier> registeredDiscs = new HashSet<>();
