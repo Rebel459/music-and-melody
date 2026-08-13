@@ -527,7 +527,7 @@ public class EventHelper {
                 case NOT -> shouldBeActive = shouldBeActive && !shouldBeActive(condition.conditions(), rollRandomChance);
                 case BIOME -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
                 case BIOME_TAG -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
-                case DIMENSION -> shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
+                case DIMENSION -> shouldBeActive = shouldBeActive && level != null && level.dimension().location().equals(condition.idValue().get());
                 case STRUCTURE -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());
                 case STRUCTURE_TAG -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get());
                 case TIME -> {
