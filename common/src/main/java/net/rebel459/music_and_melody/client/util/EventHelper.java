@@ -528,99 +528,69 @@ public class EventHelper {
         Player player = client.player;
         Level level = client.level;
         for (Event.Condition condition : conditions) {
-            if (condition.type() == Event.ConditionType.ALL_OF) {
-                shouldBeActive = shouldBeActive && shouldBeActive(condition.conditions(), rollRandomChance);
-            }
-            if (condition.type() == Event.ConditionType.ANY_OF) {
-                shouldBeActive = shouldBeActive && condition.conditions().stream().anyMatch(nested -> shouldBeActive(List.of(nested), rollRandomChance));
-            }
-            if (condition.type() == Event.ConditionType.NOT) {
-                shouldBeActive = shouldBeActive && !shouldBeActive(condition.conditions(), rollRandomChance);
-            }
-            if (condition.type() == Event.ConditionType.BIOME) {
-                shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
-            }
-            if (condition.type() == Event.ConditionType.BIOME_TAG) {
-                shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
-            }
-            if (condition.type() == Event.ConditionType.DIMENSION) {
-                shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
-            }
-            if (condition.type() == Event.ConditionType.STRUCTURE) {
-                shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());
-            }
-            if (condition.type() == Event.ConditionType.STRUCTURE_TAG) {
-                shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get());
-            }
-            if (condition.type() == Event.ConditionType.TIME) {
-                shouldBeActive = shouldBeActive && level != null;
-                if (level != null) {
-                    long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
-                    switch (condition.timeValue().get()) {
-                        case DAY -> shouldBeActive = shouldBeActive && time >= 0 && time < 12000;
-                        case SUNSET -> shouldBeActive = shouldBeActive && time >= 12000 && time < 13000;
-                        case NIGHT -> shouldBeActive = shouldBeActive && time >= 13000 && time < 23000;
-                        case SUNRISE -> shouldBeActive = shouldBeActive && time >= 23000 && time < 24000;
+            switch(condition.type()) {
+                case ALL_OF -> shouldBeActive = shouldBeActive && shouldBeActive(condition.conditions(), rollRandomChance);
+                case ANY_OF -> shouldBeActive = shouldBeActive && condition.conditions().stream().anyMatch(nested -> shouldBeActive(List.of(nested), rollRandomChance));
+                case NOT -> shouldBeActive = shouldBeActive && !shouldBeActive(condition.conditions(), rollRandomChance);
+                case BIOME -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
+                case BIOME_TAG -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
+                case DIMENSION -> shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
+                case STRUCTURE -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());
+                case STRUCTURE_TAG -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get());
+                case TIME -> {
+                    shouldBeActive = shouldBeActive && level != null;
+                    if (level != null) {
+                        long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
+                        switch (condition.timeValue().get()) {
+                            case DAY -> shouldBeActive = shouldBeActive && time >= 0 && time < 12000;
+                            case SUNSET -> shouldBeActive = shouldBeActive && time >= 12000 && time < 13000;
+                            case NIGHT -> shouldBeActive = shouldBeActive && time >= 13000 && time < 23000;
+                            case SUNRISE -> shouldBeActive = shouldBeActive && time >= 23000 && time < 24000;
+                        }
                     }
                 }
-            }
-            if (condition.type() == Event.ConditionType.WEATHER) {
-                shouldBeActive = shouldBeActive && level != null;
-                if (level != null) {
-                    switch (condition.weatherValue().get()) {
-                        case CLEAR -> shouldBeActive = shouldBeActive && !level.isRaining();
-                        case RAIN -> shouldBeActive = shouldBeActive && level.isRaining();
-                        case THUNDER -> shouldBeActive = shouldBeActive && level.isThundering();
+                case WEATHER -> {
+                    shouldBeActive = shouldBeActive && level != null;
+                    if (level != null) {
+                        switch (condition.weatherValue().get()) {
+                            case CLEAR -> shouldBeActive = shouldBeActive && !level.isRaining();
+                            case RAIN -> shouldBeActive = shouldBeActive && level.isRaining();
+                            case THUNDER -> shouldBeActive = shouldBeActive && level.isThundering();
+                        }
                     }
                 }
-            }
-            if (condition.type() == Event.ConditionType.GAME_MODE) {
-                shouldBeActive = shouldBeActive && client.gameMode != null && matchesGameMode(client.gameMode.getPlayerMode(), condition.gameModeValue().get());
-            }
-            if (condition.type() == Event.ConditionType.SPECIAL) {
-                switch (condition.eventValue().get()) {
-                    case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
-                    case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
-                    case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
-                    case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
+                case GAME_MODE -> {
+                    shouldBeActive = shouldBeActive && client.gameMode != null;
+                    if (client.gameMode != null) {
+                        GameType gameType = client.gameMode.getPlayerMode();
+                        switch (condition.gameModeValue().get()) {
+                            case SURVIVAL -> shouldBeActive = shouldBeActive && gameType == GameType.SURVIVAL;
+                            case CREATIVE -> shouldBeActive = shouldBeActive && gameType == GameType.CREATIVE;
+                            case ADVENTURE -> shouldBeActive = shouldBeActive && gameType == GameType.ADVENTURE;
+                            case SPECTATOR -> shouldBeActive = shouldBeActive && gameType == GameType.SPECTATOR;
+                        };
+                    }
                 }
-            }
-            if (condition.type() == Event.ConditionType.ABOVE_Y) {
-                shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() > condition.intValue().get();
-            }
-            if (condition.type() == Event.ConditionType.BELOW_Y) {
-                shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
-            }
-            if (condition.type() == Event.ConditionType.AT_LEAST_VERSION) {
-                shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
-            }
-            if (condition.type() == Event.ConditionType.BELOW_VERSION) {
-                shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
-            }
-            if (condition.type() == Event.ConditionType.BOSSBAR) {
-                shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
-            }
-            if (condition.type() == Event.ConditionType.MOD_LOADED) {
-                shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
-            }
-            if (condition.type() == Event.ConditionType.ALBUM_LOADED) {
-                shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
-            }
-            if (condition.type() == Event.ConditionType.RANDOM_CHANCE) {
-                shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
+                case SPECIAL -> {
+                    switch (condition.eventValue().get()) {
+                        case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
+                        case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
+                        case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
+                        case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
+                    }
+                }
+                case AT_LEAST_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() >= condition.intValue().get();
+                case BELOW_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
+                case AT_LEAST_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
+                case BELOW_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
+                case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
+                case MOD_LOADED -> shouldBeActive = shouldBeActive && UnifiedPlatform.isModLoaded(condition.stringValue().get());
+                case ALBUM_LOADED -> shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
+                case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
             }
         }
-
         return shouldBeActive;
     }
 
-    private static boolean matchesGameMode(GameType current, Event.GameModeCondition condition) {
-        return switch (condition) {
-            case SURVIVAL -> current == GameType.SURVIVAL;
-            case CREATIVE -> current == GameType.CREATIVE;
-            case ADVENTURE -> current == GameType.ADVENTURE;
-            case SPECTATOR -> current == GameType.SPECTATOR;
-        };
-    }
     private record QueuedEvent(Event event, boolean replaceCurrentMusic) {}
 }

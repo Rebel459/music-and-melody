@@ -13,8 +13,8 @@ public record RemotePack(
         String sha256,
         long size,
         Identifier icon,
-        String minInclusive,
-        String maxExclusive
+        String atLeastVersion,
+        String belowVersion
 ) {
     public String fileName() {
         String path = this.id.getPath().replace('/', '-');
