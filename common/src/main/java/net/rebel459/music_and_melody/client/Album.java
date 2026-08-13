@@ -77,11 +77,13 @@ public class Album {
         if (enabled) {
             config.albums.disabled_albums.remove(id);
             DISABLED_ALBUMS.remove(this);
+            LOADED_ALBUMS.add(this.album);
         } else {
             if (!config.albums.disabled_albums.contains(id)) {
                 config.albums.disabled_albums.add(id);
             }
             DISABLED_ALBUMS.add(this);
+            LOADED_ALBUMS.remove(this.album);
         }
 
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
