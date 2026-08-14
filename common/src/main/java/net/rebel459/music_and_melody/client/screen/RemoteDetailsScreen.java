@@ -80,7 +80,8 @@ public class RemoteDetailsScreen extends Screen {
             case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
             case UPDATE_AVAILABLE -> Component.translatable("button.music_and_melody.update");
             case FAILED -> Component.translatable("button.music_and_melody.retry");
-            default -> Component.translatable("button.music_and_melody.download");
+            case INSTALLED -> Component.translatable("screen.music_and_melody.remote_album.state.installed");
+            case REMOTE -> Component.translatable("button.music_and_melody.download");
         };
     }
 

@@ -6,8 +6,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.rebel459.music_and_melody.client.screen.ContentBrowserScreen;
-import net.rebel459.music_and_melody.client.screen.EventScreen;
+import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 
 public class MaMConfigScreen extends Screen {
@@ -26,29 +25,29 @@ public class MaMConfigScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("text.autoconfig.music_and_melody/client.title"),
-                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())
+                button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())
         ).bounds(x, y, 200, 20).build());
 
         y += 24;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("text.autoconfig.music_and_melody/server.title"),
-                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())
+                button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())
         ).bounds(x, y, 200, 20).build());
 
         y += 48;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.albums"),
-                button -> this.minecraft.setScreen(new ContentBrowserScreen(this))
+                button -> this.minecraft.gui.setScreen(new PlaylistScreen(this, MusicPlayerScreen.Page.LIBRARY))
         ).bounds(x, y, 200, 20).build());
         y += 24;
         this.eventsButton = this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.events"),
-                button -> this.minecraft.setScreen(new EventScreen.EventBrowserScreen(this))
+                button -> this.minecraft.gui.setScreen(new PlaylistScreen(this, MusicPlayerScreen.Page.EVENTS))
         ).bounds(x, y, 200, 20).build());
         y += 24;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("button.music_and_melody.playlist"),
-                button -> this.minecraft.setScreen(new PlaylistScreen(this))
+                button -> this.minecraft.gui.setScreen(new PlaylistScreen(this))
         ).bounds(x, y, 200, 20).build());
 
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
@@ -65,6 +64,6 @@ public class MaMConfigScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 }

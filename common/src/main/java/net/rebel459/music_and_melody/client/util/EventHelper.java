@@ -235,6 +235,11 @@ public class EventHelper {
         }
     }
 
+    /** Immediately clears active and queued event music after its UI toggle is disabled. */
+    public static void stopDisabledEventMusic() {
+        stopDisabledEventActivity();
+    }
+
     public static void clearCurrentEventFadeOut() {
         fadingOutCurrentEvent = false;
     }

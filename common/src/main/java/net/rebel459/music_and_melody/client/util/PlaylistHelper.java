@@ -7,6 +7,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.locale.Language;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -24,17 +25,36 @@ public final class PlaylistHelper {
     public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
+
+    /**
+     * The visible queue is deliberately never shuffled.  This list is the
+     * independent traversal order used while shuffle mode is enabled.
+     */
+    private static final List<SafeIdentifier> SHUFFLE_ORDER = new ArrayList<>();
+    private static boolean shuffle = false;
+    private static int shuffleIndex = 0;
+    private static int currentShuffleIndex = -1;
+
     private static SoundInstance currentSong = null;
     private static SafeIdentifier currentSongId = null;
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
     private static boolean currentSongFromEvent = false;
+    private static DirectSoundInstance.Type currentSongType = DirectSoundInstance.Type.ALL;
     private static SafeIdentifier directSongId = null;
     private static boolean directSongLooping = false;
     private static boolean stoppingCurrentSong = false;
     private static boolean queuePaused = true;
     private static int queueIndex = 0;
     private static int currentQueueIndex = -1;
+    private static long currentSongStartedAtNanos = 0L;
+    private static SafeIdentifier pausedQueueSong;
+    private static SoundInstance pausedQueueSound;
+    private static int pausedQueueIndex = -1;
+    private static int pausedShuffleIndex = -1;
+    private static long pausedQueueElapsedMillis;
+    /** Offset requested for the next decoded stream, consumed by SoundBufferLibraryMixin. */
+    private static long pendingSeekMillis = 0L;
 
     public static final Music EMPTY = new Music(MaMSounds.EMPTY, 0, 0, true);
 
@@ -45,6 +65,7 @@ public final class PlaylistHelper {
         if (!QUEUED_SONGS.contains(song)) {
             clearQueueSource();
             QUEUED_SONGS.add(song);
+            rebuildShuffleOrderAfterQueueChange();
             save();
         }
     }
@@ -59,15 +80,73 @@ public final class PlaylistHelper {
             }
         }
         if (changed) clearQueueSource();
+        if (changed) rebuildShuffleOrderAfterQueueChange();
         if (changed) save();
     }
 
     public static void setQueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {
+        ensureLoaded();
         MaMDataConfig config = MaMDataConfig.get();
         config.playlists.queue_source_type = type;
         config.playlists.queue_source_id = id;
         config.playlists.queue_source_name = name;
-        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        touchRecentSource(type, id);
+        save();
+    }
+
+    /** Replaces the queue without turning the loaded album or playlist into a custom list. */
+    public static boolean loadQueueSource(Collection<SafeIdentifier> songs, MaMDataConfig.QueueSourceType type, String id, String name) {
+        ensureLoaded();
+        if (songs == null) return false;
+
+        if (currentSongFromQueue) stop();
+        else clearPausedQueue();
+        QUEUED_SONGS.clear();
+        for (SafeIdentifier song : songs) {
+            if (song != null && !QUEUED_SONGS.contains(song)) {
+                QUEUED_SONGS.add(song);
+            }
+        }
+        queueIndex = 0;
+        currentQueueIndex = -1;
+        queuePaused = true;
+        currentShuffleIndex = -1;
+        rebuildShuffleOrder(null);
+
+        MaMDataConfig config = MaMDataConfig.get();
+        config.playlists.queue_source_type = type;
+        config.playlists.queue_source_id = id;
+        config.playlists.queue_source_name = name;
+        touchRecentSource(type, id);
+        save();
+        return !QUEUED_SONGS.isEmpty();
+    }
+
+    /**
+     * Opens the editable Custom Playlist from an explicit song list.  Unlike
+     * {@link #loadQueueSource(Collection, MaMDataConfig.QueueSourceType, String, String)},
+     * this intentionally has no album or playlist source identity.
+     */
+    public static boolean loadCustomQueue(Collection<SafeIdentifier> songs) {
+        ensureLoaded();
+        if (songs == null) return false;
+
+        if (currentSongFromQueue) stop();
+        else clearPausedQueue();
+        QUEUED_SONGS.clear();
+        for (SafeIdentifier song : songs) {
+            if (song != null && !QUEUED_SONGS.contains(song)) {
+                QUEUED_SONGS.add(song);
+            }
+        }
+        queueIndex = 0;
+        currentQueueIndex = -1;
+        queuePaused = true;
+        currentShuffleIndex = -1;
+        clearQueueSource();
+        rebuildShuffleOrder(null);
+        save();
+        return !QUEUED_SONGS.isEmpty();
     }
 
     public static Optional<QueueSource> queueSource() {
@@ -86,6 +165,29 @@ public final class PlaylistHelper {
         return List.copyOf(QUEUED_SONGS);
     }
 
+    public static boolean isQueueCustom() {
+        return queueSource().isEmpty();
+    }
+
+    public static boolean move(int fromIndex, int toIndex) {
+        ensureLoaded();
+        if (fromIndex < 0 || fromIndex >= QUEUED_SONGS.size()
+                || toIndex < 0 || toIndex >= QUEUED_SONGS.size()
+                || fromIndex == toIndex) {
+            return false;
+        }
+
+        SafeIdentifier moved = QUEUED_SONGS.remove(fromIndex);
+        QUEUED_SONGS.add(toIndex, moved);
+        queueIndex = remapMovedIndex(queueIndex, fromIndex, toIndex);
+        currentQueueIndex = remapMovedIndex(currentQueueIndex, fromIndex, toIndex);
+        pausedQueueIndex = remapMovedIndex(pausedQueueIndex, fromIndex, toIndex);
+        clearQueueSource();
+        rebuildShuffleOrderAfterQueueChange();
+        save();
+        return true;
+    }
+
     public static void remove(int index) {
         ensureLoaded();
         if (index >= 0 && index < QUEUED_SONGS.size()) {
@@ -93,9 +195,12 @@ public final class PlaylistHelper {
             QUEUED_SONGS.remove(index);
             if (index < queueIndex) queueIndex--;
             if (index < currentQueueIndex) currentQueueIndex--;
+            if (index == pausedQueueIndex) clearPausedQueue();
+            else if (index < pausedQueueIndex) pausedQueueIndex--;
             if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
             queueIndex = clampQueueIndex(queueIndex);
             clearQueueSource();
+            rebuildShuffleOrderAfterQueueChange();
             save();
         }
     }
@@ -108,6 +213,10 @@ public final class PlaylistHelper {
         queueIndex = 0;
         currentQueueIndex = -1;
         queuePaused = true;
+        clearPausedQueue();
+        currentShuffleIndex = -1;
+        SHUFFLE_ORDER.clear();
+        shuffleIndex = 0;
         clearQueueSource();
         save();
     }
@@ -115,11 +224,30 @@ public final class PlaylistHelper {
     public static boolean shuffleQueue() {
         ensureLoaded();
         if (QUEUED_SONGS.size() < 2) return false;
-        Collections.shuffle(QUEUED_SONGS);
-        queueIndex = 0;
-        currentQueueIndex = currentSongFromQueue ? findCurrentQueueIndex() : -1;
-        save();
+        setShuffleQueue(!shuffle);
         return true;
+    }
+
+    public static boolean isShuffleQueue() {
+        ensureLoaded();
+        return shuffle;
+    }
+
+    public static void setShuffleQueue(boolean enabled) {
+        ensureLoaded();
+        if (shuffle == enabled) return;
+        shuffle = enabled;
+        if (shuffle) {
+            SafeIdentifier current = currentSongFromQueue && currentQueueIndex >= 0
+                    ? QUEUED_SONGS.get(currentQueueIndex)
+                    : null;
+            rebuildShuffleOrder(current);
+        } else {
+            SHUFFLE_ORDER.clear();
+            shuffleIndex = 0;
+            currentShuffleIndex = -1;
+        }
+        save();
     }
 
     public static boolean isPlaying(SafeIdentifier song) {
@@ -160,12 +288,54 @@ public final class PlaylistHelper {
         }
     }
 
+    public static boolean hasPreviousQueue() {
+        ensureLoaded();
+        if (QUEUED_SONGS.size() < 2) return false;
+        if (shuffle) {
+            return currentShuffleIndex > 0 || (!isQueuePlaying() && shuffleIndex > 0);
+        }
+        int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
+        return loop || index > 0;
+    }
+
+    public static boolean previousQueue() {
+        ensureLoaded();
+        if (!hasPreviousQueue()) return false;
+        queuePaused = false;
+
+        if (shuffle) {
+            ensureShuffleOrder();
+            int previous = currentShuffleIndex >= 0 ? currentShuffleIndex - 1 : shuffleIndex - 1;
+            if (previous < 0) {
+                if (!loop || SHUFFLE_ORDER.isEmpty()) return false;
+                previous = SHUFFLE_ORDER.size() - 1;
+            }
+            SafeIdentifier id = SHUFFLE_ORDER.get(previous);
+            int visibleIndex = QUEUED_SONGS.indexOf(id);
+            if (visibleIndex < 0 || !MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id)) return false;
+            shuffleIndex = previous + 1;
+            currentShuffleIndex = previous;
+            queueIndex = visibleIndex;
+            stop();
+            return playSound(id, false, true, false);
+        }
+
+        int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
+        index--;
+        if (index < 0) index = QUEUED_SONGS.size() - 1;
+        int playableIndex = previousPlayableIndex(index, loop);
+        if (playableIndex < 0) return false;
+        queueIndex = playableIndex;
+        stop();
+        return playSound(QUEUED_SONGS.get(queueIndex), false, true, false);
+    }
+
     public static boolean isPlaying() {
         return currentSong != null && Minecraft.getInstance().getSoundManager().isActive(currentSong);
     }
 
     public static boolean isQueuePlaying() {
-        return currentSongFromQueue && isPlaying();
+        return currentSongFromQueue && !queuePaused && isPlaying();
     }
 
     public static boolean isDirectPlaying() {
@@ -208,7 +378,7 @@ public final class PlaylistHelper {
     }
 
     public static SafeIdentifier getCurrentSongId() {
-        return currentSongId;
+        return currentSongId != null ? currentSongId : pausedQueueSong;
     }
 
     public static boolean isEventPlaying() {
@@ -220,22 +390,66 @@ public final class PlaylistHelper {
     }
 
     public static SoundInstance getCurrentSong() {
-        return currentSong;
+        return currentSong != null ? currentSong : pausedQueueSound;
+    }
+
+    /**
+     * Reopens the current stream and discards decoded samples until {@code millis}.
+     * This is deliberately restart-at-offset seeking: it is dependable for both
+     * resource-pack and direct OGG files without a new audio dependency.
+     */
+    public static boolean seekCurrentSong(long millis) {
+        // SoundEngine can report a streaming source as inactive for the few
+        // ticks between creating its channel and attaching the stream. The
+        // player still has a valid song at that point, so do not reject a UI
+        // seek solely because of that transient engine state.
+        if (currentSong == null || currentSongId == null || currentSongStartedAtNanos == 0L) return false;
+
+        SafeIdentifier id = currentSongId;
+        boolean looping = currentSongLooping;
+        boolean fromQueue = currentSongFromQueue;
+        boolean fromEvent = currentSongFromEvent;
+        DirectSoundInstance.Type type = currentSongType;
+        long offset = Math.max(0L, millis);
+
+        thisStopCurrentSongOnly();
+        pendingSeekMillis = offset;
+        return playSound(id, looping, fromQueue, fromEvent, type);
+    }
+
+    /** Called by the stream factory exactly once for the matching next sound. */
+    public static long consumePendingSeekMillis(Identifier streamLocation) {
+        if (pendingSeekMillis <= 0L || streamLocation == null || currentSong == null) return 0L;
+        Sound sound = currentSong.getSound();
+        if (sound == null || sound == SoundManager.EMPTY_SOUND || sound == SoundManager.INTENTIONALLY_EMPTY_SOUND) return 0L;
+
+        boolean matches = DirectSoundFiles.sameStreamResource(streamLocation, sound.getPath())
+                || DirectSoundFiles.sameStreamResource(streamLocation, sound.getLocation())
+                || DirectSoundFiles.sameStreamResource(streamLocation, currentSong.getIdentifier());
+        if (!matches) return 0L;
+
+        long offset = pendingSeekMillis;
+        pendingSeekMillis = 0L;
+        return offset;
     }
 
     public static void interruptCurrentPlayback(SoundInstance sound) {
         if ((!currentSongFromQueue && !currentSongFromEvent) || currentSong == null) return;
         if (sound != null && sound != currentSong) return;
-        if (sound != null && currentSongFromQueue && !stoppingCurrentSong) {
-            advanceFinishedQueuedSong(false);
+        if (sound != null && currentSongFromQueue) {
+            if (!stoppingCurrentSong) {
+                advanceFinishedQueuedSong(false);
+            }
             return;
         }
         currentSong = null;
         currentSongId = null;
         currentSongLooping = false;
+        currentSongType = DirectSoundInstance.Type.ALL;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
         currentQueueIndex = -1;
+        currentSongStartedAtNanos = 0L;
     }
 
     public static String getCurrentMusicTranslationKey() {
@@ -264,6 +478,7 @@ public final class PlaylistHelper {
         ensureLoaded();
         advanceFinishedQueuedSong(true);
         if (queuePaused || QUEUED_SONGS.isEmpty() || hasActiveMusic()) return false;
+        if (shuffle) return playNextShuffled();
         int playableIndex = nextPlayableIndex(queueIndex, loop);
         if (playableIndex < 0) {
             queuePaused = true;
@@ -277,11 +492,19 @@ public final class PlaylistHelper {
     public static boolean playNextNow() {
         ensureLoaded();
         if (QUEUED_SONGS.isEmpty()) return false;
+        if (resumeQueue()) return true;
         queuePaused = false;
         if (currentSongFromQueue && currentSongId != null && isPlaying()) {
+            if (shuffle) {
+                return skipQueue();
+            }
             queueIndex = nextQueueIndex(currentQueueIndex >= 0 ? currentQueueIndex : queueIndex);
         } else {
             advanceFinishedQueuedSong(true);
+        }
+        if (shuffle) {
+            if (currentSong != null && isPlaying()) stop();
+            return playNextShuffled();
         }
         queueIndex = clampQueueIndex(queueIndex);
         int playableIndex = nextPlayableIndex(queueIndex, true);
@@ -295,6 +518,11 @@ public final class PlaylistHelper {
     public static boolean canSkipQueue() {
         ensureLoaded();
         if (QUEUED_SONGS.size() < 2) return false;
+        if (shuffle) {
+            ensureShuffleOrder();
+            if (loop) return SHUFFLE_ORDER.stream().anyMatch(id -> MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id));
+            return hasUnlockedShuffleSongFrom(shuffleIndex);
+        }
         int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
         return loop || index < QUEUED_SONGS.size() - 1;
     }
@@ -303,6 +531,18 @@ public final class PlaylistHelper {
         ensureLoaded();
         if (!canSkipQueue()) return false;
         queuePaused = false;
+        if (shuffle) {
+            ensureShuffleOrder();
+            int shuffledIndex = nextShuffledPlayableIndex();
+            if (shuffledIndex < 0) return false;
+            SafeIdentifier id = SHUFFLE_ORDER.get(shuffledIndex);
+            int visibleIndex = QUEUED_SONGS.indexOf(id);
+            if (visibleIndex < 0) return false;
+            currentShuffleIndex = shuffledIndex;
+            queueIndex = visibleIndex;
+            stop();
+            return playSound(id, false, true, false);
+        }
         int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
         queueIndex = index + 1 >= QUEUED_SONGS.size() ? 0 : index + 1;
         int playableIndex = nextPlayableIndex(queueIndex, loop);
@@ -319,6 +559,9 @@ public final class PlaylistHelper {
         if (!MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return false;
         queuePaused = false;
         queueIndex = index;
+        if (shuffle) {
+            rebuildShuffleOrder(QUEUED_SONGS.get(index));
+        }
         stop();
         return playSound(QUEUED_SONGS.get(queueIndex), false, true, false);
     }
@@ -329,7 +572,7 @@ public final class PlaylistHelper {
                 ? currentQueueIndex
                 : findCurrentQueueIndex();
         if (finishedIndex >= 0) {
-            queueIndex = nextQueueIndex(finishedIndex);
+            if (!shuffle) queueIndex = nextQueueIndex(finishedIndex);
         }
         currentSong = null;
         currentSongId = null;
@@ -337,6 +580,7 @@ public final class PlaylistHelper {
         currentSongFromQueue = false;
         currentSongFromEvent = false;
         currentQueueIndex = -1;
+        currentSongStartedAtNanos = 0L;
     }
 
     private static int findCurrentQueueIndex() {
@@ -357,6 +601,20 @@ public final class PlaylistHelper {
             }
         }
         return nextIndex;
+    }
+
+    private static int previousPlayableIndex(int start, boolean wrap) {
+        if (QUEUED_SONGS.isEmpty()) return -1;
+        int index = clampQueueIndex(start);
+        for (int checked = 0; checked < QUEUED_SONGS.size(); checked++) {
+            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return index;
+            index--;
+            if (index < 0) {
+                if (!wrap) return -1;
+                index = QUEUED_SONGS.size() - 1;
+            }
+        }
+        return -1;
     }
 
     public static boolean hasActiveMusic() {
@@ -412,9 +670,11 @@ public final class PlaylistHelper {
         if (sampledVolume != null) volume = sampledVolume.sample(random);
         currentSongId = id;
         currentSongLooping = loop;
+        currentSongType = type;
         currentSongFromQueue = fromQueue;
         currentSongFromEvent = fromEvent;
         currentQueueIndex = fromQueue ? queueIndex : -1;
+        currentSongStartedAtNanos = System.nanoTime() - pendingSeekMillis * 1_000_000L;
         if (!fromQueue && !fromEvent) {
             directSongId = id;
             directSongLooping = loop;
@@ -443,9 +703,13 @@ public final class PlaylistHelper {
             currentSong = null;
             currentSongId = null;
             currentSongLooping = false;
+            currentSongType = DirectSoundInstance.Type.ALL;
             currentSongFromQueue = false;
             currentSongFromEvent = false;
             currentQueueIndex = -1;
+            currentShuffleIndex = -1;
+            currentSongStartedAtNanos = 0L;
+            pendingSeekMillis = 0L;
             return false;
         }
         if (result == SoundEngine.PlayResult.STARTED) {
@@ -470,9 +734,33 @@ public final class PlaylistHelper {
         currentSong = null;
         currentSongId = null;
         currentSongLooping = false;
+        currentSongType = DirectSoundInstance.Type.ALL;
         currentSongFromQueue = false;
         currentSongFromEvent = false;
         currentQueueIndex = -1;
+        currentSongStartedAtNanos = 0L;
+        pendingSeekMillis = 0L;
+        clearPausedQueue();
+    }
+
+    private static void thisStopCurrentSongOnly() {
+        SoundInstance song = currentSong;
+        if (song != null) {
+            stoppingCurrentSong = true;
+            try {
+                Minecraft.getInstance().getSoundManager().stop(song);
+            } finally {
+                stoppingCurrentSong = false;
+            }
+        }
+        currentSong = null;
+        currentSongId = null;
+        currentSongLooping = false;
+        currentSongType = DirectSoundInstance.Type.ALL;
+        currentSongFromQueue = false;
+        currentSongFromEvent = false;
+        currentQueueIndex = -1;
+        currentSongStartedAtNanos = 0L;
     }
 
     public static boolean play(SafeIdentifier id, boolean loop) {
@@ -499,8 +787,57 @@ public final class PlaylistHelper {
 
     public static void pauseQueue() {
         ensureLoaded();
-        stop();
+        if (!currentSongFromQueue || currentSongId == null || !isPlaying()) return;
+        long elapsed = currentSongElapsedMillis();
+        SoundEngineStopper engine = (SoundEngineStopper) Minecraft.getInstance().getSoundManager().soundEngine;
+        if (!engine.pausePlaylist(currentSong)) return;
+        pausedQueueElapsedMillis = elapsed;
         queuePaused = true;
+    }
+
+    private static boolean resumeQueue() {
+        if (queuePaused && currentSongFromQueue && currentSong != null) {
+            SoundEngineStopper engine = (SoundEngineStopper) Minecraft.getInstance().getSoundManager().soundEngine;
+            if (!engine.resumePlaylist(currentSong)) return false;
+            currentSongStartedAtNanos = System.nanoTime() - pausedQueueElapsedMillis * 1_000_000L;
+            pausedQueueElapsedMillis = 0L;
+            queuePaused = false;
+            return true;
+        }
+        if (pausedQueueSong == null || pausedQueueIndex < 0 || pausedQueueIndex >= QUEUED_SONGS.size()
+                || !DirectSoundFiles.samePlayable(QUEUED_SONGS.get(pausedQueueIndex), pausedQueueSong)) {
+            clearPausedQueue();
+            return false;
+        }
+        SafeIdentifier song = pausedQueueSong;
+        queueIndex = pausedQueueIndex;
+        currentShuffleIndex = pausedShuffleIndex;
+        if (shuffle && pausedShuffleIndex >= 0) shuffleIndex = pausedShuffleIndex + 1;
+        pendingSeekMillis = pausedQueueElapsedMillis;
+        clearPausedQueue(false);
+        queuePaused = false;
+        return playSound(song, false, true, false);
+    }
+
+    private static void clearPausedQueue() {
+        clearPausedQueue(true);
+    }
+
+    private static void clearPausedQueue(boolean clearSeek) {
+        pausedQueueSong = null;
+        pausedQueueSound = null;
+        pausedQueueIndex = -1;
+        pausedShuffleIndex = -1;
+        pausedQueueElapsedMillis = 0L;
+        if (clearSeek) pendingSeekMillis = 0L;
+    }
+
+    /** Returns elapsed playback time for the shared player progress display. */
+    public static long currentSongElapsedMillis() {
+        if (queuePaused && currentSongFromQueue) return pausedQueueElapsedMillis;
+        if (currentSong == null) return pausedQueueElapsedMillis;
+        if (currentSongStartedAtNanos == 0L) return 0L;
+        return Math.max(0L, (System.nanoTime() - currentSongStartedAtNanos) / 1_000_000L);
     }
 
     private static void ensureLoaded() {
@@ -510,15 +847,18 @@ public final class PlaylistHelper {
         queuePaused = true;
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
+        shuffle = config.playlists.shuffle;
         for (String song : config.playlists.queued_songs) {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
+        if (shuffle) rebuildShuffleOrder(null);
     }
 
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
         config.playlists.loop = loop;
+        config.playlists.shuffle = shuffle;
         config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
@@ -528,6 +868,102 @@ public final class PlaylistHelper {
         config.playlists.queue_source_type = MaMDataConfig.QueueSourceType.NONE;
         config.playlists.queue_source_id = "";
         config.playlists.queue_source_name = "";
+    }
+
+    private static int remapMovedIndex(int index, int fromIndex, int toIndex) {
+        if (index < 0) return index;
+        if (index == fromIndex) return toIndex;
+        if (fromIndex < toIndex && index > fromIndex && index <= toIndex) return index - 1;
+        if (toIndex < fromIndex && index >= toIndex && index < fromIndex) return index + 1;
+        return index;
+    }
+
+    private static void touchRecentSource(MaMDataConfig.QueueSourceType type, String id) {
+        if (type == MaMDataConfig.QueueSourceType.NONE || id == null || id.isBlank()) return;
+        MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
+        String key = type.name() + "|" + id;
+        playlists.recent_sources.remove(key);
+        playlists.recent_sources.addFirst(key);
+    }
+
+    /** Returns {@code 0} for the most recently played source, or a large rank when unseen. */
+    public static int recentSourceRank(MaMDataConfig.QueueSourceType type, String id) {
+        if (type == MaMDataConfig.QueueSourceType.NONE || id == null) return Integer.MAX_VALUE;
+        int index = MaMDataConfig.get().playlists.recent_sources.indexOf(type.name() + "|" + id);
+        return index < 0 ? Integer.MAX_VALUE : index;
+    }
+
+    private static void rebuildShuffleOrderAfterQueueChange() {
+        if (!shuffle) return;
+        SafeIdentifier current = currentSongFromQueue && currentQueueIndex >= 0 && currentQueueIndex < QUEUED_SONGS.size()
+                ? QUEUED_SONGS.get(currentQueueIndex)
+                : null;
+        rebuildShuffleOrder(current);
+    }
+
+    private static void ensureShuffleOrder() {
+        if (!shuffle) return;
+        if (SHUFFLE_ORDER.size() != QUEUED_SONGS.size() || !SHUFFLE_ORDER.containsAll(QUEUED_SONGS)) {
+            SafeIdentifier current = currentSongFromQueue && currentQueueIndex >= 0 && currentQueueIndex < QUEUED_SONGS.size()
+                    ? QUEUED_SONGS.get(currentQueueIndex)
+                    : null;
+            rebuildShuffleOrder(current);
+        }
+    }
+
+    /** Starts a new shuffle cycle while preserving the current song at the front when necessary. */
+    private static void rebuildShuffleOrder(SafeIdentifier current) {
+        SHUFFLE_ORDER.clear();
+        List<SafeIdentifier> remaining = new ArrayList<>(QUEUED_SONGS);
+        if (current != null && remaining.remove(current)) {
+            SHUFFLE_ORDER.add(current);
+            currentShuffleIndex = 0;
+            shuffleIndex = 1;
+        } else {
+            currentShuffleIndex = -1;
+            shuffleIndex = 0;
+        }
+        Collections.shuffle(remaining);
+        SHUFFLE_ORDER.addAll(remaining);
+    }
+
+    private static boolean playNextShuffled() {
+        ensureShuffleOrder();
+        int shuffledIndex = nextShuffledPlayableIndex();
+        if (shuffledIndex < 0) return false;
+        SafeIdentifier id = SHUFFLE_ORDER.get(shuffledIndex);
+        int visibleIndex = QUEUED_SONGS.indexOf(id);
+        if (visibleIndex < 0) return false;
+        currentShuffleIndex = shuffledIndex;
+        queueIndex = visibleIndex;
+        return playSound(id, false, true, false);
+    }
+
+    private static int nextShuffledPlayableIndex() {
+        int checked = 0;
+        while (checked < Math.max(1, QUEUED_SONGS.size())) {
+            if (shuffleIndex >= SHUFFLE_ORDER.size()) {
+                if (!loop) {
+                    queuePaused = true;
+                    return -1;
+                }
+                rebuildShuffleOrder(null);
+            }
+            if (SHUFFLE_ORDER.isEmpty()) return -1;
+            int candidate = shuffleIndex++;
+            SafeIdentifier id = SHUFFLE_ORDER.get(candidate);
+            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id)) return candidate;
+            checked++;
+        }
+        return -1;
+    }
+
+    private static boolean hasUnlockedShuffleSongFrom(int start) {
+        ensureShuffleOrder();
+        for (int i = Math.max(0, start); i < SHUFFLE_ORDER.size(); i++) {
+            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), SHUFFLE_ORDER.get(i))) return true;
+        }
+        return false;
     }
 
     public record QueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {}

@@ -5,6 +5,7 @@ import net.minecraft.client.sounds.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import javax.sound.sampled.AudioFormat;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -61,9 +63,11 @@ public abstract class SoundBufferLibraryMixin {
 			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
 				try {
 					InputStream inputStream = Files.newInputStream(path);
-					return looping
+					AudioStream stream = looping
 							? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
 							: new JOrbisAudioStream(inputStream);
+					skipToRequestedOffset(stream, PlaylistHelper.consumePendingSeekMillis(location));
+					return stream;
 				} catch (IOException exception) {
 					throw new CompletionException(exception);
 				}
@@ -71,5 +75,42 @@ public abstract class SoundBufferLibraryMixin {
 
 			cir.setReturnValue(future);
 		});
+	}
+
+	@Inject(method = "getStream", at = @At("RETURN"), cancellable = true)
+	private void music_and_melody$seekResourceStream(
+			Identifier location,
+			boolean looping,
+			CallbackInfoReturnable<CompletableFuture<AudioStream>> cir
+	) {
+		long offset = PlaylistHelper.consumePendingSeekMillis(location);
+		if (offset <= 0L) return;
+		cir.setReturnValue(cir.getReturnValue().thenApply(stream -> {
+			try {
+				skipToRequestedOffset(stream, offset);
+				return stream;
+			} catch (IOException exception) {
+				try {
+					stream.close();
+				} catch (IOException ignored) {
+				}
+				throw new CompletionException(exception);
+			}
+		}));
+	}
+
+	private static void skipToRequestedOffset(AudioStream stream, long offsetMillis) throws IOException {
+		if (offsetMillis <= 0L) return;
+		AudioFormat format = stream.getFormat();
+		int frameSize = Math.max(1, format.getFrameSize());
+		float frameRate = format.getFrameRate() > 0.0F ? format.getFrameRate() : format.getSampleRate();
+		if (frameRate <= 0.0F) return;
+		long remaining = Math.max(0L, Math.round(frameRate * frameSize * offsetMillis / 1000.0D));
+		while (remaining > 0L) {
+			ByteBuffer data = stream.read((int) Math.min(16_384L, remaining));
+			int read = data.remaining();
+			if (read <= 0) break;
+			remaining -= read;
+		}
 	}
 }

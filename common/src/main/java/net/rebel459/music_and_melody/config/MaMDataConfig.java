@@ -50,11 +50,18 @@ public class MaMDataConfig implements ConfigData {
 
 	public static class Playlists {
 		public boolean loop = false;
+		public boolean shuffle = false;
 		public QueueSourceType queue_source_type = QueueSourceType.NONE;
 		public String queue_source_id = "";
 		public String queue_source_name = "";
 		public List<String> queued_songs = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
+		/**
+		 * Most-recently played source identifiers, stored as {@code TYPE|identifier}.
+		 * Keeping this separate from favourites means an item can retain its position
+		 * when it is unfavourited and favourited again later.
+		 */
+		public List<String> recent_sources = new ArrayList<>();
 	}
 
 	public enum QueueSourceType {
