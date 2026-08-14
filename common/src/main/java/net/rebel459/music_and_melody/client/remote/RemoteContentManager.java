@@ -56,6 +56,7 @@ public final class RemoteContentManager {
             .build();
     private static final Map<Identifier, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
     private static final Set<Identifier> DOWNLOADING = ConcurrentHashMap.newKeySet();
+    private static final Map<Identifier, Double> DOWNLOAD_PROGRESS = new ConcurrentHashMap<>();
     private static final List<RemotePack> PACKS = new ArrayList<>();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
@@ -117,6 +118,11 @@ public final class RemoteContentManager {
         return State.INSTALLED;
     }
 
+    public static OptionalDouble downloadProgress(RemotePack pack) {
+        Double value = DOWNLOAD_PROGRESS.get(pack.id());
+        return value == null ? OptionalDouble.empty() : OptionalDouble.of(value);
+    }
+
     public static boolean isDownloadedAlbum(Identifier id) {
         return installed(id) != null;
     }
@@ -124,11 +130,14 @@ public final class RemoteContentManager {
     public static void download(RemotePack pack) {
         if (!remoteDownloadsAllowed()) return;
         if (!DOWNLOADING.add(pack.id())) return;
+        DOWNLOAD_PROGRESS.put(pack.id(), 0.0D);
         OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
             Path zip = null;
             try {
-                zip = PlatformContentManager.download(pack);
+                zip = PlatformContentManager.download(pack, downloaded -> {
+                    if (pack.size() > 0L) DOWNLOAD_PROGRESS.put(pack.id(), Math.min(1.0D, downloaded / (double) pack.size()));
+                });
                 importAndExtract(pack, zip);
                 recordInstalled(pack);
                 OVERRIDE_STATES.put(pack.id(), State.NEEDS_RELOAD);
@@ -142,6 +151,7 @@ public final class RemoteContentManager {
                     }
                 }
                 DOWNLOADING.remove(pack.id());
+                DOWNLOAD_PROGRESS.remove(pack.id());
             }
         });
     }

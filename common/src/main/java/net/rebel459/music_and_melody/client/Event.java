@@ -30,6 +30,7 @@ import java.util.*;
 public class Event {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
     public static final Path CONFIG_DIR = Path.of("config", MusicAndMelody.MOD_ID, "events");
 
     private static final List<Source> RESOURCE_SOURCES = new ArrayList<>();
@@ -161,12 +162,18 @@ public class Event {
     }
 
     public static synchronized Source createConfigSource(String name, String description, String pathOverride) {
+        return createConfigSource(name, description, "", pathOverride);
+    }
+
+    public static synchronized Source createConfigSource(String name, String description, String iconPath, String pathOverride) {
         String trimmedName = name.trim();
         if (trimmedName.isEmpty()) return null;
         Path target = configTarget(trimmedName, pathOverride);
         if (target == null || Files.exists(target)) return null;
         Component descriptionComponent = description.trim().isEmpty() ? CommonComponents.EMPTY : Component.literal(description.trim());
-        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), descriptionComponent, List.of(), new ArrayList<>()))) return null;
+        Identifier icon = iconPath == null || iconPath.isBlank() ? DEFAULT_ICON : Identifier.tryParse(iconPath.trim());
+        if (icon == null) return null;
+        if (!writeConfigRecord(target, new Record(Component.literal(trimmedName), descriptionComponent, icon, List.of(), List.of(), "enabled", true))) return null;
         reloadConfigEvents();
         for (Source source : CONFIG_SOURCES) {
             if (source.path.equals(target)) return source;
@@ -176,7 +183,7 @@ public class Event {
 
     public static synchronized boolean saveSourceEntries(Source source, List<Record.Entry> entries) {
         if (source == null || !source.isConfig()) return false;
-        if (!writeConfigRecord(source.path, new Record(source.record.name(), source.record.description(), entries, source.record.dependencies(), source.record.defaultState(), source.record.hasName()))) return false;
+        if (!writeConfigRecord(source.path, new Record(source.record.name(), source.record.description(), source.record.icon(), entries, source.record.dependencies(), source.record.defaultState(), source.record.hasName()))) return false;
         reloadConfigEvents();
         return true;
     }
@@ -271,7 +278,7 @@ public class Event {
         try (Reader reader = Files.newBufferedReader(file)) {
             JsonElement json = JsonParser.parseReader(reader);
             Record record = Record.CODEC.parse(JsonOps.INSTANCE, json).result().orElse(null);
-            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.entries(), record.dependencies(), record.defaultState(), false);
+            return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.icon(), record.entries(), record.dependencies(), record.defaultState(), false);
         } catch (Exception exception) {
             LogUtils.getLogger().warn("Failed to read event music config: " + file, exception);
             return null;
@@ -615,6 +622,10 @@ public class Event {
             return this.path != null;
         }
 
+        public Identifier icon() {
+            return this.record.icon();
+        }
+
         public boolean isEnabled() {
             MaMDataConfig.Events events = MaMDataConfig.get().events;
             String id = this.id.toString();
@@ -669,17 +680,26 @@ public class Event {
 
     public record ScreenEntry(Source source, int index, Record.Entry entry) {}
 
-    public record Record(Component name, Component description, List<Entry> entries, List<String> dependencies, String defaultState, boolean hasName) {
+    public record Record(Component name, Component description, Identifier icon, List<Entry> entries, List<String> dependencies, String defaultState, boolean hasName) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(record -> record.hasName ? Optional.of(record.name) : Optional.empty()),
                 ComponentSerialization.CODEC.optionalFieldOf("description", CommonComponents.EMPTY).forGetter(Record::description),
+                Identifier.CODEC.optionalFieldOf("icon", DEFAULT_ICON).forGetter(Record::icon),
                 Entry.CODEC.listOf().fieldOf("entries").forGetter(Record::entries),
                 Codec.STRING.listOf().optionalFieldOf("dependencies", List.of()).forGetter(Record::dependencies),
                 Codec.STRING.optionalFieldOf("default", "enabled").forGetter(Record::defaultState)
-        ).apply(instance, (name, description, entries, dependencies, defaultState) -> new Record(name.orElse(Component.empty()), description, entries, dependencies, defaultState, name.isPresent())));
+        ).apply(instance, (name, description, icon, entries, dependencies, defaultState) -> new Record(name.orElse(Component.empty()), description, icon, entries, dependencies, defaultState, name.isPresent())));
+
+        public Record(Component name, Component description, Identifier icon, List<String> dependencies, List<Entry> entries) {
+            this(name, description, icon, entries, dependencies, "enabled", true);
+        }
 
         public Record(Component name, Component description, List<String> dependencies, List<Entry> entries) {
-            this(name, description, entries, dependencies, "enabled", true);
+            this(name, description, DEFAULT_ICON, entries, dependencies, "enabled", true);
+        }
+
+        public Record(Component name, Component description, List<Entry> entries, List<String> dependencies, String defaultState, boolean hasName) {
+            this(name, description, DEFAULT_ICON, entries, dependencies, defaultState, hasName);
         }
 
         public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, boolean constant, int weight) {

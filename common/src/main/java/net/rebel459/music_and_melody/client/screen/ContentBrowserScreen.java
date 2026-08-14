@@ -17,6 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Playlist;
+import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
@@ -559,7 +560,8 @@ public class ContentBrowserScreen extends Screen {
                 case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
                 case UPDATE_AVAILABLE -> Component.translatable("button.music_and_melody.update");
                 case FAILED -> Component.translatable("button.music_and_melody.retry");
-                default -> Component.translatable("button.music_and_melody.download");
+                case INSTALLED -> Component.translatable("screen.music_and_melody.remote_album.state.installed");
+                case REMOTE -> Component.translatable("button.music_and_melody.download");
             };
         }
 
@@ -569,7 +571,8 @@ public class ContentBrowserScreen extends Screen {
                 case NEEDS_RELOAD -> IconButton.icon("reload");
                 case UPDATE_AVAILABLE -> IconButton.icon("update");
                 case FAILED -> IconButton.icon("retry_download");
-                default -> IconButton.icon("download");
+                case INSTALLED -> IconButton.icon("enabled");
+                case REMOTE -> IconButton.icon("download");
             };
         }
 

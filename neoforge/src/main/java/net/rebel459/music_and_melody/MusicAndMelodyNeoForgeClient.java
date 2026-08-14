@@ -22,17 +22,10 @@ public class MusicAndMelodyNeoForgeClient {
                 () -> (modContainer, parent) ->
                         new MaMConfigScreen(parent)
         );
-        modEventBus.addListener(MusicAndMelodyNeoForgeClient::addClientReloadListeners);
         modEventBus.addListener(MusicAndMelodyNeoForgeClient::commonSetup);
     }
 
     private static void commonSetup(final FMLCommonSetupEvent event) {
         MusicAndMelodyClient.init();
-    }
-
-    private static void addClientReloadListeners(final AddClientReloadListenersEvent event) {
-        event.addListener(AlbumListener.ID, new AlbumListener());
-        event.addListener(PlaylistListener.ID, new PlaylistListener());
-        event.addListener(EventListener.ID, new EventListener());
     }
 }

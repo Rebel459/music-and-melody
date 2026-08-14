@@ -30,6 +30,10 @@ public final class DirectSoundFiles {
 			Path path
 	) {
 		FILES.put(soundResourceId, path.toAbsolutePath().normalize());
+		// The sound engine requests streams by the generated playable id in some
+		// paths and by the actual sounds/... resource in others.  Retain both so
+		// UI metadata (duration/seek) and direct-file streaming resolve equally.
+		FILES.put(playableId, path.toAbsolutePath().normalize());
 
 		DISPLAY_KEYS.put(playableId, displayName);
 		DISPLAY_KEYS.put(soundResourceId, displayName);
@@ -85,6 +89,28 @@ public final class DirectSoundFiles {
 	public static boolean samePlayable(SafeIdentifier a, SafeIdentifier b) {
 		if (a == null || b == null) return false;
 		return playableIdOrSelf(a).equals(playableIdOrSelf(b));
+	}
+
+	/**
+	 * The sound engine may ask for either a generated playable id or the
+	 * physical {@code sounds/...ogg} resource. Treat both aliases as the same
+	 * stream so restart-at-offset seeking reaches the reopened song.
+	 */
+	public static boolean sameStreamResource(Identifier a, Identifier b) {
+		if (a == null || b == null) return false;
+		if (a.equals(b)) return true;
+
+		Identifier aPlayable = IDENTIFIER_PLAYABLE_IDS.getOrDefault(a, a);
+		Identifier bPlayable = IDENTIFIER_PLAYABLE_IDS.getOrDefault(b, b);
+		if (aPlayable.equals(bPlayable)) return true;
+
+		if (!a.getNamespace().equals(b.getNamespace())) return false;
+		return normalizedStreamPath(a.getPath()).equals(normalizedStreamPath(b.getPath()));
+	}
+
+	private static String normalizedStreamPath(String path) {
+		String normalized = path.startsWith("sounds/") ? path.substring("sounds/".length()) : path;
+		return normalized.endsWith(".ogg") ? normalized.substring(0, normalized.length() - ".ogg".length()) : normalized;
 	}
 
 	public static boolean contains(Identifier soundResourceId) {

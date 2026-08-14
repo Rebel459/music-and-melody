@@ -47,7 +47,7 @@ public final class ConfigAlbum {
         if (FILES.isEmpty() && discs.isEmpty()) return null;
         return new Album(
                 ALBUM_ID,
-                Component.literal("Config Album"),
+                Component.translatable("album.music_and_melody.config_album"),
                 Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"),
                 FILES.keySet().stream().map(SafeIdentifier::getPath).collect(Collectors.toSet()),
                 discs

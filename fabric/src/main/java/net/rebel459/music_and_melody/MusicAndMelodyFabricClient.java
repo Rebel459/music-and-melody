@@ -12,9 +12,6 @@ public class MusicAndMelodyFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         MusicAndMelodyClient.initRegistries();
-        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(AlbumListener.ID, new AlbumListener());
-        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(PlaylistListener.ID, new PlaylistListener());
-        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(EventListener.ID, new EventListener());
         MusicAndMelodyClient.init();
     }
 }
