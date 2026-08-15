@@ -11,7 +11,6 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.unified.api.core.UnifiedInstance;
 import net.rebel459.unified.api.util.VanillaVersion;
 
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -77,13 +75,23 @@ public final class RemoteContentManager {
 
     public static synchronized void refresh() {
         loaded = true;
-        List<String> repositories = List.copyOf(MaMDataConfig.get().remote.added_repositories);
-        if (!MaMClientConfig.get().remote_downloads || repositories.isEmpty()) {
+        MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
+        List<String> repositories = remote == null || remote.added_repositories == null
+                ? List.of()
+                : remote.added_repositories.stream().filter(Objects::nonNull).filter(value -> !value.isBlank()).toList();
+        List<ProviderSource> providers = new ArrayList<>();
+        if (remote != null && remote.official_provider) {
+            providers.add(new ProviderSource(OFFICIAL_PROVIDER, RemotePack.Provenance.OFFICIAL));
+        }
+        if (remote != null && remote.community_provider) {
+            providers.add(new ProviderSource(COMMUNITY_PROVIDER, RemotePack.Provenance.VERIFIED));
+        }
+        if (!MaMClientConfig.get().remote_downloads || providers.isEmpty() && repositories.isEmpty()) {
             PACKS.clear();
             refreshTask = null;
             return;
         }
-        refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(repositories))
+        refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(providers, repositories))
                 .thenAccept(packs -> {
                     synchronized (RemoteContentManager.class) {
                         PACKS.clear();
@@ -182,12 +190,23 @@ public final class RemoteContentManager {
         OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
     }
 
-    private static List<RemotePack> loadCatalogs(List<String> repositories) {
+    private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories) {
         List<RemotePack> packs = new ArrayList<>();
         Set<Identifier> ids = new HashSet<>();
+        Set<String> loadedCatalogs = new HashSet<>();
+        for (ProviderSource provider : providers) {
+            for (String catalog : loadProvider(provider.url())) {
+                if (!loadedCatalogs.add(catalog)) continue;
+                try {
+                    packs.addAll(loadCatalog(catalog, ids, provider.provenance()));
+                } catch (Exception ignored) {
+                }
+            }
+        }
         for (String repository : repositories) {
+            if (!loadedCatalogs.add(repository)) continue;
             try {
-                packs.addAll(loadCatalog(repository, ids));
+                packs.addAll(loadCatalog(repository, ids, RemotePack.Provenance.UNVERIFIED));
             } catch (Exception ignored) {
             }
         }
@@ -195,7 +214,33 @@ public final class RemoteContentManager {
         return packs;
     }
 
-    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<Identifier> ids) throws IOException, InterruptedException {
+    private record ProviderSource(String url, RemotePack.Provenance provenance) {}
+
+    private static List<String> loadProvider(String providerUrl) {
+        try {
+            URI providerUri = catalogUri(providerUrl);
+            HttpRequest request = HttpRequest.newBuilder(providerUri)
+                    .timeout(Duration.ofSeconds(20))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
+
+            JsonElement root = JsonParser.parseString(response.body());
+            if (!root.isJsonArray()) return List.of();
+            List<String> catalogs = new ArrayList<>();
+            for (JsonElement element : root.getAsJsonArray()) {
+                if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) continue;
+                String value = element.getAsString().trim();
+                if (!value.isEmpty()) catalogs.add(providerUri.resolve(value).toString());
+            }
+            return catalogs;
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<Identifier> ids, RemotePack.Provenance provenance) throws IOException, InterruptedException {
         URI catalogUri = catalogUri(repositoryUrl);
         HttpRequest request = HttpRequest.newBuilder(catalogUri)
                 .timeout(Duration.ofSeconds(20))
@@ -212,7 +257,12 @@ public final class RemoteContentManager {
         List<RemotePack> packs = new ArrayList<>();
         for (JsonElement element : array) {
             if (!element.isJsonObject()) continue;
-            RemotePack pack = parsePack(element.getAsJsonObject(), repositoryName, catalogUri);
+            RemotePack pack;
+            try {
+                pack = parsePack(element.getAsJsonObject(), repositoryName, catalogUri, provenance);
+            } catch (RuntimeException ignored) {
+                continue;
+            }
             if (pack == null || !supportsCurrentVersion(pack) || !ids.add(pack.id())) continue;
             packs.add(pack);
         }
@@ -234,10 +284,10 @@ public final class RemoteContentManager {
 
     private static boolean supportsCurrentVersion(RemotePack pack) {
         VanillaVersion version = VanillaVersion.getVanillaVersion();
-        boolean withinMaxExclusive = pack.showBelowVersion().isEmpty()
-                || VanillaVersion.parse(pack.showBelowVersion()).compareTo(version) > 0;
-        boolean withinMinInclusive = pack.showFromVersion().isEmpty()
-                || VanillaVersion.parse(pack.showFromVersion()).compareTo(version) <= 0;
+        boolean withinMaxExclusive = pack.belowVersion().isEmpty()
+                || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
+        boolean withinMinInclusive = pack.atLeastVersion().isEmpty()
+                || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
         return withinMaxExclusive && withinMinInclusive;
     }
 
@@ -257,11 +307,17 @@ public final class RemoteContentManager {
                         if (!path.isEmpty()) path.append('/');
                         path.append(parts[i]);
                     }
-                    if ("blob".equals(parts[2])) {
+                    if ("blob".equals(parts[2]) || isJsonCatalogUrl(uri)) {
                         return URI.create("https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + path);
                     }
                 }
-                if (isJsonCatalogUrl(uri)) return uri;
+                if (path.isEmpty() && isJsonCatalogUrl(uri)) {
+                    for (int i = 2; i < parts.length; i++) {
+                        if (!path.isEmpty()) path.append('/');
+                        path.append(parts[i]);
+                    }
+                    return URI.create("https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + path);
+                }
                 if (!path.isEmpty()) path.append('/');
                 path.append("catalog.json");
                 return URI.create("https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + path);
@@ -285,26 +341,18 @@ public final class RemoteContentManager {
         return fallback;
     }
 
-    private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri) {
+    private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri, RemotePack.Provenance provenance) {
         Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
-        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size")) {
+        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size") || !object.has("tag")) {
             return null;
         }
+        RemotePack.Tag tag = RemotePack.Tag.fromSerialized(object.get("tag").getAsString());
+        if (tag == null) return null;
         String icon = object.has("icon")
                 ? object.get("icon").getAsString()
                 : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png").toString();
-        String showFromVersion = object.has("show_from_version") ? object.get("show_from_version").getAsString() : "";
-        String showBelowVersion = object.has("show_below_version") ? object.get("show_below_version").getAsString() : "";
-
-        List<String> tags = stringArray(object, "tags");
-        if (!tags.isEmpty() && (tags.size() != 1 || !Objects.equals(tags.getFirst(), "album"))) {
-            return null;
-        }
-        List<String> dependencies = stringArray(object, "dependencies");
-        for (String mod : dependencies) {
-            if (!UnifiedInstance.isModLoaded(mod)) return null;
-        }
-
+        String atLeastVersion = object.has("at_least_version") ? object.get("at_least_version").getAsString() : "";
+        String belowVersion = object.has("below_version") ? object.get("below_version").getAsString() : "";
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -315,21 +363,11 @@ public final class RemoteContentManager {
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
                 icon,
-                showFromVersion,
-                showBelowVersion
+                atLeastVersion,
+                belowVersion,
+                tag,
+                provenance
         );
-    }
-
-    private static List<String> stringArray(JsonObject object, String name) {
-        JsonArray array = object.getAsJsonArray(name);
-        if (array == null) return List.of();
-        List<String> values = new ArrayList<>();
-        for (JsonElement element : array) {
-            if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) continue;
-            String value = element.getAsString().trim();
-            if (!value.isEmpty()) values.add(value);
-        }
-        return List.copyOf(values);
     }
 
     private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
@@ -610,28 +648,5 @@ public final class RemoteContentManager {
         String name = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
         return PACK_DIRECTORY.resolve(name);
-    }
-
-    static CompletableFuture<byte[]> loadIcon(URI uri) {
-        if (!MaMClientConfig.get().remote_downloads) return CompletableFuture.completedFuture(null);
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(Duration.ofSeconds(20))
-                .GET()
-                .build();
-        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
-                .thenApply(response -> {
-                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                        throw new CompletionException(new IOException("Icon download failed: " + response.statusCode()));
-                    }
-                    try (InputStream input = response.body()) {
-                        byte[] bytes = input.readNBytes(5242880 + 1);
-                        if (bytes.length > 5242880) {
-                            throw new IOException("Remote icon exceeds " + 5242880 + " bytes");
-                        }
-                        return bytes;
-                    } catch (IOException exception) {
-                        throw new CompletionException(exception);
-                    }
-                });
     }
 }
