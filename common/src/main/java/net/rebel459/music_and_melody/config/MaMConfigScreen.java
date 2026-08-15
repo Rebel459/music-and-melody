@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.TEXT_TITLE;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.TEXT_TITLE;
 
 public class MaMConfigScreen extends Screen {
     private final Screen parent;

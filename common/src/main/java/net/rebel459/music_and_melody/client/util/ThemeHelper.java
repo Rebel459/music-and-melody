@@ -11,16 +11,15 @@ import java.util.Optional;
  * them directly.  A future album can replace these values without having to
  * find colours spread across individual screens.</p>
  */
-public final class ScreenConstants {
+public final class ThemeHelper {
 
-    private ScreenConstants() {
+    private ThemeHelper() {
     }
 
     // Surfaces and overlays
     public static final int SCREEN_BACKGROUND = 0xC9070A10;
     public static final int PANEL_BACKGROUND = 0xE5151B28;
     public static final int PANEL_OUTLINE = 0xFF3B4963;
-    public static final int SOURCE_CARD_BACKGROUND = 0xFF111927;
     public static final int MODAL_BACKGROUND = 0xFF151C2A;
     public static final int DIM_OVERLAY = 0x5C000000;
 
@@ -45,9 +44,9 @@ public final class ScreenConstants {
 
     /** Optional texture for the ordinary custom button state. */
     public static final Optional<Identifier> BUTTON_TEXTURE = Optional.empty();
-    /** Optional texture for hovered, focused, or selected custom buttons. */
+    /** Optional texture for hovered, focused, or selected custom elements. */
     public static final Optional<Identifier> BUTTON_HIGHLIGHTED_TEXTURE = Optional.empty();
-    /** Optional texture for inactive custom buttons. */
+    /** Optional texture for inactive custom elements. */
     public static final Optional<Identifier> BUTTON_DISABLED_TEXTURE = Optional.empty();
 
     /** Converts an ARGB token to the RGB value expected by text styles. */

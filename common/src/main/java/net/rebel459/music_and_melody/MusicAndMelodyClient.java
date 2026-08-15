@@ -6,6 +6,7 @@ import net.minecraft.server.packs.PackType;
 import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
+import net.rebel459.music_and_melody.client.ThemeListener;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.api.client.core.UnifiedClientEvents;
@@ -35,6 +36,7 @@ public final class MusicAndMelodyClient {
         UnifiedClientHelpers.RELOAD_LISTENERS.addListener(AlbumListener.ID, new AlbumListener());
         UnifiedClientHelpers.RELOAD_LISTENERS.addListener(PlaylistListener.ID, new PlaylistListener());
         UnifiedClientHelpers.RELOAD_LISTENERS.addListener(EventListener.ID, new EventListener());
+        UnifiedClientHelpers.RELOAD_LISTENERS.addListener(ThemeListener.ID, new ThemeListener());
     }
 
     public static void init() {

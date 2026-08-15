@@ -4,6 +4,7 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
 import java.util.ArrayList;
@@ -53,6 +54,8 @@ public class MaMDataConfig implements ConfigData {
 		public String queue_source_id = "";
 		public String queue_source_name = "";
 		public List<String> queued_songs = new ArrayList<>();
+		public List<String> custom_playlist_songs = new ArrayList<>();
+		public boolean custom_playlist_migrated = false;
 		public List<String> favourites = new ArrayList<>();
 		/**
 		 * Most-recently played source identifiers, stored as {@code TYPE|identifier}.
@@ -85,6 +88,8 @@ public class MaMDataConfig implements ConfigData {
 		public boolean official_provider = true;
 		public boolean community_provider = true;
 	}
+
+	public String active_theme = "music_and_melody:default";
 	
 	public float gui_multiplier = 0.85F;
 }

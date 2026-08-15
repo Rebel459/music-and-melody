@@ -6,14 +6,15 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 import java.util.List;
 
-/** A focused confirmation before a loaded album or playlist becomes custom. */
+/** A focused confirmation before replacing a non-empty Custom Playlist. */
 final class QueueMutationConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 110;
@@ -25,11 +26,6 @@ final class QueueMutationConfirmScreen extends Screen {
     private final Runnable confirmedAction;
     private int layoutWidth;
     private int layoutHeight;
-
-    QueueMutationConfirmScreen(MusicPlayerScreen parent, Component message, Runnable confirmedAction) {
-        this(parent, Component.translatable("screen.music_and_melody.queue_mutation"), message,
-                Component.translatable("button.music_and_melody.make_custom"), confirmedAction);
-    }
 
     QueueMutationConfirmScreen(MusicPlayerScreen parent, Component title, Component message, Component confirmLabel, Runnable confirmedAction) {
         super(title);
@@ -72,10 +68,15 @@ final class QueueMutationConfirmScreen extends Screen {
         // Keep the workspace visible beneath the confirmation instead of
         // replacing it with the normal full-screen screen background.
         this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
-        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
-        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
-        graphics.pose().popMatrix();
+        try {
+            graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+            super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        } finally {
+            graphics.pose().popMatrix();
+            IconButton.resetTooltipScale();
+        }
     }
 
     @Override

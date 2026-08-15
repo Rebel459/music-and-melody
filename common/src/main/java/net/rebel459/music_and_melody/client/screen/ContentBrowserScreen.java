@@ -1,7 +1,6 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -31,7 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 public class ContentBrowserScreen extends Screen {
 
