@@ -10,7 +10,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
@@ -83,6 +85,7 @@ public class MusicPlayerScreen extends Screen {
     private static final int TRACK_TEXT_OFFSET = 32;
     private static final int HOME_BUTTON_COUNT = 6;
     private static final int HOME_BUTTON_STEP = 29;
+    private static final int HOME_MENU_TOP = 64;
     private static final int HOME_MENU_HEIGHT = 22 + (HOME_BUTTON_COUNT - 1) * HOME_BUTTON_STEP;
 
     private final Screen parent;
@@ -365,7 +368,7 @@ public class MusicPlayerScreen extends Screen {
         this.mainQueueList = this.addRenderableWidget(new QueueList(this, this.minecraft, this.middleX, this.middleWidth, listTop, this.contentBottom - 6, false));
 
         this.saveButton = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.save"), IconButton.icon("save"), button ->
-                this.minecraft.gui.setScreen(new SavePlaylistScreen(this))));
+                openSavePlaylistScreen()));
         int actionGroupWidth = IconButton.SIZE * 2 + 5;
         int actionX = this.rightX + (this.rightWidth - actionGroupWidth) / 2;
         this.saveButton.setX(actionX);
@@ -424,7 +427,7 @@ public class MusicPlayerScreen extends Screen {
         }
         this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
                 Component.translatable("button.music_and_melody.new_event"), false,
-                button -> this.minecraft.gui.setScreen(new CreateEventScreen(this))));
+                button -> openCreateEventScreen()));
     }
 
     private void buildOnlinePage() {
@@ -439,7 +442,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildHomePage() {
-        int listTop = PANEL_TOP + 58;
+        int listTop = PANEL_TOP + HOME_MENU_TOP;
         int listBottom = this.contentBottom - 6;
         if (listBottom - listTop < HOME_MENU_HEIGHT) {
             this.addRenderableWidget(new HomeMenuList(this, this.minecraft, this.middleX, this.middleWidth, listTop, listBottom));
@@ -447,7 +450,7 @@ public class MusicPlayerScreen extends Screen {
         }
         int buttonWidth = mainMenuButtonWidth();
         int x = this.middleX + this.middleWidth / 2 - buttonWidth / 2;
-        int y = PANEL_TOP + Math.max(58, (this.contentBottom - PANEL_TOP - HOME_MENU_HEIGHT) / 2);
+        int y = PANEL_TOP + Math.max(HOME_MENU_TOP, (this.contentBottom - PANEL_TOP - HOME_MENU_HEIGHT) / 2);
         addHomeButton(Component.translatable("screen.music_and_melody.albums"), x, y, buttonWidth, () -> setPage(Page.LIBRARY));
         addHomeButton(Component.translatable("button.music_and_melody.events"), x, y + HOME_BUTTON_STEP, buttonWidth, () -> setPage(Page.EVENTS));
         addHomeButton(Component.translatable("screen.music_and_melody.themes"), x, y + HOME_BUTTON_STEP * 2, buttonWidth, () -> setPage(Page.THEMES));
@@ -471,6 +474,7 @@ public class MusicPlayerScreen extends Screen {
         this.addRenderableWidget(new WorkspaceButton(x, y + 28, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.server"), false,
                 button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())));
+        this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + 56, buttonWidth, 20));
     }
 
     private int mainMenuButtonWidth() {
@@ -843,29 +847,67 @@ public class MusicPlayerScreen extends Screen {
         this.rebuildWidgets();
     }
 
+    private void openSavePlaylistScreen() {
+        closeSearch();
+        this.minecraft.gui.setScreen(new SavePlaylistScreen(this));
+    }
+
+    private void openCreateEventScreen() {
+        closeSearch();
+        this.minecraft.gui.setScreen(new CreateEventScreen(this));
+    }
+
     private void toggleSearch() {
-        this.searching = !this.searching;
-        if (!this.searching) {
-            this.search = "";
-            this.searchField.setValue("");
-            this.searchField.setFocused(false);
-            this.setFocused(null);
-            this.focusSearchField = false;
-            refreshPageList();
+        if (!supportsSearch()) {
+            closeSearch();
+            return;
+        }
+        if (this.searching) {
+            closeSearch();
         } else {
+            this.searching = true;
             // Screen's click dispatch focuses the icon after this callback
             // returns.  Defer the field focus to the next render pass so it
             // wins that race and is immediately ready for typing.
-            updateSearchVisibility();
             this.focusSearchField = true;
         }
         updateSearchVisibility();
     }
 
     private void updateSearchVisibility() {
+        boolean supported = supportsSearch();
+        if (!supported) {
+            this.searching = false;
+            this.search = "";
+            this.focusSearchField = false;
+        }
+        if (this.searchButton != null) this.searchButton.active = supported;
         if (this.searchField != null) {
-            this.searchField.visible = this.searching;
-            this.searchField.active = this.searching;
+            this.searchField.visible = supported && this.searching;
+            this.searchField.active = supported && this.searching;
+        }
+    }
+
+    private boolean supportsSearch() {
+        return switch (this.page) {
+            case LIBRARY, DETAILS, EVENTS, ONLINE -> true;
+            case NOW_PLAYING, HOME, THEMES, CONFIG -> false;
+        };
+    }
+
+    private void closeSearch() {
+        boolean wasSearching = this.searching;
+        boolean hadText = !this.search.isEmpty();
+        this.searching = false;
+        this.search = "";
+        this.focusSearchField = false;
+        this.setFocused(null);
+        if (this.searchField != null) {
+            this.searchField.setFocused(false);
+            if (!this.searchField.getValue().isEmpty()) this.searchField.setValue("");
+        }
+        if (wasSearching && !hadText && this.searchField != null && this.searchField.getValue().isEmpty()) {
+            refreshPageList();
         }
     }
 
@@ -1129,8 +1171,7 @@ public class MusicPlayerScreen extends Screen {
     void openContent(ContentItem item) {
         this.viewedContent = item;
         this.page = Page.DETAILS;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1155,8 +1196,7 @@ public class MusicPlayerScreen extends Screen {
         if (!PlaylistHelper.loadCustomQueue(songs)) return;
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1177,8 +1217,7 @@ public class MusicPlayerScreen extends Screen {
         PlaylistHelper.loadCustomQueue(songs);
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1186,8 +1225,7 @@ public class MusicPlayerScreen extends Screen {
         PlaylistHelper.loadCustomQueue(List.of());
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1223,8 +1261,7 @@ public class MusicPlayerScreen extends Screen {
     private void finishPlayingViewedContentTrack(int index) {
         if (!PlaylistHelper.playNow(index)) return;
         this.page = Page.DETAILS;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1244,26 +1281,31 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void chooseEventNamespace(String namespace) {
+        closeSearch();
         this.selectedEventNamespace = namespace;
         this.rebuildWidgets();
     }
 
     void openEvent(Event.Source source) {
+        closeSearch();
         this.minecraft.gui.setScreen(new EventScreen(this, source.id));
     }
 
     void chooseOnlineCatalog(String catalog) {
+        closeSearch();
         this.selectedOnlineCatalog = catalog;
         this.viewedRemotePack = null;
         this.rebuildWidgets();
     }
 
     void viewRemotePack(RemotePack pack) {
+        closeSearch();
         this.viewedRemotePack = pack;
         this.rebuildWidgets();
     }
 
     void openRepositoryEditor() {
+        closeSearch();
         this.minecraft.gui.setScreen(new RepositoryScreen(this));
     }
 
@@ -1310,6 +1352,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void closeRemoteDetails() {
+        closeSearch();
         this.viewedRemotePack = null;
         this.rebuildWidgets();
     }
@@ -1328,9 +1371,8 @@ public class MusicPlayerScreen extends Screen {
 
     private void setPage(Page page) {
         if (this.page == Page.ONLINE && page != Page.ONLINE) applyPendingRemoteDeletes();
+        closeSearch();
         this.page = page;
-        this.searching = false;
-        this.search = "";
         this.selectedEventNamespace = null;
         this.selectedOnlineCatalog = null;
         this.viewedRemotePack = null;
@@ -1346,12 +1388,14 @@ public class MusicPlayerScreen extends Screen {
             }
             case EVENTS -> {
                 if (this.selectedEventNamespace != null) {
+                    closeSearch();
                     this.selectedEventNamespace = null;
                     this.rebuildWidgets();
                 } else setPage(Page.HOME);
             }
             case ONLINE -> {
                 if (this.selectedOnlineCatalog != null) {
+                    closeSearch();
                     this.selectedOnlineCatalog = null;
                     this.viewedRemotePack = null;
                     this.rebuildWidgets();
@@ -1379,8 +1423,7 @@ public class MusicPlayerScreen extends Screen {
         }
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
-        this.searching = false;
-        this.search = "";
+        closeSearch();
         this.rebuildWidgets();
     }
 
@@ -1511,13 +1554,25 @@ public class MusicPlayerScreen extends Screen {
         return visibleEventSources().stream().filter(source -> source.id.getNamespace().equals(namespace)).toList();
     }
 
-    List<String> onlineCatalogs() {
-        return RemoteContentManager.packs().stream()
-                .map(RemotePack::repository)
-                .filter(value -> value != null && !value.isBlank())
-                .distinct()
-                .sorted(String.CASE_INSENSITIVE_ORDER)
+    List<OnlineCatalog> onlineCatalogs() {
+        Map<String, RemotePack.Provenance> provenanceByCatalog = new LinkedHashMap<>();
+        for (RemotePack pack : RemoteContentManager.packs()) {
+            String repository = pack.repository();
+            if (repository == null || repository.isBlank()) continue;
+            RemotePack.Provenance provenance = pack.provenance() == null
+                    ? RemotePack.Provenance.UNVERIFIED
+                    : pack.provenance();
+            provenanceByCatalog.merge(repository, provenance, MusicPlayerScreen::preferredProvenance);
+        }
+        return provenanceByCatalog.entrySet().stream()
+                .map(entry -> new OnlineCatalog(entry.getKey(), entry.getKey(), entry.getValue()))
+                .filter(catalog -> matchesSearch(catalog.name(), catalog.provenance().label().getString()))
+                .sorted(Comparator.comparing(OnlineCatalog::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    private static RemotePack.Provenance preferredProvenance(RemotePack.Provenance first, RemotePack.Provenance second) {
+        return first.ordinal() <= second.ordinal() ? first : second;
     }
 
     List<RemotePack> onlinePacks(String catalog) {
@@ -1676,6 +1731,7 @@ public class MusicPlayerScreen extends Screen {
             case EVENTS -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
                 breadcrumbs.add(new Breadcrumb(Component.translatable("button.music_and_melody.events"), this.selectedEventNamespace == null ? null : () -> {
+                    closeSearch();
                     this.selectedEventNamespace = null;
                     this.rebuildWidgets();
                 }));
@@ -1684,6 +1740,7 @@ public class MusicPlayerScreen extends Screen {
             case ONLINE -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.online_browser"), this.selectedOnlineCatalog == null ? null : () -> {
+                    closeSearch();
                     this.selectedOnlineCatalog = null;
                     this.viewedRemotePack = null;
                     this.rebuildWidgets();
@@ -1853,7 +1910,7 @@ public class MusicPlayerScreen extends Screen {
         ALBUM("screen.music_and_melody.tag.album"),
         PLAYLIST("screen.music_and_melody.tag.playlist"),
         EVENT("screen.music_and_melody.tag.event"),
-        THEME("screen.music_and_melody.tag.album"),
+        THEME("screen.music_and_melody.tag.theme"),
         DOWNLOADED("screen.music_and_melody.tag.downloaded"),
         REMOTE("screen.music_and_melody.tag.remote"),
         NEEDS_UPDATE("screen.music_and_melody.tag.needs_update");
@@ -1872,8 +1929,10 @@ public class MusicPlayerScreen extends Screen {
         boolean matches(RemotePack pack) {
             RemoteContentManager.State state = RemoteContentManager.state(pack);
             return switch (this) {
-                case ALBUM -> true;
-                case PLAYLIST, EVENT, THEME -> false;
+                case ALBUM -> pack.tag() == RemotePack.Tag.ALBUM;
+                case PLAYLIST -> pack.tag() == RemotePack.Tag.PLAYLIST;
+                case EVENT -> pack.tag() == RemotePack.Tag.EVENT;
+                case THEME -> pack.tag() == RemotePack.Tag.THEME;
                 case DOWNLOADED -> state == RemoteContentManager.State.INSTALLED
                         || state == RemoteContentManager.State.NEEDS_RELOAD
                         || state == RemoteContentManager.State.UPDATE_AVAILABLE;
@@ -1882,6 +1941,91 @@ public class MusicPlayerScreen extends Screen {
             };
         }
     }
+
+    private static final class GuiMultiplierSlider extends AbstractSliderButton {
+        private static final int STEP_COUNT = 10;
+        private final MusicPlayerScreen screen;
+
+        GuiMultiplierSlider(MusicPlayerScreen screen, int x, int y, int width, int height) {
+            super(x, y, width, height, Component.empty(), positionFor(MaMDataConfig.get().gui_multiplier));
+            this.screen = screen;
+            updateMessage();
+        }
+
+        @Override
+        protected void setValue(double value) {
+            super.setValue(steppedPosition(value));
+        }
+
+        @Override
+        protected void updateMessage() {
+            this.setMessage(Component.translatable("screen.music_and_melody.gui_multiplier", formattedMultiplier(multiplier(this.value))));
+        }
+
+        @Override
+        protected void applyValue() {
+            updateMessage();
+        }
+
+        @Override
+        public void onRelease(MouseButtonEvent event) {
+            super.onRelease(event);
+            commit();
+        }
+
+        @Override
+        public boolean keyPressed(KeyEvent event) {
+            boolean handled = super.keyPressed(event);
+            if (handled) commit();
+            return handled;
+        }
+
+        @Override
+        public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+            int x = this.getX();
+            int y = this.getY();
+            int width = this.getWidth();
+            int height = this.getHeight();
+            boolean highlighted = this.active && this.isHoveredOrFocused();
+            graphics.fill(x, y, x + width, y + height, highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE);
+            int filledWidth = Math.round((width - 4) * (float) this.value);
+            graphics.fill(x, y, x + filledWidth + 2, y + height, PANEL_HIGHLIGHT);
+            int handleX = x + Math.round((width - 4) * (float) this.value);
+            graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
+            int textColor = this.active ? TEXT_PRIMARY : TEXT_DISABLED;
+            graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), x + width / 2,
+                    y + (height - 8) / 2, textColor);
+        }
+
+        private void commit() {
+            float multiplier = multiplier(this.value);
+            MaMDataConfig config = MaMDataConfig.get();
+            if (Float.compare(config.gui_multiplier, multiplier) == 0) return;
+            config.gui_multiplier = multiplier;
+            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+            this.screen.repositionElements();
+        }
+
+        private static double positionFor(float multiplier) {
+            float clamped = Math.max(0.5F, Math.min(1.0F, multiplier));
+            return (clamped - 0.5F) / 0.5F;
+        }
+
+        private static double steppedPosition(double value) {
+            return Math.round(Math.max(0.0D, Math.min(1.0D, value)) * STEP_COUNT) / (double) STEP_COUNT;
+        }
+
+        private static float multiplier(double position) {
+            int step = (int) Math.round(Math.max(0.0D, Math.min(1.0D, position)) * STEP_COUNT);
+            return 0.5F + step * 0.05F;
+        }
+
+        private static String formattedMultiplier(float multiplier) {
+            return String.format(Locale.ROOT, "%.2fF", multiplier);
+        }
+    }
+
+    private record OnlineCatalog(String name, String catalog, RemotePack.Provenance provenance) {}
 
     record ContentItem(Album album, Playlist playlist) {
         Component name() {
@@ -2665,7 +2809,7 @@ public class MusicPlayerScreen extends Screen {
 
     private static final class OnlineCatalogList extends PanelList<OnlineCatalogEntry> {
         OnlineCatalogList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
-            super(screen, minecraft, panelX, panelWidth, top, bottom, 30);
+            super(screen, minecraft, panelX, panelWidth, top, bottom, 42);
             refresh();
         }
 
@@ -2673,7 +2817,7 @@ public class MusicPlayerScreen extends Screen {
             this.clearEntries();
             this.addEntry(new OnlineCatalogEntry(this.screen, Component.translatable("screen.music_and_melody.all"), ""));
             this.screen.onlineCatalogs().stream()
-                    .map(catalog -> new OnlineCatalogEntry(this.screen, Component.literal(catalog), catalog))
+                    .map(catalog -> new OnlineCatalogEntry(this.screen, catalog))
                     .forEach(this::addEntry);
             this.addEntry(OnlineCatalogEntry.addRepository(this.screen));
         }
@@ -2683,21 +2827,28 @@ public class MusicPlayerScreen extends Screen {
         private final MusicPlayerScreen screen;
         private final Component label;
         private final String catalog;
+        private final RemotePack.Provenance provenance;
         private final boolean addRepository;
 
         OnlineCatalogEntry(MusicPlayerScreen screen, Component label, String catalog) {
-            this(screen, label, catalog, false);
+            this(screen, label, catalog, null, false);
         }
 
-        private OnlineCatalogEntry(MusicPlayerScreen screen, Component label, String catalog, boolean addRepository) {
+        OnlineCatalogEntry(MusicPlayerScreen screen, OnlineCatalog catalog) {
+            this(screen, Component.literal(catalog.name()), catalog.catalog(), catalog.provenance(), false);
+        }
+
+        private OnlineCatalogEntry(MusicPlayerScreen screen, Component label, String catalog,
+                                   RemotePack.Provenance provenance, boolean addRepository) {
             this.screen = screen;
             this.label = label;
             this.catalog = catalog;
+            this.provenance = provenance;
             this.addRepository = addRepository;
         }
 
         static OnlineCatalogEntry addRepository(MusicPlayerScreen screen) {
-            return new OnlineCatalogEntry(screen, Component.translatable("button.music_and_melody.add_repository"), "", true);
+            return new OnlineCatalogEntry(screen, Component.translatable("button.music_and_melody.add_repository"), "", null, true);
         }
 
         @Override
@@ -2710,7 +2861,16 @@ public class MusicPlayerScreen extends Screen {
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int color = this.addRepository ? PANEL_HIGHLIGHT : TEXT_TITLE;
             Component text = this.addRepository ? this.label : Component.literal("\u25B8 ").append(this.label);
-            graphics.text(this.screen.font, text, this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, color);
+            if (this.provenance == null) {
+                graphics.text(this.screen.font, text, this.getContentX() + 4,
+                        this.getContentYMiddle() - this.screen.font.lineHeight / 2, color);
+                return;
+            }
+            int textWidth = this.getContentWidth() - 8;
+            this.screen.drawTrackMarquee(graphics, text, this.getContentX() + 4, this.getContentY() + 4,
+                    Math.max(1, textWidth), color);
+            graphics.text(this.screen.font, this.provenance.label(), this.getContentX() + 4,
+                    this.getContentY() + 4 + this.screen.font.lineHeight + 2, TEXT_DESCRIPTION);
         }
 
         @Override

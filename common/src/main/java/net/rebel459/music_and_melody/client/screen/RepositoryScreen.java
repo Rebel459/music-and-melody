@@ -5,13 +5,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.net.URI;
@@ -30,6 +31,8 @@ final class RepositoryScreen extends Screen {
     private final MusicPlayerScreen parent;
     private RepositoryList list;
     private EditBox urlField;
+    private WorkspaceButton officialButton;
+    private WorkspaceButton communityButton;
     private Component feedback = Component.empty();
     private boolean feedbackError;
     private boolean changed;
@@ -47,7 +50,21 @@ final class RepositoryScreen extends Screen {
         int width = panelWidth();
         int height = panelHeight();
 
-        this.list = this.addRenderableWidget(new RepositoryList(this, this.minecraft, x + 10, width - 20, y + 34, y + height - 70));
+        int entriesX = x + 10;
+        int entriesWidth = width - 20;
+        int providerTop = y + 34;
+        int providerWidth = (entriesWidth - 4) / 2;
+        MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
+        this.officialButton = this.addRenderableWidget(new WorkspaceButton(entriesX, providerTop, providerWidth, 20,
+                Component.translatable("button.music_and_melody.official_catalogs"), remote.official_provider,
+                ignored -> toggleProvider(true)));
+        this.officialButton.setTooltip(Tooltip.create(Component.translatable("screen.music_and_melody.repositories.official_tooltip")));
+        this.communityButton = this.addRenderableWidget(new WorkspaceButton(entriesX + providerWidth + 4, providerTop,
+                entriesWidth - providerWidth - 4, 20,
+                Component.translatable("button.music_and_melody.community_catalogs"), remote.community_provider,
+                ignored -> toggleProvider(false)));
+        this.communityButton.setTooltip(Tooltip.create(Component.translatable("screen.music_and_melody.repositories.community_tooltip")));
+        this.list = this.addRenderableWidget(new RepositoryList(this, this.minecraft, entriesX, entriesWidth, providerTop + 24, y + height - 70));
         this.urlField = this.addRenderableWidget(new EditBox(this.font, x + 10, y + height - 31, Math.max(110, width - 82), 20,
                 Component.translatable("screen.music_and_melody.repositories.url")));
         this.urlField.setMaxLength(1024);
@@ -135,6 +152,16 @@ final class RepositoryScreen extends Screen {
         if (this.list != null) this.list.refresh();
     }
 
+    private void toggleProvider(boolean official) {
+        MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
+        if (official) remote.official_provider = !remote.official_provider;
+        else remote.community_provider = !remote.community_provider;
+        this.changed = true;
+        saveChanges();
+        RemoteContentManager.refresh();
+        this.rebuildWidgets();
+    }
+
     void removeRepository(String value) {
         MaMDataConfig config = MaMDataConfig.get();
         if (config.remote.added_repositories == null || !config.remote.added_repositories.remove(value)) return;
@@ -145,7 +172,7 @@ final class RepositoryScreen extends Screen {
 
     private void saveChanges() {
         this.changed = true;
-        AutoConfig.getConfigHolder(MaMClientConfig.class).save();
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
     private void clearFeedback() {
