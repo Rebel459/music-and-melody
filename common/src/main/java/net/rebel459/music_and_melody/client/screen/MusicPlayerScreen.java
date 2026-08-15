@@ -172,6 +172,59 @@ public class MusicPlayerScreen extends Screen {
         buildPage();
     }
 
+    @Override
+    protected void rebuildWidgets() {
+        double favouriteScroll = this.favouriteList == null ? 0.0D : this.favouriteList.scrollAmount();
+        Page pageBeforeRebuild = this.page;
+        double pageScroll = currentPageScrollAmount();
+
+        super.rebuildWidgets();
+
+        if (this.favouriteList != null) this.favouriteList.setScrollAmount(favouriteScroll);
+        if (this.page == pageBeforeRebuild) restoreCurrentPageScroll(pageScroll);
+    }
+
+    private double currentPageScrollAmount() {
+        return switch (this.page) {
+            case NOW_PLAYING -> this.mainQueueList == null ? 0.0D : this.mainQueueList.scrollAmount();
+            case LIBRARY -> this.libraryList == null ? 0.0D : this.libraryList.scrollAmount();
+            case DETAILS -> this.contentTrackList == null ? 0.0D : this.contentTrackList.scrollAmount();
+            case EVENTS -> {
+                PanelList<?> list = this.selectedEventNamespace == null ? this.eventFolderList : this.eventSourceList;
+                yield list == null ? 0.0D : list.scrollAmount();
+            }
+            case ONLINE -> {
+                PanelList<?> list = this.selectedOnlineCatalog == null ? this.onlineCatalogList : this.onlinePackList;
+                yield list == null ? 0.0D : list.scrollAmount();
+            }
+            case HOME, THEMES, CONFIG -> 0.0D;
+        };
+    }
+
+    private void restoreCurrentPageScroll(double scrollAmount) {
+        switch (this.page) {
+            case NOW_PLAYING -> {
+                if (this.mainQueueList != null) this.mainQueueList.setScrollAmount(scrollAmount);
+            }
+            case LIBRARY -> {
+                if (this.libraryList != null) this.libraryList.setScrollAmount(scrollAmount);
+            }
+            case DETAILS -> {
+                if (this.contentTrackList != null) this.contentTrackList.setScrollAmount(scrollAmount);
+            }
+            case EVENTS -> {
+                PanelList<?> list = this.selectedEventNamespace == null ? this.eventFolderList : this.eventSourceList;
+                if (list != null) list.setScrollAmount(scrollAmount);
+            }
+            case ONLINE -> {
+                PanelList<?> list = this.selectedOnlineCatalog == null ? this.onlineCatalogList : this.onlinePackList;
+                if (list != null) list.setScrollAmount(scrollAmount);
+            }
+            case HOME, THEMES, CONFIG -> {
+            }
+        }
+    }
+
     private void calculateLayout() {
         this.panelBottom = this.height - PANEL_BOTTOM_MARGIN;
         this.bottomPanelTop = this.panelBottom - BOTTOM_PANEL_HEIGHT;
@@ -545,7 +598,7 @@ public class MusicPlayerScreen extends Screen {
         int iconX = cardX + (cardSize - iconSize) / 2;
         int iconY = cardY + 9;
         graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        drawCenteredTruncated(graphics, source.name(), cardX + cardSize / 2, cardY + cardSize - 12, cardSize - 8,
+        drawMarquee(graphics, source.name(), cardX + 4, cardY + cardSize - 12, cardSize - 8,
                 source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
     }
 
@@ -1440,15 +1493,9 @@ public class MusicPlayerScreen extends Screen {
         graphics.text(this.font, line, x, y, color);
     }
 
-    private void drawCenteredTruncated(GuiGraphicsExtractor graphics, Component text, int centerX, int y, int width, int color) {
-        FormattedCharSequence line = this.font.split(text, Math.max(1, width)).getFirst();
-        graphics.text(this.font, line, centerX - this.font.width(line) / 2, y, color);
-    }
-
     /**
-     * Draws a current-track title without allowing it to escape the playback
-     * strip. Long titles pause briefly at both ends instead of jumping back to
-     * the beginning.
+     * Draws a title within a bounded area. Long titles pause briefly at both
+     * ends instead of jumping back to the beginning.
      */
     private void drawMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         int textWidth = this.font.width(text);
