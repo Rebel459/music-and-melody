@@ -117,12 +117,12 @@ final class CreateEventScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
+        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
         graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
-        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
+        graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), x + 12, y + 28, TEXT_DESCRIPTION);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), x + 12, y + 64, TEXT_DESCRIPTION);

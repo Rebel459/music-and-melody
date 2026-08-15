@@ -54,9 +54,9 @@ public final class RemoteContentManager {
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
-    private static final Map<Identifier, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
-    private static final Set<Identifier> DOWNLOADING = ConcurrentHashMap.newKeySet();
-    private static final Map<Identifier, Double> DOWNLOAD_PROGRESS = new ConcurrentHashMap<>();
+    private static final Map<RemotePack.Key, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
+    private static final Set<RemotePack.Key> DOWNLOADING = ConcurrentHashMap.newKeySet();
+    private static final Map<RemotePack.Key, Double> DOWNLOAD_PROGRESS = new ConcurrentHashMap<>();
     private static final List<RemotePack> PACKS = new ArrayList<>();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
@@ -117,10 +117,11 @@ public final class RemoteContentManager {
     }
 
     public static State state(RemotePack pack) {
-        if (DOWNLOADING.contains(pack.id())) return State.DOWNLOADING;
-        State override = OVERRIDE_STATES.get(pack.id());
+        RemotePack.Key key = pack.key();
+        if (DOWNLOADING.contains(key)) return State.DOWNLOADING;
+        State override = OVERRIDE_STATES.get(key);
         if (override != null) return override;
-        MaMDataConfig.DownloadedPack installed = installed(pack.id());
+        MaMDataConfig.DownloadedPack installed = installed(pack);
         if (installed == null) return State.REMOTE;
         if (!installed.version.equals(pack.version()) || !installed.sha256.equalsIgnoreCase(pack.sha256())) {
             return State.UPDATE_AVAILABLE;
@@ -129,30 +130,35 @@ public final class RemoteContentManager {
     }
 
     public static OptionalDouble downloadProgress(RemotePack pack) {
-        Double value = DOWNLOAD_PROGRESS.get(pack.id());
+        Double value = DOWNLOAD_PROGRESS.get(pack.key());
         return value == null ? OptionalDouble.empty() : OptionalDouble.of(value);
     }
 
     public static boolean isDownloadedAlbum(Identifier id) {
-        return installed(id) != null;
+        return installed(id, RemotePack.Tag.ALBUM) != null;
+    }
+
+    public static boolean isDownloaded(Identifier id, RemotePack.Tag tag) {
+        return installed(id, tag) != null;
     }
 
     public static void download(RemotePack pack) {
         if (!remoteDownloadsAllowed()) return;
-        if (!DOWNLOADING.add(pack.id())) return;
-        DOWNLOAD_PROGRESS.put(pack.id(), 0.0D);
-        OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
+        RemotePack.Key key = pack.key();
+        if (!DOWNLOADING.add(key)) return;
+        DOWNLOAD_PROGRESS.put(key, 0.0D);
+        OVERRIDE_STATES.put(key, State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
             Path zip = null;
             try {
                 zip = PlatformContentManager.download(pack, downloaded -> {
-                    if (pack.size() > 0L) DOWNLOAD_PROGRESS.put(pack.id(), Math.min(1.0D, downloaded / (double) pack.size()));
+                    if (pack.size() > 0L) DOWNLOAD_PROGRESS.put(key, Math.min(1.0D, downloaded / (double) pack.size()));
                 });
                 importAndExtract(pack, zip);
                 recordInstalled(pack);
-                OVERRIDE_STATES.put(pack.id(), State.NEEDS_RELOAD);
+                OVERRIDE_STATES.put(key, State.NEEDS_RELOAD);
             } catch (Exception exception) {
-                OVERRIDE_STATES.put(pack.id(), State.FAILED);
+                OVERRIDE_STATES.put(key, State.FAILED);
             } finally {
                 if (zip != null) {
                     try {
@@ -160,24 +166,25 @@ public final class RemoteContentManager {
                     } catch (IOException ignored) {
                     }
                 }
-                DOWNLOADING.remove(pack.id());
-                DOWNLOAD_PROGRESS.remove(pack.id());
+                DOWNLOADING.remove(key);
+                DOWNLOAD_PROGRESS.remove(key);
             }
         });
     }
 
     public static void importLocal(RemotePack pack, Path zip) {
-        if (!DOWNLOADING.add(pack.id())) return;
-        OVERRIDE_STATES.put(pack.id(), State.DOWNLOADING);
+        RemotePack.Key key = pack.key();
+        if (!DOWNLOADING.add(key)) return;
+        OVERRIDE_STATES.put(key, State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
             try {
                 importAndExtract(pack, zip);
                 recordInstalled(pack);
-                OVERRIDE_STATES.put(pack.id(), State.NEEDS_RELOAD);
+                OVERRIDE_STATES.put(key, State.NEEDS_RELOAD);
             } catch (Exception exception) {
-                OVERRIDE_STATES.put(pack.id(), State.FAILED);
+                OVERRIDE_STATES.put(key, State.FAILED);
             } finally {
-                DOWNLOADING.remove(pack.id());
+                DOWNLOADING.remove(key);
             }
         });
     }
@@ -192,7 +199,7 @@ public final class RemoteContentManager {
 
     private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories) {
         List<RemotePack> packs = new ArrayList<>();
-        Set<Identifier> ids = new HashSet<>();
+        Set<RemotePack.Key> ids = new HashSet<>();
         Set<String> loadedCatalogs = new HashSet<>();
         for (ProviderSource provider : providers) {
             for (String catalog : loadProvider(provider.url())) {
@@ -240,7 +247,7 @@ public final class RemoteContentManager {
         }
     }
 
-    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<Identifier> ids, RemotePack.Provenance provenance) throws IOException, InterruptedException {
+    private static List<RemotePack> loadCatalog(String repositoryUrl, Set<RemotePack.Key> ids, RemotePack.Provenance provenance) throws IOException, InterruptedException {
         URI catalogUri = catalogUri(repositoryUrl);
         HttpRequest request = HttpRequest.newBuilder(catalogUri)
                 .timeout(Duration.ofSeconds(20))
@@ -263,7 +270,7 @@ public final class RemoteContentManager {
             } catch (RuntimeException ignored) {
                 continue;
             }
-            if (pack == null || !supportsCurrentVersion(pack) || !ids.add(pack.id())) continue;
+            if (pack == null || !supportsCurrentVersion(pack) || !ids.add(pack.key())) continue;
             packs.add(pack);
         }
         return packs;
@@ -375,20 +382,20 @@ public final class RemoteContentManager {
         if (Files.size(zip) != pack.size()) throw new IOException("Imported size mismatch");
         String hash = sha256(zip);
         if (!hash.equalsIgnoreCase(pack.sha256())) throw new IOException("Imported hash mismatch");
-        if (installed(pack.id()) != null) {
-            deleteInstalledFiles(pack.id());
+        if (installed(pack) != null) {
+            deleteInstalledFiles(pack.key());
         }
-        List<Path> extracted = extractZip(zip, packDirectory(pack.id()));
-        writeManifest(pack.id(), extracted);
+        List<Path> extracted = extractZip(zip, packDirectory(pack.key()));
+        writeManifest(pack.key(), extracted);
     }
 
-    private static void deleteInstalledFiles(Identifier id) {
-        boolean deletedFiles = deleteFromManifest(id);
+    private static void deleteInstalledFiles(RemotePack.Key key) {
+        boolean deletedFiles = deleteFromManifest(key);
 
         if (!deletedFiles) {
-            deleteDirectory(packDirectory(id));
-            if (!hasOtherInstalledPackInNamespace(id)) {
-                deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+            deleteDirectory(packDirectory(key));
+            if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
+                deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
             }
         }
 
@@ -437,21 +444,37 @@ public final class RemoteContentManager {
         }
     }
 
-    private static MaMDataConfig.DownloadedPack installed(Identifier id) {
-        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
-            if (pack.id.equals(id.toString())) return pack;
+    private static MaMDataConfig.DownloadedPack installed(RemotePack pack) {
+        return installed(pack.id(), pack.tag());
+    }
+
+    private static MaMDataConfig.DownloadedPack installed(Identifier id, RemotePack.Tag tag) {
+        MaMDataConfig.DownloadedPack legacy = null;
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
+            if (pack == null || !pack.id.equals(id.toString())) continue;
+            RemotePack.Tag storedTag = RemotePack.Tag.fromSerialized(pack.tag);
+            if (storedTag == tag) return pack;
+            if (storedTag == null) legacy = pack;
+        }
+        return legacy;
+    }
+
+    private static MaMDataConfig.DownloadedPack installedAny(Identifier id) {
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
+            if (pack != null && pack.id.equals(id.toString())) return pack;
         }
         return null;
     }
 
     private static void recordInstalled(RemotePack pack) {
         MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedPack record = installed(pack.id());
+        MaMDataConfig.DownloadedPack record = installed(pack);
         if (record == null) {
             record = new MaMDataConfig.DownloadedPack();
-            config.albums.downloads.add(record);
+            config.remote.downloads.add(record);
         }
         record.id = pack.id().toString();
+        record.tag = pack.tag() == null ? "" : pack.tag().name().toLowerCase(Locale.ROOT);
         record.version = pack.version();
         record.sha256 = pack.sha256();
         record.file = pack.fileName();
@@ -461,6 +484,7 @@ public final class RemoteContentManager {
     public record InstalledPack(
             Component name,
             Identifier id,
+            RemotePack.Tag tag,
             String version,
             String sha256
     ) {}
@@ -468,13 +492,15 @@ public final class RemoteContentManager {
     public static synchronized List<InstalledPack> installedPacks() {
         List<InstalledPack> packs = new ArrayList<>();
 
-        for (MaMDataConfig.DownloadedPack record : MaMDataConfig.get().albums.downloads) {
+        for (MaMDataConfig.DownloadedPack record : MaMDataConfig.get().remote.downloads) {
             Identifier id = Identifier.tryParse(record.id);
             if (id == null) continue;
+            RemotePack.Tag tag = RemotePack.Tag.fromSerialized(record.tag);
 
             packs.add(new InstalledPack(
-                    installedName(id),
+                    installedName(id, tag),
                     id,
+                    tag,
                     record.version,
                     record.sha256
             ));
@@ -484,7 +510,7 @@ public final class RemoteContentManager {
         return packs;
     }
 
-    private static Component installedName(Identifier id) {
+    private static Component installedName(Identifier id, RemotePack.Tag tag) {
         for (Album album : Album.ALBUMS) {
             if (album.album.equals(id)) {
                 return album.name;
@@ -492,7 +518,7 @@ public final class RemoteContentManager {
         }
 
         for (RemotePack pack : PACKS) {
-            if (pack.id().equals(id)) {
+            if (pack.id().equals(id) && (tag == null || pack.tag() == tag)) {
                 return pack.name();
             }
         }
@@ -500,43 +526,55 @@ public final class RemoteContentManager {
         return Component.literal(id.toString());
     }
 
-    public static synchronized boolean deleteInstalled(Identifier id) {
-        if (DOWNLOADING.contains(id)) return false;
+    public static synchronized boolean deleteInstalled(RemotePack pack) {
+        return deleteInstalled(pack.key());
+    }
+
+    public static synchronized boolean deleteInstalled(RemotePack.Key key) {
+        if (DOWNLOADING.contains(key)) return false;
 
         MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedPack record = installed(id);
+        MaMDataConfig.DownloadedPack record = installed(key.id(), key.tag());
         if (record == null) return false;
 
-        boolean deletedFiles = deleteFromManifest(id);
+        boolean deletedFiles = deleteFromManifest(key);
 
         if (!deletedFiles) {
-            deleteDirectory(packDirectory(id));
-            if (!hasOtherInstalledPackInNamespace(id)) {
-                deleteDirectory(DIRECTORY.resolve(id.getNamespace()));
+            deleteDirectory(packDirectory(key));
+            if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
+                deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
             }
         }
 
-        String idString = id.toString();
-        config.albums.downloads.removeIf(pack -> pack.id.equals(idString));
+        config.remote.downloads.removeIf(pack -> pack == record);
+        String idString = key.id().toString();
         config.albums.disabled_albums.remove(idString);
         config.albums.favourites.remove(idString);
 
-        if (!hasOtherInstalledPackInNamespace(id)) {
-            String namespacePrefix = id.getNamespace() + ":";
+        if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
+            String namespacePrefix = key.id().getNamespace() + ":";
             config.albums.disabled_tracks.removeIf(track -> track.startsWith(namespacePrefix));
         }
 
-        OVERRIDE_STATES.remove(id);
+        OVERRIDE_STATES.remove(key);
 
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         DownloadedResources.invalidate();
         return true;
     }
 
-    private static void writeManifest(Identifier id, List<Path> extracted) throws IOException {
+    /** Compatibility overload for callers that only have an identifier. */
+    public static synchronized boolean deleteInstalled(Identifier id) {
+        MaMDataConfig.DownloadedPack record = installedAny(id);
+        if (record == null) return false;
+        RemotePack.Tag tag = RemotePack.Tag.fromSerialized(record.tag);
+        return deleteInstalled(new RemotePack.Key(id, tag));
+    }
+
+    private static void writeManifest(RemotePack.Key key, List<Path> extracted) throws IOException {
         Files.createDirectories(MANIFEST_DIRECTORY);
 
-        Path manifest = manifestPath(id);
+        Path manifest = manifestPath(key);
         Path root = DIRECTORY.toAbsolutePath().normalize();
         List<String> lines = extracted.stream()
                 .map(path -> root.relativize(path.toAbsolutePath().normalize()).toString().replace('\\', '/'))
@@ -546,8 +584,8 @@ public final class RemoteContentManager {
         Files.write(manifest, lines);
     }
 
-    private static boolean deleteFromManifest(Identifier id) {
-        Path manifest = manifestPath(id);
+    private static boolean deleteFromManifest(RemotePack.Key key) {
+        Path manifest = manifestPath(key);
         if (!Files.isRegularFile(manifest)) return false;
 
         Path root = DIRECTORY.toAbsolutePath().normalize();
@@ -628,25 +666,33 @@ public final class RemoteContentManager {
         }
     }
 
-    private static boolean hasOtherInstalledPackInNamespace(Identifier id) {
-        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
+    private static boolean hasOtherInstalledPackInNamespace(Identifier id, RemotePack.Key excluded) {
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
             Identifier other = Identifier.tryParse(pack.id);
             if (other == null) continue;
-            if (other.equals(id)) continue;
+            RemotePack.Tag otherTag = RemotePack.Tag.fromSerialized(pack.tag);
+            if (other.equals(excluded.id()) && otherTag == excluded.tag()) continue;
             if (other.getNamespace().equals(id.getNamespace())) return true;
         }
 
         return false;
     }
 
-    private static Path manifestPath(Identifier id) {
-        String path = id.getPath().replace('/', '-');
-        return MANIFEST_DIRECTORY.resolve(id.getNamespace() + "-" + path + ".txt");
+    private static Path manifestPath(RemotePack.Key key) {
+        String path = key.id().getPath().replace('/', '-');
+        if (key.tag() == null) return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + ".txt");
+        String tag = key.tag() == null ? "unknown" : key.tag().name().toLowerCase(Locale.ROOT);
+        return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + "-" + tag + ".txt");
     }
 
-    static Path packDirectory(Identifier id) {
+    static Path packDirectory(RemotePack.Key key) {
+        if (key.tag() == null) {
+            return PACK_DIRECTORY.resolve(Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(key.id().toString().getBytes(StandardCharsets.UTF_8)));
+        }
+        String tag = key.tag() == null ? "unknown" : key.tag().name().toLowerCase(Locale.ROOT);
         String name = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
+                .encodeToString((key.id() + "|" + tag).getBytes(StandardCharsets.UTF_8));
         return PACK_DIRECTORY.resolve(name);
     }
 }

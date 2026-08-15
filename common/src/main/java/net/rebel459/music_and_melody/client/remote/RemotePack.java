@@ -20,6 +20,16 @@ public record RemotePack(
         Tag tag,
         Provenance provenance
 ) {
+    public record Key(Identifier id, Tag tag) {
+        public static Key of(RemotePack pack) {
+            return new Key(pack.id(), pack.tag());
+        }
+    }
+
+    public Key key() {
+        return new Key(this.id, this.tag);
+    }
+
     public enum Tag {
         ALBUM,
         PLAYLIST,
@@ -53,6 +63,7 @@ public record RemotePack(
 
     public String fileName() {
         String path = this.id.getPath().replace('/', '-');
-        return this.id.getNamespace() + "-" + path + ".zip";
+        String tagName = this.tag == null ? "unknown" : this.tag.name().toLowerCase(Locale.ROOT);
+        return this.id.getNamespace() + "-" + path + "-" + tagName + ".zip";
     }
 }

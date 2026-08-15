@@ -63,7 +63,7 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-	public ButtonPlacement button_placement = ButtonPlacement.TOP;
+	public boolean menu_buttons = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -89,12 +89,6 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean remote_downloads = true;
-
-	public enum ButtonPlacement {
-		TOP,
-		BOTTOM,
-		NONE
-	}
 
 	private static boolean configContainsField(Path path, String fieldName) {
 		try {

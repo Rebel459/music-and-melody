@@ -90,12 +90,12 @@ final class QueueMutationConfirmScreen extends Screen {
         int width = dialogWidth();
         int x = dialogX();
         int y = dialogY();
-        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
+        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
         graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, MODAL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
-        graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, PANEL_OUTLINE);
-        graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, PANEL_OUTLINE);
-        graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, PANEL_OUTLINE);
+        graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
+        graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
+        graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, POPUP_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
         List<FormattedCharSequence> lines = this.font.split(this.message, width - 24);
         for (int i = 0; i < lines.size() && i < 3; i++) {

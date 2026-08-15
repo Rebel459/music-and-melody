@@ -89,10 +89,11 @@ public final class DownloadedResources {
 
     private static void scanPackDirectories() {
         Set<Path> scanned = new HashSet<>();
-        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().albums.downloads) {
+        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
             Identifier id = Identifier.tryParse(pack.id);
             if (id == null) continue;
-            Path directory = RemoteContentManager.packDirectory(id);
+            RemotePack.Tag tag = RemotePack.Tag.fromSerialized(pack.tag);
+            Path directory = RemoteContentManager.packDirectory(new RemotePack.Key(id, tag));
             if (scanned.add(directory)) scanPack(directory);
         }
 

@@ -18,7 +18,9 @@ public class MaMDataConfig implements ConfigData {
 			AutoConfig.register(MaMDataConfig.class, JanksonConfigSerializer::new);
 			MusicAndMelody.registeredDataConfig = true;
 		}
-		return AutoConfig.getConfigHolder(MaMDataConfig.class).getConfig();
+		MaMDataConfig config = AutoConfig.getConfigHolder(MaMDataConfig.class).getConfig();
+		config.migrateDownloadedPacks();
+		return config;
 	}
 	public Albums albums = new Albums();
 
@@ -29,6 +31,8 @@ public class MaMDataConfig implements ConfigData {
 		public List<String> disabled_albums = new ArrayList<>();
 		public List<String> disabled_tracks = new ArrayList<>();
 		public List<String> favourites = new ArrayList<>();
+		/** @deprecated Downloads are stored under {@link Remote}; retained only for one-time migration. */
+		@Deprecated
 		public List<DownloadedPack> downloads = new ArrayList<>();
 	}
 
@@ -40,6 +44,7 @@ public class MaMDataConfig implements ConfigData {
 
 	public static class DownloadedPack {
 		public String id = "";
+		public String tag = "";
 		public String version = "";
 		public String sha256 = "";
 		public String file = "";
@@ -87,9 +92,24 @@ public class MaMDataConfig implements ConfigData {
 		public List<String> added_repositories = new ArrayList<>();
 		public boolean official_provider = true;
 		public boolean community_provider = true;
+		public List<DownloadedPack> downloads = new ArrayList<>();
 	}
 
 	public String active_theme = "music_and_melody:default";
 	
 	public float gui_multiplier = 0.85F;
+
+	private void migrateDownloadedPacks() {
+		if (this.remote == null) this.remote = new Remote();
+		if (this.remote.downloads == null) this.remote.downloads = new ArrayList<>();
+		if (this.albums == null || this.albums.downloads == null || this.albums.downloads.isEmpty()) return;
+		for (DownloadedPack legacy : this.albums.downloads) {
+			if (legacy == null || legacy.id == null || legacy.id.isBlank()) continue;
+			boolean exists = this.remote.downloads.stream().anyMatch(current -> current != null
+					&& current.id.equals(legacy.id) && current.tag.equalsIgnoreCase(legacy.tag));
+			if (!exists) this.remote.downloads.add(legacy);
+		}
+		this.albums.downloads.clear();
+		AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+	}
 }

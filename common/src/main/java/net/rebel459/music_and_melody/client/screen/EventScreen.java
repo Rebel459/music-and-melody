@@ -78,6 +78,7 @@ public class EventScreen extends Screen {
     private Button addButton;
     private Button saveButton;
     private Button removeButton;
+    private IconButton deleteButton;
     private int selectedIndex = -1;
     private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
     private int priorityIndex = Event.PriorityType.LOW.ordinal();
@@ -85,6 +86,7 @@ public class EventScreen extends Screen {
     private boolean constant = false;
     private boolean loadingEditor;
     private boolean savedChanges;
+    private boolean deletePending;
     private boolean openSourcesOnInit;
     private boolean closeToSources;
     private Screen sourceBrowserParent;
@@ -107,6 +109,7 @@ public class EventScreen extends Screen {
     public EventScreen(Screen parent, Identifier sourceId) {
         this(parent);
         this.activeSourceId = sourceId;
+        if (parent instanceof MusicPlayerScreen musicPlayer) this.deletePending = musicPlayer.isEventDeletePending(sourceId);
         reloadEntries();
     }
 
@@ -186,6 +189,9 @@ public class EventScreen extends Screen {
                 Component.translatable("button.music_and_melody.remove"), false, button -> removeSelected()));
         this.saveButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY + 50, actionWidth, 20,
                 Component.translatable("button.music_and_melody.save"), false, button -> saveEntry()));
+        this.deleteButton = this.addRenderableWidget(new IconButton(deleteMessage(), deleteIcon(), button -> toggleDelete()));
+        this.deleteButton.setX(actionX + (actionWidth - IconButton.SIZE) / 2);
+        this.deleteButton.setY(layout.panelBottom - 52);
         this.addRenderableWidget(new WorkspaceButton(actionX, layout.panelBottom - 28, actionWidth, 20,
                 CommonComponents.GUI_DONE, false, button -> this.onClose()));
 
@@ -378,8 +384,28 @@ public class EventScreen extends Screen {
         if (this.savedChanges) {
             EventHelper.resetMusicBreak();
         }
+        if (this.parent instanceof MusicPlayerScreen musicPlayer) musicPlayer.rebuildWidgets();
         if (this.closeToSources) this.minecraft.gui.setScreen(new EventBrowserScreen(this, this.sourceBrowserParent == null ? this.parent : this.sourceBrowserParent));
         else this.minecraft.gui.setScreen(this.parent);
+    }
+
+    private void toggleDelete() {
+        Event.Source source = activeSource();
+        if (source == null || !source.isConfig()) return;
+        if (this.parent instanceof MusicPlayerScreen musicPlayer) {
+            this.deletePending = musicPlayer.toggleEventDeletePending(source.id);
+        } else {
+            this.deletePending = !this.deletePending;
+        }
+        refreshEditorState();
+    }
+
+    private Component deleteMessage() {
+        return Component.translatable(this.deletePending ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+    }
+
+    private Identifier deleteIcon() {
+        return IconButton.icon(this.deletePending ? "restore" : "delete");
     }
 
     private void reloadEntries() {
@@ -487,6 +513,7 @@ public class EventScreen extends Screen {
 
     private void loadSource(Identifier sourceId) {
         this.activeSourceId = sourceId;
+        this.deletePending = this.parent instanceof MusicPlayerScreen musicPlayer && musicPlayer.isEventDeletePending(sourceId);
         this.selectedIndex = -1;
         reloadEntries();
         if (this.musicField == null || this.weightField == null || this.conditionsField == null) {
@@ -561,6 +588,10 @@ public class EventScreen extends Screen {
             this.saveButton.active = editable && draft != null && changed;
         }
         if (this.removeButton != null) this.removeButton.active = configSelected;
+        if (this.deleteButton != null) {
+            this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
+            this.deleteButton.active = editable;
+        }
     }
 
     private boolean saveSourceEntries(Event.Source source, List<Event.Record.Entry> entries) {
@@ -1026,7 +1057,7 @@ public class EventScreen extends Screen {
         @Override
         public void onClose() {
             boolean deletedActiveSource = false;
-            if (!this.deletePendingSources.isEmpty()) {
+            if (rootPlayer() == null && !this.deletePendingSources.isEmpty()) {
                 for (Event.Source source : Event.sources()) {
                     if (!this.deletePendingSources.contains(source.id)) continue;
                     deletedActiveSource |= source.id.equals(this.editor.activeSourceId);
@@ -1062,16 +1093,24 @@ public class EventScreen extends Screen {
         }
 
         private boolean isDeletePending(Event.Source source) {
-            return this.deletePendingSources.contains(source.id);
+            MusicPlayerScreen root = rootPlayer();
+            return root != null ? root.isEventDeletePending(source.id) : this.deletePendingSources.contains(source.id);
         }
 
         private void toggleDeletePending(Event.Source source) {
             if (!source.isConfig()) return;
-            if (!this.deletePendingSources.remove(source.id)) {
+            MusicPlayerScreen root = rootPlayer();
+            if (root != null) {
+                root.toggleEventDeletePending(source.id);
+            } else if (!this.deletePendingSources.remove(source.id)) {
                 this.deletePendingSources.add(source.id);
             }
-            this.editor.markSavedChanges();
             refreshList();
+        }
+
+        private MusicPlayerScreen rootPlayer() {
+            if (this.parent instanceof MusicPlayerScreen musicPlayer) return musicPlayer;
+            return this.editor.parent instanceof MusicPlayerScreen musicPlayer ? musicPlayer : null;
         }
 
         private boolean visible(Event.Source source) {
@@ -1144,7 +1183,9 @@ public class EventScreen extends Screen {
             this.toggleButton = Button.builder(toggleMessage(), button -> toggleSource())
                     .size(BUTTON_WIDTH, 20)
                     .build();
-            this.deleteButton = source.isConfig() ? new IconButton(deleteMessage(), deleteIcon(), button -> deleteSource()) : null;
+            // Deletion is staged from the full event editor, not from the
+            // browser row.
+            this.deleteButton = null;
         }
 
         @Override

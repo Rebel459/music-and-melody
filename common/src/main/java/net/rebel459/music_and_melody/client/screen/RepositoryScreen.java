@@ -68,7 +68,8 @@ final class RepositoryScreen extends Screen {
         this.urlField = this.addRenderableWidget(new EditBox(this.font, x + 10, y + height - 31, Math.max(110, width - 82), 20,
                 Component.translatable("screen.music_and_melody.repositories.url")));
         this.urlField.setMaxLength(1024);
-        this.urlField.setHint(Component.literal("https://example.com/catalog.json"));
+        this.urlField.setHint(Component.literal("https://example.com/catalog.json")
+                .withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.urlField.setResponder(ignored -> clearFeedback());
         this.addRenderableWidget(new WorkspaceButton(x + width - 66, y + height - 31, 56, 20,
                 Component.translatable("button.music_and_melody.add"), false, ignored -> addRepository()));
@@ -93,12 +94,12 @@ final class RepositoryScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
         graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
-        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
+        graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.repositories.title"), x + 10, y + 14, TEXT_TITLE);
         if (!this.feedback.getString().isEmpty()) {
             graphics.text(this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? TEXT_PENDING_DELETION : TEXT_SELECTED);
@@ -272,7 +273,7 @@ final class RepositoryScreen extends Screen {
             this.screen = screen;
             this.minecraft = minecraft;
             this.repository = repository;
-            this.removeButton = new IconButton(Component.translatable("screen.music_and_melody.repositories.remove"), IconButton.icon("remove"), ignored -> this.screen.removeRepository(this.repository));
+            this.removeButton = IconButton.createListIcon(Component.translatable("screen.music_and_melody.repositories.remove"), IconButton.icon("remove"), ignored -> this.screen.removeRepository(this.repository));
         }
 
         @Override
