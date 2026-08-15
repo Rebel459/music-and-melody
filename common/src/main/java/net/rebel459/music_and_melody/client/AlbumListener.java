@@ -135,7 +135,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
-        if (RemoteContentManager.isDownloadedAlbum(albumId)) {
+        if (RemoteContentManager.isDownloaded(albumId, net.rebel459.music_and_melody.client.remote.RemotePack.Tag.ALBUM)) {
             tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
         }
 

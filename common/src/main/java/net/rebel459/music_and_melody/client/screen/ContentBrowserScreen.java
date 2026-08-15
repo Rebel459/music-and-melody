@@ -38,7 +38,7 @@ public class ContentBrowserScreen extends Screen {
     private static final Component TITLE = Component.translatable("screen.music_and_melody.albums");
     private final Screen parent;
     private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
-    private final Set<Identifier> pendingRemoteDeletes = new HashSet<>();
+    private final Set<RemotePack.Key> pendingRemoteDeletes = new HashSet<>();
     private AlbumList list;
     private MaMDataConfig.BrowserTab tab;
     private boolean catalogRefreshing;
@@ -160,11 +160,11 @@ public class ContentBrowserScreen extends Screen {
         if (this.list != null) this.list.refresh();
     }
 
-    private boolean isDeletePending(Playlist playlist) {
+    boolean isDeletePending(Playlist playlist) {
         return this.pendingPlaylistDeletes.contains(playlist.playlist);
     }
 
-    private void toggleDeletePending(Playlist playlist) {
+    void toggleDeletePending(Playlist playlist) {
         if (!playlist.isCustom()) return;
         if (!this.pendingPlaylistDeletes.remove(playlist.playlist)) {
             this.pendingPlaylistDeletes.add(playlist.playlist);
@@ -172,14 +172,14 @@ public class ContentBrowserScreen extends Screen {
         refreshList();
     }
 
-    private boolean isDeletePending(RemotePack pack) {
-        return this.pendingRemoteDeletes.contains(pack.id());
+    boolean isDeletePending(RemotePack pack) {
+        return this.pendingRemoteDeletes.contains(pack.key());
     }
 
-    private void toggleDeletePending(RemotePack pack) {
+    void toggleDeletePending(RemotePack pack) {
         if (!remoteDeleteAvailable(pack)) return;
-        if (!this.pendingRemoteDeletes.remove(pack.id())) {
-            this.pendingRemoteDeletes.add(pack.id());
+        if (!this.pendingRemoteDeletes.remove(pack.key())) {
+            this.pendingRemoteDeletes.add(pack.key());
         }
         refreshList();
     }
@@ -199,8 +199,8 @@ public class ContentBrowserScreen extends Screen {
     private void deletePendingRemotes() {
         if (this.pendingRemoteDeletes.isEmpty()) return;
         boolean changed = false;
-        for (Identifier id : List.copyOf(this.pendingRemoteDeletes)) {
-            if (RemoteContentManager.deleteInstalled(id)) {
+        for (RemotePack.Key key : List.copyOf(this.pendingRemoteDeletes)) {
+            if (RemoteContentManager.deleteInstalled(key)) {
                 changed = true;
             }
         }
@@ -344,12 +344,12 @@ public class ContentBrowserScreen extends Screen {
 
         private IconButton createSecondButton() {
             if (this.entry.isRemote()) {
-                IconButton button = new IconButton(remoteActionMessage(this.entry.remote), remoteActionIcon(this.entry.remote), ignored -> remoteAction());
+                IconButton button = IconButton.createListIcon(remoteActionMessage(this.entry.remote), remoteActionIcon(this.entry.remote), ignored -> remoteAction());
                 updateRemoteAction(button);
                 return button;
             }
 
-            return new IconButton(favouriteMessage(this.entry), favouriteIcon(this.entry), button -> {
+            return IconButton.createListIcon(favouriteMessage(this.entry), favouriteIcon(this.entry), button -> {
                 setFavourite(!this.entry.favourite());
                 ((IconButton) button).setIconAndTooltip(favouriteIcon(this.entry), favouriteMessage(this.entry));
                 this.list.refresh();
@@ -358,26 +358,22 @@ public class ContentBrowserScreen extends Screen {
 
         private IconButton createThirdButton() {
             if (this.entry.isRemote()) {
-                IconButton button = new IconButton(remoteDeleteMessage(this.screen, this.entry.remote), remoteDeleteIcon(this.screen, this.entry.remote), ignored -> {
-                    this.screen.toggleDeletePending(this.entry.remote);
-                });
-                updateRemoteDelete(button);
-                return button;
+                // Deletion is staged from the full content details screen;
+                // the Online Browser remains an install/manage browser.
+                return null;
             }
 
             if (this.entry.album != null) {
-                return new IconButton(albumEnabledMessage(this.entry.album), albumEnabledIcon(this.entry.album), button -> {
+                return IconButton.createListIcon(albumEnabledMessage(this.entry.album), albumEnabledIcon(this.entry.album), button -> {
                     toggleAlbum();
                     ((IconButton) button).setIconAndTooltip(albumEnabledIcon(this.entry.album), albumEnabledMessage(this.entry.album));
                     this.list.refresh();
                 });
             }
 
-            if (!this.entry.playlist.isCustom()) return null;
-            return new IconButton(playlistDeleteMessage(this.entry.playlist), playlistDeleteIcon(this.entry.playlist), button -> {
-                this.screen.toggleDeletePending(this.entry.playlist);
-                ((IconButton) button).setIconAndTooltip(playlistDeleteIcon(this.entry.playlist), playlistDeleteMessage(this.entry.playlist));
-            });
+            // Config playlist deletion is also handled inside its full
+            // details screen, so browser rows do not carry a trash button.
+            return null;
         }
 
         @Override
@@ -510,7 +506,6 @@ public class ContentBrowserScreen extends Screen {
             }
 
             updateRemoteAction(this.secondButton);
-            updateRemoteDelete(this.thirdButton);
         }
 
         private void updateRemoteAction(IconButton button) {

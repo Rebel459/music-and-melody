@@ -25,6 +25,8 @@ import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.Playlist;
+import net.rebel459.music_and_melody.client.Theme;
+import net.rebel459.music_and_melody.client.ThemeListener;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
@@ -90,6 +92,7 @@ public class MusicPlayerScreen extends Screen {
 
     private final Screen parent;
     private Page page;
+    private static Page lastOpenedPage;
 
     private int leftX;
     private int leftWidth;
@@ -113,6 +116,7 @@ public class MusicPlayerScreen extends Screen {
     private EventSourceList eventSourceList;
     private OnlineCatalogList onlineCatalogList;
     private OnlinePackList onlinePackList;
+    private ThemeList themeList;
     private TagFilterList<?> tagFilterList;
 
     private IconButton searchButton;
@@ -128,6 +132,7 @@ public class MusicPlayerScreen extends Screen {
     private WorkspaceButton eventsButton;
     private WorkspaceButton loadButton;
     private WorkspaceButton queueButton;
+    private IconButton contentDeleteButton;
     private WorkspaceButton remoteActionButton;
     private WorkspaceButton remoteDeleteButton;
     private WorkspaceButton remoteBackButton;
@@ -145,13 +150,20 @@ public class MusicPlayerScreen extends Screen {
 
     private final Set<LibraryTag> libraryTags = EnumSet.noneOf(LibraryTag.class);
     private final Set<EventTag> eventTags = EnumSet.noneOf(EventTag.class);
+    private final Set<ThemeTag> themeTags = EnumSet.noneOf(ThemeTag.class);
     private final Set<OnlineTag> onlineTags = EnumSet.noneOf(OnlineTag.class);
     private String selectedEventNamespace;
     /** null = choose a catalog, empty = All, any other value = one catalog. */
     private String selectedOnlineCatalog;
     private ContentItem viewedContent;
     private RemotePack viewedRemotePack;
-    private final Set<Identifier> pendingRemoteDeletes = new HashSet<>();
+    private Theme viewedTheme;
+    private Identifier selectedThemeId;
+    private boolean previewingTheme;
+    private final Set<RemotePack.Key> pendingRemoteDeletes = new HashSet<>();
+    private final Set<Identifier> pendingPlaylistDeletes = new HashSet<>();
+    private final Set<Identifier> pendingEventDeletes = new HashSet<>();
+    private final Set<Identifier> pendingThemeDeletes = new HashSet<>();
     private final List<BreadcrumbHit> breadcrumbHits = new ArrayList<>();
 
     public MusicPlayerScreen(Screen parent) {
@@ -164,8 +176,15 @@ public class MusicPlayerScreen extends Screen {
         this.page = page;
     }
 
+    public static MusicPlayerScreen openLast(Screen parent) {
+        Page page = lastOpenedPage == null ? Page.HOME
+                : lastOpenedPage == Page.DETAILS ? Page.LIBRARY : lastOpenedPage;
+        return new MusicPlayerScreen(parent, page);
+    }
+
     @Override
     protected void init() {
+        lastOpenedPage = this.page;
         calculateLayout();
         MusicDiscHelper.requestStats(this.minecraft);
         RemoteContentManager.refreshIfNeeded();
@@ -211,7 +230,8 @@ public class MusicPlayerScreen extends Screen {
                 PanelList<?> list = this.selectedOnlineCatalog == null ? this.onlineCatalogList : this.onlinePackList;
                 yield list == null ? 0.0D : list.scrollAmount();
             }
-            case HOME, THEMES, CONFIG -> 0.0D;
+            case THEMES -> this.themeList == null ? 0.0D : this.themeList.scrollAmount();
+            case HOME, CONFIG -> 0.0D;
         };
     }
 
@@ -234,7 +254,10 @@ public class MusicPlayerScreen extends Screen {
                 PanelList<?> list = this.selectedOnlineCatalog == null ? this.onlineCatalogList : this.onlinePackList;
                 if (list != null) list.setScrollAmount(scrollAmount);
             }
-            case HOME, THEMES, CONFIG -> {
+            case THEMES -> {
+                if (this.themeList != null) this.themeList.setScrollAmount(scrollAmount);
+            }
+            case HOME, CONFIG -> {
             }
         }
     }
@@ -296,7 +319,10 @@ public class MusicPlayerScreen extends Screen {
         this.customPlaylistButton = this.addRenderableWidget(new WorkspaceButton(this.leftX + 5, sourceTop + 47,
                 this.leftWidth - 10, 20, Component.translatable("screen.music_and_melody.custom_playlist"), false,
                 ignored -> openCustomPlaylist()));
-        this.favouriteList = this.addRenderableWidget(new FavouriteList(this, this.minecraft, this.leftX, this.leftWidth, favouriteTop, this.panelBottom - 5));
+        this.favouriteList = this.addRenderableWidget(new FavouriteList(this, this.minecraft, this.leftX, this.leftWidth,
+                favouriteTop, this.panelBottom - 34));
+        this.addRenderableWidget(new WorkspaceButton(this.leftX + 5, this.panelBottom - 28, this.leftWidth - 10, 20,
+                Component.translatable("button.music_and_melody.exit"), false, ignored -> exitToParent()));
     }
 
     private void buildPlaybackStrip() {
@@ -382,12 +408,20 @@ public class MusicPlayerScreen extends Screen {
         addBackButton();
         this.contentTrackList = this.addRenderableWidget(new ContentTrackList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 42, this.contentBottom - 6));
         int actionWidth = this.rightWidth - 16;
-        int buttonWidth = (actionWidth - 5) / 2;
+        int buttonWidth = Math.max(1, (actionWidth - IconButton.SIZE - 8) / 2);
         int actionX = this.rightX + 8;
         int actionY = playerActionY();
         this.loadButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.load"), false, button -> loadViewedContent()));
-        this.queueButton = this.addRenderableWidget(new WorkspaceButton(actionX + buttonWidth + 5, actionY, actionWidth - buttonWidth - 5, 20,
+        int deleteX = actionX + buttonWidth + 4;
+        if (viewedContentDeleteable()) {
+            this.contentDeleteButton = this.addRenderableWidget(new IconButton(contentDeleteMessage(), contentDeleteIcon(),
+                    button -> toggleViewedContentDelete()));
+            this.contentDeleteButton.setX(deleteX);
+            this.contentDeleteButton.setY(actionY);
+        }
+        int queueX = deleteX + IconButton.SIZE + 4;
+        this.queueButton = this.addRenderableWidget(new WorkspaceButton(queueX, actionY, actionX + actionWidth - queueX, 20,
                 Component.translatable("button.music_and_melody.queue"), false, button -> queueViewedContent()));
         buildMusicToggles();
     }
@@ -452,6 +486,16 @@ public class MusicPlayerScreen extends Screen {
 
     private void buildThemesPage() {
         addBackButton();
+        this.themeList = this.addRenderableWidget(new ThemeList(this, this.minecraft, this.middleX, this.middleWidth,
+                PANEL_TOP + 38, this.contentBottom - 6));
+        if (this.viewedTheme == null) {
+            buildTagButtons(ThemeTag.values(), this.themeTags, this::toggleThemeTag);
+            this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
+                    Component.translatable("button.music_and_melody.new_theme"), false,
+                    button -> openCreateThemeScreen()));
+        } else {
+            buildThemeDetailsActions();
+        }
     }
 
     private void buildConfigPage() {
@@ -459,13 +503,13 @@ public class MusicPlayerScreen extends Screen {
         int buttonWidth = mainMenuButtonWidth();
         int x = this.middleX + this.middleWidth / 2 - buttonWidth / 2;
         int y = PANEL_TOP + 64;
-        this.addRenderableWidget(new WorkspaceButton(x, y, buttonWidth, 20,
+        this.addRenderableWidget(new WorkspaceButton(x, y, buttonWidth, 22,
                 Component.translatable("button.music_and_melody.client"), false,
                 button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())));
-        this.addRenderableWidget(new WorkspaceButton(x, y + 28, buttonWidth, 20,
+        this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP, buttonWidth, 22,
                 Component.translatable("button.music_and_melody.server"), false,
                 button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())));
-        this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + 56, buttonWidth, 20));
+        this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + HOME_BUTTON_STEP * 2, buttonWidth, 20));
     }
 
     private int mainMenuButtonWidth() {
@@ -508,6 +552,36 @@ public class MusicPlayerScreen extends Screen {
             this.remoteActionButton = this.addRenderableWidget(new WorkspaceButton(x, backY - 24, width, 20,
                     remoteActionMessage(pack), false, button -> activateRemotePack(pack)));
         }
+    }
+
+    private void buildThemeDetailsActions() {
+        if (this.viewedTheme == null) return;
+        int x = this.rightX + 7;
+        int width = this.rightWidth - 14;
+        int doneY = this.panelBottom - 28;
+        int openY = doneY - 24;
+        int applyY = openY - 24;
+        int previewY = applyY - 24;
+        WorkspaceButton preview = this.addRenderableWidget(new WorkspaceButton(x, previewY, width, 20,
+                Component.translatable("button.music_and_melody.preview"), this.previewingTheme,
+                button -> previewTheme(this.viewedTheme)));
+        WorkspaceButton apply = this.addRenderableWidget(new WorkspaceButton(x, applyY, width, 20,
+                Component.translatable("button.music_and_melody.apply"), false,
+                button -> applyTheme(this.viewedTheme)));
+        WorkspaceButton open = this.addRenderableWidget(new WorkspaceButton(x, openY, width, 20,
+                Component.translatable("button.music_and_melody.open_theme"), false,
+                button -> openThemeEditor(this.viewedTheme)));
+        this.addRenderableWidget(new WorkspaceButton(x, doneY, width, 20, CommonComponents.GUI_DONE, false,
+                button -> finishThemePreview()));
+        boolean valid = this.viewedTheme.valid;
+        preview.active = valid;
+        apply.active = valid && !isActiveTheme(this.viewedTheme);
+        open.active = true;
+    }
+
+    private static boolean isActiveTheme(Theme theme) {
+        Theme active = ThemeListener.activeTheme();
+        return theme != null && active != null && active.theme.equals(theme.theme);
     }
 
     private void addBackButton() {
@@ -559,6 +633,10 @@ public class MusicPlayerScreen extends Screen {
         toggleTag(this.onlineTags, tag);
     }
 
+    private void toggleThemeTag(ThemeTag tag) {
+        toggleTag(this.themeTags, tag);
+    }
+
     private static <T> void toggleTag(Set<T> tags, T tag) {
         if (!tags.add(tag)) tags.remove(tag);
     }
@@ -608,10 +686,6 @@ public class MusicPlayerScreen extends Screen {
             case LIBRARY, EVENTS, ONLINE, CONFIG -> renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
             case THEMES -> {
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.themes").withStyle(ChatFormatting.BOLD),
-                        this.middleX + this.middleWidth / 2, PANEL_TOP + 42, TEXT_TITLE);
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.themes.coming_soon"),
-                        this.middleX + this.middleWidth / 2, PANEL_TOP + 58, TEXT_DESCRIPTION);
             }
             case HOME -> {
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
@@ -628,6 +702,13 @@ public class MusicPlayerScreen extends Screen {
                 renderSourceCard(graphics, source);
                 renderVolumeSlider(graphics, mouseX, mouseY);
             }
+            if (this.page == Page.DETAILS && !viewedContentDeleteable()) {
+                int actionWidth = this.rightWidth - 16;
+                int buttonWidth = Math.max(1, (actionWidth - IconButton.SIZE - 8) / 2);
+                int iconX = this.rightX + 8 + buttonWidth + 4;
+                IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), iconX, playerActionY(),
+                        Component.translatable("screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);
+            }
             return;
         }
 
@@ -636,9 +717,14 @@ public class MusicPlayerScreen extends Screen {
             return;
         }
 
+        if (this.page == Page.THEMES && this.viewedTheme != null) {
+            renderThemeDetails(graphics, this.viewedTheme);
+            return;
+        }
+
         Component title = switch (this.page) {
-            case LIBRARY, EVENTS, ONLINE -> Component.translatable("screen.music_and_melody.filter_by_tags");
-            case HOME, CONFIG, NOW_PLAYING, DETAILS, THEMES -> Component.empty();
+            case LIBRARY, EVENTS, ONLINE, THEMES -> Component.translatable("screen.music_and_melody.filter_by_tags");
+            case HOME, CONFIG, NOW_PLAYING, DETAILS -> Component.empty();
         };
         if (!title.getString().isEmpty()) graphics.text(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
         if (this.page == Page.ONLINE) renderOnlineDownloadProgress(graphics);
@@ -647,6 +733,7 @@ public class MusicPlayerScreen extends Screen {
     private SourceInfo viewedContentSource() {
         if (this.viewedContent == null) return null;
         return new SourceInfo(this.viewedContent.name(), this.viewedContent.icon(),
+                Component.literal(this.viewedContent.id().toString()),
                 sourceTypeLabel(this.viewedContent.type()), originFor(this.viewedContent.id(), this.viewedContent.playlist()),
                 this.viewedContent.favourite());
     }
@@ -656,12 +743,14 @@ public class MusicPlayerScreen extends Screen {
         int cardSize = sourceCardSize();
         int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
         Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
-        int iconSize = Math.max(24, cardSize - 24);
+        int iconSize = Math.max(20, cardSize - 42);
         int iconX = cardX + (cardSize - iconSize) / 2;
         int iconY = cardY + 9;
         graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        drawMarquee(graphics, source.name(), cardX + 4, cardY + cardSize - 12, cardSize - 8,
-                source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
+        int titleColor = this.page == Page.DETAILS && isContentDeletePending(this.viewedContent)
+                ? TEXT_PENDING_DELETION : source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE;
+        drawMarquee(graphics, source.name(), cardX + 4, cardY + cardSize - 25, cardSize - 8, titleColor);
+        drawMarquee(graphics, source.id(), cardX + 4, cardY + cardSize - 12, cardSize - 8, TEXT_DESCRIPTION);
     }
 
     private void renderVolumeSlider(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -700,11 +789,14 @@ public class MusicPlayerScreen extends Screen {
     private void renderRemoteDetails(GuiGraphicsExtractor graphics, RemotePack pack) {
         int x = this.rightX + 8;
         int width = this.rightWidth - 16;
-        int headingY = PANEL_TOP + 2;
+        // Keep the online details heading aligned with the other right-panel
+        // headings.  The old +2 position let the heading and the first icon
+        // sit noticeably higher than the filter/action panels.
+        int headingY = PANEL_TOP + 14;
         graphics.text(this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, headingY, TEXT_HEADER);
 
         int iconSize = Math.min(42, width);
-        int iconY = PANEL_TOP + 18;
+        int iconY = PANEL_TOP + 30;
         graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(pack)),
                 x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
         int textX = x + iconSize + 6;
@@ -733,6 +825,83 @@ public class MusicPlayerScreen extends Screen {
         renderRemoteDownloadProgress(graphics, pack);
     }
 
+    private RemotePack viewedContentRemotePack() {
+        if (this.viewedContent == null) return null;
+        return RemoteContentManager.packs().stream()
+                .filter(pack -> pack.id().equals(this.viewedContent.id()))
+                .findFirst().orElse(null);
+    }
+
+    private boolean viewedContentDeleteable() {
+        if (this.viewedContent == null) return false;
+        if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) return true;
+        RemotePack pack = viewedContentRemotePack();
+        return pack != null && remoteDeleteAvailable(pack);
+    }
+
+    private boolean viewedContentDeletePending() {
+        if (this.viewedContent == null) return false;
+        if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) {
+            return this.pendingPlaylistDeletes.contains(this.viewedContent.id());
+        }
+        RemotePack pack = viewedContentRemotePack();
+        return pack != null && this.pendingRemoteDeletes.contains(pack.key());
+    }
+
+    private Component contentDeleteMessage() {
+        return Component.translatable(viewedContentDeletePending()
+                ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+    }
+
+    private Identifier contentDeleteIcon() {
+        return IconButton.icon(viewedContentDeletePending() ? "restore" : "delete");
+    }
+
+    private void toggleViewedContentDelete() {
+        if (!viewedContentDeleteable()) return;
+        if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) {
+            if (!this.pendingPlaylistDeletes.remove(this.viewedContent.id())) this.pendingPlaylistDeletes.add(this.viewedContent.id());
+        } else {
+            RemotePack pack = viewedContentRemotePack();
+            if (pack == null) return;
+            if (!this.pendingRemoteDeletes.remove(pack.key())) this.pendingRemoteDeletes.add(pack.key());
+        }
+        this.rebuildWidgets();
+    }
+
+    private void renderThemeDetails(GuiGraphicsExtractor graphics, Theme theme) {
+        int x = this.rightX + 8;
+        int width = this.rightWidth - 16;
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD),
+                x, PANEL_TOP + 14, TEXT_HEADER);
+        int iconSize = Math.min(42, width);
+        int iconY = PANEL_TOP + 30;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, theme.icon), x, iconY,
+                0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        int textX = x + iconSize + 6;
+        int textWidth = Math.max(1, width - iconSize - 6);
+        int titleColor = isThemeDeletePending(theme.theme) ? TEXT_PENDING_DELETION
+                : isActiveTheme(theme) ? TEXT_SELECTED : TEXT_TITLE;
+        drawTrackMarquee(graphics, theme.name, textX, iconY + 1, textWidth, titleColor);
+        drawTrackMarquee(graphics, Component.literal(theme.theme.getNamespace() + ":"), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
+        drawTrackMarquee(graphics, Component.literal(theme.theme.getPath()), textX, iconY + 25, textWidth, TEXT_DESCRIPTION);
+        int descriptionY = iconY + iconSize + 6;
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE),
+                x, descriptionY, TEXT_DESCRIPTION);
+        descriptionY += 12;
+        List<FormattedCharSequence> lines = this.font.split(theme.description, Math.max(1, width));
+        int bottom = this.panelBottom - 110;
+        for (FormattedCharSequence line : lines) {
+            if (descriptionY + this.font.lineHeight > bottom) break;
+            graphics.text(this.font, line, x, descriptionY, TEXT_PRIMARY);
+            descriptionY += this.font.lineHeight + 2;
+        }
+        if (!theme.valid) {
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.invalid").withStyle(ChatFormatting.BOLD),
+                    x, Math.min(bottom, descriptionY + 4), TEXT_PENDING_DELETION);
+        }
+    }
+
     private void renderRemoteDetailField(GuiGraphicsExtractor graphics, String headingKey, Component value, int x, int y, int width) {
         graphics.text(this.font, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, TEXT_DESCRIPTION);
         drawTrackMarquee(graphics, value, x, y + 12, width, TEXT_PRIMARY);
@@ -748,10 +917,10 @@ public class MusicPlayerScreen extends Screen {
         graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHT);
     }
 
-    private void renderPlaybackStrip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        int progressX = this.middleX + 34;
-        int progressRight = this.middleX + this.middleWidth - 42;
-        int progressY = this.bottomPanelTop + 9;
+    void renderPlaybackStrip(GuiGraphicsExtractor graphics, int middleX, int middleWidth, int bottomPanelTop) {
+        int progressX = middleX + 34;
+        int progressRight = middleX + middleWidth - 42;
+        int progressY = bottomPanelTop + 9;
         int progressWidth = Math.max(1, progressRight - progressX);
         graphics.fill(progressX, progressY, progressRight, progressY + 3, BAR_BACKGROUND);
 
@@ -762,16 +931,20 @@ public class MusicPlayerScreen extends Screen {
             int handleX = progressX + Math.round(progressWidth * progress);
             graphics.fill(progressX, progressY, handleX, progressY + 3, PANEL_HIGHLIGHT);
             graphics.fill(handleX - 1, progressY - 2, handleX + 2, progressY + 5, TEXT_TITLE);
-            graphics.text(this.font, Component.literal(formatDuration(Math.max(0L, duration.get() - elapsed))), progressRight + 6, this.bottomPanelTop + 7, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.literal(formatDuration(Math.max(0L, duration.get() - elapsed))), progressRight + 6, bottomPanelTop + 7, TEXT_DESCRIPTION);
         } else {
-            graphics.text(this.font, Component.literal("--:--"), progressRight + 6, this.bottomPanelTop + 7, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.literal("--:--"), progressRight + 6, bottomPanelTop + 7, TEXT_DESCRIPTION);
         }
         if (!this.searching && PlaylistHelper.getCurrentSongId() != null) {
             Component track = MusicScreenHelper.playlistName(this.minecraft, PlaylistHelper.getCurrentSongId());
             // Keep the moving title inside the same horizontal lane as the
             // seek bar; it must never sweep under the search control.
-            drawMarquee(graphics, track, progressX, this.bottomPanelTop + 17, progressWidth, TEXT_DESCRIPTION);
+            drawMarquee(graphics, track, progressX, bottomPanelTop + 17, progressWidth, TEXT_DESCRIPTION);
         }
+    }
+
+    private void renderPlaybackStrip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        renderPlaybackStrip(graphics, this.middleX, this.middleWidth, this.bottomPanelTop);
     }
 
     @Override
@@ -859,6 +1032,11 @@ public class MusicPlayerScreen extends Screen {
         this.minecraft.gui.setScreen(new CreateEventScreen(this));
     }
 
+    private void openCreateThemeScreen() {
+        closeSearch();
+        this.minecraft.gui.setScreen(new CreateThemeScreen(this));
+    }
+
     private void toggleSearch() {
         if (!supportsSearch()) {
             closeSearch();
@@ -892,8 +1070,8 @@ public class MusicPlayerScreen extends Screen {
 
     private boolean supportsSearch() {
         return switch (this.page) {
-            case LIBRARY, DETAILS, EVENTS, ONLINE -> true;
-            case NOW_PLAYING, HOME, THEMES, CONFIG -> false;
+            case LIBRARY, DETAILS, EVENTS, THEMES, ONLINE -> true;
+            case NOW_PLAYING, HOME, CONFIG -> false;
         };
     }
 
@@ -929,11 +1107,7 @@ public class MusicPlayerScreen extends Screen {
                 return true;
             }
         }
-        if (isInProgressBar(event.x(), event.y()) && currentTrackDuration().isPresent()) {
-            this.draggingProgress = true;
-            setSeekPreviewFromX(event.x());
-            return true;
-        }
+        if (handlePlaybackClick(event.x(), event.y(), this.middleX, this.middleWidth, this.bottomPanelTop)) return true;
         if ((this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) && isInVolumeSlider(event.x(), event.y())) {
             this.draggingVolume = true;
             setVolumeFromY(event.y());
@@ -947,10 +1121,7 @@ public class MusicPlayerScreen extends Screen {
         event = toLayoutMouse(event);
         dragX /= MaMDataConfig.get().gui_multiplier;
         dragY /= MaMDataConfig.get().gui_multiplier;
-        if (this.draggingProgress) {
-            setSeekPreviewFromX(event.x());
-            return true;
-        }
+        if (handlePlaybackDrag(event.x(), event.y(), this.middleX, this.middleWidth)) return true;
         if (this.draggingVolume) {
             setVolumeFromY(event.y());
             return true;
@@ -961,11 +1132,7 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         event = toLayoutMouse(event);
-        if (this.draggingProgress) {
-            this.draggingProgress = false;
-            PlaylistHelper.seekCurrentSong(this.seekPreviewMillis);
-            return true;
-        }
+        if (handlePlaybackRelease()) return true;
         if (this.draggingVolume) {
             this.draggingVolume = false;
             return true;
@@ -1001,10 +1168,31 @@ public class MusicPlayerScreen extends Screen {
         return mouseX >= x - 10 && mouseX <= x + 14 && mouseY >= top && mouseY <= bottom;
     }
 
-    private boolean isInProgressBar(double mouseX, double mouseY) {
-        int left = this.middleX + 30;
-        int right = this.middleX + this.middleWidth - 38;
-        int top = this.bottomPanelTop + 4;
+    boolean handlePlaybackClick(double mouseX, double mouseY, int stripX, int stripWidth, int stripTop) {
+        if (!isInProgressBar(mouseX, mouseY, stripX, stripWidth, stripTop)
+                || currentTrackDuration().isEmpty()) return false;
+        this.draggingProgress = true;
+        setSeekPreviewFromX(mouseX, stripX, stripWidth);
+        return true;
+    }
+
+    boolean handlePlaybackDrag(double mouseX, double mouseY, int stripX, int stripWidth) {
+        if (!this.draggingProgress) return false;
+        setSeekPreviewFromX(mouseX, stripX, stripWidth);
+        return true;
+    }
+
+    boolean handlePlaybackRelease() {
+        if (!this.draggingProgress) return false;
+        this.draggingProgress = false;
+        PlaylistHelper.seekCurrentSong(this.seekPreviewMillis);
+        return true;
+    }
+
+    private boolean isInProgressBar(double mouseX, double mouseY, int stripX, int stripWidth, int stripTop) {
+        int left = stripX + 30;
+        int right = stripX + stripWidth - 38;
+        int top = stripTop + 4;
         return mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= top + 12;
     }
 
@@ -1013,11 +1201,11 @@ public class MusicPlayerScreen extends Screen {
                 .filter(value -> value > 0L);
     }
 
-    private void setSeekPreviewFromX(double mouseX) {
+    private void setSeekPreviewFromX(double mouseX, int stripX, int stripWidth) {
         Optional<Long> duration = currentTrackDuration();
         if (duration.isEmpty()) return;
-        int progressX = this.middleX + 34;
-        int progressRight = this.middleX + this.middleWidth - 42;
+        int progressX = stripX + 34;
+        int progressRight = stripX + stripWidth - 42;
         float fraction = (float) ((mouseX - progressX) / Math.max(1, progressRight - progressX));
         this.seekPreviewMillis = Math.round(Math.max(0.0F, Math.min(1.0F, fraction)) * duration.get());
     }
@@ -1054,7 +1242,7 @@ public class MusicPlayerScreen extends Screen {
     private int sourceCardSize() {
         int widthLimit = this.rightWidth - 16;
         int heightLimit = musicToggleY() - PANEL_TOP - 86;
-        return Math.max(24, Math.min(112, Math.min(widthLimit, heightLimit)));
+        return Math.max(48, Math.min(112, Math.min(widthLimit, heightLimit)));
     }
 
     void startQueueDrag(QueueList list, int index) {
@@ -1150,6 +1338,51 @@ public class MusicPlayerScreen extends Screen {
         if (this.eventSourceList != null) this.eventSourceList.refresh();
         if (this.onlineCatalogList != null) this.onlineCatalogList.refresh();
         if (this.onlinePackList != null) this.onlinePackList.refresh();
+        if (this.themeList != null) this.themeList.refresh();
+    }
+
+    private void previewTheme(Theme theme) {
+        if (theme == null || !theme.valid) return;
+        if (this.previewingTheme && this.viewedTheme != null && this.viewedTheme.theme.equals(theme.theme)) {
+            ThemeListener.restoreActive();
+            this.previewingTheme = false;
+            this.rebuildWidgets();
+            return;
+        }
+        ThemeListener.preview(theme.theme);
+        this.selectedThemeId = theme.theme;
+        this.previewingTheme = true;
+        this.rebuildWidgets();
+    }
+
+    private void applyTheme(Theme theme) {
+        if (theme == null || !theme.valid || !ThemeListener.apply(theme.theme)) return;
+        this.selectedThemeId = theme.theme;
+        this.previewingTheme = false;
+        this.rebuildWidgets();
+    }
+
+    private void openThemeEditor(Theme theme) {
+        if (theme == null) return;
+        closeSearch();
+        this.minecraft.gui.setScreen(new ThemeEditorScreen(this, theme));
+    }
+
+    void themeChanged(Identifier id) {
+        this.selectedThemeId = id;
+        this.viewedTheme = ThemeListener.theme(id);
+        this.previewingTheme = false;
+        ThemeListener.restoreActive();
+        this.rebuildWidgets();
+    }
+
+    private void finishThemePreview() {
+        if (this.previewingTheme) ThemeListener.restoreActive();
+        this.previewingTheme = false;
+        // Keep the selected item highlighted in the middle list, but return
+        // the right panel to its normal tag-filter state.
+        this.viewedTheme = null;
+        this.rebuildWidgets();
     }
 
     void openContent(ContentItem item) {
@@ -1293,12 +1526,12 @@ public class MusicPlayerScreen extends Screen {
     }
 
     boolean isRemoteDeletePending(RemotePack pack) {
-        return this.pendingRemoteDeletes.contains(pack.id());
+        return this.pendingRemoteDeletes.contains(pack.key());
     }
 
     void toggleRemoteDeletePending(RemotePack pack) {
         if (!remoteDeleteAvailable(pack)) return;
-        if (!this.pendingRemoteDeletes.remove(pack.id())) this.pendingRemoteDeletes.add(pack.id());
+        if (!this.pendingRemoteDeletes.remove(pack.key())) this.pendingRemoteDeletes.add(pack.key());
         if (this.onlinePackList != null) this.onlinePackList.refresh();
         this.rebuildWidgets();
     }
@@ -1316,8 +1549,8 @@ public class MusicPlayerScreen extends Screen {
     private void applyPendingRemoteDeletes() {
         if (this.pendingRemoteDeletes.isEmpty()) return;
         boolean changed = false;
-        for (Identifier id : List.copyOf(this.pendingRemoteDeletes)) {
-            changed |= RemoteContentManager.deleteInstalled(id);
+        for (RemotePack.Key key : List.copyOf(this.pendingRemoteDeletes)) {
+            changed |= RemoteContentManager.deleteInstalled(key);
         }
         this.pendingRemoteDeletes.clear();
         if (!changed) return;
@@ -1325,13 +1558,78 @@ public class MusicPlayerScreen extends Screen {
         RemoteContentManager.refresh();
     }
 
+    private boolean isContentDeletePending(ContentItem item) {
+        if (item == null) return false;
+        if (item.playlist() != null && item.playlist().isCustom()) return this.pendingPlaylistDeletes.contains(item.id());
+        RemotePack pack = viewedContentRemotePack();
+        return pack != null && this.pendingRemoteDeletes.contains(pack.key());
+    }
+
+    private void applyPendingPlaylistDeletes() {
+        if (this.pendingPlaylistDeletes.isEmpty()) return;
+        for (Playlist playlist : List.copyOf(Playlist.PLAYLISTS)) {
+            if (this.pendingPlaylistDeletes.contains(playlist.playlist)) playlist.deleteCustom();
+        }
+        this.pendingPlaylistDeletes.clear();
+    }
+
+    boolean isEventDeletePending(Identifier id) {
+        return id != null && this.pendingEventDeletes.contains(id);
+    }
+
+    boolean toggleEventDeletePending(Identifier id) {
+        if (id == null) return false;
+        if (!this.pendingEventDeletes.remove(id)) this.pendingEventDeletes.add(id);
+        refreshPageList();
+        return this.pendingEventDeletes.contains(id);
+    }
+
+    boolean isThemeDeletePending(Identifier id) {
+        return id != null && this.pendingThemeDeletes.contains(id);
+    }
+
+    boolean toggleThemeDeletePending(Identifier id) {
+        if (id == null) return false;
+        if (!this.pendingThemeDeletes.remove(id)) this.pendingThemeDeletes.add(id);
+        refreshPageList();
+        return this.pendingThemeDeletes.contains(id);
+    }
+
+    private void applyPendingEventDeletes() {
+        if (this.pendingEventDeletes.isEmpty()) return;
+        for (Event.Source source : List.copyOf(Event.sources())) {
+            if (this.pendingEventDeletes.contains(source.id)) source.deleteConfig();
+        }
+        this.pendingEventDeletes.clear();
+        this.reloadPending = true;
+    }
+
+    private void applyPendingThemeDeletes() {
+        if (this.pendingThemeDeletes.isEmpty()) return;
+        for (Identifier id : List.copyOf(this.pendingThemeDeletes)) ThemeListener.deleteConfigTheme(id);
+        this.pendingThemeDeletes.clear();
+        this.reloadPending = true;
+    }
+
+    private void applyAllPendingDeletes() {
+        applyPendingPlaylistDeletes();
+        applyPendingRemoteDeletes();
+        applyPendingEventDeletes();
+        applyPendingThemeDeletes();
+    }
+
     private void setPage(Page page) {
-        if (this.page == Page.ONLINE && page != Page.ONLINE) applyPendingRemoteDeletes();
+        if (this.page == Page.THEMES && page != Page.THEMES && this.previewingTheme) {
+            ThemeListener.restoreActive();
+            this.previewingTheme = false;
+        }
         closeSearch();
         this.page = page;
+        if (page != Page.DETAILS) lastOpenedPage = page;
         this.selectedEventNamespace = null;
         this.selectedOnlineCatalog = null;
         this.viewedRemotePack = null;
+        this.viewedTheme = null;
         this.rebuildWidgets();
     }
 
@@ -1357,7 +1655,11 @@ public class MusicPlayerScreen extends Screen {
                     this.rebuildWidgets();
                 } else setPage(Page.HOME);
             }
-            case LIBRARY, CONFIG, THEMES -> setPage(Page.HOME);
+            case THEMES -> {
+                if (this.viewedTheme != null) finishThemePreview();
+                else setPage(Page.HOME);
+            }
+            case LIBRARY, CONFIG -> setPage(Page.HOME);
             case HOME -> this.minecraft.gui.setScreen(this.parent);
         }
     }
@@ -1365,9 +1667,18 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public void onClose() {
         if (this.page == Page.HOME) {
+            applyAllPendingDeletes();
             this.minecraft.gui.setScreen(this.parent);
             if (this.reloadPending) this.minecraft.reloadResourcePacks();
         } else goBack();
+    }
+
+    private void exitToParent() {
+        if (this.page == Page.THEMES && this.previewingTheme) ThemeListener.restoreActive();
+        this.previewingTheme = false;
+        applyAllPendingDeletes();
+        this.minecraft.gui.setScreen(this.parent);
+        if (this.reloadPending) this.minecraft.reloadResourcePacks();
     }
 
     /** Opens the actual source page; Now Playing itself is not a second list type. */
@@ -1405,21 +1716,25 @@ public class MusicPlayerScreen extends Screen {
         Optional<PlaylistHelper.QueueSource> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) {
             return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+                    Component.literal("custom"),
                     sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
         }
         PlaylistHelper.QueueSource source = queuedSource.get();
         Identifier id = Identifier.tryParse(source.id());
         if (id != null && source.type() == MaMDataConfig.QueueSourceType.ALBUM) {
             for (Album album : Album.ALBUMS) {
-                if (album.album.equals(id)) return new SourceInfo(album.name, album.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.ALBUM), originFor(id, null), album.isFavourite());
+                if (album.album.equals(id)) return new SourceInfo(album.name, album.icon, Component.literal(album.album.toString()),
+                        sourceTypeLabel(MaMDataConfig.QueueSourceType.ALBUM), originFor(id, null), album.isFavourite());
             }
         }
         if (id != null && source.type() == MaMDataConfig.QueueSourceType.PLAYLIST) {
             for (Playlist playlist : Playlist.PLAYLISTS) {
-                if (playlist.playlist.equals(id)) return new SourceInfo(playlist.name, playlist.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
+                if (playlist.playlist.equals(id)) return new SourceInfo(playlist.name, playlist.icon, Component.literal(playlist.playlist.toString()),
+                        sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
             }
         }
         return new SourceInfo(Component.literal(source.name()), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+                Component.literal(source.id()),
                 sourceTypeLabel(source.type()), Component.translatable("screen.music_and_melody.content_origin.built_in"), false);
     }
 
@@ -1435,7 +1750,8 @@ public class MusicPlayerScreen extends Screen {
 
     private static String originKeyFor(Identifier id, Playlist playlist) {
         if (playlist != null && playlist.isCustom()) return "custom";
-        return RemoteContentManager.isDownloadedAlbum(id) ? "downloaded" : "built_in";
+        RemotePack.Tag tag = playlist == null ? RemotePack.Tag.ALBUM : RemotePack.Tag.PLAYLIST;
+        return RemoteContentManager.isDownloaded(id, tag) ? "downloaded" : "built_in";
     }
 
     /** Returns every tag that applies to an opened Album or Playlist. */
@@ -1462,8 +1778,7 @@ public class MusicPlayerScreen extends Screen {
             ContentItem item = new ContentItem(null, playlist);
             if (matchesLibrary(item)) items.add(item);
         }
-        items.sort(Comparator.comparing((ContentItem item) -> !item.favourite())
-                .thenComparing(item -> item.name().getString(), String.CASE_INSENSITIVE_ORDER));
+        items.sort(Comparator.comparing(item -> item.name().getString(), String.CASE_INSENSITIVE_ORDER));
         return items;
     }
 
@@ -1510,6 +1825,21 @@ public class MusicPlayerScreen extends Screen {
         return visibleEventSources().stream().filter(source -> source.id.getNamespace().equals(namespace)).toList();
     }
 
+    List<Theme> visibleThemes() {
+        return ThemeListener.themes().stream()
+                .filter(this::matchesThemeTags)
+                .filter(theme -> matchesSearch(theme.name.getString(), theme.theme.toString(), theme.description.getString()))
+                .sorted(Comparator.comparing(theme -> theme.name.getString(), String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private boolean matchesThemeTags(Theme theme) {
+        for (ThemeTag tag : this.themeTags) {
+            if (!tag.matches(theme)) return false;
+        }
+        return true;
+    }
+
     List<OnlineCatalog> onlineCatalogs() {
         Map<String, RemotePack.Provenance> provenanceByCatalog = new LinkedHashMap<>();
         for (RemotePack pack : RemoteContentManager.packs()) {
@@ -1530,6 +1860,7 @@ public class MusicPlayerScreen extends Screen {
 
     private static SourceInfo customPlaylistSource() {
         return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+                Component.literal("custom"),
                 sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
     }
 
@@ -1713,7 +2044,7 @@ public class MusicPlayerScreen extends Screen {
             }
             case THEMES -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
-                breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.albums"), null));
+                breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.themes"), null));
             }
             case CONFIG -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
@@ -1864,6 +2195,33 @@ public class MusicPlayerScreen extends Screen {
                 case DOWNLOADED -> false;
                 case ENABLED -> source.isEnabled();
                 case DISABLED -> !source.isEnabled();
+            };
+        }
+    }
+
+    private enum ThemeTag implements Tag {
+        BUILT_IN("screen.music_and_melody.tag.built_in"),
+        CUSTOM("screen.music_and_melody.tag.custom"),
+        DOWNLOADED("screen.music_and_melody.tag.downloaded");
+
+        private final String translationKey;
+
+        ThemeTag(String translationKey) {
+            this.translationKey = translationKey;
+        }
+
+        @Override
+        public Component label() {
+            return Component.translatable(this.translationKey);
+        }
+
+        boolean matches(Theme theme) {
+            boolean custom = theme.isCustom();
+            boolean downloaded = !custom && ThemeListener.isDownloaded(theme.theme);
+            return switch (this) {
+                case BUILT_IN -> !custom && !downloaded;
+                case CUSTOM -> custom;
+                case DOWNLOADED -> downloaded;
             };
         }
     }
@@ -2036,7 +2394,7 @@ public class MusicPlayerScreen extends Screen {
         }
     }
 
-    private record SourceInfo(Component name, Identifier icon, Component typeLabel, Component originLabel, boolean favourite) {}
+    private record SourceInfo(Component name, Identifier icon, Component id, Component typeLabel, Component originLabel, boolean favourite) {}
 
     /** The top-left card is a shortcut to the active queue, not a second track list. */
     private static final class CurrentSourceCard extends Button {
@@ -2076,6 +2434,7 @@ public class MusicPlayerScreen extends Screen {
         }
 
         void refresh() {
+            double scroll = this.scrollAmount();
             this.clearEntries();
             if (this.screen.viewedContent == null) return;
             ContentItem content = this.screen.viewedContent;
@@ -2090,6 +2449,7 @@ public class MusicPlayerScreen extends Screen {
             } else if (content.playlist() != null) {
                 addPlaylist(content.playlist(), queue);
             }
+            this.setScrollAmount(scroll);
         }
 
         private void addAlbum(Album album, List<SafeIdentifier> queue) {
@@ -2195,10 +2555,10 @@ public class MusicPlayerScreen extends Screen {
             this.song = song;
             this.heading = null;
             this.status = status;
-            this.addButton = new IconButton(Component.translatable("button.music_and_melody.queue"), IconButton.icon("queue"), ignored ->
+            this.addButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.queue"), IconButton.icon("queue"), ignored ->
                     this.screen.addTrackToCustomPlaylist(this.song));
             this.toggleButton = status != null && status.toggleable()
-                    ? new IconButton(status.message(), status.icon(), ignored -> this.screen.toggleContentTrack(status.album(), status.track()))
+                    ? IconButton.createListIcon(status.message(), status.icon(), ignored -> this.screen.toggleContentTrack(status.album(), status.track()))
                     : null;
         }
 
@@ -2228,10 +2588,14 @@ public class MusicPlayerScreen extends Screen {
             this.screen.drawTrackMarquee(graphics, title, textX,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textWidth, color);
             int addX = this.getContentRight() - IconButton.SIZE - 3;
+            boolean alreadyAdded = PlaylistHelper.isInCustomPlaylist(this.song);
             this.addButton.setX(addX);
             this.addButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
-            this.addButton.active = !PlaylistHelper.isInCustomPlaylist(this.song);
-            this.addButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+            this.addButton.active = !alreadyAdded;
+            // Keep the add slot reserved so status/toggle icons do not move,
+            // but do not draw an inactive add icon for tracks already in the
+            // Custom Playlist.
+            if (!alreadyAdded) this.addButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             if (this.status != null) {
                 int statusX = addX - IconButton.SIZE - 4;
                 if (this.toggleButton != null) {
@@ -2483,7 +2847,7 @@ public class MusicPlayerScreen extends Screen {
             this.index = index;
             this.song = song;
             this.compact = compact;
-            this.removeButton = new IconButton(Component.translatable("button.music_and_melody.remove"), IconButton.icon("remove"), ignored ->
+            this.removeButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.remove"), IconButton.icon("remove"), ignored ->
                     this.screen.requestRemoveQueueTrack(this.index));
         }
 
@@ -2543,10 +2907,12 @@ public class MusicPlayerScreen extends Screen {
         }
 
         void refresh() {
+            double scroll = this.scrollAmount();
             this.clearEntries();
             this.screen.favouriteItems().stream()
                     .map(item -> new FavouriteEntry(this.screen, this.minecraft, item))
                     .forEach(this::addEntry);
+            this.setScrollAmount(scroll);
         }
     }
 
@@ -2573,7 +2939,8 @@ public class MusicPlayerScreen extends Screen {
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.item.icon()), this.getContentX() + 2, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             this.screen.drawTrackMarquee(graphics, this.item.name(), this.getContentX() + iconSize + 6,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2,
-                    Math.max(1, this.getContentWidth() - iconSize - 8), TEXT_FAVOURITE);
+                    Math.max(1, this.getContentWidth() - iconSize - 8),
+                    this.screen.isContentDeletePending(this.item) ? TEXT_PENDING_DELETION : TEXT_FAVOURITE);
         }
 
         @Override
@@ -2591,10 +2958,12 @@ public class MusicPlayerScreen extends Screen {
         }
 
         void refresh() {
+            double scroll = this.scrollAmount();
             this.clearEntries();
             this.screen.libraryItems().stream()
                     .map(item -> new LibraryEntry(this.screen, this.minecraft, item))
                     .forEach(this::addEntry);
+            this.setScrollAmount(scroll);
         }
     }
 
@@ -2610,8 +2979,8 @@ public class MusicPlayerScreen extends Screen {
             this.screen = screen;
             this.minecraft = minecraft;
             this.item = item;
-            this.favouriteButton = new IconButton(Component.translatable("button.music_and_melody.favourite"), IconButton.icon(item.favourite() ? "favourited" : "favourite"), ignored -> this.screen.toggleFavourite(this.item));
-            this.albumEnabledButton = item.album() == null ? null : new IconButton(
+            this.favouriteButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.favourite"), IconButton.icon(item.favourite() ? "favourited" : "favourite"), ignored -> this.screen.toggleFavourite(this.item));
+            this.albumEnabledButton = item.album() == null ? null : IconButton.createListIcon(
                     Component.translatable(item.album().isEnabled() ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled"),
                     IconButton.icon(item.album().isEnabled() ? "enabled" : "disabled"),
                     ignored -> this.screen.toggleAlbumEnabled(this.item.album()));
@@ -2633,8 +3002,10 @@ public class MusicPlayerScreen extends Screen {
             int textX = this.getContentX() + iconSize + 9;
             int actionWidth = IconButton.SIZE + (this.albumEnabledButton == null && this.playlistOriginIcon == null ? 0 : IconButton.SIZE + 4);
             int textWidth = this.getContentWidth() - iconSize - actionWidth - 16;
+            int titleColor = this.screen.isContentDeletePending(this.item) ? TEXT_PENDING_DELETION
+                    : this.item.favourite() ? TEXT_FAVOURITE : TEXT_TITLE;
             this.screen.drawTrackMarquee(graphics, this.item.name(), textX, this.getContentYMiddle() - 10,
-                    Math.max(1, textWidth), this.item.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
+                    Math.max(1, textWidth), titleColor);
             this.screen.drawTrackMarquee(graphics, this.item.details(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             this.favouriteButton.setIconAndTooltip(IconButton.icon(this.item.favourite() ? "favourited" : "favourite"), Component.translatable(this.item.favourite()
                     ? "button.music_and_melody.unfavourite"
@@ -2751,7 +3122,7 @@ public class MusicPlayerScreen extends Screen {
             this.screen = screen;
             this.minecraft = minecraft;
             this.source = source;
-            this.toggleButton = new IconButton(Component.translatable(source.isEnabled() ? "button.music_and_melody.disable" : "button.music_and_melody.enable"), IconButton.icon(source.isEnabled() ? "enabled" : "disabled"), ignored -> {
+            this.toggleButton = IconButton.createListIcon(Component.translatable(source.isEnabled() ? "button.music_and_melody.disable" : "button.music_and_melody.enable"), IconButton.icon(source.isEnabled() ? "enabled" : "disabled"), ignored -> {
                 this.source.setEnabled(!this.source.isEnabled());
                 if (this.screen.eventSourceList != null) this.screen.eventSourceList.refresh();
             });
@@ -2769,8 +3140,10 @@ public class MusicPlayerScreen extends Screen {
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.source.icon()), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 8;
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 17;
+            int titleColor = this.screen.isEventDeletePending(this.source.id) ? TEXT_PENDING_DELETION
+                    : this.source.isEnabled() ? TEXT_TITLE : TEXT_DESCRIPTION;
             this.screen.drawTrackMarquee(graphics, this.source.record.name(), textX, this.getContentYMiddle() - 10,
-                    Math.max(1, textWidth), this.source.isEnabled() ? TEXT_TITLE : TEXT_DESCRIPTION);
+                    Math.max(1, textWidth), titleColor);
             this.screen.drawTrackMarquee(graphics, this.source.record.description(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             this.toggleButton.setIconAndTooltip(IconButton.icon(this.source.isEnabled() ? "enabled" : "disabled"), Component.translatable(this.source.isEnabled()
                     ? "button.music_and_melody.disable"
@@ -2785,6 +3158,70 @@ public class MusicPlayerScreen extends Screen {
             if (this.toggleButton.mouseClicked(event, doubleClick)) return true;
             this.screen.playClick();
             this.screen.openEvent(this.source);
+            return true;
+        }
+    }
+
+    private static final class ThemeList extends PanelList<ThemeEntry> {
+        ThemeList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
+            super(screen, minecraft, panelX, panelWidth, top, bottom, 42);
+            refresh();
+        }
+
+        void refresh() {
+            double scroll = this.scrollAmount();
+            this.clearEntries();
+            this.screen.visibleThemes().stream()
+                    .map(theme -> new ThemeEntry(this.screen, this.minecraft, theme))
+                    .forEach(this::addEntry);
+            this.setScrollAmount(scroll);
+        }
+    }
+
+    private static final class ThemeEntry extends ObjectSelectionList.Entry<ThemeEntry> {
+        private final MusicPlayerScreen screen;
+        private final Minecraft minecraft;
+        private final Theme theme;
+
+        ThemeEntry(MusicPlayerScreen screen, Minecraft minecraft, Theme theme) {
+            this.screen = screen;
+            this.minecraft = minecraft;
+            this.theme = theme;
+        }
+
+        @Override
+        public Component getNarration() {
+            return this.theme.name;
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            boolean selected = this.theme.theme.equals(this.screen.selectedThemeId);
+            if (hovered || selected) {
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            }
+            int iconSize = 32;
+            int iconY = this.getContentYMiddle() - iconSize / 2;
+            graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.theme.icon),
+                    this.getContentX() + 3, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+            int textX = this.getContentX() + iconSize + 9;
+            int textWidth = Math.max(1, this.getContentWidth() - iconSize - 18);
+            int titleColor = this.screen.isThemeDeletePending(this.theme.theme) || !this.theme.valid
+                    ? TEXT_PENDING_DELETION : isActiveTheme(this.theme) ? TEXT_SELECTED : TEXT_TITLE;
+            this.screen.drawTrackMarquee(graphics, this.theme.name, textX, this.getContentYMiddle() - 15, textWidth,
+                    titleColor);
+            this.screen.drawTrackMarquee(graphics, this.theme.description, textX,
+                    this.getContentYMiddle() - 3, textWidth, TEXT_DESCRIPTION);
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            this.screen.playClick();
+            if (this.screen.previewingTheme) ThemeListener.restoreActive();
+            this.screen.selectedThemeId = this.theme.theme;
+            this.screen.viewedTheme = this.theme;
+            this.screen.previewingTheme = false;
+            this.screen.rebuildWidgets();
             return true;
         }
     }
@@ -2891,7 +3328,7 @@ public class MusicPlayerScreen extends Screen {
             this.screen = screen;
             this.minecraft = minecraft;
             this.pack = pack;
-            this.actionButton = new IconButton(Component.translatable("button.music_and_melody.download"), IconButton.icon("download"), ignored -> {
+            this.actionButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.download"), IconButton.icon("download"), ignored -> {
                 if (RemoteContentManager.state(this.pack) == RemoteContentManager.State.INSTALLED) {
                     this.screen.toggleRemoteDeletePending(this.pack);
                 } else {
