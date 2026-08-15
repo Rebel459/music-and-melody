@@ -11,14 +11,13 @@ import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 /** Saves a custom queue without visually leaving the music workspace. */
 class SavePlaylistScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.save_playlist");
     private static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
-    private static final int PANEL_BACKGROUND = 0xFF151C2A;
-    private static final int PANEL_BORDER = 0xFF78A6FF;
-    private static final int MUTED = 0xFF9DA9BF;
 
     private final MusicPlayerScreen parent;
     private EditBox nameField;
@@ -52,7 +51,7 @@ class SavePlaylistScreen extends Screen {
                 Component.translatable("screen.music_and_melody.save_playlist.icon")));
         this.iconField.setMaxLength(256);
         this.iconField.setResponder(value -> refreshSaveState());
-        this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(ChatFormatting.DARK_GRAY));
+        this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
 
         this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 132, fieldWidth, 20,
                 Component.translatable("screen.music_and_melody.save_playlist.path")));
@@ -86,16 +85,16 @@ class SavePlaylistScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.width, this.height, 0x52000000);
-        graphics.fill(x, y, x + width, y + height, PANEL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
-        graphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, 0xFFFFFFFF);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), x + 12, y + 38, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), x + 12, y + 79, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), x + 12, y + 120, MUTED);
+        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
+        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
+        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), x + 12, y + 38, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), x + 12, y + 120, TEXT_DESCRIPTION);
     }
 
     @Override
@@ -158,7 +157,7 @@ class SavePlaylistScreen extends Screen {
     private void updatePathHint() {
         if (this.pathField == null) return;
         String preview = Playlist.previewConfigPlaylistPath(this.nameField.getValue());
-        this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(ChatFormatting.DARK_GRAY));
+        this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
     }
 
     private int panelWidth() {

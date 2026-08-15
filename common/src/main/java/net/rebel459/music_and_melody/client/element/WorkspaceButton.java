@@ -3,18 +3,19 @@ package net.rebel459.music_and_melody.client.element;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.rebel459.music_and_melody.client.util.ScreenConstants;
+
+import java.util.Optional;
 
 /**
- * The flat, texture-free action treatment used throughout the compact music
- * workspace. A selected button uses the blue fill; ordinary actions keep the
- * same shape without implying a persistent state.
+ * The flat action treatment used throughout the compact music workspace. A
+ * theme may provide textures for its three states; otherwise the shared colour
+ * tokens provide the surface.
  */
 public final class WorkspaceButton extends Button {
-
-    private static final int ACCENT = 0xFF78A6FF;
-    private static final int MUTED = 0xFF9DA9BF;
-    private static final int ROW_HOVER = 0xAA344765;
 
     private final boolean selected;
 
@@ -24,13 +25,24 @@ public final class WorkspaceButton extends Button {
     }
 
     @Override
-    public    void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
-                && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
-        int background = !this.active ? 0x66303A4D : this.selected ? 0xCC365985 : hovered ? ROW_HOVER : 0x66303A4D;
-        graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
-        if (this.selected) graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ACCENT);
-        int textColor = this.active ? 0xFFE8EDF6 : MUTED;
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        boolean highlighted = this.active && (this.selected || this.isHoveredOrFocused());
+        Optional<Identifier> texture = !this.active
+                ? ScreenConstants.BUTTON_DISABLED_TEXTURE
+                : highlighted
+                  ? ScreenConstants.BUTTON_HIGHLIGHTED_TEXTURE
+                  : ScreenConstants.BUTTON_TEXTURE;
+        if (texture.isPresent()) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, texture.get(), this.getX(), this.getY(),
+                    0.0F, 0.0F, this.getWidth(), this.getHeight(), this.getWidth(), this.getHeight());
+        } else {
+            int background = highlighted ? ScreenConstants.BUTTON_HIGHLIGHT : ScreenConstants.BUTTON_PASSIVE;
+            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
+            if (this.selected) {
+                graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ScreenConstants.PANEL_HIGHLIGHT);
+            }
+        }
+        int textColor = this.active ? ScreenConstants.TEXT_PRIMARY : ScreenConstants.TEXT_DISABLED;
         graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.getWidth() / 2,
                 this.getY() + (this.getHeight() - 8) / 2, textColor);
     }

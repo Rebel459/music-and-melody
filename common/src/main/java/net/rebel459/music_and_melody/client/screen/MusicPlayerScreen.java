@@ -47,6 +47,8 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 /**
  * The compact, persistent music workspace.  It intentionally keeps the
  * left-hand queue and the transport controls alive while only the middle and
@@ -72,14 +74,6 @@ public class MusicPlayerScreen extends Screen {
     private static final int PANEL_BOTTOM_MARGIN = 10;
     private static final int BOTTOM_PANEL_HEIGHT = 56;
     private static final int TRACK_ROW_HEIGHT = 24;
-    private static final int PANEL_BACKGROUND = 0xE5151B28;
-    private static final int PANEL_BORDER = 0xFF3B4963;
-    private static final int PANEL_HEADER = 0xFF1B2435;
-    private static final int ROW_HOVER = 0xAA344765;
-    private static final int ROW_ACTIVE = 0xCC273B59;
-    private static final int ACCENT = 0xFF78A6FF;
-    private static final int MUTED = 0xFF9DA9BF;
-    private static final int SUCCESS = 0xFF9ED9A0;
     private static final int TRACK_NUMBER_OFFSET = 15;
     private static final int TRACK_TEXT_OFFSET = 32;
 
@@ -457,15 +451,15 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        graphics.fill(0, 0, this.width, this.height, 0xC9070A10);
+        graphics.fill(0, 0, this.width, this.height, SCREEN_BACKGROUND);
         drawPanel(graphics, this.leftX, PANEL_TOP, this.leftWidth, this.panelBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, PANEL_TOP, this.middleWidth, this.contentBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, this.bottomPanelTop, this.middleWidth, this.panelBottom - this.bottomPanelTop);
         drawPanel(graphics, this.rightX, PANEL_TOP, this.rightWidth, this.panelBottom - PANEL_TOP);
 
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.now_playing").withStyle(ChatFormatting.BOLD), this.leftX + 8, PANEL_TOP + 11, ACCENT);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.now_playing").withStyle(ChatFormatting.BOLD), this.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
         int favouriteHeaderY = PANEL_TOP + 31 + 75;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.favourites").withStyle(ChatFormatting.BOLD), this.leftX + 8, favouriteHeaderY + 3, ACCENT);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.favourites").withStyle(ChatFormatting.BOLD), this.leftX + 8, favouriteHeaderY + 3, TEXT_HEADER);
 
         renderMiddleHeader(graphics);
         renderRightPanel(graphics, mouseX, mouseY);
@@ -474,10 +468,10 @@ public class MusicPlayerScreen extends Screen {
 
     private void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, PANEL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
-        graphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
+        graphics.fill(x, y, x + width, y + 1, PANEL_OUTLINE);
+        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
     }
 
     private void renderMiddleHeader(GuiGraphicsExtractor graphics) {
@@ -486,27 +480,27 @@ public class MusicPlayerScreen extends Screen {
             case NOW_PLAYING -> {
                 SourceInfo source = currentSource();
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
-                graphics.text(this.font, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, MUTED);
+                graphics.text(this.font, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
             }
             case DETAILS -> {
                 if (this.viewedContent != null) {
                     renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
                     drawTrackMarquee(graphics, contentTags(this.viewedContent), this.middleX + 34, PANEL_TOP + 27,
-                            this.middleWidth - 42, MUTED);
+                            this.middleWidth - 42, TEXT_DESCRIPTION);
                 }
             }
             case LIBRARY, EVENTS, ONLINE, CONFIG -> renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
             case THEMES -> {
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
                 graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.themes").withStyle(ChatFormatting.BOLD),
-                        this.middleX + this.middleWidth / 2, PANEL_TOP + 42, 0xFFFFFFFF);
+                        this.middleX + this.middleWidth / 2, PANEL_TOP + 42, TEXT_TITLE);
                 graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.themes.coming_soon"),
-                        this.middleX + this.middleWidth / 2, PANEL_TOP + 58, MUTED);
+                        this.middleX + this.middleWidth / 2, PANEL_TOP + 58, TEXT_DESCRIPTION);
             }
             case HOME -> {
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.music_player").withStyle(ChatFormatting.BOLD), this.middleX + this.middleWidth / 2, PANEL_TOP + 34, 0xFFFFFFFF);
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.choose_section"), this.middleX + this.middleWidth / 2, PANEL_TOP + 48, MUTED);
+                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.music_player").withStyle(ChatFormatting.BOLD), this.middleX + this.middleWidth / 2, PANEL_TOP + 34, TEXT_TITLE);
+                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.choose_section"), this.middleX + this.middleWidth / 2, PANEL_TOP + 48, TEXT_DESCRIPTION);
             }
         }
     }
@@ -530,27 +524,29 @@ public class MusicPlayerScreen extends Screen {
             case LIBRARY, EVENTS, ONLINE -> Component.translatable("screen.music_and_melody.filter_by_tags");
             case HOME, CONFIG, NOW_PLAYING, DETAILS, THEMES -> Component.empty();
         };
-        if (!title.getString().isEmpty()) graphics.text(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.rightX + 8, PANEL_TOP + 14, ACCENT);
+        if (!title.getString().isEmpty()) graphics.text(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
         if (this.page == Page.ONLINE) renderOnlineDownloadProgress(graphics);
     }
 
     private SourceInfo viewedContentSource() {
         if (this.viewedContent == null) return null;
         return new SourceInfo(this.viewedContent.name(), this.viewedContent.icon(),
-                sourceTypeLabel(this.viewedContent.type()), originFor(this.viewedContent.id(), this.viewedContent.playlist()));
+                sourceTypeLabel(this.viewedContent.type()), originFor(this.viewedContent.id(), this.viewedContent.playlist()),
+                this.viewedContent.favourite());
     }
 
     private void renderSourceCard(GuiGraphicsExtractor graphics, SourceInfo source) {
         int cardY = PANEL_TOP + 10;
         int cardSize = Math.min(this.rightWidth - 16, 112);
         int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
-        graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, 0xFF111927);
+        graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, SOURCE_CARD_BACKGROUND);
         Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
         int iconSize = Math.max(24, cardSize - 24);
         int iconX = cardX + (cardSize - iconSize) / 2;
         int iconY = cardY + 9;
         graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        drawCenteredTruncated(graphics, source.name(), cardX + cardSize / 2, cardY + cardSize - 12, cardSize - 8, 0xFFFFFFFF);
+        drawCenteredTruncated(graphics, source.name(), cardX + cardSize / 2, cardY + cardSize - 12, cardSize - 8,
+                source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
     }
 
     private void renderVolumeSlider(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -558,10 +554,10 @@ public class MusicPlayerScreen extends Screen {
         int sliderTop = volumeSliderTop();
         int sliderBottom = volumeSliderBottom();
         float volume = this.minecraft.options.getSoundSourceVolume(SoundSource.MUSIC);
-        graphics.fill(sliderX, sliderTop, sliderX + 4, sliderBottom, 0xFF303C52);
+        graphics.fill(sliderX, sliderTop, sliderX + 4, sliderBottom, BAR_BACKGROUND);
         int filledTop = sliderBottom - Math.round((sliderBottom - sliderTop) * volume);
-        graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, ACCENT);
-        graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, 0xFFFFFFFF);
+        graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, PANEL_HIGHLIGHT);
+        graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, TEXT_TITLE);
         if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
             graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)), mouseX, mouseY);
         }
@@ -574,9 +570,9 @@ public class MusicPlayerScreen extends Screen {
             int x = this.rightX + 8;
             int right = this.rightX + this.rightWidth - 8;
             int y = Math.max(this.panelBottom - 22, onlineTagBottom() + 8);
-            drawTrackMarquee(graphics, pack.name(), x, y - 12, Math.max(1, right - x), MUTED);
-            graphics.fill(x, y, right, y + 4, 0xFF303C52);
-            graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, ACCENT);
+            drawTrackMarquee(graphics, pack.name(), x, y - 12, Math.max(1, right - x), TEXT_DESCRIPTION);
+            graphics.fill(x, y, right, y + 4, BAR_BACKGROUND);
+            graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHT);
             return;
         }
     }
@@ -589,7 +585,7 @@ public class MusicPlayerScreen extends Screen {
         int x = this.rightX + 8;
         int width = this.rightWidth - 16;
         int headingY = PANEL_TOP + 2;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, headingY, ACCENT);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, headingY, TEXT_HEADER);
 
         int iconSize = Math.min(42, width);
         int iconY = PANEL_TOP + 18;
@@ -597,11 +593,11 @@ public class MusicPlayerScreen extends Screen {
                 x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
         int textX = x + iconSize + 6;
         int textWidth = Math.max(1, width - iconSize - 6);
-        drawTrackMarquee(graphics, pack.name(), textX, iconY + 1, textWidth, 0xFFFFFFFF);
+        drawTrackMarquee(graphics, pack.name(), textX, iconY + 1, textWidth, TEXT_TITLE);
         // Reserve two lines beside the icon for the content namespace.  Both
         // lines pan independently instead of being cut off in this narrow panel.
-        drawTrackMarquee(graphics, Component.literal(pack.id().getNamespace() + ":"), textX, iconY + 13, textWidth, MUTED);
-        drawTrackMarquee(graphics, Component.literal(pack.id().getPath()), textX, iconY + 25, textWidth, MUTED);
+        drawTrackMarquee(graphics, Component.literal(pack.id().getNamespace() + ":"), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
+        drawTrackMarquee(graphics, Component.literal(pack.id().getPath()), textX, iconY + 25, textWidth, TEXT_DESCRIPTION);
 
         int fieldY = iconY + iconSize + 5;
         renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, fieldY, width);
@@ -610,20 +606,20 @@ public class MusicPlayerScreen extends Screen {
 
         int descriptionY = fieldY + 78;
         graphics.text(this.font, Component.translatable("screen.music_and_melody.remote_details.description").withStyle(ChatFormatting.UNDERLINE),
-                x, descriptionY, MUTED);
+                x, descriptionY, TEXT_DESCRIPTION);
         descriptionY += 12;
         int descriptionBottom = this.panelBottom - 62;
         for (FormattedCharSequence line : this.font.split(pack.description(), Math.max(1, width))) {
             if (descriptionY + this.font.lineHeight > descriptionBottom) break;
-            graphics.text(this.font, line, x, descriptionY, 0xFFE6EBF5);
+            graphics.text(this.font, line, x, descriptionY, TEXT_PRIMARY);
             descriptionY += this.font.lineHeight + 2;
         }
         renderRemoteDownloadProgress(graphics, pack);
     }
 
     private void renderRemoteDetailField(GuiGraphicsExtractor graphics, String headingKey, Component value, int x, int y, int width) {
-        graphics.text(this.font, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, MUTED);
-        drawTrackMarquee(graphics, value, x, y + 12, width, 0xFFE6EBF5);
+        graphics.text(this.font, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, TEXT_DESCRIPTION);
+        drawTrackMarquee(graphics, value, x, y + 12, width, TEXT_PRIMARY);
     }
 
     private void renderRemoteDownloadProgress(GuiGraphicsExtractor graphics, RemotePack pack) {
@@ -632,8 +628,8 @@ public class MusicPlayerScreen extends Screen {
         int x = this.rightX + 8;
         int right = this.rightX + this.rightWidth - 8;
         int y = this.panelBottom - 47;
-        graphics.fill(x, y, right, y + 4, 0xFF303C52);
-        graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, ACCENT);
+        graphics.fill(x, y, right, y + 4, BAR_BACKGROUND);
+        graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHT);
     }
 
     private void renderPlaybackStrip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -641,24 +637,24 @@ public class MusicPlayerScreen extends Screen {
         int progressRight = this.middleX + this.middleWidth - 42;
         int progressY = this.bottomPanelTop + 9;
         int progressWidth = Math.max(1, progressRight - progressX);
-        graphics.fill(progressX, progressY, progressRight, progressY + 3, 0xFF334057);
+        graphics.fill(progressX, progressY, progressRight, progressY + 3, BAR_BACKGROUND);
 
         long elapsed = this.draggingProgress ? this.seekPreviewMillis : PlaylistHelper.currentSongElapsedMillis();
         Optional<Long> duration = MusicDurationHelper.currentDurationMillis(this.minecraft, PlaylistHelper.getCurrentSong());
         if (duration.isPresent() && duration.get() > 0L) {
             float progress = Math.min(1.0F, elapsed / (float) duration.get());
             int handleX = progressX + Math.round(progressWidth * progress);
-            graphics.fill(progressX, progressY, handleX, progressY + 3, ACCENT);
-            graphics.fill(handleX - 1, progressY - 2, handleX + 2, progressY + 5, 0xFFFFFFFF);
-            graphics.text(this.font, Component.literal(formatDuration(Math.max(0L, duration.get() - elapsed))), progressRight + 6, this.bottomPanelTop + 7, MUTED);
+            graphics.fill(progressX, progressY, handleX, progressY + 3, PANEL_HIGHLIGHT);
+            graphics.fill(handleX - 1, progressY - 2, handleX + 2, progressY + 5, TEXT_TITLE);
+            graphics.text(this.font, Component.literal(formatDuration(Math.max(0L, duration.get() - elapsed))), progressRight + 6, this.bottomPanelTop + 7, TEXT_DESCRIPTION);
         } else {
-            graphics.text(this.font, Component.literal("--:--"), progressRight + 6, this.bottomPanelTop + 7, MUTED);
+            graphics.text(this.font, Component.literal("--:--"), progressRight + 6, this.bottomPanelTop + 7, TEXT_DESCRIPTION);
         }
         if (!this.searching && PlaylistHelper.getCurrentSongId() != null) {
             Component track = MusicScreenHelper.playlistName(this.minecraft, PlaylistHelper.getCurrentSongId());
             // Keep the moving title inside the same horizontal lane as the
             // seek bar; it must never sweep under the search control.
-            drawMarquee(graphics, track, progressX, this.bottomPanelTop + 17, progressWidth, MUTED);
+            drawMarquee(graphics, track, progressX, this.bottomPanelTop + 17, progressWidth, TEXT_DESCRIPTION);
         }
     }
 
@@ -1251,22 +1247,22 @@ public class MusicPlayerScreen extends Screen {
         Optional<PlaylistHelper.QueueSource> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) {
             return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
-                    sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"));
+                    sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
         }
         PlaylistHelper.QueueSource source = queuedSource.get();
         Identifier id = Identifier.tryParse(source.id());
         if (id != null && source.type() == MaMDataConfig.QueueSourceType.ALBUM) {
             for (Album album : Album.ALBUMS) {
-                if (album.album.equals(id)) return new SourceInfo(album.name, album.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.ALBUM), originFor(id, null));
+                if (album.album.equals(id)) return new SourceInfo(album.name, album.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.ALBUM), originFor(id, null), album.isFavourite());
             }
         }
         if (id != null && source.type() == MaMDataConfig.QueueSourceType.PLAYLIST) {
             for (Playlist playlist : Playlist.PLAYLISTS) {
-                if (playlist.playlist.equals(id)) return new SourceInfo(playlist.name, playlist.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), originFor(id, playlist));
+                if (playlist.playlist.equals(id)) return new SourceInfo(playlist.name, playlist.icon, sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
             }
         }
         return new SourceInfo(Component.literal(source.name()), MusicScreenHelper.FALLBACK_ALBUM_ICON,
-                sourceTypeLabel(source.type()), Component.translatable("screen.music_and_melody.content_origin.built_in"));
+                sourceTypeLabel(source.type()), Component.translatable("screen.music_and_melody.content_origin.built_in"), false);
     }
 
     private static Component sourceTypeLabel(MaMDataConfig.QueueSourceType type) {
@@ -1545,7 +1541,7 @@ public class MusicPlayerScreen extends Screen {
             }
             case THEMES -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
-                breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.themes"), null));
+                breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.albums"), null));
             }
             case CONFIG -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
@@ -1594,21 +1590,21 @@ public class MusicPlayerScreen extends Screen {
                 Breadcrumb removed = visible.removeFirst();
                 used -= this.font.width(removed.label()) + separatorWidth;
             }
-            graphics.text(this.font, omission, left, PANEL_TOP + 11, MUTED);
+            graphics.text(this.font, omission, left, PANEL_TOP + 11, TEXT_DESCRIPTION);
             left += omissionWidth;
         }
 
         for (int index = 0; index < visible.size(); index++) {
             Breadcrumb breadcrumb = visible.get(index);
             int labelWidth = this.font.width(breadcrumb.label());
-            int color = index == visible.size() - 1 ? 0xFFFFFFFF : ACCENT;
+            int color = index == visible.size() - 1 ? TEXT_TITLE : TEXT_HEADER;
             graphics.text(this.font, breadcrumb.label(), left, PANEL_TOP + 11, color);
             if (breadcrumb.action() != null) {
                 this.breadcrumbHits.add(new BreadcrumbHit(left, PANEL_TOP + 8, labelWidth, this.font.lineHeight + 5, breadcrumb.action()));
             }
             left += labelWidth;
             if (index < visible.size() - 1) {
-                graphics.text(this.font, separator, left, PANEL_TOP + 11, MUTED);
+                graphics.text(this.font, separator, left, PANEL_TOP + 11, TEXT_DESCRIPTION);
                 left += separatorWidth;
             }
         }
@@ -1704,7 +1700,7 @@ public class MusicPlayerScreen extends Screen {
         ALBUM("screen.music_and_melody.tag.album"),
         PLAYLIST("screen.music_and_melody.tag.playlist"),
         EVENT("screen.music_and_melody.tag.event"),
-        THEME("screen.music_and_melody.tag.theme"),
+        THEME("screen.music_and_melody.tag.album"),
         DOWNLOADED("screen.music_and_melody.tag.downloaded"),
         REMOTE("screen.music_and_melody.tag.remote"),
         NEEDS_UPDATE("screen.music_and_melody.tag.needs_update");
@@ -1781,7 +1777,7 @@ public class MusicPlayerScreen extends Screen {
         }
     }
 
-    private record SourceInfo(Component name, Identifier icon, Component typeLabel, Component originLabel) {}
+    private record SourceInfo(Component name, Identifier icon, Component typeLabel, Component originLabel, boolean favourite) {}
 
     /** The top-left card is a shortcut to the active queue, not a second track list. */
     private static final class CurrentSourceCard extends Button {
@@ -1796,9 +1792,9 @@ public class MusicPlayerScreen extends Screen {
         protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                     && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
-            int background = hovered ? ROW_HOVER : 0xFF111927;
+            int background = hovered ? BUTTON_HIGHLIGHT : SOURCE_CARD_BACKGROUND;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
-            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? ACCENT : PANEL_BORDER);
+            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHT : PANEL_OUTLINE);
 
             SourceInfo source = this.screen.currentSource();
             int iconSize = Math.min(32, this.getHeight() - 8);
@@ -1807,9 +1803,10 @@ public class MusicPlayerScreen extends Screen {
                     0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getX() + iconSize + 10;
             int textWidth = Math.max(1, this.getWidth() - iconSize - 15);
-            this.screen.drawTruncated(graphics, source.name(), textX, this.getY() + 7, textWidth, 0xFFFFFFFF);
+            this.screen.drawTruncated(graphics, source.name(), textX, this.getY() + 7, textWidth,
+                    source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
             this.screen.drawTruncated(graphics, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()),
-                    textX, this.getY() + 21, textWidth, MUTED);
+                    textX, this.getY() + 21, textWidth, TEXT_DESCRIPTION);
         }
     }
 
@@ -1955,19 +1952,20 @@ public class MusicPlayerScreen extends Screen {
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (this.heading != null) {
                 graphics.text(this.minecraft.font, this.heading.copy().withStyle(ChatFormatting.BOLD), this.getContentX() + 4,
-                        this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, ACCENT);
+                        this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, PANEL_HIGHLIGHT);
                 return;
             }
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             boolean unlocked = MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
             int numberX = this.getContentX() + TRACK_NUMBER_OFFSET;
             int textX = this.getContentX() + TRACK_TEXT_OFFSET;
             int buttons = IconButton.SIZE + (this.status == null ? 0 : IconButton.SIZE + 4);
             int textWidth = Math.max(1, this.getContentWidth() - TRACK_TEXT_OFFSET - buttons - 8);
             Component title = MusicScreenHelper.playlistName(this.minecraft, this.song);
-            int color = PlaylistHelper.isQueuePlaying(this.song) ? SUCCESS : unlocked ? 0xFFE6EBF5 : MUTED;
+            boolean enabled = this.status == null || this.status.enabled();
+            int color = PlaylistHelper.isQueuePlaying(this.song) ? TEXT_SELECTED : enabled && unlocked ? TEXT_PRIMARY : TEXT_DISABLED;
             graphics.text(this.minecraft.font, Component.literal((this.queueIndex + 1) + "."), numberX,
-                    this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, MUTED);
+                    this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_DESCRIPTION);
             this.screen.drawTrackMarquee(graphics, title, textX,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, textWidth, color);
             int addX = this.getContentRight() - IconButton.SIZE - 3;
@@ -2079,10 +2077,10 @@ public class MusicPlayerScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 2;
             int bottom = this.getY() + this.getHeight() - 2;
-            graphics.fill(x, top, x + 4, bottom, 0x88303C52);
+            graphics.fill(x, top, x + 4, bottom, BUTTON_PASSIVE);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
-            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? ACCENT : 0xFF627492;
+            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
             graphics.fill(x, thumbTop, x + 4, thumbBottom, color);
         }
     }
@@ -2137,14 +2135,25 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            int rowColor = this.screen.isDraggingQueue(this.index) ? ROW_ACTIVE : hovered ? ROW_HOVER : 0;
+            boolean dragging = this.screen.isDraggingQueue(this.index);
+            int rowColor = dragging || hovered ? BUTTON_HIGHLIGHT : 0;
             if (rowColor != 0) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), rowColor);
+            if (dragging) {
+                int left = this.getContentX();
+                int top = this.getContentY();
+                int right = this.getContentRight();
+                int bottom = this.getContentBottom();
+                graphics.fill(left, top, right, top + 1, DRAG_OUTLINE);
+                graphics.fill(left, bottom - 1, right, bottom, DRAG_OUTLINE);
+                graphics.fill(left, top, left + 1, bottom, DRAG_OUTLINE);
+                graphics.fill(right - 1, top, right, bottom, DRAG_OUTLINE);
+            }
             int numberX = this.getContentX() + TRACK_NUMBER_OFFSET;
             int textX = this.getContentX() + TRACK_TEXT_OFFSET;
             int maxWidth = this.getContentWidth() - TRACK_TEXT_OFFSET - (this.compact ? 5 : IconButton.SIZE + 8);
             Component name = MusicScreenHelper.playlistName(this.minecraft, this.song);
-            int color = PlaylistHelper.isQueuePlaying(this.song) ? SUCCESS : 0xFFE6EBF5;
-            graphics.text(this.minecraft.font, Component.literal((this.index + 1) + "."), numberX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, MUTED);
+            int color = PlaylistHelper.isQueuePlaying(this.song) ? TEXT_SELECTED : TEXT_PRIMARY;
+            graphics.text(this.minecraft.font, Component.literal((this.index + 1) + "."), numberX, this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_DESCRIPTION);
             this.screen.drawTrackMarquee(graphics, name, textX,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, Math.max(1, maxWidth), color);
             if (!this.compact) {
@@ -2200,12 +2209,12 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int iconSize = 22;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.item.icon()), this.getContentX() + 2, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             this.screen.drawTrackMarquee(graphics, this.item.name(), this.getContentX() + iconSize + 6,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2,
-                    Math.max(1, this.getContentWidth() - iconSize - 8), 0xFFE8EDF6);
+                    Math.max(1, this.getContentWidth() - iconSize - 8), TEXT_FAVOURITE);
         }
 
         @Override
@@ -2258,7 +2267,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int iconSize = 30;
             int iconY = this.getContentYMiddle() - iconSize / 2;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.item.icon()), this.getContentX() + 3, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
@@ -2266,8 +2275,8 @@ public class MusicPlayerScreen extends Screen {
             int actionWidth = IconButton.SIZE + (this.albumEnabledButton == null && this.playlistOriginIcon == null ? 0 : IconButton.SIZE + 4);
             int textWidth = this.getContentWidth() - iconSize - actionWidth - 16;
             this.screen.drawTrackMarquee(graphics, this.item.name(), textX, this.getContentYMiddle() - 10,
-                    Math.max(1, textWidth), this.item.favourite() ? 0xFFFFD878 : 0xFFFFFFFF);
-            this.screen.drawTrackMarquee(graphics, this.item.details(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), MUTED);
+                    Math.max(1, textWidth), this.item.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
+            this.screen.drawTrackMarquee(graphics, this.item.details(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             this.favouriteButton.setIconAndTooltip(IconButton.icon(this.item.favourite() ? "favourited" : "favourite"), Component.translatable(this.item.favourite()
                     ? "button.music_and_melody.unfavourite"
                     : "button.music_and_melody.favourite"));
@@ -2339,13 +2348,13 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
-            graphics.text(this.screen.font, Component.literal("\u25B8 ").append(eventFolderLabel(this.namespace)), this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, 0xFFFFFFFF);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            graphics.text(this.screen.font, Component.literal("\u25B8 ").append(eventFolderLabel(this.namespace)), this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, TEXT_TITLE);
             Component suffix = Component.translatable(this.count == 1
                     ? "screen.music_and_melody.event_count.single"
                     : "screen.music_and_melody.event_count.multiple", this.count);
             int x = this.getContentRight() - this.screen.font.width(suffix) - 3;
-            graphics.text(this.screen.font, suffix, x, this.getContentYMiddle() - this.screen.font.lineHeight / 2, MUTED);
+            graphics.text(this.screen.font, suffix, x, this.getContentYMiddle() - this.screen.font.lineHeight / 2, TEXT_DESCRIPTION);
         }
 
         @Override
@@ -2396,14 +2405,14 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int iconSize = 28;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.source.icon()), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 8;
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 17;
             this.screen.drawTrackMarquee(graphics, this.source.record.name(), textX, this.getContentYMiddle() - 10,
-                    Math.max(1, textWidth), this.source.isEnabled() ? 0xFFFFFFFF : MUTED);
-            this.screen.drawTrackMarquee(graphics, this.source.record.description(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), MUTED);
+                    Math.max(1, textWidth), this.source.isEnabled() ? TEXT_TITLE : TEXT_DESCRIPTION);
+            this.screen.drawTrackMarquee(graphics, this.source.record.description(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             this.toggleButton.setIconAndTooltip(IconButton.icon(this.source.isEnabled() ? "enabled" : "disabled"), Component.translatable(this.source.isEnabled()
                     ? "button.music_and_melody.disable"
                     : "button.music_and_melody.enable"));
@@ -2465,8 +2474,8 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
-            int color = this.addRepository ? ACCENT : 0xFFFFFFFF;
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            int color = this.addRepository ? PANEL_HIGHLIGHT : TEXT_TITLE;
             Component text = this.addRepository ? this.label : Component.literal("\u25B8 ").append(this.label);
             graphics.text(this.screen.font, text, this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, color);
         }
@@ -2523,15 +2532,15 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int iconSize = 30;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(this.pack)), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 9;
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 16;
-            int titleColor = this.screen.isRemoteDeletePending(this.pack) ? 0xFFFF8888 : 0xFFFFFFFF;
+            int titleColor = this.screen.isRemoteDeletePending(this.pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
             this.screen.drawTrackMarquee(graphics, this.pack.name(), textX, this.getContentYMiddle() - 10, Math.max(1, textWidth), titleColor);
             this.screen.drawTrackMarquee(graphics, remoteStateMessage(RemoteContentManager.state(this.pack)), textX,
-                    this.getContentYMiddle() + 2, Math.max(1, textWidth), MUTED);
+                    this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             updateAction();
             this.actionButton.setX(this.getContentRight() - IconButton.SIZE - 3);
             this.actionButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);

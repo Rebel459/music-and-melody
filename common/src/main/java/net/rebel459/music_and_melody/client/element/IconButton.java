@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.util.ScreenConstants;
 
 public class IconButton extends Button {
 
@@ -70,13 +71,18 @@ public class IconButton extends Button {
 
     @Override
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // Icons are the button surface in the compact player UI.  Retain a
-        // small hover cue, but do not put every texture inside the stock
-        // vanilla button frame.
-        if (this.selected) {
-            graphics.fill(this.getX(), this.getY(), this.getX() + SIZE, this.getY() + SIZE, 0x883E6E8E);
-        } else if (this.active && this.isHoveredOrFocused()) {
-            graphics.fill(this.getX(), this.getY(), this.getX() + SIZE, this.getY() + SIZE, 0x66344765);
+        boolean highlighted = this.active && (this.selected || this.isHoveredOrFocused());
+        Identifier texture = !this.active
+                ? ScreenConstants.BUTTON_DISABLED_TEXTURE.orElse(null)
+                : highlighted
+                  ? ScreenConstants.BUTTON_HIGHLIGHTED_TEXTURE.orElse(null)
+                  : ScreenConstants.BUTTON_TEXTURE.orElse(null);
+        if (texture != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, texture, this.getX(), this.getY(),
+                    0.0F, 0.0F, SIZE, SIZE, SIZE, SIZE);
+        } else if (highlighted) {
+            graphics.fill(this.getX(), this.getY(), this.getX() + SIZE, this.getY() + SIZE,
+                    ScreenConstants.BUTTON_HIGHLIGHT);
         }
         renderIcon(graphics, this.icon, this.getX(), this.getY());
     }

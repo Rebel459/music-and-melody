@@ -17,17 +17,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 /**
  * An in-context editor for remote catalog URLs. It deliberately renders the
  * player below the dialog so adding a repository never feels like leaving the
  * online browser.
  */
 final class RepositoryScreen extends Screen {
-
-    private static final int PANEL_BACKGROUND = 0xFF151C2A;
-    private static final int PANEL_BORDER = 0xFF78A6FF;
-    private static final int ROW_HOVER = 0xAA344765;
-    private static final int MUTED = 0xFF9DA9BF;
 
     private final MusicPlayerScreen parent;
     private RepositoryList list;
@@ -78,15 +75,15 @@ final class RepositoryScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.width, this.height, 0x52000000);
-        graphics.fill(x, y, x + width, y + height, PANEL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
-        graphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.repositories.title"), x + 10, y + 14, 0xFFFFFFFF);
+        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
+        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.repositories.title"), x + 10, y + 14, TEXT_TITLE);
         if (!this.feedback.getString().isEmpty()) {
-            graphics.text(this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? 0xFFFF8B8B : 0xFF9ED9A0);
+            graphics.text(this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? TEXT_PENDING_DELETION : TEXT_SELECTED);
         }
     }
 
@@ -257,11 +254,11 @@ final class RepositoryScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int textWidth = Math.max(1, this.getContentWidth() - IconButton.SIZE - 10);
             String shown = tail(this.minecraft, this.repository, textWidth);
             graphics.text(this.minecraft.font, Component.literal(shown), this.getContentX() + 3,
-                    this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, 0xFFE6EBF5);
+                    this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_PRIMARY);
             this.removeButton.setX(this.getContentRight() - IconButton.SIZE - 3);
             this.removeButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
             this.removeButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
