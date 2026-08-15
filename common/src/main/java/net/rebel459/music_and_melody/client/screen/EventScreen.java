@@ -50,6 +50,10 @@ public class EventScreen extends Screen {
     private static final int PANEL_GAP = 7;
     private static final int PANEL_TOP = OUTER_MARGIN;
     private static final int PANEL_BOTTOM_MARGIN = 10;
+    private static final int REFERENCE_WORKSPACE_WIDTH = 620;
+    private static final int MIN_LEFT_WIDTH = 112;
+    private static final int MIN_MIDDLE_WIDTH = 180;
+    private static final int MIN_RIGHT_WIDTH = 124;
     /** Matches the shared workspace footer baseline while fitting one single-line and one two-line field. */
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
 
@@ -85,6 +89,8 @@ public class EventScreen extends Screen {
     private boolean closeToSources;
     private Screen sourceBrowserParent;
     private Identifier activeSourceId;
+    private int layoutWidth;
+    private int layoutHeight;
 
     public EventScreen(Screen parent) {
         super(TITLE);
@@ -106,6 +112,7 @@ public class EventScreen extends Screen {
 
     @Override
     protected void init() {
+        calculateLayoutSize();
         if (this.openSourcesOnInit) {
             this.openSourcesOnInit = false;
             this.minecraft.gui.setScreen(new EventBrowserScreen(this, this.parent));
@@ -192,28 +199,90 @@ public class EventScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        graphics.pose().popMatrix();
         refreshEditorState();
     }
 
+    private void calculateLayoutSize() {
+        this.layoutWidth = Math.max(1, Math.round(this.width / MaMDataConfig.get().gui_multiplier));
+        this.layoutHeight = Math.max(1, Math.round(this.height / MaMDataConfig.get().gui_multiplier));
+    }
+
+    @Override
+    protected void repositionElements() {
+        calculateLayoutSize();
+        this.rebuildWidgets();
+    }
+
+    private int toLayoutMouse(double mouse) {
+        return Math.round((float) (mouse / MaMDataConfig.get().gui_multiplier));
+    }
+
+    private MouseButtonEvent toLayoutMouse(MouseButtonEvent event) {
+        return new MouseButtonEvent(event.x() / MaMDataConfig.get().gui_multiplier, event.y() / MaMDataConfig.get().gui_multiplier, event.buttonInfo());
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return super.mouseClicked(toLayoutMouse(event), doubleClick);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        return super.mouseDragged(toLayoutMouse(event), dragX / MaMDataConfig.get().gui_multiplier, dragY / MaMDataConfig.get().gui_multiplier);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return super.mouseReleased(toLayoutMouse(event));
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        super.mouseMoved(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier, scrollX, scrollY);
+    }
+
     private EditorLayout editorLayout() {
-        int panelBottom = this.height - PANEL_BOTTOM_MARGIN;
+        int panelBottom = this.layoutHeight - PANEL_BOTTOM_MARGIN;
         int bottomPanelTop = panelBottom - EDITOR_BOTTOM_HEIGHT;
-        int usableWidth = this.width - OUTER_MARGIN * 2 - PANEL_GAP * 2;
-        // Keep the editor's three columns aligned with the main music
-        // workspace, so swapping between them does not make the shell jump.
-        int leftWidth = Math.max(132, Math.min(210, (int) (this.width * 0.23F)));
-        int rightWidth = Math.max(144, Math.min(214, (int) (this.width * 0.20F)));
-        int middleWidth = usableWidth - leftWidth - rightWidth;
-        if (middleWidth < 180) {
-            int shortfall = 180 - middleWidth;
-            int fromLeft = Math.min(shortfall / 2, Math.max(0, leftWidth - 112));
-            int fromRight = Math.min(shortfall - fromLeft, Math.max(0, rightWidth - 124));
-            leftWidth -= fromLeft;
-            rightWidth -= fromRight;
+        int workspaceWidth = Math.max(3, this.layoutWidth - OUTER_MARGIN * 2);
+        int workspaceX = (this.layoutWidth - workspaceWidth) / 2;
+        int usableWidth = Math.max(3, workspaceWidth - PANEL_GAP * 2);
+        int preferredMinimum = MIN_LEFT_WIDTH + MIN_MIDDLE_WIDTH + MIN_RIGHT_WIDTH;
+        int leftWidth;
+        int middleWidth;
+        int rightWidth;
+        if (usableWidth < preferredMinimum) {
+            leftWidth = Math.max(1, Math.round(usableWidth * (MIN_LEFT_WIDTH / (float) preferredMinimum)));
+            rightWidth = Math.max(1, Math.round(usableWidth * (MIN_RIGHT_WIDTH / (float) preferredMinimum)));
+            middleWidth = Math.max(1, usableWidth - leftWidth - rightWidth);
+        } else if (workspaceWidth <= REFERENCE_WORKSPACE_WIDTH) {
+            int viewportEquivalentWidth = workspaceWidth + OUTER_MARGIN * 2;
+            leftWidth = Math.max(132, Math.min(210, (int) (viewportEquivalentWidth * 0.23F)));
+            rightWidth = Math.max(144, Math.min(214, (int) (viewportEquivalentWidth * 0.20F)));
+            middleWidth = usableWidth - leftWidth - rightWidth;
+            if (middleWidth < MIN_MIDDLE_WIDTH) {
+                int shortfall = MIN_MIDDLE_WIDTH - middleWidth;
+                int fromLeft = Math.min(shortfall / 2, Math.max(0, leftWidth - MIN_LEFT_WIDTH));
+                int fromRight = Math.min(shortfall - fromLeft, Math.max(0, rightWidth - MIN_RIGHT_WIDTH));
+                leftWidth -= fromLeft;
+                rightWidth -= fromRight;
+                middleWidth = usableWidth - leftWidth - rightWidth;
+            }
+        } else {
+            leftWidth = Math.round(workspaceWidth * (147.0F / REFERENCE_WORKSPACE_WIDTH));
+            rightWidth = Math.round(workspaceWidth * (144.0F / REFERENCE_WORKSPACE_WIDTH));
             middleWidth = usableWidth - leftWidth - rightWidth;
         }
-        int leftX = OUTER_MARGIN;
+        int leftX = workspaceX;
         int middleX = leftX + leftWidth + PANEL_GAP;
         int rightX = middleX + middleWidth + PANEL_GAP;
         return new EditorLayout(leftX, leftWidth, middleX, middleWidth, rightX, rightWidth, panelBottom, bottomPanelTop);
@@ -221,7 +290,7 @@ public class EventScreen extends Screen {
 
     private void renderEditorShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         EditorLayout layout = editorLayout();
-        graphics.fill(0, 0, this.width, this.height, SCREEN_BACKGROUND);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, SCREEN_BACKGROUND);
         drawPanel(graphics, layout.leftX, PANEL_TOP, layout.leftWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, layout.middleX, PANEL_TOP, layout.middleWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, layout.leftX, layout.bottomPanelTop, layout.bottomRight() - layout.leftX, layout.panelBottom - layout.bottomPanelTop);

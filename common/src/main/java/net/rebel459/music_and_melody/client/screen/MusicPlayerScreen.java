@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -73,9 +74,16 @@ public class MusicPlayerScreen extends Screen {
     private static final int PANEL_TOP = OUTER_MARGIN;
     private static final int PANEL_BOTTOM_MARGIN = 10;
     private static final int BOTTOM_PANEL_HEIGHT = 56;
+    private static final int REFERENCE_WORKSPACE_WIDTH = 620;
+    private static final int MIN_LEFT_WIDTH = 112;
+    private static final int MIN_MIDDLE_WIDTH = 180;
+    private static final int MIN_RIGHT_WIDTH = 124;
     private static final int TRACK_ROW_HEIGHT = 24;
     private static final int TRACK_NUMBER_OFFSET = 15;
     private static final int TRACK_TEXT_OFFSET = 32;
+    private static final int HOME_BUTTON_COUNT = 6;
+    private static final int HOME_BUTTON_STEP = 29;
+    private static final int HOME_MENU_HEIGHT = 22 + (HOME_BUTTON_COUNT - 1) * HOME_BUTTON_STEP;
 
     private final Screen parent;
     private Page page;
@@ -89,6 +97,8 @@ public class MusicPlayerScreen extends Screen {
     private int panelBottom;
     private int contentBottom;
     private int bottomPanelTop;
+    private int layoutWidth;
+    private int layoutHeight;
 
     private CurrentSourceCard currentSourceCard;
     private WorkspaceButton customPlaylistButton;
@@ -100,6 +110,7 @@ public class MusicPlayerScreen extends Screen {
     private EventSourceList eventSourceList;
     private OnlineCatalogList onlineCatalogList;
     private OnlinePackList onlinePackList;
+    private TagFilterList<?> tagFilterList;
 
     private IconButton searchButton;
     private EditBox searchField;
@@ -164,6 +175,7 @@ public class MusicPlayerScreen extends Screen {
         calculateLayout();
         MusicDiscHelper.requestStats(this.minecraft);
         RemoteContentManager.refreshIfNeeded();
+        this.tagFilterList = null;
 
         // Rendered first, before every list and widget added below.
         this.addRenderableOnly(this::renderShell);
@@ -175,13 +187,21 @@ public class MusicPlayerScreen extends Screen {
     @Override
     protected void rebuildWidgets() {
         double favouriteScroll = this.favouriteList == null ? 0.0D : this.favouriteList.scrollAmount();
+        double tagFilterScroll = this.tagFilterList == null ? 0.0D : this.tagFilterList.scrollAmount();
         Page pageBeforeRebuild = this.page;
         double pageScroll = currentPageScrollAmount();
 
         super.rebuildWidgets();
 
         if (this.favouriteList != null) this.favouriteList.setScrollAmount(favouriteScroll);
+        if (this.tagFilterList != null) this.tagFilterList.setScrollAmount(tagFilterScroll);
         if (this.page == pageBeforeRebuild) restoreCurrentPageScroll(pageScroll);
+    }
+
+    @Override
+    protected void repositionElements() {
+        calculateLayout();
+        rebuildWidgets();
     }
 
     private double currentPageScrollAmount() {
@@ -226,24 +246,46 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void calculateLayout() {
-        this.panelBottom = this.height - PANEL_BOTTOM_MARGIN;
+        this.layoutWidth = Math.max(1, Math.round(this.width / MaMDataConfig.get().gui_multiplier));
+        this.layoutHeight = Math.max(1, Math.round(this.height / MaMDataConfig.get().gui_multiplier));
+        this.panelBottom = this.layoutHeight - PANEL_BOTTOM_MARGIN;
         this.bottomPanelTop = this.panelBottom - BOTTOM_PANEL_HEIGHT;
         this.contentBottom = this.bottomPanelTop - PANEL_GAP;
 
-        int usableWidth = this.width - OUTER_MARGIN * 2 - PANEL_GAP * 2;
-        this.leftWidth = clamp((int) (this.width * 0.23F), 132, 210);
-        this.rightWidth = clamp((int) (this.width * 0.20F), 144, 214);
-        this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
-        if (this.middleWidth < 180) {
-            int shortfall = 180 - this.middleWidth;
-            int fromLeft = Math.min(shortfall / 2, Math.max(0, this.leftWidth - 112));
-            int fromRight = Math.min(shortfall - fromLeft, Math.max(0, this.rightWidth - 124));
-            this.leftWidth -= fromLeft;
-            this.rightWidth -= fromRight;
+        int workspaceWidth = Math.max(3, this.layoutWidth - OUTER_MARGIN * 2);
+        int workspaceX = (this.layoutWidth - workspaceWidth) / 2;
+        int usableWidth = Math.max(3, workspaceWidth - PANEL_GAP * 2);
+        int preferredMinimum = MIN_LEFT_WIDTH + MIN_MIDDLE_WIDTH + MIN_RIGHT_WIDTH;
+
+        if (usableWidth < preferredMinimum) {
+            // At large GUI scales, keep all three panels inside the vanilla
+            // logical viewport and reduce them proportionally.
+            this.leftWidth = Math.max(1, Math.round(usableWidth * (MIN_LEFT_WIDTH / (float) preferredMinimum)));
+            this.rightWidth = Math.max(1, Math.round(usableWidth * (MIN_RIGHT_WIDTH / (float) preferredMinimum)));
+            this.middleWidth = Math.max(1, usableWidth - this.leftWidth - this.rightWidth);
+        } else if (workspaceWidth <= REFERENCE_WORKSPACE_WIDTH) {
+            int viewportEquivalentWidth = workspaceWidth + OUTER_MARGIN * 2;
+            this.leftWidth = clamp((int) (viewportEquivalentWidth * 0.23F), 132, 210);
+            this.rightWidth = clamp((int) (viewportEquivalentWidth * 0.20F), 144, 214);
+            this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
+            if (this.middleWidth < MIN_MIDDLE_WIDTH) {
+                int shortfall = MIN_MIDDLE_WIDTH - this.middleWidth;
+                int fromLeft = Math.min(shortfall / 2, Math.max(0, this.leftWidth - MIN_LEFT_WIDTH));
+                int fromRight = Math.min(shortfall - fromLeft, Math.max(0, this.rightWidth - MIN_RIGHT_WIDTH));
+                this.leftWidth -= fromLeft;
+                this.rightWidth -= fromRight;
+                this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
+            }
+        } else {
+            // Below the scale-7 reference, vanilla exposes a wider logical
+            // viewport. Grow the workspace and its columns together instead
+            // of leaving a fixed-width island in the middle of the screen.
+            this.leftWidth = Math.round(workspaceWidth * (147.0F / REFERENCE_WORKSPACE_WIDTH));
+            this.rightWidth = Math.round(workspaceWidth * (144.0F / REFERENCE_WORKSPACE_WIDTH));
             this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
         }
 
-        this.leftX = OUTER_MARGIN;
+        this.leftX = workspaceX;
         this.middleX = this.leftX + this.leftWidth + PANEL_GAP;
         this.rightX = this.middleX + this.middleWidth + PANEL_GAP;
     }
@@ -397,14 +439,21 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildHomePage() {
+        int listTop = PANEL_TOP + 58;
+        int listBottom = this.contentBottom - 6;
+        if (listBottom - listTop < HOME_MENU_HEIGHT) {
+            this.addRenderableWidget(new HomeMenuList(this, this.minecraft, this.middleX, this.middleWidth, listTop, listBottom));
+            return;
+        }
         int buttonWidth = mainMenuButtonWidth();
         int x = this.middleX + this.middleWidth / 2 - buttonWidth / 2;
-        int y = PANEL_TOP + Math.max(58, (this.contentBottom - PANEL_TOP - 138) / 2);
+        int y = PANEL_TOP + Math.max(58, (this.contentBottom - PANEL_TOP - HOME_MENU_HEIGHT) / 2);
         addHomeButton(Component.translatable("screen.music_and_melody.albums"), x, y, buttonWidth, () -> setPage(Page.LIBRARY));
-        addHomeButton(Component.translatable("button.music_and_melody.events"), x, y + 29, buttonWidth, () -> setPage(Page.EVENTS));
-        addHomeButton(Component.translatable("screen.music_and_melody.themes"), x, y + 58, buttonWidth, () -> setPage(Page.THEMES));
-        addHomeButton(Component.translatable("screen.music_and_melody.online_browser"), x, y + 87, buttonWidth, () -> setPage(Page.ONLINE));
-        addHomeButton(Component.translatable("screen.music_and_melody.config"), x, y + 116, buttonWidth, () -> setPage(Page.CONFIG));
+        addHomeButton(Component.translatable("button.music_and_melody.events"), x, y + HOME_BUTTON_STEP, buttonWidth, () -> setPage(Page.EVENTS));
+        addHomeButton(Component.translatable("screen.music_and_melody.themes"), x, y + HOME_BUTTON_STEP * 2, buttonWidth, () -> setPage(Page.THEMES));
+        addHomeButton(Component.translatable("screen.music_and_melody.online_browser"), x, y + HOME_BUTTON_STEP * 3, buttonWidth, () -> setPage(Page.ONLINE));
+        addHomeButton(Component.translatable("screen.music_and_melody.config"), x, y + HOME_BUTTON_STEP * 4, buttonWidth, () -> setPage(Page.CONFIG));
+        addHomeButton(CommonComponents.GUI_DONE, x, y + HOME_BUTTON_STEP * 5, buttonWidth, this::onClose);
     }
 
     private void buildThemesPage() {
@@ -425,7 +474,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private int mainMenuButtonWidth() {
-        return Math.min(230, this.middleWidth - 44);
+        return Math.max(1, Math.min(230, this.middleWidth - 44));
     }
 
     private void addHomeButton(Component label, int x, int y, int width, Runnable action) {
@@ -473,7 +522,15 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private <T extends Enum<T> & Tag> void buildTagButtons(T[] values, Set<T> selected, java.util.function.Consumer<T> onToggle) {
-        buildTagButtons(values, selected, onToggle, PANEL_TOP + 38);
+        int top = PANEL_TOP + 38;
+        int bottom = tagFilterBottom();
+        int availableHeight = Math.max(0, bottom - top);
+        if (values.length * 24 > availableHeight) {
+            this.tagFilterList = this.addRenderableWidget(new TagFilterList<>(this, this.minecraft, this.rightX, this.rightWidth,
+                    top, Math.max(top + 24, bottom), values, selected, onToggle));
+            return;
+        }
+        buildTagButtons(values, selected, onToggle, top);
     }
 
     private <T extends Enum<T> & Tag> void buildTagButtons(T[] values, Set<T> selected, java.util.function.Consumer<T> onToggle, int y) {
@@ -485,6 +542,14 @@ public class MusicPlayerScreen extends Screen {
                     }));
             y += 24;
         }
+    }
+
+    private int tagFilterBottom() {
+        return switch (this.page) {
+            case EVENTS -> this.panelBottom - 34;
+            case ONLINE -> this.panelBottom - 8;
+            default -> this.panelBottom - 8;
+        };
     }
 
     private void toggleLibraryTag(LibraryTag tag) {
@@ -504,7 +569,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        graphics.fill(0, 0, this.width, this.height, SCREEN_BACKGROUND);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, SCREEN_BACKGROUND);
         drawPanel(graphics, this.leftX, PANEL_TOP, this.leftWidth, this.panelBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, PANEL_TOP, this.middleWidth, this.contentBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, this.bottomPanelTop, this.middleWidth, this.panelBottom - this.bottomPanelTop);
@@ -590,7 +655,7 @@ public class MusicPlayerScreen extends Screen {
 
     private void renderSourceCard(GuiGraphicsExtractor graphics, SourceInfo source) {
         int cardY = PANEL_TOP + 10;
-        int cardSize = Math.min(this.rightWidth - 16, 112);
+        int cardSize = sourceCardSize();
         int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
         graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, SOURCE_CARD_BACKGROUND);
         Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
@@ -714,7 +779,18 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         updateDynamicControls();
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        graphics.pose().popMatrix();
+    }
+
+    private int toLayoutMouse(double mouse) {
+        return Math.round((float) (mouse / MaMDataConfig.get().gui_multiplier));
+    }
+
+    private MouseButtonEvent toLayoutMouse(MouseButtonEvent event) {
+        return new MouseButtonEvent(event.x() / MaMDataConfig.get().gui_multiplier, event.y() / MaMDataConfig.get().gui_multiplier, event.buttonInfo());
     }
 
     private void updateDynamicControls() {
@@ -795,6 +871,7 @@ public class MusicPlayerScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        event = toLayoutMouse(event);
         // The expanded search field intentionally covers the seek strip. It
         // must receive the click first, otherwise the concealed seek target
         // changes playback position beneath an active text field.
@@ -823,6 +900,9 @@ public class MusicPlayerScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        event = toLayoutMouse(event);
+        dragX /= MaMDataConfig.get().gui_multiplier;
+        dragY /= MaMDataConfig.get().gui_multiplier;
         if (this.draggingProgress) {
             setSeekPreviewFromX(event.x());
             return true;
@@ -836,6 +916,7 @@ public class MusicPlayerScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        event = toLayoutMouse(event);
         if (this.draggingProgress) {
             this.draggingProgress = false;
             PlaylistHelper.seekCurrentSong(this.seekPreviewMillis);
@@ -856,6 +937,16 @@ public class MusicPlayerScreen extends Screen {
             return true;
         }
         return super.mouseReleased(event);
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        super.mouseMoved(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier, scrollX, scrollY);
     }
 
     private boolean isInVolumeSlider(double mouseX, double mouseY) {
@@ -908,12 +999,17 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private int volumeSliderTop() {
-        int cardSize = Math.min(this.rightWidth - 16, 112);
-        return PANEL_TOP + 10 + cardSize + 22;
+        return PANEL_TOP + 10 + sourceCardSize() + 22;
     }
 
     private int volumeSliderBottom() {
-        return Math.max(volumeSliderTop() + 40, musicToggleY() - 14);
+        return Math.max(volumeSliderTop() + 1, musicToggleY() - 14);
+    }
+
+    private int sourceCardSize() {
+        int widthLimit = this.rightWidth - 16;
+        int heightLimit = musicToggleY() - PANEL_TOP - 86;
+        return Math.max(24, Math.min(112, Math.min(widthLimit, heightLimit)));
     }
 
     void startQueueDrag(QueueList list, int index) {
@@ -1042,13 +1138,23 @@ public class MusicPlayerScreen extends Screen {
         if (this.viewedContent == null) return;
         List<SafeIdentifier> songs = this.viewedContent.queueSongs(this.minecraft);
         if (songs.isEmpty()) return;
-        loadViewedContentNow(songs);
+
+        if (hasUnsavedCustomPlaylist()) {
+            requestDiscardCustomPlaylist(Component.translatable("button.music_and_melody.load"),
+                    () -> loadViewedContentNow(songs));
+        } else if (!PlaylistHelper.isQueueCustom() && PlaylistHelper.hasQueuedSongs()) {
+            requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"),
+                    () -> loadViewedContentNow(songs));
+        } else {
+            loadViewedContentNow(songs);
+        }
     }
 
     private void loadViewedContentNow(List<SafeIdentifier> songs) {
         if (this.viewedContent == null || songs.isEmpty()) return;
-        PlaylistHelper.loadQueueSource(songs, this.viewedContent.type(), this.viewedContent.id().toString(), this.viewedContent.name().getString());
-        this.page = Page.DETAILS;
+        if (!PlaylistHelper.loadCustomQueue(songs)) return;
+        this.viewedContent = null;
+        this.page = Page.NOW_PLAYING;
         this.searching = false;
         this.search = "";
         this.rebuildWidgets();
@@ -2129,6 +2235,86 @@ public class MusicPlayerScreen extends Screen {
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
             graphics.fill(x, thumbTop, x + 4, thumbBottom, color);
+        }
+    }
+
+    private static final class HomeMenuList extends PanelList<HomeMenuEntry> {
+        HomeMenuList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
+            super(screen, minecraft, panelX, panelWidth, top, Math.max(top + 29, bottom), 29);
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.albums"), () -> screen.setPage(Page.LIBRARY)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("button.music_and_melody.events"), () -> screen.setPage(Page.EVENTS)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.themes"), () -> screen.setPage(Page.THEMES)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.online_browser"), () -> screen.setPage(Page.ONLINE)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.config"), () -> screen.setPage(Page.CONFIG)));
+            this.addEntry(new HomeMenuEntry(screen, CommonComponents.GUI_DONE, screen::onClose));
+        }
+    }
+
+    private static final class HomeMenuEntry extends ObjectSelectionList.Entry<HomeMenuEntry> {
+        private final MusicPlayerScreen screen;
+        private final WorkspaceButton button;
+
+        HomeMenuEntry(MusicPlayerScreen screen, Component label, Runnable action) {
+            this.screen = screen;
+            this.button = new WorkspaceButton(0, 0, 1, 22, label, false, ignored -> action.run());
+        }
+
+        @Override
+        public Component getNarration() {
+            return this.button.getMessage();
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int width = this.screen.mainMenuButtonWidth();
+            this.button.setX(this.screen.middleX + (this.screen.middleWidth - width) / 2);
+            this.button.setY(this.getContentY() + 3);
+            this.button.setWidth(width);
+            this.button.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.button.mouseClicked(event, doubleClick);
+        }
+    }
+
+    private static final class TagFilterList<T extends Enum<T> & Tag> extends PanelList<TagFilterEntry<T>> {
+        TagFilterList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom,
+                      T[] values, Set<T> selected, java.util.function.Consumer<T> onToggle) {
+            super(screen, minecraft, panelX, panelWidth, top, bottom, 24);
+            for (T tag : values) {
+                this.addEntry(new TagFilterEntry<>(screen, tag, selected, onToggle));
+            }
+        }
+    }
+
+    private static final class TagFilterEntry<T extends Enum<T> & Tag> extends ObjectSelectionList.Entry<TagFilterEntry<T>> {
+        private final WorkspaceButton button;
+
+        TagFilterEntry(MusicPlayerScreen screen, T tag, Set<T> selected, java.util.function.Consumer<T> onToggle) {
+            this.button = new WorkspaceButton(0, 0, 1, 20, tag.label(), selected.contains(tag), ignored -> {
+                onToggle.accept(tag);
+                screen.rebuildWidgets();
+            });
+        }
+
+        @Override
+        public Component getNarration() {
+            return this.button.getMessage();
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            this.button.setX(this.getContentX());
+            this.button.setY(this.getContentY());
+            this.button.setWidth(this.getContentWidth());
+            this.button.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            return this.button.mouseClicked(event, doubleClick);
         }
     }
 

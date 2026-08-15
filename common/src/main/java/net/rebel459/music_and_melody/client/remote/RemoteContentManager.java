@@ -37,6 +37,8 @@ import java.util.zip.ZipInputStream;
 public final class RemoteContentManager {
 
     public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
+    public static String OFFICIAL_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/official-catalogs.json";
+    public static String COMMUNITY_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/community-catalogs.json";
 
     public enum State {
         REMOTE,
@@ -75,7 +77,7 @@ public final class RemoteContentManager {
 
     public static synchronized void refresh() {
         loaded = true;
-        List<String> repositories = List.copyOf(MaMClientConfig.get().remote_repositories);
+        List<String> repositories = List.copyOf(MaMDataConfig.get().remote.added_repositories);
         if (!MaMClientConfig.get().remote_downloads || repositories.isEmpty()) {
             PACKS.clear();
             refreshTask = null;

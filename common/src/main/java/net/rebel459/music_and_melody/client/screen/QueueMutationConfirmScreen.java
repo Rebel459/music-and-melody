@@ -7,6 +7,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
 
@@ -16,10 +17,14 @@ import java.util.List;
 final class QueueMutationConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 110;
+    private static final int DIALOG_MAX_WIDTH = 310;
+    private static final int DIALOG_SIDE_SPACE = 32;
     private final MusicPlayerScreen parent;
     private final Component message;
     private final Component confirmLabel;
     private final Runnable confirmedAction;
+    private int layoutWidth;
+    private int layoutHeight;
 
     QueueMutationConfirmScreen(MusicPlayerScreen parent, Component message, Runnable confirmedAction) {
         this(parent, Component.translatable("screen.music_and_melody.queue_mutation"), message,
@@ -36,6 +41,7 @@ final class QueueMutationConfirmScreen extends Screen {
 
     @Override
     protected void init() {
+        calculateLayoutSize();
         this.addRenderableOnly(this::renderPopup);
         int width = dialogWidth();
         int x = dialogX();
@@ -50,12 +56,26 @@ final class QueueMutationConfirmScreen extends Screen {
                 button -> this.onClose()));
     }
 
+    private void calculateLayoutSize() {
+        this.layoutWidth = Math.max(1, Math.round(this.width / MaMDataConfig.get().gui_multiplier));
+        this.layoutHeight = Math.max(1, Math.round(this.height / MaMDataConfig.get().gui_multiplier));
+    }
+
+    @Override
+    protected void repositionElements() {
+        calculateLayoutSize();
+        this.rebuildWidgets();
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         // Keep the workspace visible beneath the confirmation instead of
         // replacing it with the normal full-screen screen background.
         this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        graphics.pose().popMatrix();
     }
 
     @Override
@@ -69,7 +89,7 @@ final class QueueMutationConfirmScreen extends Screen {
         int width = dialogWidth();
         int x = dialogX();
         int y = dialogY();
-        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
         graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, MODAL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
         graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, PANEL_OUTLINE);
@@ -84,6 +104,7 @@ final class QueueMutationConfirmScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        event = toLayoutMouse(event);
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseClicked(event, doubleClick);
         return true;
@@ -91,6 +112,9 @@ final class QueueMutationConfirmScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        event = toLayoutMouse(event);
+        dragX /= MaMDataConfig.get().gui_multiplier;
+        dragY /= MaMDataConfig.get().gui_multiplier;
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseDragged(event, dragX, dragY);
         return true;
@@ -98,9 +122,18 @@ final class QueueMutationConfirmScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        event = toLayoutMouse(event);
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseReleased(event);
         return true;
+    }
+
+    private int toLayoutMouse(double mouse) {
+        return Math.round((float) (mouse / MaMDataConfig.get().gui_multiplier));
+    }
+
+    private MouseButtonEvent toLayoutMouse(MouseButtonEvent event) {
+        return new MouseButtonEvent(event.x() / MaMDataConfig.get().gui_multiplier, event.y() / MaMDataConfig.get().gui_multiplier, event.buttonInfo());
     }
 
     private boolean insideDialog(double mouseX, double mouseY) {
@@ -111,17 +144,17 @@ final class QueueMutationConfirmScreen extends Screen {
     }
 
     private int dialogWidth() {
-        return Math.min(310, this.width - 32);
+        int width = Math.min(DIALOG_MAX_WIDTH, Math.max(DIALOG_SIDE_SPACE, this.layoutWidth - DIALOG_SIDE_SPACE));
+        if ((width & 1) != (this.layoutWidth & 1) && width > DIALOG_SIDE_SPACE) width--;
+        return width;
     }
 
     private int dialogX() {
-        // Round the combined side space so a fixed-width dialog does not sit
-        // one pixel to the left on odd scaled GUI widths.
-        return Math.round((this.width - dialogWidth()) / 2.0F);
+        return (this.layoutWidth - dialogWidth()) / 2;
     }
 
     private int dialogY() {
-        return this.height / 2 - DIALOG_HEIGHT / 2;
+        return this.layoutHeight / 2 - DIALOG_HEIGHT / 2;
     }
 
     @Override
