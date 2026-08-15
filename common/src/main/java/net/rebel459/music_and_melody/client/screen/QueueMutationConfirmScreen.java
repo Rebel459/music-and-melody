@@ -113,7 +113,9 @@ final class QueueMutationConfirmScreen extends Screen {
     }
 
     private int dialogX() {
-        return this.width / 2 - dialogWidth() / 2;
+        // Round the combined side space so a fixed-width dialog does not sit
+        // one pixel to the left on odd scaled GUI widths.
+        return Math.round((this.width - dialogWidth()) / 2.0F);
     }
 
     private int dialogY() {

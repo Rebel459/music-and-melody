@@ -24,7 +24,7 @@ public final class WorkspaceButton extends Button {
     }
 
     @Override
-    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+    public    void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                 && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
         int background = !this.active ? 0x66303A4D : this.selected ? 0xCC365985 : hovered ? ROW_HOVER : 0x66303A4D;
