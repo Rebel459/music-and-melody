@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -12,7 +11,7 @@ import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 import java.util.List;
 

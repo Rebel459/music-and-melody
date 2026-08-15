@@ -22,6 +22,7 @@ import java.util.*;
 public final class PlaylistHelper {
     public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
     public static final List<SafeIdentifier> QUEUED_SONGS = new ArrayList<>();
+    private static final List<SafeIdentifier> CUSTOM_PLAYLIST_SONGS = new ArrayList<>();
     public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
@@ -122,11 +123,7 @@ public final class PlaylistHelper {
         return !QUEUED_SONGS.isEmpty();
     }
 
-    /**
-     * Opens the editable Custom Playlist from an explicit song list.  Unlike
-     * {@link #loadQueueSource(Collection, MaMDataConfig.QueueSourceType, String, String)},
-     * this intentionally has no album or playlist source identity.
-     */
+    /** Loads a snapshot of the Custom Playlist as the active playback queue. */
     public static boolean loadCustomQueue(Collection<SafeIdentifier> songs) {
         ensureLoaded();
         if (songs == null) return false;
@@ -163,6 +160,83 @@ public final class PlaylistHelper {
     public static List<SafeIdentifier> queuedSongs() {
         ensureLoaded();
         return List.copyOf(QUEUED_SONGS);
+    }
+
+    public static List<SafeIdentifier> customPlaylistSongs() {
+        ensureLoaded();
+        return List.copyOf(CUSTOM_PLAYLIST_SONGS);
+    }
+
+    public static boolean hasCustomPlaylistSongs() {
+        ensureLoaded();
+        return !CUSTOM_PLAYLIST_SONGS.isEmpty();
+    }
+
+    public static boolean isInCustomPlaylist(SafeIdentifier song) {
+        ensureLoaded();
+        return CUSTOM_PLAYLIST_SONGS.contains(song);
+    }
+
+    public static void addToCustomPlaylist(SafeIdentifier song) {
+        ensureLoaded();
+        if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
+            CUSTOM_PLAYLIST_SONGS.add(song);
+            save();
+        }
+    }
+
+    public static void addAllToCustomPlaylist(Collection<SafeIdentifier> songs) {
+        ensureLoaded();
+        if (songs == null) return;
+        boolean changed = false;
+        for (SafeIdentifier song : songs) {
+            if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
+                CUSTOM_PLAYLIST_SONGS.add(song);
+                changed = true;
+            }
+        }
+        if (changed) save();
+    }
+
+    public static boolean replaceCustomPlaylist(Collection<SafeIdentifier> songs) {
+        ensureLoaded();
+        if (songs == null) return false;
+        CUSTOM_PLAYLIST_SONGS.clear();
+        for (SafeIdentifier song : songs) {
+            if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
+                CUSTOM_PLAYLIST_SONGS.add(song);
+            }
+        }
+        save();
+        return !CUSTOM_PLAYLIST_SONGS.isEmpty();
+    }
+
+    public static boolean moveCustomPlaylistSong(int fromIndex, int toIndex) {
+        ensureLoaded();
+        if (fromIndex < 0 || fromIndex >= CUSTOM_PLAYLIST_SONGS.size()
+                || toIndex < 0 || toIndex >= CUSTOM_PLAYLIST_SONGS.size()
+                || fromIndex == toIndex) {
+            return false;
+        }
+        SafeIdentifier moved = CUSTOM_PLAYLIST_SONGS.remove(fromIndex);
+        CUSTOM_PLAYLIST_SONGS.add(toIndex, moved);
+        save();
+        return true;
+    }
+
+    public static void removeCustomPlaylistSong(int index) {
+        ensureLoaded();
+        if (index >= 0 && index < CUSTOM_PLAYLIST_SONGS.size()) {
+            CUSTOM_PLAYLIST_SONGS.remove(index);
+            save();
+        }
+    }
+
+    public static void clearCustomPlaylist() {
+        ensureLoaded();
+        if (CUSTOM_PLAYLIST_SONGS.isEmpty()) return;
+        CUSTOM_PLAYLIST_SONGS.clear();
+        save();
     }
 
     public static boolean isQueueCustom() {
@@ -844,6 +918,7 @@ public final class PlaylistHelper {
         if (loaded) return;
         loaded = true;
         QUEUED_SONGS.clear();
+        CUSTOM_PLAYLIST_SONGS.clear();
         queuePaused = true;
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.playlists.loop;
@@ -852,7 +927,21 @@ public final class PlaylistHelper {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
+        boolean migrated = !config.playlists.custom_playlist_migrated;
+        if (config.playlists.custom_playlist_songs == null) {
+            config.playlists.custom_playlist_songs = new ArrayList<>();
+        }
+        if (migrated && config.playlists.custom_playlist_songs.isEmpty()
+                && config.playlists.queue_source_type == MaMDataConfig.QueueSourceType.NONE) {
+            config.playlists.custom_playlist_songs.addAll(config.playlists.queued_songs);
+        }
+        config.playlists.custom_playlist_migrated = true;
+        for (String song : config.playlists.custom_playlist_songs) {
+            SafeIdentifier id = SafeIdentifier.parse(song);
+            if (id != null && !CUSTOM_PLAYLIST_SONGS.contains(id)) CUSTOM_PLAYLIST_SONGS.add(id);
+        }
         if (shuffle) rebuildShuffleOrder(null);
+        if (migrated) save();
     }
 
     private static void save() {
@@ -860,6 +949,8 @@ public final class PlaylistHelper {
         config.playlists.loop = loop;
         config.playlists.shuffle = shuffle;
         config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.playlists.custom_playlist_songs = new ArrayList<>(CUSTOM_PLAYLIST_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.playlists.custom_playlist_migrated = true;
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 

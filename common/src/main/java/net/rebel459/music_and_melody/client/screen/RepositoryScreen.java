@@ -19,7 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 /**
  * An in-context editor for remote catalog URLs. It deliberately renders the

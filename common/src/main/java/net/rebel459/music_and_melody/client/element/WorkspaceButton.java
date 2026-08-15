@@ -6,7 +6,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.rebel459.music_and_melody.client.util.ScreenConstants;
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
 import java.util.Optional;
 
@@ -28,21 +28,21 @@ public final class WorkspaceButton extends Button {
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         boolean highlighted = this.active && (this.selected || this.isHoveredOrFocused());
         Optional<Identifier> texture = !this.active
-                ? ScreenConstants.BUTTON_DISABLED_TEXTURE
+                ? ThemeHelper.BUTTON_DISABLED_TEXTURE
                 : highlighted
-                  ? ScreenConstants.BUTTON_HIGHLIGHTED_TEXTURE
-                  : ScreenConstants.BUTTON_TEXTURE;
+                  ? ThemeHelper.BUTTON_HIGHLIGHTED_TEXTURE
+                  : ThemeHelper.BUTTON_TEXTURE;
         if (texture.isPresent()) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, texture.get(), this.getX(), this.getY(),
                     0.0F, 0.0F, this.getWidth(), this.getHeight(), this.getWidth(), this.getHeight());
         } else {
-            int background = highlighted ? ScreenConstants.BUTTON_HIGHLIGHT : ScreenConstants.BUTTON_PASSIVE;
+            int background = highlighted ? ThemeHelper.BUTTON_HIGHLIGHT : ThemeHelper.BUTTON_PASSIVE;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             if (this.selected) {
-                graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ScreenConstants.PANEL_HIGHLIGHT);
+                graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ThemeHelper.PANEL_HIGHLIGHT);
             }
         }
-        int textColor = this.active ? ScreenConstants.TEXT_PRIMARY : ScreenConstants.TEXT_DISABLED;
+        int textColor = this.active ? ThemeHelper.TEXT_PRIMARY : ThemeHelper.TEXT_DISABLED;
         graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.getWidth() / 2,
                 this.getY() + (this.getHeight() - 8) / 2, textColor);
     }

@@ -20,12 +20,11 @@ import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
-import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 public class AlbumDetailsScreen extends Screen {
 
@@ -111,7 +110,7 @@ public class AlbumDetailsScreen extends Screen {
         graphics.text(this.font, Component.literal(counts), textX, titleY + 26, TEXT_DESCRIPTION);
         List<SafeIdentifier> songs = queueSongs(this.minecraft);
         boolean hasSongs = !songs.isEmpty();
-        if (this.loadButton != null) this.loadButton.active = hasSongs && !songs.equals(PlaylistHelper.queuedSongs());
+        if (this.loadButton != null) this.loadButton.active = hasSongs && !songs.equals(PlaylistHelper.customPlaylistSongs());
         if (this.queueAllButton != null) this.queueAllButton.active = hasQueueableSongs(songs);
         updateSearchRow();
         focusSearchAfterClick();
@@ -142,18 +141,16 @@ public class AlbumDetailsScreen extends Screen {
     }
 
     private void loadAll() {
-        PlaylistHelper.clear();
-        PlaylistHelper.addAll(queueSongs(this.minecraft));
-        PlaylistHelper.setQueueSource(this.album != null ? MaMDataConfig.QueueSourceType.ALBUM : MaMDataConfig.QueueSourceType.PLAYLIST, id().toString(), this.title.getString());
+        PlaylistHelper.replaceCustomPlaylist(queueSongs(this.minecraft));
     }
 
     private void queueAll() {
-        PlaylistHelper.addAll(queueSongs(this.minecraft));
+        PlaylistHelper.addAllToCustomPlaylist(queueSongs(this.minecraft));
     }
 
     private boolean hasQueueableSongs(List<SafeIdentifier> songs) {
         for (SafeIdentifier song : songs) {
-            if (!PlaylistHelper.isQueued(song)) return true;
+            if (!PlaylistHelper.isInCustomPlaylist(song)) return true;
         }
         return false;
     }
@@ -442,7 +439,7 @@ public class AlbumDetailsScreen extends Screen {
                 ((IconButton) button).setIconAndTooltip(playIcon(playableSong), playMessage(playableSong));
             });
             this.queueButton = playableSong == null ? null : new IconButton(Component.translatable("button.music_and_melody.queue"), IconButton.icon("queue"), button -> {
-                PlaylistHelper.add(playableSong);
+                PlaylistHelper.addToCustomPlaylist(playableSong);
                 button.active = false;
             });
             this.toggleButton = album == null ? null : new IconButton(toggleMessage(album, song), toggleIcon(album, song), button -> {
@@ -471,7 +468,7 @@ public class AlbumDetailsScreen extends Screen {
                 boolean missing = hasMissingStatusIcon();
                 this.playButton.setIconAndTooltip(playIcon(this.playableSong), playMessage(this.playableSong));
                 this.playButton.active = this.playable && !missing;
-                this.queueButton.active = this.playable && !missing && !PlaylistHelper.isQueued(this.playableSong);
+                this.queueButton.active = this.playable && !missing && !PlaylistHelper.isInCustomPlaylist(this.playableSong);
                 this.playButton.setX(controlX);
                 this.playButton.setY(buttonY);
                 this.queueButton.setX(this.playButton.getX() + BUTTON_WIDTH + BUTTON_GAP);

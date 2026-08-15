@@ -1,6 +1,5 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -9,10 +8,11 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Event;
+import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 /** Creates a config-backed event without leaving the compact workspace. */
 final class CreateEventScreen extends Screen {
@@ -77,10 +77,15 @@ final class CreateEventScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
-        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
-        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
-        graphics.pose().popMatrix();
+        try {
+            graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+            super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        } finally {
+            graphics.pose().popMatrix();
+            IconButton.resetTooltipScale();
+        }
     }
 
     private void calculateLayoutSize() {

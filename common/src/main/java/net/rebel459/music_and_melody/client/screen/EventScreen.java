@@ -33,7 +33,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 public class EventScreen extends Screen {
 
@@ -199,10 +199,15 @@ public class EventScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
-        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
-        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
-        graphics.pose().popMatrix();
+        try {
+            graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+            super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        } finally {
+            graphics.pose().popMatrix();
+            IconButton.resetTooltipScale();
+        }
         refreshEditorState();
     }
 

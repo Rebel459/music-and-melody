@@ -50,7 +50,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 
-import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 /**
  * The compact, persistent music workspace.  It intentionally keeps the
@@ -166,15 +166,6 @@ public class MusicPlayerScreen extends Screen {
 
     @Override
     protected void init() {
-        // A named source is viewed through its ordinary Album/Playlist page.
-        // Only the source-less Custom Playlist owns the editable queue view.
-        if (this.page == Page.NOW_PLAYING && !PlaylistHelper.isQueueCustom()) {
-            ContentItem source = currentSourceContent();
-            if (source != null) {
-                this.viewedContent = source;
-                this.page = Page.DETAILS;
-            }
-        }
         calculateLayout();
         MusicDiscHelper.requestStats(this.minecraft);
         RemoteContentManager.refreshIfNeeded();
@@ -304,7 +295,7 @@ public class MusicPlayerScreen extends Screen {
         this.currentSourceCard.setSize(this.leftWidth - 10, 43);
         this.customPlaylistButton = this.addRenderableWidget(new WorkspaceButton(this.leftX + 5, sourceTop + 47,
                 this.leftWidth - 10, 20, Component.translatable("screen.music_and_melody.custom_playlist"), false,
-                ignored -> loadLastCustomPlaylist()));
+                ignored -> openCustomPlaylist()));
         this.favouriteList = this.addRenderableWidget(new FavouriteList(this, this.minecraft, this.leftX, this.leftWidth, favouriteTop, this.panelBottom - 5));
     }
 
@@ -579,7 +570,10 @@ public class MusicPlayerScreen extends Screen {
         drawPanel(graphics, this.middleX, this.bottomPanelTop, this.middleWidth, this.panelBottom - this.bottomPanelTop);
         drawPanel(graphics, this.rightX, PANEL_TOP, this.rightWidth, this.panelBottom - PANEL_TOP);
 
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.now_playing").withStyle(ChatFormatting.BOLD), this.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
+        MutableComponent playbackHeading = Component.translatable(PlaylistHelper.isPlaying()
+                ? "screen.music_and_melody.now_playing"
+                : "screen.music_and_melody.last_played");
+        graphics.text(this.font, playbackHeading.withStyle(ChatFormatting.BOLD), this.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
         int favouriteHeaderY = PANEL_TOP + 31 + 75;
         graphics.text(this.font, Component.translatable("screen.music_and_melody.favourites").withStyle(ChatFormatting.BOLD), this.leftX + 8, favouriteHeaderY + 3, TEXT_HEADER);
 
@@ -600,7 +594,7 @@ public class MusicPlayerScreen extends Screen {
         this.breadcrumbHits.clear();
         switch (this.page) {
             case NOW_PLAYING -> {
-                SourceInfo source = currentSource();
+                SourceInfo source = customPlaylistSource();
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
                 graphics.text(this.font, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
             }
@@ -629,7 +623,7 @@ public class MusicPlayerScreen extends Screen {
 
     private void renderRightPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) {
-            SourceInfo source = this.page == Page.NOW_PLAYING ? currentSource() : viewedContentSource();
+            SourceInfo source = this.page == Page.NOW_PLAYING ? customPlaylistSource() : viewedContentSource();
             if (source != null) {
                 renderSourceCard(graphics, source);
                 renderVolumeSlider(graphics, mouseX, mouseY);
@@ -661,7 +655,6 @@ public class MusicPlayerScreen extends Screen {
         int cardY = PANEL_TOP + 10;
         int cardSize = sourceCardSize();
         int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
-        graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, SOURCE_CARD_BACKGROUND);
         Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
         int iconSize = Math.max(24, cardSize - 24);
         int iconX = cardX + (cardSize - iconSize) / 2;
@@ -681,7 +674,8 @@ public class MusicPlayerScreen extends Screen {
         graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, PANEL_HIGHLIGHT);
         graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, TEXT_TITLE);
         if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
-            graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)), mouseX, mouseY);
+            graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)),
+                    IconButton.scaleTooltipCoordinate(mouseX), IconButton.scaleTooltipCoordinate(mouseY));
         }
     }
 
@@ -783,10 +777,15 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         updateDynamicControls();
+        IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
-        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
-        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
-        graphics.pose().popMatrix();
+        try {
+            graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+            super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        } finally {
+            graphics.pose().popMatrix();
+            IconButton.resetTooltipScale();
+        }
     }
 
     private int toLayoutMouse(double mouse) {
@@ -812,12 +811,15 @@ public class MusicPlayerScreen extends Screen {
         }
         if (this.nextButton != null) this.nextButton.active = PlaylistHelper.canSkipQueue();
         if (this.loopButton != null) this.loopButton.setIconAndTooltip(loopIcon(), loopMessage());
-        if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasQueuedSongs() && PlaylistHelper.isQueueCustom();
-        if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasQueuedSongs();
+        if (this.saveButton != null) this.saveButton.active = PlaylistHelper.hasCustomPlaylistSongs();
+        if (this.clearButton != null) this.clearButton.active = PlaylistHelper.hasCustomPlaylistSongs();
         if (this.loadButton != null || this.queueButton != null) {
-            boolean hasTracks = this.viewedContent != null && !this.viewedContent.queueSongs(this.minecraft).isEmpty();
+            List<SafeIdentifier> viewedSongs = this.viewedContent == null ? List.of() : this.viewedContent.queueSongs(this.minecraft);
+            boolean hasTracks = !viewedSongs.isEmpty();
             if (this.loadButton != null) this.loadButton.active = hasTracks;
-            if (this.queueButton != null) this.queueButton.active = hasTracks;
+            if (this.queueButton != null) {
+                this.queueButton.active = hasTracks && viewedSongs.stream().anyMatch(song -> !PlaylistHelper.isInCustomPlaylist(song));
+            }
         }
         if (this.remoteActionButton != null && this.viewedRemotePack != null) {
             this.remoteActionButton.setMessage(remoteActionMessage(this.viewedRemotePack));
@@ -974,7 +976,8 @@ public class MusicPlayerScreen extends Screen {
             this.draggingQueueIndex = -1;
             this.draggingQueueList = null;
             if (to >= 0 && to != from) {
-                requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"), () -> PlaylistHelper.move(from, to));
+                PlaylistHelper.moveCustomPlaylistSong(from, to);
+                refreshQueueLists();
             }
             return true;
         }
@@ -1069,46 +1072,25 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void playQueueTrack(int index) {
+        List<SafeIdentifier> songs = PlaylistHelper.customPlaylistSongs();
+        if (index < 0 || index >= songs.size() || !PlaylistHelper.loadCustomQueue(songs)) return;
         PlaylistHelper.playNow(index);
         refreshQueueLists();
     }
 
-    private void requestQueueMutation(Component message, Runnable mutation) {
-        if (PlaylistHelper.isQueueCustom()) {
-            mutation.run();
-            refreshAfterQueueMutation();
-            return;
-        }
-        this.minecraft.gui.setScreen(new QueueMutationConfirmScreen(this, message, () -> {
-            mutation.run();
-            refreshAfterQueueMutation();
-        }));
-    }
-
     private void requestClearQueue() {
-        if (!PlaylistHelper.hasQueuedSongs()) return;
-        if (hasUnsavedCustomPlaylist()) {
-            requestDiscardCustomPlaylist(Component.translatable("button.music_and_melody.clear"), this::clearQueueAndRefresh);
-        } else {
-            // Clearing a named source still turns it into a Custom Playlist,
-            // so retain the normal make-custom acknowledgement first.
-            requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"), PlaylistHelper::clear);
-        }
-    }
-
-    private void clearQueueAndRefresh() {
-        PlaylistHelper.clear();
-        refreshAfterQueueMutation();
+        if (!PlaylistHelper.hasCustomPlaylistSongs()) return;
+        requestDiscardCustomPlaylist(Component.translatable("button.music_and_melody.clear"), () -> {
+            PlaylistHelper.clearCustomPlaylist();
+            refreshAfterQueueMutation();
+        });
     }
 
     private boolean hasUnsavedCustomPlaylist() {
-        return PlaylistHelper.isQueueCustom() && PlaylistHelper.hasQueuedSongs();
+        return PlaylistHelper.hasCustomPlaylistSongs();
     }
 
-    /**
-     * A source-less queue is the only unsaved playlist.  Do not silently
-     * replace or empty it, regardless of which control initiated the action.
-     */
+    /** Keep the overwrite warning solely for replacing a non-empty editor list. */
     private void requestDiscardCustomPlaylist(Component confirmLabel, Runnable action) {
         if (!hasUnsavedCustomPlaylist()) {
             action.run();
@@ -1124,14 +1106,16 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void requestRemoveQueueTrack(int index) {
-        requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"), () -> PlaylistHelper.remove(index));
+        PlaylistHelper.removeCustomPlaylistSong(index);
+        refreshAfterQueueMutation();
+    }
+
+    void addTrackToCustomPlaylist(SafeIdentifier song) {
+        PlaylistHelper.addToCustomPlaylist(song);
+        refreshAfterQueueMutation();
     }
 
     private void refreshAfterQueueMutation() {
-        if (this.page == Page.DETAILS && PlaylistHelper.isQueueCustom()) {
-            this.viewedContent = null;
-            this.page = Page.NOW_PLAYING;
-        }
         refreshQueueLists();
         refreshFavouriteList();
         if (this.page == Page.NOW_PLAYING) this.rebuildWidgets();
@@ -1183,9 +1167,6 @@ public class MusicPlayerScreen extends Screen {
         if (hasUnsavedCustomPlaylist()) {
             requestDiscardCustomPlaylist(Component.translatable("button.music_and_melody.load"),
                     () -> loadViewedContentNow(songs));
-        } else if (!PlaylistHelper.isQueueCustom() && PlaylistHelper.hasQueuedSongs()) {
-            requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"),
-                    () -> loadViewedContentNow(songs));
         } else {
             loadViewedContentNow(songs);
         }
@@ -1193,36 +1174,14 @@ public class MusicPlayerScreen extends Screen {
 
     private void loadViewedContentNow(List<SafeIdentifier> songs) {
         if (this.viewedContent == null || songs.isEmpty()) return;
-        if (!PlaylistHelper.loadCustomQueue(songs)) return;
+        if (!PlaylistHelper.replaceCustomPlaylist(songs)) return;
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
         closeSearch();
         this.rebuildWidgets();
     }
 
-    private void loadLastCustomPlaylist() {
-        Playlist playlist = Playlist.PLAYLISTS.stream()
-                .filter(Playlist::isCustom)
-                .min(Comparator.<Playlist>comparingInt(value -> PlaylistHelper.recentSourceRank(MaMDataConfig.QueueSourceType.PLAYLIST, value.playlist.toString()))
-                        .thenComparing(value -> value.name.getString(), String.CASE_INSENSITIVE_ORDER))
-                .orElse(null);
-        if (playlist == null) {
-            requestEmptyCustomPlaylist();
-            return;
-        }
-        List<SafeIdentifier> songs = new ContentItem(null, playlist).queueSongs(this.minecraft);
-        // Preserve the recency ordering of saved custom playlists while the
-        // active queue itself remains the editable, source-less Custom Playlist.
-        PlaylistHelper.setQueueSource(MaMDataConfig.QueueSourceType.PLAYLIST, playlist.playlist.toString(), playlist.name.getString());
-        PlaylistHelper.loadCustomQueue(songs);
-        this.viewedContent = null;
-        this.page = Page.NOW_PLAYING;
-        closeSearch();
-        this.rebuildWidgets();
-    }
-
-    private void requestEmptyCustomPlaylist() {
-        PlaylistHelper.loadCustomQueue(List.of());
+    private void openCustomPlaylist() {
         this.viewedContent = null;
         this.page = Page.NOW_PLAYING;
         closeSearch();
@@ -1233,12 +1192,9 @@ public class MusicPlayerScreen extends Screen {
         if (this.viewedContent == null) return;
         List<SafeIdentifier> songs = this.viewedContent.queueSongs(this.minecraft);
         if (songs.isEmpty()) return;
-        if (!PlaylistHelper.hasQueuedSongs() && !PlaylistHelper.isQueueCustom()) {
-            loadViewedContent();
-            return;
-        }
-        if (songs.stream().noneMatch(song -> !PlaylistHelper.isQueued(song))) return;
-        requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"), () -> PlaylistHelper.addAll(songs));
+        if (songs.stream().noneMatch(song -> !PlaylistHelper.isInCustomPlaylist(song))) return;
+        PlaylistHelper.addAllToCustomPlaylist(songs);
+        refreshAfterQueueMutation();
     }
 
     void playContentTrack(int index) {
@@ -1567,8 +1523,14 @@ public class MusicPlayerScreen extends Screen {
         return provenanceByCatalog.entrySet().stream()
                 .map(entry -> new OnlineCatalog(entry.getKey(), entry.getKey(), entry.getValue()))
                 .filter(catalog -> matchesSearch(catalog.name(), catalog.provenance().label().getString()))
-                .sorted(Comparator.comparing(OnlineCatalog::name, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparingInt((OnlineCatalog catalog) -> catalog.provenance().ordinal())
+                        .thenComparing(OnlineCatalog::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    private static SourceInfo customPlaylistSource() {
+        return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+                sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
     }
 
     private static RemotePack.Provenance preferredProvenance(RemotePack.Provenance first, RemotePack.Provenance second) {
@@ -1714,7 +1676,7 @@ public class MusicPlayerScreen extends Screen {
             case NOW_PLAYING -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.albums"), () -> setPage(Page.LIBRARY)));
-                breadcrumbs.add(new Breadcrumb(currentSource().name(), null));
+                breadcrumbs.add(new Breadcrumb(customPlaylistSource().name(), null));
             }
             case LIBRARY -> {
                 breadcrumbs.add(new Breadcrumb(Component.translatable("screen.music_and_melody.home"), () -> setPage(Page.HOME)));
@@ -2089,7 +2051,7 @@ public class MusicPlayerScreen extends Screen {
         protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                     && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
-            int background = hovered ? BUTTON_HIGHLIGHT : SOURCE_CARD_BACKGROUND;
+            int background = hovered ? BUTTON_HIGHLIGHT : PANEL_BACKGROUND;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHT : PANEL_OUTLINE);
 
@@ -2234,7 +2196,7 @@ public class MusicPlayerScreen extends Screen {
             this.heading = null;
             this.status = status;
             this.addButton = new IconButton(Component.translatable("button.music_and_melody.queue"), IconButton.icon("queue"), ignored ->
-                    this.screen.requestQueueMutation(Component.translatable("screen.music_and_melody.queue_mutation.warning"), () -> PlaylistHelper.add(this.song)));
+                    this.screen.addTrackToCustomPlaylist(this.song));
             this.toggleButton = status != null && status.toggleable()
                     ? new IconButton(status.message(), status.icon(), ignored -> this.screen.toggleContentTrack(status.album(), status.track()))
                     : null;
@@ -2268,7 +2230,7 @@ public class MusicPlayerScreen extends Screen {
             int addX = this.getContentRight() - IconButton.SIZE - 3;
             this.addButton.setX(addX);
             this.addButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
-            this.addButton.active = !PlaylistHelper.queuedSongs().contains(this.song);
+            this.addButton.active = !PlaylistHelper.isInCustomPlaylist(this.song);
             this.addButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             if (this.status != null) {
                 int statusX = addX - IconButton.SIZE - 4;
@@ -2287,11 +2249,31 @@ public class MusicPlayerScreen extends Screen {
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (this.heading != null) return true;
-            if (this.addButton.mouseClicked(event, doubleClick)) return true;
-            if (this.toggleButton != null && this.toggleButton.mouseClicked(event, doubleClick)) return true;
+            this.addButton.active = !PlaylistHelper.isInCustomPlaylist(this.song);
+            // Entry-owned buttons are rendered manually rather than being
+            // screen children. Check their rectangles explicitly so a click
+            // on an inactive/stale icon can never fall through to the row's
+            // play action.
+            if (contains(this.addButton, event)) {
+                if (this.addButton.active) {
+                    this.addButton.mouseClicked(event, doubleClick);
+                    this.addButton.active = false;
+                }
+                return true;
+            }
+            if (this.toggleButton != null && contains(this.toggleButton, event)) {
+                if (this.toggleButton.active) this.toggleButton.mouseClicked(event, doubleClick);
+                return true;
+            }
             this.screen.playClick();
             this.screen.playContentTrack(this.queueIndex);
             return true;
+        }
+
+        private static boolean contains(IconButton button, MouseButtonEvent event) {
+            return event.x() >= button.getX() && event.y() >= button.getY()
+                    && event.x() < button.getX() + button.getWidth()
+                    && event.y() < button.getY() + button.getHeight();
         }
     }
 
@@ -2473,7 +2455,7 @@ public class MusicPlayerScreen extends Screen {
 
         void refresh() {
             this.clearEntries();
-            List<SafeIdentifier> songs = PlaylistHelper.queuedSongs();
+            List<SafeIdentifier> songs = PlaylistHelper.customPlaylistSongs();
             for (int index = 0; index < songs.size(); index++) {
                 this.addEntry(new QueueEntry(this.screen, this, this.minecraft, index, songs.get(index), this.compact));
             }
@@ -2809,7 +2791,7 @@ public class MusicPlayerScreen extends Screen {
 
     private static final class OnlineCatalogList extends PanelList<OnlineCatalogEntry> {
         OnlineCatalogList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
-            super(screen, minecraft, panelX, panelWidth, top, bottom, 42);
+            super(screen, minecraft, panelX, panelWidth, top, bottom, 30);
             refresh();
         }
 
@@ -2861,16 +2843,16 @@ public class MusicPlayerScreen extends Screen {
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int color = this.addRepository ? PANEL_HIGHLIGHT : TEXT_TITLE;
             Component text = this.addRepository ? this.label : Component.literal("\u25B8 ").append(this.label);
+            int textY = this.getContentYMiddle() - this.screen.font.lineHeight / 2;
             if (this.provenance == null) {
-                graphics.text(this.screen.font, text, this.getContentX() + 4,
-                        this.getContentYMiddle() - this.screen.font.lineHeight / 2, color);
+                graphics.text(this.screen.font, text, this.getContentX() + 4, textY, color);
                 return;
             }
-            int textWidth = this.getContentWidth() - 8;
-            this.screen.drawTrackMarquee(graphics, text, this.getContentX() + 4, this.getContentY() + 4,
-                    Math.max(1, textWidth), color);
-            graphics.text(this.screen.font, this.provenance.label(), this.getContentX() + 4,
-                    this.getContentY() + 4 + this.screen.font.lineHeight + 2, TEXT_DESCRIPTION);
+            Component status = this.provenance.label();
+            int statusX = this.getContentRight() - this.screen.font.width(status) - 4;
+            int textWidth = Math.max(1, statusX - this.getContentX() - 8);
+            this.screen.drawTrackMarquee(graphics, text, this.getContentX() + 4, textY, textWidth, color);
+            graphics.text(this.screen.font, status, statusX, textY, TEXT_DESCRIPTION);
         }
 
         @Override

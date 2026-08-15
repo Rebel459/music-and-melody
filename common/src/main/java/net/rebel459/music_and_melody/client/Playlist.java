@@ -149,8 +149,8 @@ public class Playlist {
         return configTarget(playlistName, pathOverride) != null;
     }
 
-    public static synchronized boolean saveCurrentQueue(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {
-        List<SafeIdentifier> queuedSongs = PlaylistHelper.queuedSongs();
+    public static synchronized boolean saveCustomPlaylist(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {
+        List<SafeIdentifier> queuedSongs = PlaylistHelper.customPlaylistSongs();
         String trimmedName = playlistName.trim();
         if (queuedSongs.isEmpty() || trimmedName.isEmpty()) return false;
 
