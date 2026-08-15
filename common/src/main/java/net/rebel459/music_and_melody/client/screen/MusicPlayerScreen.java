@@ -287,13 +287,7 @@ public class MusicPlayerScreen extends Screen {
         this.clearButton.setX(actionX + IconButton.SIZE + 5);
         this.clearButton.setY(playerActionY());
 
-        MaMClientConfig config = MaMClientConfig.get();
-        int togglesY = musicToggleY();
-        int toggleWidth = this.rightWidth - 16;
-        this.vanillaMusicButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY, toggleWidth, 20,
-                Component.translatable("screen.music_and_melody.vanilla_music"), config.vanilla_music, button -> toggleVanillaMusic()));
-        this.eventsButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY + 24, toggleWidth, 20,
-                Component.translatable("screen.music_and_melody.event_music"), config.allow_events, button -> toggleEventMusic()));
+        buildMusicToggles();
     }
 
     private void buildDetailsPage() {
@@ -305,10 +299,24 @@ public class MusicPlayerScreen extends Screen {
         addBackButton();
         this.contentTrackList = this.addRenderableWidget(new ContentTrackList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 42, this.contentBottom - 6));
         int actionWidth = this.rightWidth - 16;
-        this.loadButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, detailsActionY(), actionWidth, 20,
+        int buttonWidth = (actionWidth - 5) / 2;
+        int actionX = this.rightX + 8;
+        int actionY = playerActionY();
+        this.loadButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.load"), false, button -> loadViewedContent()));
-        this.queueButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, detailsActionY() + 25, actionWidth, 20,
+        this.queueButton = this.addRenderableWidget(new WorkspaceButton(actionX + buttonWidth + 5, actionY, actionWidth - buttonWidth - 5, 20,
                 Component.translatable("button.music_and_melody.queue"), false, button -> queueViewedContent()));
+        buildMusicToggles();
+    }
+
+    private void buildMusicToggles() {
+        MaMClientConfig config = MaMClientConfig.get();
+        int togglesY = musicToggleY();
+        int toggleWidth = this.rightWidth - 16;
+        this.vanillaMusicButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY, toggleWidth, 20,
+                Component.translatable("screen.music_and_melody.vanilla_music"), config.vanilla_music, button -> toggleVanillaMusic()));
+        this.eventsButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY + 24, toggleWidth, 20,
+                Component.translatable("screen.music_and_melody.event_music"), config.allow_events, button -> toggleEventMusic()));
     }
 
     private void buildLibraryPage() {
@@ -504,40 +512,17 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderRightPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        if (this.page == Page.NOW_PLAYING) {
-            SourceInfo source = currentSource();
-            int cardY = PANEL_TOP + 10;
-            int cardSize = Math.min(this.rightWidth - 16, 112);
-            int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
-            graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, 0xFF111927);
-            Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
-            int iconSize = Math.max(24, cardSize - 24);
-            int iconX = cardX + (cardSize - iconSize) / 2;
-            int iconY = cardY + 9;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-            drawCenteredTruncated(graphics, source.name(), cardX + cardSize / 2, cardY + cardSize - 12, cardSize - 8, 0xFFFFFFFF);
-
-            int sliderX = volumeSliderX();
-            int sliderTop = volumeSliderTop();
-            int sliderBottom = volumeSliderBottom();
-            float volume = this.minecraft.options.getSoundSourceVolume(SoundSource.MUSIC);
-            graphics.fill(sliderX, sliderTop, sliderX + 4, sliderBottom, 0xFF303C52);
-            int filledTop = sliderBottom - Math.round((sliderBottom - sliderTop) * volume);
-            graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, ACCENT);
-            graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, 0xFFFFFFFF);
-            if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
-                graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)), mouseX, mouseY);
+        if (this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) {
+            SourceInfo source = this.page == Page.NOW_PLAYING ? currentSource() : viewedContentSource();
+            if (source != null) {
+                renderSourceCard(graphics, source);
+                renderVolumeSlider(graphics, mouseX, mouseY);
             }
             return;
         }
 
         if (this.page == Page.ONLINE && this.viewedRemotePack != null) {
             renderRemoteDetails(graphics, this.viewedRemotePack);
-            return;
-        }
-
-        if (this.page == Page.DETAILS) {
-            renderContentDetailsSidebar(graphics);
             return;
         }
 
@@ -549,35 +534,37 @@ public class MusicPlayerScreen extends Screen {
         if (this.page == Page.ONLINE) renderOnlineDownloadProgress(graphics);
     }
 
-    private int detailsIconSize() {
-        return Math.min(48, this.rightWidth - 16);
+    private SourceInfo viewedContentSource() {
+        if (this.viewedContent == null) return null;
+        return new SourceInfo(this.viewedContent.name(), this.viewedContent.icon(),
+                sourceTypeLabel(this.viewedContent.type()), originFor(this.viewedContent.id(), this.viewedContent.playlist()));
     }
 
-    private int detailsTagY() {
-        return PANEL_TOP + 10 + detailsIconSize() + 30;
+    private void renderSourceCard(GuiGraphicsExtractor graphics, SourceInfo source) {
+        int cardY = PANEL_TOP + 10;
+        int cardSize = Math.min(this.rightWidth - 16, 112);
+        int cardX = this.rightX + (this.rightWidth - cardSize) / 2;
+        graphics.fill(cardX, cardY, cardX + cardSize, cardY + cardSize, 0xFF111927);
+        Identifier icon = MusicScreenHelper.albumIcon(this.minecraft, source.icon());
+        int iconSize = Math.max(24, cardSize - 24);
+        int iconX = cardX + (cardSize - iconSize) / 2;
+        int iconY = cardY + 9;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        drawCenteredTruncated(graphics, source.name(), cardX + cardSize / 2, cardY + cardSize - 12, cardSize - 8, 0xFFFFFFFF);
     }
 
-    private int detailsActionHeaderY() {
-        // The track view has no tag filter: Actions begins just below the
-        // former heading, leaving a consistent gap below the content title.
-        return detailsTagY() - 8;
-    }
-
-    private int detailsActionY() {
-        return detailsActionHeaderY() + 18;
-    }
-
-    private void renderContentDetailsSidebar(GuiGraphicsExtractor graphics) {
-        if (this.viewedContent == null) return;
-        int iconSize = detailsIconSize();
-        int iconX = this.rightX + (this.rightWidth - iconSize) / 2;
-        int iconY = PANEL_TOP + 10;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.viewedContent.icon()),
-                iconX, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        drawCenteredTruncated(graphics, this.viewedContent.name(), this.rightX + this.rightWidth / 2, iconY + iconSize + 4,
-                this.rightWidth - 16, 0xFFFFFFFF);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.actions").withStyle(ChatFormatting.BOLD),
-                this.rightX + 8, detailsActionHeaderY(), ACCENT);
+    private void renderVolumeSlider(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        int sliderX = volumeSliderX();
+        int sliderTop = volumeSliderTop();
+        int sliderBottom = volumeSliderBottom();
+        float volume = this.minecraft.options.getSoundSourceVolume(SoundSource.MUSIC);
+        graphics.fill(sliderX, sliderTop, sliderX + 4, sliderBottom, 0xFF303C52);
+        int filledTop = sliderBottom - Math.round((sliderBottom - sliderTop) * volume);
+        graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, ACCENT);
+        graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, 0xFFFFFFFF);
+        if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
+            graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)), mouseX, mouseY);
+        }
     }
 
     private void renderOnlineDownloadProgress(GuiGraphicsExtractor graphics) {
@@ -777,7 +764,7 @@ public class MusicPlayerScreen extends Screen {
             setSeekPreviewFromX(event.x());
             return true;
         }
-        if (this.page == Page.NOW_PLAYING && isInVolumeSlider(event.x(), event.y())) {
+        if ((this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) && isInVolumeSlider(event.x(), event.y())) {
             this.draggingVolume = true;
             setVolumeFromY(event.y());
             return true;
