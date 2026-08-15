@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
 
@@ -24,6 +25,8 @@ class SavePlaylistScreen extends Screen {
     private EditBox iconField;
     private EditBox pathField;
     private WorkspaceButton saveButton;
+    private int layoutWidth;
+    private int layoutHeight;
 
     SavePlaylistScreen(MusicPlayerScreen parent) {
         super(TITLE);
@@ -32,6 +35,7 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     protected void init() {
+        calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
         int y = panelY();
@@ -72,7 +76,29 @@ class SavePlaylistScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+        super.extractRenderState(graphics, toLayoutMouse(mouseX), toLayoutMouse(mouseY), tickDelta);
+        graphics.pose().popMatrix();
+    }
+
+    private void calculateLayoutSize() {
+        this.layoutWidth = Math.max(1, Math.round(this.width / MaMDataConfig.get().gui_multiplier));
+        this.layoutHeight = Math.max(1, Math.round(this.height / MaMDataConfig.get().gui_multiplier));
+    }
+
+    @Override
+    protected void repositionElements() {
+        calculateLayoutSize();
+        this.rebuildWidgets();
+    }
+
+    private MouseButtonEvent toLayoutMouse(MouseButtonEvent event) {
+        return new MouseButtonEvent(event.x() / MaMDataConfig.get().gui_multiplier, event.y() / MaMDataConfig.get().gui_multiplier, event.buttonInfo());
+    }
+
+    private int toLayoutMouse(int coordinate) {
+        return Math.round(coordinate / MaMDataConfig.get().gui_multiplier);
     }
 
     @Override
@@ -85,7 +111,7 @@ class SavePlaylistScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
         graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
         graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
@@ -99,6 +125,7 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        event = toLayoutMouse(event);
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseClicked(event, doubleClick);
         return true;
@@ -106,6 +133,9 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        event = toLayoutMouse(event);
+        dragX /= MaMDataConfig.get().gui_multiplier;
+        dragY /= MaMDataConfig.get().gui_multiplier;
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseDragged(event, dragX, dragY);
         return true;
@@ -113,6 +143,7 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        event = toLayoutMouse(event);
         if (!insideDialog(event.x(), event.y())) return true;
         super.mouseReleased(event);
         return true;
@@ -161,18 +192,18 @@ class SavePlaylistScreen extends Screen {
     }
 
     private int panelWidth() {
-        return Math.min(360, this.width - 24);
+        return Math.min(360, this.layoutWidth - 24);
     }
 
     private int panelHeight() {
-        return Math.min(193, this.height - 28);
+        return Math.min(193, this.layoutHeight - 28);
     }
 
     private int panelX() {
-        return this.width / 2 - panelWidth() / 2;
+        return this.layoutWidth / 2 - panelWidth() / 2;
     }
 
     private int panelY() {
-        return this.height / 2 - panelHeight() / 2;
+        return this.layoutHeight / 2 - panelHeight() / 2;
     }
 }

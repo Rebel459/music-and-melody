@@ -20,6 +20,7 @@ final class MusicScreenHelper {
     private MusicScreenHelper() {}
 
     static final Identifier FALLBACK_ALBUM_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+    /** Relative to Minecraft's current GUI scale; 7 displays approximately like the previous 6. */
 
     private static final URI DISCORD = URI.create("https://discord.com/invite/TGbBb47Gr5");
     private static final URI KOFI = URI.create("https://ko-fi.com/rebel459");

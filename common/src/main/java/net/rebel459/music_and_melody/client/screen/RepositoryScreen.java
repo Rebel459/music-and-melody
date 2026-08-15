@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -121,13 +122,13 @@ final class RepositoryScreen extends Screen {
             return;
         }
 
-        MaMClientConfig config = MaMClientConfig.get();
-        if (config.remote_repositories == null) config.remote_repositories = new ArrayList<>();
-        if (config.remote_repositories.stream().anyMatch(value::equalsIgnoreCase)) {
+        MaMDataConfig config = MaMDataConfig.get();
+        if (config.remote.added_repositories == null) config.remote.added_repositories = new ArrayList<>();
+        if (config.remote.added_repositories.stream().anyMatch(value::equalsIgnoreCase)) {
             setFeedback(Component.translatable("screen.music_and_melody.repositories.duplicate"), true);
             return;
         }
-        config.remote_repositories.add(value);
+        config.remote.added_repositories.add(value);
         saveChanges();
         this.urlField.setValue("");
         setFeedback(Component.translatable("screen.music_and_melody.repositories.added"), false);
@@ -135,8 +136,8 @@ final class RepositoryScreen extends Screen {
     }
 
     void removeRepository(String value) {
-        MaMClientConfig config = MaMClientConfig.get();
-        if (config.remote_repositories == null || !config.remote_repositories.remove(value)) return;
+        MaMDataConfig config = MaMDataConfig.get();
+        if (config.remote.added_repositories == null || !config.remote.added_repositories.remove(value)) return;
         saveChanges();
         setFeedback(Component.translatable("screen.music_and_melody.repositories.removed"), false);
         if (this.list != null) this.list.refresh();
@@ -205,7 +206,7 @@ final class RepositoryScreen extends Screen {
 
         void refresh() {
             this.clearEntries();
-            List<String> repositories = MaMClientConfig.get().remote_repositories;
+            List<String> repositories = MaMDataConfig.get().remote.added_repositories;
             if (repositories == null) return;
             for (String repository : repositories) {
                 if (repository != null && !repository.isBlank()) this.addEntry(new RepositoryEntry(this.screen, this.minecraft, repository));

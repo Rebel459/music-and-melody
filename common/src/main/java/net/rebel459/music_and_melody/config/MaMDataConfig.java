@@ -3,7 +3,6 @@ package net.rebel459.music_and_melody.config;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
-import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
@@ -45,7 +44,6 @@ public class MaMDataConfig implements ConfigData {
 		public String file = "";
 	}
 
-	@ConfigEntry.Gui.CollapsibleObject
 	public Playlists playlists = new Playlists();
 
 	public static class Playlists {
@@ -70,7 +68,6 @@ public class MaMDataConfig implements ConfigData {
 		PLAYLIST
 	}
 
-	@ConfigEntry.Gui.CollapsibleObject
 	public Events events = new Events();
 
 	public static class Events {
@@ -80,4 +77,14 @@ public class MaMDataConfig implements ConfigData {
 		public List<String> disabled_events = new ArrayList<>();
 		public List<String> enabled_events = new ArrayList<>();
 	}
+
+	public Remote remote = new Remote();
+	
+	public static class Remote {
+		public List<String> added_repositories = new ArrayList<>();
+		public boolean official_provider = true;
+		public boolean community_provider = true;
+	}
+	
+	public float gui_multiplier = 0.85F;
 }
