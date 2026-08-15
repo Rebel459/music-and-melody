@@ -19,6 +19,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.Event;
+import net.rebel459.music_and_melody.client.element.ExampleHintEditBox;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.util.EventHelper;
@@ -144,7 +145,8 @@ public class EventScreen extends Screen {
         int fieldWidth = Math.max(48, layout.bottomRight() - fieldX - 8);
         int musicY = layout.bottomPanelTop + 2;
         int conditionsY = layout.bottomPanelTop + 26;
-        this.musicField = this.addRenderableWidget(new EditBox(this.font, fieldX, musicY, fieldWidth, 20, Component.translatable("screen.music_and_melody.event_editor.music")));
+        this.musicField = this.addRenderableWidget(new ExampleHintEditBox(this.font, fieldX, musicY, fieldWidth, 20,
+                Component.translatable("screen.music_and_melody.event_editor.music")));
         this.musicField.setMaxLength(256);
         this.musicField.setResponder(value -> markDirty());
         this.conditionsField = this.addRenderableWidget(MultiLineEditBox.builder()
