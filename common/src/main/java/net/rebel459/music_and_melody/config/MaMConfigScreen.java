@@ -9,6 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.TEXT_TITLE;
+
 public class MaMConfigScreen extends Screen {
     private final Screen parent;
     private Button eventsButton;
@@ -58,7 +60,7 @@ public class MaMConfigScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+        graphics.centeredText(this.font, this.title, this.width / 2, 15, TEXT_TITLE);
         if (this.eventsButton != null) this.eventsButton.active = MaMClientConfig.get().allow_events;
     }
 

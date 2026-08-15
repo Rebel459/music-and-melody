@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 public class ContentBrowserScreen extends Screen {
 
     static final int MAIN_BUTTON_ROW_WIDTH = 308;
@@ -125,7 +127,7 @@ public class ContentBrowserScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+        graphics.centeredText(this.font, this.title, this.width / 2, 15, TEXT_TITLE);
         if (this.catalogRefreshing && !RemoteContentManager.isRefreshing()) {
             this.catalogRefreshing = false;
             refreshList();
@@ -420,8 +422,8 @@ public class ContentBrowserScreen extends Screen {
             );
 
             graphics.text(this.minecraft.font, name, textX, textY, nameColor());
-            graphics.text(this.minecraft.font, Component.literal(id).withStyle(ChatFormatting.GRAY), textX, textY + 11, 0xFFAAAAAA);
-            graphics.text(this.minecraft.font, details, textX, textY + 22, 0xFFAAAAAA);
+            graphics.text(this.minecraft.font, Component.literal(id), textX, textY + 11, TEXT_DESCRIPTION);
+            graphics.text(this.minecraft.font, details, textX, textY + 22, TEXT_DESCRIPTION);
 
             int detailsX = this.getContentRight() - buttonsWidth;
 
@@ -468,10 +470,10 @@ public class ContentBrowserScreen extends Screen {
         }
 
         private int nameColor() {
-            if (this.entry.playlist != null && this.screen.isDeletePending(this.entry.playlist)) return 0xFFFF8888;
-            if (this.entry.remote != null && this.screen.isDeletePending(this.entry.remote)) return 0xFFFF8888;
-            if (this.entry.favourite()) return 0xFFD7D272;
-            return 0xFFFFFFFF;
+            if (this.entry.playlist != null && this.screen.isDeletePending(this.entry.playlist)) return TEXT_PENDING_DELETION;
+            if (this.entry.remote != null && this.screen.isDeletePending(this.entry.remote)) return TEXT_PENDING_DELETION;
+            if (this.entry.favourite()) return TEXT_FAVOURITE;
+            return TEXT_TITLE;
         }
 
         private void setFavourite(boolean favourite) {

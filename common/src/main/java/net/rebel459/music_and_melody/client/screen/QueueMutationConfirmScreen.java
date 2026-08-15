@@ -8,6 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 import java.util.List;
 
 /** A focused confirmation before a loaded album or playlist becomes custom. */
@@ -67,16 +69,16 @@ final class QueueMutationConfirmScreen extends Screen {
         int width = dialogWidth();
         int x = dialogX();
         int y = dialogY();
-        graphics.fill(0, 0, this.width, this.height, 0x5C000000);
-        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, 0xFF151C2A);
-        graphics.fill(x, y, x + width, y + 1, 0xFF78A6FF);
-        graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, 0xFF3B4963);
-        graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, 0xFF3B4963);
-        graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, 0xFF3B4963);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 12, 0xFFFFFFFF);
+        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, MODAL_BACKGROUND);
+        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
+        graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, PANEL_OUTLINE);
+        graphics.centeredText(this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
         List<FormattedCharSequence> lines = this.font.split(this.message, width - 24);
         for (int i = 0; i < lines.size() && i < 3; i++) {
-            graphics.text(this.font, lines.get(i), x + 12, y + 31 + i * this.font.lineHeight, 0xFFB7C1D5);
+            graphics.text(this.font, lines.get(i), x + 12, y + 31 + i * this.font.lineHeight, TEXT_DESCRIPTION);
         }
     }
 

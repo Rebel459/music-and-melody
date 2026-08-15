@@ -11,13 +11,12 @@ import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 /** Creates a config-backed event without leaving the compact workspace. */
 final class CreateEventScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.create_event");
-    private static final int PANEL_BACKGROUND = 0xFF151C2A;
-    private static final int PANEL_BORDER = 0xFF78A6FF;
-    private static final int MUTED = 0xFF9DA9BF;
 
     private final MusicPlayerScreen parent;
     private EditBox nameField;
@@ -48,7 +47,7 @@ final class CreateEventScreen extends Screen {
 
         this.descriptionField = field(Component.translatable("screen.music_and_melody.create_event.description"), fieldX, y + 76, fieldWidth);
         this.iconField = field(Component.translatable("screen.music_and_melody.event_editor.icon"), fieldX, y + 112, fieldWidth);
-        this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(ChatFormatting.DARK_GRAY));
+        this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.iconField.setResponder(value -> refreshCreateState());
 
         this.pathField = field(Component.translatable("screen.music_and_melody.create_event.path"), fieldX, y + 148, fieldWidth);
@@ -87,17 +86,17 @@ final class CreateEventScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        graphics.fill(0, 0, this.width, this.height, 0x52000000);
-        graphics.fill(x, y, x + width, y + height, PANEL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
-        graphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, 0xFFFFFFFF);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), x + 12, y + 28, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), x + 12, y + 64, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), x + 12, y + 100, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), x + 12, y + 136, MUTED);
+        graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        graphics.fill(x, y, x + width, y + 1, PANEL_HIGHLIGHT);
+        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
+        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), x + 12, y + 28, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), x + 12, y + 64, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), x + 12, y + 100, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), x + 12, y + 136, TEXT_DESCRIPTION);
     }
 
     @Override
@@ -142,7 +141,7 @@ final class CreateEventScreen extends Screen {
     private void updatePathHint() {
         if (this.pathField == null) return;
         String preview = Event.previewConfigSourcePath(this.nameField.getValue());
-        this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(ChatFormatting.DARK_GRAY));
+        this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
     }
 
     private int panelWidth() {

@@ -12,6 +12,8 @@ import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 import java.util.List;
 
 public class RemoteDetailsScreen extends Screen {
@@ -48,8 +50,8 @@ public class RemoteDetailsScreen extends Screen {
         int titleY = 24;
 
         graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(this.pack)), titleX, titleY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        graphics.text(this.font, title, titleX + iconSize + 6, titleY + 4, 0xFFFFFFFF);
-        graphics.text(this.font, Component.literal(id).withStyle(ChatFormatting.GRAY), titleX + iconSize + 6, titleY + 17, 0xFFAAAAAA);
+        graphics.text(this.font, title, titleX + iconSize + 6, titleY + 4, TEXT_TITLE);
+        graphics.text(this.font, Component.literal(id), titleX + iconSize + 6, titleY + 17, TEXT_DESCRIPTION);
 
         int x = this.width / 2 - ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH / 2;
         int y = 76;
@@ -59,7 +61,7 @@ public class RemoteDetailsScreen extends Screen {
         List<FormattedCharSequence> description = this.font.split(this.pack.description(), ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH);
         y += 24;
         for (FormattedCharSequence line : description) {
-            graphics.text(this.font, line, x, y, 0xFFCCCCCC);
+            graphics.text(this.font, line, x, y, TEXT_DESCRIPTION);
             y += this.font.lineHeight + 2;
         }
     }
@@ -71,7 +73,7 @@ public class RemoteDetailsScreen extends Screen {
     }
 
     private void line(GuiGraphicsExtractor graphics, Component component, int x, int y) {
-        graphics.text(this.font, component, x, y, 0xFFAAAAAA);
+        graphics.text(this.font, component, x, y, TEXT_DESCRIPTION);
     }
 
     private Component remoteActionMessage() {

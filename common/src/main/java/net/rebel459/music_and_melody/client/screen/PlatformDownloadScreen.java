@@ -9,6 +9,8 @@ import net.minecraft.util.Util;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
+
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.net.URI;
@@ -60,11 +62,11 @@ public class PlatformDownloadScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 
         int y = 48;
-        graphics.centeredText(this.font, this.pack.name(), this.width / 2, y, 0xFFFFFFFF);
+        graphics.centeredText(this.font, this.pack.name(), this.width / 2, y, TEXT_TITLE);
 
         y += 28;
         for (var line : descriptionLines()) {
-            graphics.centeredText(this.font, line, this.width / 2, y, 0xFFCCCCCC);
+            graphics.centeredText(this.font, line, this.width / 2, y, TEXT_DESCRIPTION);
             y += this.font.lineHeight + 2;
         }
 

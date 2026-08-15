@@ -32,6 +32,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static net.rebel459.music_and_melody.client.util.ScreenConstants.*;
+
 public class EventScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.event_editor");
@@ -49,13 +51,13 @@ public class EventScreen extends Screen {
     private static final int PANEL_BOTTOM_MARGIN = 10;
     /** Matches the shared workspace footer baseline while fitting one single-line and one two-line field. */
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
-    private static final int PANEL_BACKGROUND = 0xE5151B28;
-    private static final int PANEL_BORDER = 0xFF3B4963;
-    private static final int PANEL_HEADER = 0xFF1B2435;
-    private static final int ACCENT = 0xFF78A6FF;
-    private static final int MUTED = 0xFF9DA9BF;
-    private static final int ROW_HOVER = 0xAA344765;
-    private static final int ROW_ACTIVE = 0xCC273B59;
+
+
+
+
+
+
+
 
     private final Screen parent;
     private final List<Event.ScreenEntry> entries = new ArrayList<>();
@@ -148,7 +150,7 @@ public class EventScreen extends Screen {
         this.conditionsField = this.addRenderableWidget(MultiLineEditBox.builder()
                 .setX(fieldX)
                 .setY(conditionsY)
-                .setPlaceholder(Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(ChatFormatting.DARK_GRAY))
+                .setPlaceholder(Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))))
                 .build(this.font, fieldWidth, CONDITIONS_TWO_LINE_HEIGHT, Component.translatable("screen.music_and_melody.event_editor.conditions")));
         this.conditionsField.setValueListener(value -> markDirty());
 
@@ -217,7 +219,7 @@ public class EventScreen extends Screen {
 
     private void renderEditorShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         EditorLayout layout = editorLayout();
-        graphics.fill(0, 0, this.width, this.height, 0xC9070A10);
+        graphics.fill(0, 0, this.width, this.height, SCREEN_BACKGROUND);
         drawPanel(graphics, layout.leftX, PANEL_TOP, layout.leftWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, layout.middleX, PANEL_TOP, layout.middleWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, layout.leftX, layout.bottomPanelTop, layout.bottomRight() - layout.leftX, layout.panelBottom - layout.bottomPanelTop);
@@ -225,9 +227,9 @@ public class EventScreen extends Screen {
         // full-height right panel so its Done control remains inside it.
         drawPanel(graphics, layout.rightX, PANEL_TOP, layout.rightWidth, layout.panelBottom - PANEL_TOP);
 
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.settings").withStyle(ChatFormatting.BOLD), layout.leftX + 8, PANEL_TOP + 11, ACCENT);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.entries").withStyle(ChatFormatting.BOLD), layout.middleX + 8, PANEL_TOP + 11, ACCENT);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.actions").withStyle(ChatFormatting.BOLD), layout.rightX + 8, PANEL_TOP + 14, ACCENT);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.settings").withStyle(ChatFormatting.BOLD), layout.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.entries").withStyle(ChatFormatting.BOLD), layout.middleX + 8, PANEL_TOP + 11, TEXT_HEADER);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.actions").withStyle(ChatFormatting.BOLD), layout.rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
 
         Event.Source source = activeSource();
         int titleX = layout.middleX + 8;
@@ -238,28 +240,28 @@ public class EventScreen extends Screen {
             titleX += iconSize + 6;
         }
         int titleWidth = Math.max(1, layout.middleWidth - (titleX - layout.middleX) - 8);
-        drawMarquee(graphics, title(), titleX, PANEL_TOP + 35, titleWidth, 0xFFFFFFFF);
+        drawMarquee(graphics, title(), titleX, PANEL_TOP + 35, titleWidth, TEXT_TITLE);
 
         int controlLabelY = PANEL_TOP + 30;
         int controlStep = settingsStep(layout);
         int settingsX = layout.leftX + 8;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 2, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, MUTED);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
 
         int bottomX = layout.leftX + 8;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), bottomX, layout.bottomPanelTop + 7, MUTED);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), bottomX, layout.bottomPanelTop + 31, MUTED);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), bottomX, layout.bottomPanelTop + 7, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), bottomX, layout.bottomPanelTop + 31, TEXT_DESCRIPTION);
     }
 
     private static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, PANEL_BACKGROUND);
-        graphics.fill(x, y, x + width, y + 1, PANEL_BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
-        graphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
+        graphics.fill(x, y, x + width, y + 1, PANEL_OUTLINE);
+        graphics.fill(x, y + height - 1, x + width, y + height, PANEL_OUTLINE);
+        graphics.fill(x, y, x + 1, y + height, PANEL_OUTLINE);
+        graphics.fill(x + width - 1, y, x + width, y + height, PANEL_OUTLINE);
     }
 
     private void drawMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
@@ -465,7 +467,7 @@ public class EventScreen extends Screen {
         if (this.priorityButton != null) this.priorityButton.setMessage(priorityMessage());
         if (this.sustainButton != null) this.sustainButton.setMessage(sustainMessage());
         if (this.constantButton != null) this.constantButton.setMessage(constantMessage());
-        if (this.musicField != null) this.musicField.setHint(Component.literal("eg. " + musicExample()).withStyle(ChatFormatting.DARK_GRAY));
+        if (this.musicField != null) this.musicField.setHint(Component.literal("eg. " + musicExample()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
 
         Event.Record.Entry draft = editorEntry();
         Event.Source source = selectedSource();
@@ -722,11 +724,11 @@ public class EventScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 1;
             int bottom = this.getY() + this.getHeight() - 1;
-            graphics.fill(x, top, x + 3, bottom, 0x88303C52);
+            graphics.fill(x, top, x + 3, bottom, BUTTON_PASSIVE);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             graphics.fill(x, thumbTop, x + 3, thumbBottom,
-                    mouseX >= x - 2 && mouseX <= x + 5 && mouseY >= thumbTop && mouseY <= thumbBottom ? ACCENT : 0xFF627492);
+                    mouseX >= x - 2 && mouseX <= x + 5 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB);
         }
     }
 
@@ -745,7 +747,7 @@ public class EventScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             graphics.text(Minecraft.getInstance().font, this.line, this.getContentX(),
-                    this.getContentYMiddle() - Minecraft.getInstance().font.lineHeight / 2, MUTED);
+                    this.getContentYMiddle() - Minecraft.getInstance().font.lineHeight / 2, TEXT_DESCRIPTION);
         }
     }
 
@@ -788,10 +790,10 @@ public class EventScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 2;
             int bottom = this.getY() + this.getHeight() - 2;
-            graphics.fill(x, top, x + 4, bottom, 0x88303C52);
+            graphics.fill(x, top, x + 4, bottom, BUTTON_PASSIVE);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
-            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? ACCENT : 0xFF627492;
+            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
             graphics.fill(x, thumbTop, x + 4, thumbBottom, color);
         }
 
@@ -833,19 +835,19 @@ public class EventScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (this.index == this.screen.selectedIndex) {
-                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_ACTIVE);
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             } else if (hovered) {
-                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), ROW_HOVER);
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             }
-            int color = this.index == this.screen.selectedIndex ? 0xFFFFFFFF : this.row.source().isEnabled() ? 0xFFFFFFFF : MUTED;
+            int color = this.index == this.screen.selectedIndex ? TEXT_SELECTED : this.row.source().isEnabled() ? TEXT_PRIMARY : TEXT_DISABLED;
             Event.Record.Entry entry = this.row.entry();
             String first = entry.music() + " (" + entry.category() + ")";
             String second = "priority=" + entry.priority() + " | sustain=" + entry.sustain() + " | constant=" + entry.constant() + " | weight=" + entry.weight();
             String third = conditionsText(entry.conditions());
             int maxWidth = this.getContentWidth() - 2;
             this.screen.drawMarquee(graphics, Component.literal(first), this.getContentX() + 1, this.getContentY() + 5, maxWidth, color);
-            this.screen.drawMarquee(graphics, Component.literal(second), this.getContentX() + 1, this.getContentY() + 17, maxWidth, 0xFFAAAAAA);
-            this.screen.drawMarquee(graphics, Component.literal(third), this.getContentX() + 1, this.getContentY() + 29, maxWidth, 0xFFAAAAAA);
+            this.screen.drawMarquee(graphics, Component.literal(second), this.getContentX() + 1, this.getContentY() + 17, maxWidth, TEXT_DESCRIPTION);
+            this.screen.drawMarquee(graphics, Component.literal(third), this.getContentX() + 1, this.getContentY() + 29, maxWidth, TEXT_DESCRIPTION);
         }
 
         @Override
@@ -942,7 +944,7 @@ public class EventScreen extends Screen {
         @Override
         public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-            graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+            graphics.centeredText(this.font, this.title, this.width / 2, 15, TEXT_TITLE);
         }
 
         @Override
@@ -1079,10 +1081,10 @@ public class EventScreen extends Screen {
             int x = this.getContentX() + 1;
             int buttonsWidth = BUTTON_WIDTH * 2 + IconButton.SIZE + BUTTON_GAP * 2;
             int maxWidth = this.getContentWidth() - buttonsWidth - 12;
-            int color = this.screen.isDeletePending(this.source) ? 0xFFFF8888 : this.source.isEnabled() ? 0xFFFFFFFF : 0xFF888888;
+            int color = this.screen.isDeletePending(this.source) ? TEXT_PENDING_DELETION : this.source.isEnabled() ? TEXT_TITLE : TEXT_DISABLED;
             FormattedCharSequence name = this.minecraft.font.split(this.source.record.name(), maxWidth).getFirst();
             graphics.text(this.minecraft.font, name, x, this.getContentYMiddle() - this.minecraft.font.lineHeight - 1, color);
-            graphics.text(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(this.source.id.toString(), maxWidth), x, this.getContentYMiddle() + 2, 0xFFAAAAAA);
+            graphics.text(this.minecraft.font, this.minecraft.font.plainSubstrByWidth(this.source.id.toString(), maxWidth), x, this.getContentYMiddle() + 2, TEXT_DESCRIPTION);
             if (hovered && hasDescription() && mouseX < this.getContentRight() - buttonsWidth) {
                 graphics.setTooltipForNextFrame(this.minecraft.font, this.minecraft.font.split(this.source.record.description(), 240), mouseX, mouseY);
             }
@@ -1183,7 +1185,7 @@ public class EventScreen extends Screen {
             this.descriptionField.setMaxLength(256);
             this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, 146, fieldWidth, 20, Component.translatable("screen.music_and_melody.event_editor.icon")));
             this.iconField.setMaxLength(256);
-            this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(ChatFormatting.DARK_GRAY));
+            this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
             this.iconField.setResponder(value -> refreshCreateState());
             this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 188, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.path")));
             this.pathField.setMaxLength(256);
@@ -1208,12 +1210,12 @@ public class EventScreen extends Screen {
         @Override
         public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
-            graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+            graphics.centeredText(this.font, this.title, this.width / 2, 15, TEXT_TITLE);
             int fieldX = this.nameField.getX();
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), fieldX, 50, 0xFFAAAAAA);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), fieldX, 92, 0xFFAAAAAA);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), fieldX, 134, 0xFFAAAAAA);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), fieldX, 176, 0xFFAAAAAA);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), fieldX, 50, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), fieldX, 92, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), fieldX, 134, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), fieldX, 176, TEXT_DESCRIPTION);
         }
 
         @Override
@@ -1241,7 +1243,7 @@ public class EventScreen extends Screen {
         private void updatePathHint() {
             if (this.pathField == null) return;
             String preview = Event.previewConfigSourcePath(this.nameField.getValue());
-            this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(ChatFormatting.DARK_GRAY));
+            this.pathField.setHint(preview.isEmpty() ? Component.empty() : Component.literal(preview).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         }
     }
 }
