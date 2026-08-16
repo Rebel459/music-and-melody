@@ -36,8 +36,11 @@ public class WorkspaceButton extends Button {
             Identifier sprite = this.active
                     ? highlighted ? VANILLA_BUTTON_HIGHLIGHTED : VANILLA_BUTTON
                     : VANILLA_BUTTON_DISABLED;
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(),
-                    this.getWidth(), this.getHeight());
+            if (!ThemeHelper.renderThemeButton(graphics, sprite, this.getX(), this.getY(),
+                    this.getWidth(), this.getHeight(), 1.0F)) {
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(),
+                        this.getWidth(), this.getHeight());
+            }
         } else {
             int background = highlighted ? ThemeHelper.BUTTON_HIGHLIGHT : ThemeHelper.BUTTON_PASSIVE;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);

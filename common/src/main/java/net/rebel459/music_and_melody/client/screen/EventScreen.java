@@ -322,7 +322,15 @@ public class EventScreen extends Screen {
             titleX += iconSize + 6;
         }
         int titleWidth = Math.max(1, layout.middleWidth - (titleX - layout.middleX) - 8);
-        drawMarquee(graphics, title(), titleX, PANEL_TOP + 35, titleWidth, TEXT_TITLE);
+        if (source == null) {
+            drawMarquee(graphics, title(), titleX, PANEL_TOP + 35, titleWidth, TEXT_TITLE);
+        } else {
+            Component sourceId = Component.literal(source.id.toString());
+            int idWidth = Math.min(this.font.width(sourceId), Math.max(1, titleWidth - 8));
+            int nameWidth = Math.max(1, titleWidth - idWidth - 8);
+            drawMarquee(graphics, source.record.name(), titleX, PANEL_TOP + 35, nameWidth, TEXT_TITLE);
+            drawMarquee(graphics, sourceId, titleX + nameWidth + 8, PANEL_TOP + 35, idWidth, TEXT_DESCRIPTION);
+        }
 
         int controlLabelY = PANEL_TOP + 30;
         int controlStep = settingsStep(layout);
@@ -649,7 +657,7 @@ public class EventScreen extends Screen {
     private String musicExample() {
         return switch (CATEGORIES[this.categoryIndex]) {
             case ALBUM -> "minecraft:volume_alpha";
-            case PLAYLIST -> "config:playlists/example";
+            case PLAYLIST -> "config:example";
             case POOL -> "minecraft:music.overworld.forest";
             case TRACK -> "music_and_melody:music/overworld/alpha";
             case DISC -> "minecraft:cat";

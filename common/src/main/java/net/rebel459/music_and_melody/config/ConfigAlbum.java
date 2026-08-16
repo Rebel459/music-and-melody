@@ -30,7 +30,7 @@ public final class ConfigAlbum {
 
     public static final Identifier ALBUM_ID = Identifier.fromNamespaceAndPath("config", "album");
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "album");
-    private static final String SOUND_PATH = "album/";
+    private static final String INTERNAL_SOUND_PATH = "album/";
     private static final Map<SafeIdentifier, Path> FILES = new LinkedHashMap<>();
     private static final Map<SafeIdentifier, String> NAMES = new HashMap<>();
 
@@ -73,8 +73,13 @@ public final class ConfigAlbum {
     }
 
     public static SafeIdentifier playableId(SafeIdentifier id) {
-        if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(SOUND_PATH)) {
-            return SafeIdentifier.fromNamespaceAndPath("config", id.getPath());
+        if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(INTERNAL_SOUND_PATH)) {
+            return SafeIdentifier.fromNamespaceAndPath("config", id.getPath().substring(INTERNAL_SOUND_PATH.length()));
+        }
+        // Keep existing playlists and saved state readable after config sound
+        // identifiers lose their redundant `album/` path segment.
+        if (id.getNamespace().equals("config") && id.getPath().startsWith(INTERNAL_SOUND_PATH)) {
+            return SafeIdentifier.fromNamespaceAndPath("config", id.getPath().substring(INTERNAL_SOUND_PATH.length()));
         }
         return id;
     }
@@ -103,7 +108,7 @@ public final class ConfigAlbum {
         Set<String> usedPaths = new HashSet<>();
         for (Path file : files) {
             String fileName = file.getFileName().toString();
-            String path = uniquePath(SOUND_PATH + sanitize(stem(fileName)), usedPaths);
+            String path = uniquePath(sanitize(stem(fileName)), usedPaths);
             SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
