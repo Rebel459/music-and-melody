@@ -5,6 +5,7 @@
   "description": {
     "translate": "theme.music_and_melody.classic.description"
   },
+  "icon": "minecraft:textures/block/dirt.png",
   "panels": {
     "background": "#007A0A10",
     "panel_background": "#50000000",

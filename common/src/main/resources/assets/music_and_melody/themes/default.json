@@ -5,7 +5,7 @@
   "description": {
     "translate": "theme.music_and_melody.default.description"
   },
-  "icon": "minecraft:textures/misc/unknown_pack.png",
+  "icon": "music_and_melody:icon.png",
   "panels": {
     "background": "#00070A10",
     "panel_background": "#50000000",
