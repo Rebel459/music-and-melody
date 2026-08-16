@@ -54,6 +54,8 @@ public final class PlaylistHelper {
     private static int pausedQueueIndex = -1;
     private static int pausedShuffleIndex = -1;
     private static long pausedQueueElapsedMillis;
+    private static boolean soundEngineReloading = false;
+    private static ReloadPlayback reloadPlayback;
     /** Offset requested for the next decoded stream, consumed by SoundBufferLibraryMixin. */
     private static long pendingSeekMillis = 0L;
 
@@ -507,7 +509,50 @@ public final class PlaylistHelper {
         return offset;
     }
 
+    public static void beginSoundEngineReload() {
+        soundEngineReloading = true;
+        reloadPlayback = null;
+
+        if (!currentSongFromQueue || currentSong == null || currentSongId == null || !isPlaying()) return;
+
+        reloadPlayback = new ReloadPlayback(
+                currentSongId,
+                currentSongLooping,
+                currentShuffleIndex,
+                shuffleIndex,
+                queuePaused,
+                currentSongElapsedMillis()
+        );
+    }
+
+    public static void finishSoundEngineReload() {
+        ReloadPlayback playback = reloadPlayback;
+        reloadPlayback = null;
+        soundEngineReloading = false;
+
+        if (playback == null) {
+            interruptCurrentPlayback(null);
+            return;
+        }
+
+        int visibleIndex = findQueueIndex(playback.song());
+        if (visibleIndex < 0) {
+            interruptCurrentPlayback(null);
+            return;
+        }
+
+        queueIndex = visibleIndex;
+        currentShuffleIndex = playback.currentShuffleIndex();
+        shuffleIndex = playback.shuffleIndex();
+        queuePaused = false;
+        pendingSeekMillis = playback.elapsedMillis();
+
+        boolean restarted = playSound(playback.song(), playback.looping(), true, false);
+        if (restarted && playback.queuePaused()) pauseQueue();
+    }
+
     public static void interruptCurrentPlayback(SoundInstance sound) {
+        if (soundEngineReloading) return;
         if ((!currentSongFromQueue && !currentSongFromEvent) || currentSong == null) return;
         if (sound != null && sound != currentSong) return;
         if (sound != null && currentSongFromQueue) {
@@ -658,8 +703,13 @@ public final class PlaylistHelper {
     }
 
     private static int findCurrentQueueIndex() {
+        return findQueueIndex(currentSongId);
+    }
+
+    private static int findQueueIndex(SafeIdentifier song) {
+        if (song == null) return -1;
         for (int i = 0; i < QUEUED_SONGS.size(); i++) {
-            if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), currentSongId)) return i;
+            if (DirectSoundFiles.samePlayable(QUEUED_SONGS.get(i), song)) return i;
         }
         return -1;
     }
@@ -913,6 +963,15 @@ public final class PlaylistHelper {
         if (currentSongStartedAtNanos == 0L) return 0L;
         return Math.max(0L, (System.nanoTime() - currentSongStartedAtNanos) / 1_000_000L);
     }
+
+    private record ReloadPlayback(
+            SafeIdentifier song,
+            boolean looping,
+            int currentShuffleIndex,
+            int shuffleIndex,
+            boolean queuePaused,
+            long elapsedMillis
+    ) {}
 
     private static void ensureLoaded() {
         if (loaded) return;

@@ -56,9 +56,18 @@ public abstract class SoundEngineMixin implements SoundEngineStopper {
         PlaylistHelper.interruptCurrentPlayback(soundInstance);
     }
 
+    @Inject(method = "reload", at = @At("HEAD"))
+    private void beginPlaylistSoundReload(CallbackInfo ci) {
+        PlaylistHelper.beginSoundEngineReload();
+    }
+
+    @Inject(method = "reload", at = @At("TAIL"))
+    private void finishPlaylistSoundReload(CallbackInfo ci) {
+        PlaylistHelper.finishSoundEngineReload();
+    }
+
     @Inject(
             method = {
-                    "reload",
                     "destroy",
                     "emergencyShutdown",
                     "stopAll"

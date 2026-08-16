@@ -110,7 +110,6 @@
   "screen.music_and_melody.theme_editor.colours": "Colours",
   "screen.music_and_melody.theme_editor.value": "Value",
   "screen.music_and_melody.theme_editor.parent": "Parent Theme ID",
-  "screen.music_and_melody.theme_editor.parent_hint": "Omitted or invalid parents use Default",
   "screen.music_and_melody.theme_editor.hex": "#AARRGGBB",
   "screen.music_and_melody.theme_editor.button_textures": "Vanilla Button Textures: %s",
   "screen.music_and_melody.theme_editor.main": "Main",
@@ -258,7 +257,7 @@
   "album.minecraft.lava_chicken": "Lava Chicken",
   "album.minecraft.chaos_cubed": "Chaos Cubed",
 
-  "theme.music_and_melody.default": "Default",
+  "theme.music_and_melody.t": "Default",
   "theme.music_and_melody.default.description": "The default theme, a more modern design using similar colour palettes to vanilla",
   "theme.music_and_melody.modern": "Modern",
   "theme.music_and_melody.modern.description": "The modern theme the UI was built around",

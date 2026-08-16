@@ -126,7 +126,7 @@ public class Playlist {
         for (Path file : files) {
             Record record = readRecord(file);
             if (record == null) continue;
-            Identifier id = Identifier.fromNamespaceAndPath("config", "playlists/" + uniquePath(sanitize(stem(file)), usedPaths));
+            Identifier id = Identifier.fromNamespaceAndPath("config", uniquePath(sanitize(stem(file)), usedPaths));
             Playlist playlist = create(id, record, file);
             CONFIG_PLAYLISTS.add(playlist);
         }

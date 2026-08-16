@@ -805,8 +805,6 @@ final class ThemeEditorScreen extends Screen {
             drawMiddleFieldLabel(graphics, MainOption.DESCRIPTION.label(), PANEL_TOP + 76, overriddenMain.contains(MainOption.DESCRIPTION));
             drawMiddleFieldLabel(graphics, MainOption.ICON.label(), PANEL_TOP + 114, overriddenMain.contains(MainOption.ICON));
             drawMiddleFieldLabel(graphics, Component.translatable("screen.music_and_melody.theme_editor.parent"), PANEL_TOP + 152, true);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme_editor.parent_hint"),
-                    middleX + 8, middleY(PANEL_TOP + 188), TEXT_DESCRIPTION);
         }
         graphics.disableScissor();
         renderMiddleScrollbar(graphics, mouseX, mouseY);

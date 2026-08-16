@@ -375,7 +375,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
                 relative = relative.substring(0, relative.length() - ".json".length());
                 String unique = uniquePath(sanitizePath(relative), usedPaths);
                 if (unique.isBlank()) continue;
-                Identifier id = Identifier.fromNamespaceAndPath("config", "themes/" + unique);
+                Identifier id = Identifier.fromNamespaceAndPath("config", unique);
                 Theme.Record record = readRecord(file, id);
                 if (record == null) continue;
                 CONFIG_PATHS.put(id, file);

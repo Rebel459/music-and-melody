@@ -1,0 +1,36 @@
+{
+  "name": {
+    "translate": "theme.music_and_melody.modern"
+  },
+  "description": {
+    "translate": "theme.music_and_melody.modern.description"
+  },
+  "panels": {
+    "background": "#C9070A10",
+    "panel_background": "#E5151B28",
+    "panel_outline": "#FF3B4963",
+    "panel_highlight": "#FF78A6FF",
+    "popup_panel_background": "#FF151C2A",
+    "popup_outline": "#FF3B4963",
+    "popup_overlay": "#5C000000"
+  },
+  "elements": {
+    "button_background": "#66303A4D",
+    "button_highlight": "#CC365985",
+    "outline": "#FF3B4963",
+    "bar_background": "#FF334057",
+    "bar_thumb": "#FF627492",
+    "button_textures": false
+  },
+  "text": {
+    "selected": "#FF9ED9A0",
+    "title": "#FFFFFFFF",
+    "primary": "#FFE6EBF5",
+    "description": "#FF9DA9BF",
+    "header": "#FF78A6FF",
+    "favourite": "#FFD7D272",
+    "example": "#FF555555",
+    "disabled": "#FF888888",
+    "warning": "#FFFF8888"
+  }
+}

@@ -110,7 +110,7 @@ public class Event {
 
         Set<String> usedPaths = new HashSet<>();
         for (Path file : configFiles()) {
-            Identifier id = Identifier.fromNamespaceAndPath("config", "events/" + uniquePath(configPath(file), usedPaths));
+            Identifier id = Identifier.fromNamespaceAndPath("config", uniquePath(configPath(file), usedPaths));
             Record record = readRecord(file, shortName(id));
             if (record == null) continue;
             boolean shouldLoad = true;

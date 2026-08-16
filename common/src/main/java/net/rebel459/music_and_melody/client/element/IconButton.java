@@ -55,18 +55,7 @@ public class IconButton extends Button {
     }
 
     public static void renderIcon(GuiGraphicsExtractor graphics, Identifier icon, int x, int y) {
-        graphics.blit(
-                RenderPipelines.GUI_TEXTURED,
-                icon,
-                x + ICON_PADDING,
-                y + ICON_PADDING,
-                0.0F,
-                0.0F,
-                ICON_SIZE,
-                ICON_SIZE,
-                ICON_SIZE,
-                ICON_SIZE
-        );
+        graphics.blit(RenderPipelines.GUI_TEXTURED, ThemeHelper.getThemeTexture(icon), x + ICON_PADDING, y + ICON_PADDING, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
     }
 
     public static void renderIconWithTooltip(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
@@ -125,8 +114,11 @@ public class IconButton extends Button {
             Identifier sprite = this.active
                     ? highlighted ? VANILLA_BUTTON_HIGHLIGHTED : VANILLA_BUTTON
                     : VANILLA_BUTTON_DISABLED;
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(), width, height,
-                    this.getAlpha());
+            if (forceVanillaTextures || !ThemeHelper.renderThemeButton(graphics, sprite, this.getX(), this.getY(),
+                    width, height, this.getAlpha())) {
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(), width, height,
+                        this.getAlpha());
+            }
         } else {
             if (highlighted) {
                 graphics.fill(this.getX(), this.getY(), this.getX() + width, this.getY() + height,
@@ -143,8 +135,8 @@ public class IconButton extends Button {
         }
     }
 
-    private static void renderButtonIcon(GuiGraphicsExtractor graphics, Identifier icon,
-                                         int x, int y, int width, int height, float alpha) {
+    private static void renderButtonIcon(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, int width, int height, float alpha) {
+        icon = ThemeHelper.getThemeTexture(icon);
         int iconSize = Math.min(ICON_SIZE, Math.max(1, Math.min(width, height) - 4));
         graphics.blit(RenderPipelines.GUI_TEXTURED, icon,
                 x + (width - iconSize) / 2,
