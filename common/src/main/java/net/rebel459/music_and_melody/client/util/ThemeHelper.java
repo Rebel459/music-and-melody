@@ -41,8 +41,10 @@ public final class ThemeHelper {
     public static int TEXT_SELECTED;
     public static int TEXT_TITLE;
     public static int TEXT_PRIMARY;
+    public static int TEXT_PRIMARY_HIGHLIGHT;
     public static int TEXT_DESCRIPTION;
     public static int TEXT_HEADER;
+    public static int TEXT_HEADER_SECONDARY;
     public static int TEXT_FAVOURITE;
     public static int TEXT_EXAMPLE;
     public static int TEXT_DISABLED;
@@ -53,6 +55,7 @@ public final class ThemeHelper {
     // Interactive surfaces and progress controls
     public static int BUTTON_HIGHLIGHT;
     public static int BUTTON_PASSIVE;
+    public static int BUTTON_DISABLED;
     public static boolean BUTTON_TEXTURES;
     public static int PANEL_HIGHLIGHT;
     public static int BAR_BACKGROUND;
@@ -76,6 +79,7 @@ public final class ThemeHelper {
 
         BUTTON_PASSIVE = argb(theme.elements.buttonBackground());
         BUTTON_HIGHLIGHT = argb(theme.elements.buttonHighlight());
+        BUTTON_DISABLED = argb(theme.elements.buttonDisabled());
         BUTTON_TEXTURES = theme.elements.buttonTextures();
         DRAG_OUTLINE = argb(theme.elements.outline());
         BAR_BACKGROUND = argb(theme.elements.barBackground());
@@ -84,8 +88,10 @@ public final class ThemeHelper {
         TEXT_SELECTED = argb(theme.text.selected());
         TEXT_TITLE = argb(theme.text.title());
         TEXT_PRIMARY = argb(theme.text.primary());
+        TEXT_PRIMARY_HIGHLIGHT = argb(theme.text.primaryHighlight());
         TEXT_DESCRIPTION = argb(theme.text.description());
         TEXT_HEADER = argb(theme.text.header());
+        TEXT_HEADER_SECONDARY = argb(theme.text.headerSecondary());
         TEXT_FAVOURITE = argb(theme.text.favourite());
         TEXT_EXAMPLE = argb(theme.text.example());
         TEXT_DISABLED = argb(theme.text.disabled());

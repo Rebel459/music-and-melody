@@ -565,7 +565,7 @@ public class MusicPlayerScreen extends Screen {
         int doneY = this.panelBottom - 28;
         int openY = doneY - 24;
         int applyY = openY - 24;
-        int previewY = applyY - 24;
+        int previewY = themePreviewY();
         WorkspaceButton preview = this.addRenderableWidget(new WorkspaceButton(x, previewY, width, 20,
                 Component.translatable("button.music_and_melody.preview"), this.previewingTheme,
                 button -> previewTheme(this.viewedTheme)));
@@ -678,7 +678,8 @@ public class MusicPlayerScreen extends Screen {
             case NOW_PLAYING -> {
                 SourceInfo source = customPlaylistSource();
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
-                graphics.text(this.font, Component.translatable("screen.music_and_melody.content_details", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
+                graphics.text(this.font, fittedContentDetails(source.typeLabel(), source.originLabel(), this.middleWidth - 42),
+                        this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
             }
             case DETAILS -> {
                 if (this.viewedContent != null) {
@@ -894,16 +895,26 @@ public class MusicPlayerScreen extends Screen {
                 x, descriptionY, TEXT_DESCRIPTION);
         descriptionY += 12;
         List<FormattedCharSequence> lines = this.font.split(theme.description, Math.max(1, width));
-        int bottom = this.panelBottom - 110;
+        // Keep the description clear of the action stack, while allowing the
+        // last complete line to use the space immediately above it. The old
+        // fixed offset left a scale-dependent gap and could make the final
+        // line appear clipped at the bottom of the details panel.
+        int bottom = themePreviewY() - 6;
         for (FormattedCharSequence line : lines) {
             if (descriptionY + this.font.lineHeight > bottom) break;
             graphics.text(this.font, line, x, descriptionY, TEXT_PRIMARY);
             descriptionY += this.font.lineHeight + 2;
         }
         if (!theme.valid) {
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.invalid").withStyle(ChatFormatting.BOLD),
-                    x, Math.min(bottom, descriptionY + 4), TEXT_PENDING_DELETION);
+            if (descriptionY + this.font.lineHeight <= bottom) {
+                graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.invalid").withStyle(ChatFormatting.BOLD),
+                        x, descriptionY, TEXT_PENDING_DELETION);
+            }
         }
+    }
+
+    private int themePreviewY() {
+        return this.panelBottom - 100;
     }
 
     private void renderRemoteDetailField(GuiGraphicsExtractor graphics, String headingKey, Component value, int x, int y, int width) {
@@ -966,7 +977,10 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private int toLayoutMouse(double mouse) {
-        return Math.round((float) (mouse / MaMDataConfig.get().gui_multiplier));
+        // Rendering receives integer coordinates, while click handling keeps
+        // the exact divided double. Floor preserves the half-open widget
+        // bounds under fractional GUI multipliers so hover and click agree.
+        return (int) Math.floor(mouse / MaMDataConfig.get().gui_multiplier);
     }
 
     private MouseButtonEvent toLayoutMouse(MouseButtonEvent event) {
@@ -1945,6 +1959,15 @@ public class MusicPlayerScreen extends Screen {
         return Component.translatable(remoteStateTranslationKey(state));
     }
 
+    private static Component remoteTypeMessage(RemotePack pack) {
+        return Component.translatable(switch (pack.tag()) {
+            case ALBUM -> "screen.music_and_melody.tag.album";
+            case PLAYLIST -> "screen.music_and_melody.tag.playlist";
+            case EVENT -> "screen.music_and_melody.tag.event";
+            case THEME -> "screen.music_and_melody.tag.theme";
+        });
+    }
+
     private static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -1957,6 +1980,16 @@ public class MusicPlayerScreen extends Screen {
     private void drawTruncated(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         FormattedCharSequence line = this.font.split(text, Math.max(1, width)).getFirst();
         graphics.text(this.font, line, x, y, color);
+    }
+
+    /** Keeps a separator from being stranded when only the first tag fits. */
+    private Component fittedContentDetails(Component first, Component second, int width) {
+        if (second == null || second.getString().isBlank()) return first;
+        int separatorWidth = this.font.width(" \u00b7 ");
+        if (this.font.width(first) + separatorWidth + this.font.width(second) <= Math.max(1, width)) {
+            return Component.translatable("screen.music_and_melody.content_details", first, second);
+        }
+        return first;
     }
 
     /**
@@ -1982,7 +2015,7 @@ public class MusicPlayerScreen extends Screen {
         else fraction = 1.0F - (elapsed - pause - move - pause) / (float) move;
         int offset = Math.round(travel * Math.max(0.0F, Math.min(1.0F, fraction)));
 
-        graphics.enableScissor(x, y, x + width, y + this.font.lineHeight);
+        graphics.enableScissor(x, y, x + width, y + this.font.lineHeight + 2);
         graphics.text(this.font, text, x - offset, y, color);
         graphics.disableScissor();
     }
@@ -2007,7 +2040,7 @@ public class MusicPlayerScreen extends Screen {
         else fraction = 1.0F - (elapsed - pause - move - pause) / (float) move;
         int offset = Math.round(travel * Math.max(0.0F, Math.min(1.0F, fraction)));
 
-        graphics.enableScissor(x, y, x + width, y + this.font.lineHeight);
+        graphics.enableScissor(x, y, x + width, y + this.font.lineHeight + 2);
         graphics.text(this.font, text, x - offset, y, color);
         graphics.disableScissor();
     }
@@ -2318,8 +2351,9 @@ public class MusicPlayerScreen extends Screen {
             int y = this.getY();
             int width = this.getWidth();
             int height = this.getHeight();
-            boolean highlighted = this.active && this.isHoveredOrFocused();
-            graphics.fill(x, y, x + width, y + height, highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE);
+            boolean highlighted = this.active && (this.isMouseOver(mouseX, mouseY) || this.isFocused());
+            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE;
+            graphics.fill(x, y, x + width, y + height, background);
             int filledWidth = Math.round((width - 4) * (float) this.value);
             graphics.fill(x, y, x + filledWidth + 2, y + height, PANEL_HIGHLIGHT);
             int handleX = x + Math.round((width - 4) * (float) this.value);
@@ -2432,7 +2466,7 @@ public class MusicPlayerScreen extends Screen {
         protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                     && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
-            int background = hovered ? BUTTON_HIGHLIGHT : PANEL_BACKGROUND;
+            int background = !this.active ? BUTTON_DISABLED : hovered ? BUTTON_HIGHLIGHT : PANEL_BACKGROUND;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHT : PANEL_OUTLINE);
 
@@ -2445,7 +2479,7 @@ public class MusicPlayerScreen extends Screen {
             int textWidth = Math.max(1, this.getWidth() - iconSize - 15);
             this.screen.drawTruncated(graphics, source.name(), textX, this.getY() + 7, textWidth,
                     source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
-            this.screen.drawTruncated(graphics, Component.translatable("screen.music_and_melody.content_details", source.typeLabel(), source.originLabel()),
+            this.screen.drawTruncated(graphics, this.screen.fittedContentDetails(source.typeLabel(), source.originLabel(), textWidth),
                     textX, this.getY() + 21, textWidth, TEXT_DESCRIPTION);
         }
     }
@@ -2594,7 +2628,7 @@ public class MusicPlayerScreen extends Screen {
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (this.heading != null) {
                 graphics.text(this.minecraft.font, this.heading.copy().withStyle(ChatFormatting.BOLD), this.getContentX() + 4,
-                        this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, PANEL_HIGHLIGHT);
+                        this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_HEADER_SECONDARY);
                 return;
             }
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
@@ -3187,8 +3221,17 @@ public class MusicPlayerScreen extends Screen {
 
     private static final class ThemeList extends PanelList<ThemeEntry> {
         ThemeList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
-            super(screen, minecraft, panelX, panelWidth, top, bottom, 42);
+            super(screen, minecraft, panelX, panelWidth, top, completeRowsBottom(top, bottom, 42), 42);
             refresh();
+        }
+
+        private static int completeRowsBottom(int top, int bottom, int rowHeight) {
+            // AbstractSelectionList starts its first entry two pixels below
+            // the list top. Include that inset when aligning the viewport, or
+            // the final row would still lose its bottom two pixels.
+            int available = Math.max(0, bottom - top - 2);
+            int rows = Math.max(1, available / rowHeight);
+            return Math.min(bottom, top + 2 + rows * rowHeight + 2);
         }
 
         void refresh() {
@@ -3234,7 +3277,7 @@ public class MusicPlayerScreen extends Screen {
             this.screen.drawTrackMarquee(graphics, this.theme.name, textX, this.getContentYMiddle() - 15, textWidth,
                     titleColor);
             this.screen.drawTrackMarquee(graphics, this.theme.description, textX,
-                    this.getContentYMiddle() - 3, textWidth, TEXT_DESCRIPTION);
+                    this.getContentYMiddle() - 4, textWidth, TEXT_DESCRIPTION);
         }
 
         @Override
@@ -3374,7 +3417,9 @@ public class MusicPlayerScreen extends Screen {
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 16;
             int titleColor = this.screen.isRemoteDeletePending(this.pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
             this.screen.drawTrackMarquee(graphics, this.pack.name(), textX, this.getContentYMiddle() - 10, Math.max(1, textWidth), titleColor);
-            this.screen.drawTrackMarquee(graphics, remoteStateMessage(RemoteContentManager.state(this.pack)), textX,
+            Component details = Component.translatable("screen.music_and_melody.content_details",
+                    remoteTypeMessage(this.pack), remoteStateMessage(RemoteContentManager.state(this.pack)));
+            this.screen.drawTrackMarquee(graphics, details, textX,
                     this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             updateAction();
             this.actionButton.setX(this.getContentRight() - IconButton.SIZE - 3);

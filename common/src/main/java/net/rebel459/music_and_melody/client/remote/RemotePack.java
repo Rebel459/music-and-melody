@@ -15,8 +15,8 @@ public record RemotePack(
         String sha256,
         long size,
         String icon,
-        String atLeastVersion,
-        String belowVersion,
+        String minimumVanillaVersion,
+        String belowVanillaVersion,
         Tag tag,
         Provenance provenance
 ) {

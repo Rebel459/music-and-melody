@@ -31,7 +31,11 @@ public class WorkspaceButton extends Button {
 
     @Override
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        boolean highlighted = this.active && (this.selected || this.isHoveredOrFocused());
+        // AbstractWidget's hover flag is calculated against the vanilla
+        // scissor rectangle. MusicPlayerScreen renders in a fractional
+        // logical scale, so use the same local bounds as click handling here.
+        boolean highlighted = this.active && (this.selected
+                || this.isMouseOver(mouseX, mouseY) || this.isFocused());
         if (ThemeHelper.BUTTON_TEXTURES) {
             Identifier sprite = this.active
                     ? highlighted ? VANILLA_BUTTON_HIGHLIGHTED : VANILLA_BUTTON
@@ -42,18 +46,23 @@ public class WorkspaceButton extends Button {
                         this.getWidth(), this.getHeight());
             }
         } else {
-            int background = highlighted ? ThemeHelper.BUTTON_HIGHLIGHT : ThemeHelper.BUTTON_PASSIVE;
+            int background = !this.active ? ThemeHelper.BUTTON_DISABLED
+                    : highlighted ? ThemeHelper.BUTTON_HIGHLIGHT : ThemeHelper.BUTTON_PASSIVE;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             if (this.selected) {
                 graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ThemeHelper.PANEL_HIGHLIGHT);
             }
         }
-        int textColor = textColor();
-        graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.getWidth() / 2,
+        int textColor = textColor(highlighted);
+        // WithInactiveMessage decorates getMessage() with Minecraft's fixed
+        // grey style while inactive. Use the raw message so the theme's
+        // disabled colour supplied above is actually respected.
+        graphics.centeredText(Minecraft.getInstance().font, this.message, this.getX() + this.getWidth() / 2,
                 this.getY() + (this.getHeight() - 8) / 2, textColor);
     }
 
-    protected int textColor() {
-        return this.active ? ThemeHelper.TEXT_PRIMARY : ThemeHelper.TEXT_DISABLED;
+    protected int textColor(boolean highlighted) {
+        if (!this.active) return ThemeHelper.TEXT_DISABLED;
+        return highlighted ? ThemeHelper.TEXT_PRIMARY_HIGHLIGHT : ThemeHelper.TEXT_PRIMARY;
     }
 }

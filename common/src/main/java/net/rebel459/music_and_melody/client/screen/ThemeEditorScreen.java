@@ -130,7 +130,7 @@ final class ThemeEditorScreen extends Screen {
         this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), middleFieldX, PANEL_TOP + 88, middleFieldWidth);
         this.iconField = field(Component.translatable("screen.music_and_melody.create_theme.icon"), middleFieldX, PANEL_TOP + 126, middleFieldWidth);
         this.parentField = field(Component.translatable("screen.music_and_melody.theme_editor.parent"), middleFieldX, PANEL_TOP + 164, middleFieldWidth);
-        this.buttonTexturesButton = this.addRenderableWidget(new WorkspaceButton(middleFieldX, PANEL_TOP + 162,
+        this.buttonTexturesButton = this.addRenderableWidget(new WorkspaceButton(middleFieldX, buttonTexturesBaseY(),
                 middleFieldWidth, 20, buttonTexturesMessage(), this.buttonTextures,
                 ignored -> toggleButtonTextures()));
         this.loading = true;
@@ -243,9 +243,9 @@ final class ThemeEditorScreen extends Screen {
                 if (!sameColour(value, parentValues.get(role))) overriddenRoles.add(role);
             });
         }
-        if (record.name().isPresent() && !record.name().get().getString().equals(parentName())) overriddenMain.add(MainOption.NAME);
-        if (record.description().isPresent() && !record.description().get().getString().equals(parentDescription())) overriddenMain.add(MainOption.DESCRIPTION);
-        if (record.icon().isPresent() && !record.icon().get().equals(parentIcon())) overriddenMain.add(MainOption.ICON);
+        if (record.name().isPresent()) overriddenMain.add(MainOption.NAME);
+        if (record.description().isPresent()) overriddenMain.add(MainOption.DESCRIPTION);
+        if (record.icon().isPresent()) overriddenMain.add(MainOption.ICON);
         record.elements().flatMap(Theme.RawElements::buttonTextures).ifPresent(value -> {
             this.buttonTextures = value;
             this.overriddenButtonTextures = value != this.parentButtonTextures;
@@ -319,7 +319,7 @@ final class ThemeEditorScreen extends Screen {
         this.middleViewportBottom = Math.max(this.middleViewportTop + 20, this.bottomPanelTop - 4);
         int contentBottom = switch (this.category) {
             case MAIN -> PANEL_TOP + 204;
-            case ELEMENTS -> PANEL_TOP + 204;
+            case ELEMENTS -> buttonTexturesBaseY() + 24;
             case PANELS, TEXT -> PANEL_TOP + 38 + roleCount(this.category) * 24;
         };
         this.middleScrollMax = Math.max(0.0D, contentBottom - this.middleViewportBottom);
@@ -337,9 +337,13 @@ final class ThemeEditorScreen extends Screen {
         setMiddleFieldPosition(this.descriptionField, PANEL_TOP + 88);
         setMiddleFieldPosition(this.iconField, PANEL_TOP + 126);
         setMiddleFieldPosition(this.parentField, PANEL_TOP + 164);
-        this.buttonTexturesButton.setY(middleY(PANEL_TOP + 162));
+        this.buttonTexturesButton.setY(middleY(buttonTexturesBaseY()));
         this.buttonTexturesButton.visible = this.category == Category.ELEMENTS
                 && middleVisible(this.buttonTexturesButton.getY(), this.buttonTexturesButton.getHeight());
+    }
+
+    private int buttonTexturesBaseY() {
+        return PANEL_TOP + 38 + roleCount(Category.ELEMENTS) * 24 + 4;
     }
 
     private void setMiddleFieldPosition(EditBox field, int baseY) {
@@ -455,13 +459,7 @@ final class ThemeEditorScreen extends Screen {
 
     private void textChanged(MainOption option, String value) {
         if (loading || readOnly) return;
-        String parent = switch (option) {
-            case NAME -> parentName();
-            case DESCRIPTION -> parentDescription();
-            case ICON -> parentIcon();
-        };
-        if (value.equals(parent)) overriddenMain.remove(option);
-        else overriddenMain.add(option);
+        overriddenMain.add(option);
         dirty = true;
         updateWidgets();
     }
@@ -493,21 +491,9 @@ final class ThemeEditorScreen extends Screen {
             this.buttonTextures = this.parentButtonTextures;
         }
         this.overriddenButtonTextures = this.buttonTextures != this.parentButtonTextures;
-        refreshInheritedTextFields();
         this.loading = false;
         dirty = true;
         updateWidgets();
-    }
-
-    private void refreshInheritedTextFields() {
-        reconcileMain(MainOption.NAME, nameField, parentName());
-        reconcileMain(MainOption.DESCRIPTION, descriptionField, parentDescription());
-        reconcileMain(MainOption.ICON, iconField, parentIcon());
-    }
-
-    private void reconcileMain(MainOption option, EditBox field, String inherited) {
-        if (!overriddenMain.contains(option)) field.setValue(inherited);
-        else if (field.getValue().equals(inherited)) overriddenMain.remove(option);
     }
 
     private void updateRoleOverride(Role role) {
@@ -521,22 +507,10 @@ final class ThemeEditorScreen extends Screen {
         return a != null && a.equals(b);
     }
 
-    private String parentName() {
-        return inheritedTheme == null ? "" : inheritedTheme.name.getString();
-    }
-
-    private String parentDescription() {
-        return inheritedTheme == null ? "" : inheritedTheme.description.getString();
-    }
-
-    private String parentIcon() {
-        return inheritedTheme == null ? "" : inheritedTheme.icon.toString();
-    }
-
     private void updateTextColours() {
-        setFieldColour(nameField, overriddenMain.contains(MainOption.NAME));
-        setFieldColour(descriptionField, overriddenMain.contains(MainOption.DESCRIPTION));
-        setFieldColour(iconField, overriddenMain.contains(MainOption.ICON));
+        setFieldColour(nameField, true);
+        setFieldColour(descriptionField, true);
+        setFieldColour(iconField, true);
         setFieldColour(parentField, true);
         setFieldColour(hexField, overriddenRoles.contains(selectedRole));
     }
@@ -565,11 +539,11 @@ final class ThemeEditorScreen extends Screen {
                 roleValue(Role.POPUP_OVERLAY));
         Theme.RawElements elements = new Theme.RawElements(
                 roleValue(Role.BUTTON_BACKGROUND), roleValue(Role.BUTTON_HIGHLIGHT),
-                roleValue(Role.OUTLINE), roleValue(Role.BAR_BACKGROUND),
+                roleValue(Role.BUTTON_DISABLED), roleValue(Role.OUTLINE), roleValue(Role.BAR_BACKGROUND),
                 roleValue(Role.BAR_THUMB), buttonTexturesValue());
         Theme.RawText text = new Theme.RawText(
-                roleValue(Role.SELECTED), roleValue(Role.TITLE), roleValue(Role.PRIMARY),
-                roleValue(Role.DESCRIPTION), roleValue(Role.HEADER), roleValue(Role.FAVOURITE),
+                roleValue(Role.SELECTED), roleValue(Role.TITLE), roleValue(Role.PRIMARY), roleValue(Role.PRIMARY_HIGHLIGHT),
+                roleValue(Role.DESCRIPTION), roleValue(Role.HEADER), roleValue(Role.HEADER_SECONDARY), roleValue(Role.FAVOURITE),
                 roleValue(Role.EXAMPLE), roleValue(Role.DISABLED), roleValue(Role.WARNING));
         return new Theme.Record(theme.theme, componentValue(MainOption.NAME, nameField),
                 componentValue(MainOption.DESCRIPTION, descriptionField), stringValue(MainOption.ICON, iconField), parent,
@@ -883,14 +857,17 @@ final class ThemeEditorScreen extends Screen {
         POPUP_OVERLAY(Category.PANELS, "screen.music_and_melody.theme.popup_overlay"),
         BUTTON_BACKGROUND(Category.ELEMENTS, "screen.music_and_melody.theme.button_background"),
         BUTTON_HIGHLIGHT(Category.ELEMENTS, "screen.music_and_melody.theme.button_highlight"),
+        BUTTON_DISABLED(Category.ELEMENTS, "screen.music_and_melody.theme.button_disabled"),
         OUTLINE(Category.ELEMENTS, "screen.music_and_melody.theme.outline"),
         BAR_BACKGROUND(Category.ELEMENTS, "screen.music_and_melody.theme.bar_background"),
         BAR_THUMB(Category.ELEMENTS, "screen.music_and_melody.theme.bar_thumb"),
         SELECTED(Category.TEXT, "screen.music_and_melody.theme.selected"),
         TITLE(Category.TEXT, "screen.music_and_melody.theme.title"),
         PRIMARY(Category.TEXT, "screen.music_and_melody.theme.primary"),
+        PRIMARY_HIGHLIGHT(Category.TEXT, "screen.music_and_melody.theme.primary_highlight"),
         DESCRIPTION(Category.TEXT, "screen.music_and_melody.theme.description_text"),
         HEADER(Category.TEXT, "screen.music_and_melody.theme.header"),
+        HEADER_SECONDARY(Category.TEXT, "screen.music_and_melody.theme.header_secondary"),
         FAVOURITE(Category.TEXT, "screen.music_and_melody.theme.favourite"),
         EXAMPLE(Category.TEXT, "screen.music_and_melody.theme.example"),
         DISABLED(Category.TEXT, "screen.music_and_melody.theme.disabled"),
@@ -919,14 +896,17 @@ final class ThemeEditorScreen extends Screen {
                 case POPUP_OVERLAY -> theme.panels.popupOverlay();
                 case BUTTON_BACKGROUND -> theme.elements.buttonBackground();
                 case BUTTON_HIGHLIGHT -> theme.elements.buttonHighlight();
+                case BUTTON_DISABLED -> theme.elements.buttonDisabled();
                 case OUTLINE -> theme.elements.outline();
                 case BAR_BACKGROUND -> theme.elements.barBackground();
                 case BAR_THUMB -> theme.elements.barThumb();
                 case SELECTED -> theme.text.selected();
                 case TITLE -> theme.text.title();
                 case PRIMARY -> theme.text.primary();
+                case PRIMARY_HIGHLIGHT -> theme.text.primaryHighlight();
                 case DESCRIPTION -> theme.text.description();
                 case HEADER -> theme.text.header();
+                case HEADER_SECONDARY -> theme.text.headerSecondary();
                 case FAVOURITE -> theme.text.favourite();
                 case EXAMPLE -> theme.text.example();
                 case DISABLED -> theme.text.disabled();
@@ -946,14 +926,17 @@ final class ThemeEditorScreen extends Screen {
                 case POPUP_OVERLAY -> record.panels().flatMap(Theme.RawPanels::popupOverlay);
                 case BUTTON_BACKGROUND -> record.elements().flatMap(Theme.RawElements::buttonBackground);
                 case BUTTON_HIGHLIGHT -> record.elements().flatMap(Theme.RawElements::buttonHighlight);
+                case BUTTON_DISABLED -> record.elements().flatMap(Theme.RawElements::buttonDisabled);
                 case OUTLINE -> record.elements().flatMap(Theme.RawElements::outline);
                 case BAR_BACKGROUND -> record.elements().flatMap(Theme.RawElements::barBackground);
                 case BAR_THUMB -> record.elements().flatMap(Theme.RawElements::barThumb);
                 case SELECTED -> record.text().flatMap(Theme.RawText::selected);
                 case TITLE -> record.text().flatMap(Theme.RawText::title);
                 case PRIMARY -> record.text().flatMap(Theme.RawText::primary);
+                case PRIMARY_HIGHLIGHT -> record.text().flatMap(Theme.RawText::primaryHighlight);
                 case DESCRIPTION -> record.text().flatMap(Theme.RawText::description);
                 case HEADER -> record.text().flatMap(Theme.RawText::header);
+                case HEADER_SECONDARY -> record.text().flatMap(Theme.RawText::headerSecondary);
                 case FAVOURITE -> record.text().flatMap(Theme.RawText::favourite);
                 case EXAMPLE -> record.text().flatMap(Theme.RawText::example);
                 case DISABLED -> record.text().flatMap(Theme.RawText::disabled);
@@ -1019,7 +1002,9 @@ final class ThemeEditorScreen extends Screen {
             int y = this.getY();
             int width = this.getWidth();
             int height = this.getHeight();
-            graphics.fill(x, y, x + width, y + height, this.isHoveredOrFocused() ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE);
+            boolean highlighted = this.active && (this.isMouseOver(mouseX, mouseY) || this.isFocused());
+            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE;
+            graphics.fill(x, y, x + width, y + height, background);
             int filled = Math.round((width - 4) * (float) this.value);
             graphics.fill(x, y, x + filled + 2, y + height, PANEL_HIGHLIGHT);
             int handleX = x + filled;
@@ -1045,8 +1030,9 @@ final class ThemeEditorScreen extends Screen {
         }
 
         @Override
-        protected int textColor() {
-            return overriddenRoles.contains(this.role) ? TEXT_PRIMARY : TEXT_DISABLED;
+        protected int textColor(boolean highlighted) {
+            if (!overriddenRoles.contains(this.role)) return TEXT_DISABLED;
+            return highlighted ? TEXT_PRIMARY_HIGHLIGHT : TEXT_PRIMARY;
         }
     }
 }

@@ -18,16 +18,15 @@
   "elements": {
     "button_background": "#66303A4D",
     "button_highlight": "#CC365985",
+    "button_disabled": "#30303A4D",
     "outline": "#FF3B4963",
     "bar_background": "#FF334057",
     "bar_thumb": "#FF627492"
   },
   "text": {
-    "selected": "#FF9ED9A0",
-    "title": "#FFFFFFFF",
     "description": "#FF9DA9BF",
     "header": "#FF78A6FF",
-    "example": "#FF555555",
+    "header_secondary": "#FF78A6FF",
     "disabled": "#FF888888"
   }
 }
