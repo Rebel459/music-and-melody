@@ -109,7 +109,8 @@ public class IconButton extends Button {
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int width = Math.max(1, this.getWidth());
         int height = Math.max(1, this.getHeight());
-        boolean highlighted = this.active && (this.selected || this.isHoveredOrFocused());
+        boolean highlighted = this.active && (this.selected
+                || this.isMouseOver(mouseX, mouseY) || this.isFocused());
         if ((ThemeHelper.BUTTON_TEXTURES || this.forceVanillaTextures) && !this.listIcon) {
             Identifier sprite = this.active
                     ? highlighted ? VANILLA_BUTTON_HIGHLIGHTED : VANILLA_BUTTON
@@ -120,9 +121,10 @@ public class IconButton extends Button {
                         this.getAlpha());
             }
         } else {
-            if (highlighted) {
+            if (!this.active || highlighted) {
                 graphics.fill(this.getX(), this.getY(), this.getX() + width, this.getY() + height,
-                        ARGB.multiplyAlpha(ThemeHelper.BUTTON_HIGHLIGHT, this.getAlpha()));
+                        ARGB.multiplyAlpha(!this.active ? ThemeHelper.BUTTON_DISABLED : ThemeHelper.BUTTON_HIGHLIGHT,
+                                this.getAlpha()));
             }
         }
         renderButtonIcon(graphics, this.icon, this.getX(), this.getY(), width, height, this.getAlpha());

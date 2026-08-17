@@ -53,18 +53,20 @@ public final class Theme {
     }
 
     /** Fully resolved interactive-element colours and button rendering mode. */
-    public record Elements(String buttonBackground, String buttonHighlight, String outline, String barBackground,
-                           String barThumb, boolean buttonTextures) {
+    public record Elements(String buttonBackground, String buttonHighlight, String buttonDisabled,
+                           String outline, String barBackground, String barThumb, boolean buttonTextures) {
     }
 
     /** Fully resolved text colours. */
-    public record Text(String selected, String title, String primary, String description, String header,
-                       String favourite, String example, String disabled, String warning) {
+    public record Text(String selected, String title, String primary, String primaryHighlight,
+                       String description, String header, String headerSecondary, String favourite,
+                       String example, String disabled, String warning) {
     }
 
     /**
-     * Raw decoded theme data. Every field other than the record id is optional
-     * so a child theme can inherit it from its parent. Colour and identifier
+     * Raw decoded theme data. Visual fields are optional so a child theme can
+     * inherit them from its parent; metadata remains optional so incomplete
+     * records can still be displayed and corrected in the editor. Colour
      * values remain strings here so parseable but invalid entries can still be
      * displayed and corrected in the editor.
      */
@@ -106,12 +108,14 @@ public final class Theme {
     }
 
     public record RawElements(Optional<String> buttonBackground, Optional<String> buttonHighlight,
-                              Optional<String> outline, Optional<String> barBackground, Optional<String> barThumb,
+                              Optional<String> buttonDisabled, Optional<String> outline,
+                              Optional<String> barBackground, Optional<String> barThumb,
                               Optional<Boolean> buttonTextures) {
 
         public static final Codec<RawElements> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("button_background").forGetter(RawElements::buttonBackground),
                 Codec.STRING.optionalFieldOf("button_highlight").forGetter(RawElements::buttonHighlight),
+                Codec.STRING.optionalFieldOf("button_disabled").forGetter(RawElements::buttonDisabled),
                 Codec.STRING.optionalFieldOf("outline").forGetter(RawElements::outline),
                 Codec.STRING.optionalFieldOf("bar_background").forGetter(RawElements::barBackground),
                 Codec.STRING.optionalFieldOf("bar_thumb").forGetter(RawElements::barThumb),
@@ -120,15 +124,18 @@ public final class Theme {
     }
 
     public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary,
-                          Optional<String> description, Optional<String> header, Optional<String> favourite,
-                          Optional<String> example, Optional<String> disabled, Optional<String> warning) {
+                          Optional<String> primaryHighlight, Optional<String> description, Optional<String> header,
+                          Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example,
+                          Optional<String> disabled, Optional<String> warning) {
 
         public static final Codec<RawText> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("selected").forGetter(RawText::selected),
                 Codec.STRING.optionalFieldOf("title").forGetter(RawText::title),
                 Codec.STRING.optionalFieldOf("primary").forGetter(RawText::primary),
+                Codec.STRING.optionalFieldOf("primary_highlight").forGetter(RawText::primaryHighlight),
                 Codec.STRING.optionalFieldOf("description").forGetter(RawText::description),
                 Codec.STRING.optionalFieldOf("header").forGetter(RawText::header),
+                Codec.STRING.optionalFieldOf("header_secondary").forGetter(RawText::headerSecondary),
                 Codec.STRING.optionalFieldOf("favourite").forGetter(RawText::favourite),
                 Codec.STRING.optionalFieldOf("example").forGetter(RawText::example),
                 Codec.STRING.optionalFieldOf("disabled").forGetter(RawText::disabled),

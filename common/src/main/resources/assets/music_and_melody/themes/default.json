@@ -18,6 +18,7 @@
   "elements": {
     "button_background": "#32FFFFFF",
     "button_highlight": "#64C8C8C8",
+    "button_disabled": "#19FFFFFF",
     "outline": "#FFFFFFFF",
     "bar_background": "#82828282",
     "bar_thumb": "#FFC8C8C8",
@@ -30,8 +31,10 @@
     "selected": "#FF9ED9A0",
     "title": "#FFFFFFFF",
     "primary": "#FFE6EBF5",
+    "primary_highlight": "#FFE6EBF5",
     "favourite": "#FFD7D272",
     "example": "#FF555555",
+    "header_secondary": "#FF89DF81",
     "warning": "#FFFF8888"
   }
 }

@@ -291,10 +291,10 @@ public final class RemoteContentManager {
 
     private static boolean supportsCurrentVersion(RemotePack pack) {
         VanillaVersion version = VanillaVersion.getVanillaVersion();
-        boolean withinMaxExclusive = pack.belowVersion().isEmpty()
-                || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
-        boolean withinMinInclusive = pack.atLeastVersion().isEmpty()
-                || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
+        boolean withinMaxExclusive = pack.belowVanillaVersion().isEmpty()
+                || VanillaVersion.parse(pack.belowVanillaVersion()).compareTo(version) > 0;
+        boolean withinMinInclusive = pack.minimumVanillaVersion().isEmpty()
+                || VanillaVersion.parse(pack.minimumVanillaVersion()).compareTo(version) <= 0;
         return withinMaxExclusive && withinMinInclusive;
     }
 

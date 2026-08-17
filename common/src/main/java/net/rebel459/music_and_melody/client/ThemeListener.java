@@ -111,18 +111,25 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
     }
 
     public static synchronized Theme activeTheme() {
-        Identifier id = Identifier.tryParse(MaMDataConfig.get().active_theme);
+        String configuredId = MaMDataConfig.get().active_theme;
+        Identifier id = configuredThemeId(configuredId);
         Theme active = id == null ? null : THEMES.get(id);
         if (active == null || !active.valid) {
             active = THEMES.get(Theme.DEFAULT_ID);
             if (active == null || !active.valid) return null;
-            String fallback = active.theme.toString();
-            if (!Objects.equals(MaMDataConfig.get().active_theme, fallback)) {
-                MaMDataConfig.get().active_theme = fallback;
-                saveDataConfig();
-            }
+            // This method is also called by bootstrapDefault(), before the
+            // asynchronous resource reload has populated all bundled themes.
+            // Persisting the fallback here would overwrite a valid configured
+            // theme before it has had a chance to resolve.
         }
         return active;
+    }
+
+    private static Identifier configuredThemeId(String value) {
+        if (value == null || value.isBlank()) return null;
+        String trimmed = value.trim();
+        if (!trimmed.contains(":")) return Identifier.tryParse(MusicAndMelody.MOD_ID + ":" + trimmed);
+        return Identifier.tryParse(trimmed);
     }
 
     public static synchronized void preview(Identifier id) {
@@ -258,13 +265,14 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         var elements = record.elements().orElse(null);
         var text = record.text().orElse(null);
 
-        // Metadata is data-driven too. Never manufacture an identifier or
-        // description for a record that omitted these fields.
-        net.minecraft.network.chat.Component name = record.name().orElse(inherited == null
-                ? net.minecraft.network.chat.CommonComponents.EMPTY : inherited.name);
-        net.minecraft.network.chat.Component description = record.description().orElse(inherited == null
-                ? net.minecraft.network.chat.CommonComponents.EMPTY : inherited.description);
-        Identifier icon = identifier(record.icon(), inherited == null ? null : inherited.icon, "icon", errors);
+        // Metadata belongs to the theme itself. Parent themes provide visual
+        // tokens only; an omitted name or description stays empty, and an
+        // omitted/invalid icon uses the neutral unknown-pack icon.
+        net.minecraft.network.chat.Component name = record.name()
+                .orElse(net.minecraft.network.chat.CommonComponents.EMPTY);
+        net.minecraft.network.chat.Component description = record.description()
+                .orElse(net.minecraft.network.chat.CommonComponents.EMPTY);
+        Identifier icon = identifier(record.icon(), null, "icon", errors);
 
         Theme.Panels resolvedPanels = new Theme.Panels(
                 color(panels == null ? Optional.empty() : panels.background(), inherited == null ? null : inherited.panels.background(), "panels.background", errors),
@@ -279,6 +287,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         Theme.Elements resolvedElements = new Theme.Elements(
                 color(elements == null ? Optional.empty() : elements.buttonBackground(), inherited == null ? null : inherited.elements.buttonBackground(), "elements.button_background", errors),
                 color(elements == null ? Optional.empty() : elements.buttonHighlight(), inherited == null ? null : inherited.elements.buttonHighlight(), "elements.button_highlight", errors),
+                color(elements == null ? Optional.empty() : elements.buttonDisabled(), inherited == null ? null : inherited.elements.buttonDisabled(), "elements.button_disabled", errors),
                 color(elements == null ? Optional.empty() : elements.outline(), inherited == null ? null : inherited.elements.outline(), "elements.outline", errors),
                 color(elements == null ? Optional.empty() : elements.barBackground(), inherited == null ? null : inherited.elements.barBackground(), "elements.bar_background", errors),
                 color(elements == null ? Optional.empty() : elements.barThumb(), inherited == null ? null : inherited.elements.barThumb(), "elements.bar_thumb", errors),
@@ -291,8 +300,10 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
                 color(text == null ? Optional.empty() : text.selected(), inherited == null ? null : inherited.text.selected(), "text.selected", errors),
                 color(text == null ? Optional.empty() : text.title(), inherited == null ? null : inherited.text.title(), "text.title", errors),
                 color(text == null ? Optional.empty() : text.primary(), inherited == null ? null : inherited.text.primary(), "text.primary", errors),
+                color(text == null ? Optional.empty() : text.primaryHighlight(), inherited == null ? null : inherited.text.primaryHighlight(), "text.primary_highlight", errors),
                 color(text == null ? Optional.empty() : text.description(), inherited == null ? null : inherited.text.description(), "text.description", errors),
                 color(text == null ? Optional.empty() : text.header(), inherited == null ? null : inherited.text.header(), "text.header", errors),
+                color(text == null ? Optional.empty() : text.headerSecondary(), inherited == null ? null : inherited.text.headerSecondary(), "text.header_secondary", errors),
                 color(text == null ? Optional.empty() : text.favourite(), inherited == null ? null : inherited.text.favourite(), "text.favourite", errors),
                 color(text == null ? Optional.empty() : text.example(), inherited == null ? null : inherited.text.example(), "text.example", errors),
                 color(text == null ? Optional.empty() : text.disabled(), inherited == null ? null : inherited.text.disabled(), "text.disabled", errors),
@@ -326,14 +337,12 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
 
     private static Identifier identifier(Optional<String> value, Identifier inherited, String path, List<String> errors) {
         if (value.isEmpty()) {
-            if (inherited != null) return inherited;
-            errors.add(path + " is required by the default theme");
-            return Theme.DEFAULT_ICON;
+            return inherited == null ? Theme.DEFAULT_ICON : inherited;
         }
         Identifier parsed = Identifier.tryParse(value.get());
         if (parsed == null) {
             errors.add(path + " must be a valid identifier");
-            return inherited;
+            return inherited == null ? Theme.DEFAULT_ICON : inherited;
         }
         return parsed;
     }

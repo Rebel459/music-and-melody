@@ -1027,20 +1027,16 @@ public class EventScreen extends Screen {
             });
 
             int buttonWidth = (rowWidth - 8) / 3;
-            this.sortButton = this.addRenderableWidget(Button.builder(sortMessage(), button -> {
+            this.sortButton = this.addRenderableWidget(new WorkspaceButton(rowX, buttonY, buttonWidth, 20, sortMessage(), false, button -> {
                         events.enabled_first = !events.enabled_first;
                         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
                         this.sortButton.setMessage(sortMessage());
                         refreshList();
-                    })
-                    .bounds(rowX, buttonY, buttonWidth, 20)
-                    .build());
-            this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.new"), button -> newSource())
-                    .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
-                    .build());
-            this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
-                    .bounds(rowX + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20)
-                    .build());
+                    }));
+            this.addRenderableWidget(new WorkspaceButton(rowX + buttonWidth + 4, buttonY, buttonWidth, 20,
+                    Component.translatable("button.music_and_melody.new"), false, button -> newSource()));
+            this.addRenderableWidget(new WorkspaceButton(rowX + (buttonWidth + 4) * 2, buttonY, buttonWidth, 20,
+                    CommonComponents.GUI_DONE, false, button -> this.onClose()));
             MusicScreenHelper.addSocialButtons(this);
         }
 
@@ -1184,20 +1180,18 @@ public class EventScreen extends Screen {
         private final EventBrowserScreen screen;
         private final Minecraft minecraft;
         private final Event.Source source;
-        private final Button loadButton;
-        private final Button toggleButton;
+        private final WorkspaceButton loadButton;
+        private final WorkspaceButton toggleButton;
         private final IconButton deleteButton;
 
         SourceEntry(EventBrowserScreen screen, Minecraft minecraft, Event.Source source) {
             this.screen = screen;
             this.minecraft = minecraft;
             this.source = source;
-            this.loadButton = Button.builder(loadMessage(), button -> this.screen.choose(this.source.id))
-                    .size(BUTTON_WIDTH, 20)
-                    .build();
-            this.toggleButton = Button.builder(toggleMessage(), button -> toggleSource())
-                    .size(BUTTON_WIDTH, 20)
-                    .build();
+            this.loadButton = new WorkspaceButton(0, 0, BUTTON_WIDTH, 20, loadMessage(), false,
+                    button -> this.screen.choose(this.source.id));
+            this.toggleButton = new WorkspaceButton(0, 0, BUTTON_WIDTH, 20, toggleMessage(), false,
+                    button -> toggleSource());
             // Deletion is staged from the full event editor, not from the
             // browser row.
             this.deleteButton = null;
@@ -1296,7 +1290,7 @@ public class EventScreen extends Screen {
         private EditBox descriptionField;
         private EditBox iconField;
         private EditBox pathField;
-        private Button createButton;
+        private WorkspaceButton createButton;
 
         NewEventScreen(EventBrowserScreen parent) {
             super(TITLE);
@@ -1328,12 +1322,10 @@ public class EventScreen extends Screen {
             int rowWidth = Math.min(BROWSER_ROW_WIDTH, this.width - 20);
             int rowX = this.width / 2 - rowWidth / 2;
             int buttonWidth = (rowWidth - 4) / 2;
-            this.createButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.create"), button -> create())
-                    .bounds(rowX, buttonY, buttonWidth, 20)
-                    .build());
-            this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
-                    .bounds(rowX + buttonWidth + 4, buttonY, buttonWidth, 20)
-                    .build());
+            this.createButton = this.addRenderableWidget(new WorkspaceButton(rowX, buttonY, buttonWidth, 20,
+                    Component.translatable("button.music_and_melody.create"), false, button -> create()));
+            this.addRenderableWidget(new WorkspaceButton(rowX + buttonWidth + 4, buttonY, buttonWidth, 20,
+                    CommonComponents.GUI_CANCEL, false, button -> this.onClose()));
             MusicScreenHelper.addSocialButtons(this);
             this.setInitialFocus(this.nameField);
             refreshCreateState();

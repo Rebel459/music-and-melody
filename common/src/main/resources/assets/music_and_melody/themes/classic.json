@@ -8,25 +8,17 @@
   "icon": "minecraft:textures/block/dirt.png",
   "panels": {
     "background": "#007A0A10",
-    "panel_background": "#50000000",
     "panel_outline": "#00000000",
     "panel_highlight": "#FFC6C6C6",
-    "popup_panel_background": "#92000000",
-    "popup_outline": "#AC828282",
-    "popup_overlay": "#81000000"
+    "popup_outline": "#AC828282"
   },
   "elements": {
-    "button_background": "#32FFFFFF",
-    "button_highlight": "#64C8C8C8",
-    "outline": "#FFFFFFFF",
-    "bar_background": "#82828282",
-    "bar_thumb": "#FFC8C8C8",
     "button_textures": true
   },
   "text": {
     "primary": "#FFFFFFFF",
-    "description": "#FF8C8C8C",
-    "header": "#FFC8C8C8",
+    "primary_highlight": "#FFFFFFFF",
+    "header_secondary": "#FFC6C6C6",
     "disabled": "#FFAAAAAA"
   }
 }

@@ -100,7 +100,7 @@ final class RepositoryScreen extends Screen {
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
-        graphics.text(this.font, Component.translatable("button.music_and_melody.add_repository"), x + 10, y + 14, TEXT_TITLE);
+        graphics.text(this.font, Component.translatable("button.music_and_melody.add_repository"), x + 10, y + 14, TEXT_HEADER_SECONDARY);
         if (!this.feedback.getString().isEmpty()) {
             graphics.text(this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? TEXT_PENDING_DELETION : TEXT_SELECTED);
         }

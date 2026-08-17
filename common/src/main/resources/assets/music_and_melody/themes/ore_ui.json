@@ -11,13 +11,16 @@
     "panel_highlight": "#DC286533"
   },
   "elements": {
-    "button_background": "#A0FFFFFF",
-    "button_highlight": "#7D7FFF62"
+    "button_background": "#B4FFFFFF",
+    "button_highlight": "#7D7FFF62",
+    "button_disabled": "#B4464646"
   },
   "text": {
     "selected": "#FFFFFFFF",
-    "primary": "#FFD2D2D2",
-    "disabled": "#FF8C8C8C",
+    "primary": "#FF969696",
+    "primary_highlight": "#FFFFFFFF",
+    "header_secondary": "#FFC8C8C8",
+    "disabled": "#FF828282",
     "warning": "#FFFF556E"
   }
 }
