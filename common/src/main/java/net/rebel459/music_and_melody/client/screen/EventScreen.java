@@ -54,6 +54,7 @@ public class EventScreen extends Screen {
     private static final int MIN_LEFT_WIDTH = 112;
     private static final int MIN_MIDDLE_WIDTH = 180;
     private static final int MIN_RIGHT_WIDTH = 124;
+    private static final int BROWSER_ROW_WIDTH = 308;
     /** Matches the shared workspace footer baseline while fitting one single-line and one two-line field. */
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
 
@@ -635,7 +636,13 @@ public class EventScreen extends Screen {
     }
 
     private Component categoryMessage() {
-        return Component.translatable("screen.music_and_melody.event_editor.category." + Event.categoryName(CATEGORIES[this.categoryIndex]));
+        String category = Event.categoryName(CATEGORIES[this.categoryIndex]);
+        String key = switch (category) {
+            case "album" -> "screen.music_and_melody.tag.album";
+            case "playlist" -> "screen.music_and_melody.tag.playlist";
+            default -> "screen.music_and_melody.event_editor.category." + category;
+        };
+        return Component.translatable(key);
     }
 
     private Component priorityMessage() {
@@ -975,7 +982,7 @@ public class EventScreen extends Screen {
 
     public static class EventBrowserScreen extends Screen {
 
-        private static final Component TITLE = Component.translatable("screen.music_and_melody.events");
+        private static final Component TITLE = Component.translatable("button.music_and_melody.events");
         private final EventScreen editor;
         private final Screen parent;
         private final Set<Identifier> deletePendingSources = new HashSet<>();
@@ -999,14 +1006,14 @@ public class EventScreen extends Screen {
 
         @Override
         protected void init() {
-            int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+            int rowWidth = Math.min(BROWSER_ROW_WIDTH, this.width - 20);
             int rowX = this.width / 2 - rowWidth / 2;
             int topY = 31;
             int halfWidth = (rowWidth - 4) / 2;
             MaMDataConfig.Events events = MaMDataConfig.get().events;
 
-            addCheckbox("screen.music_and_melody.event.custom", rowX, topY, halfWidth, () -> events.show_custom, value -> events.show_custom = value);
-            addCheckbox("screen.music_and_melody.event.built_in", rowX + halfWidth + 4, topY, halfWidth, () -> events.show_built_in, value -> events.show_built_in = value);
+            addCheckbox("screen.music_and_melody.content_origin.custom", rowX, topY, halfWidth, () -> events.show_custom, value -> events.show_custom = value);
+            addCheckbox("screen.music_and_melody.content_origin.built_in", rowX + halfWidth + 4, topY, halfWidth, () -> events.show_built_in, value -> events.show_built_in = value);
 
             this.list = this.addRenderableWidget(new SourceList(this, this.minecraft, this.width, this.height - 112));
 
@@ -1247,7 +1254,7 @@ public class EventScreen extends Screen {
                 this.deleteButton.setY(buttonY);
                 this.deleteButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             } else if (this.source != null) {
-                IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), thirdX, buttonY, Component.translatable("screen.music_and_melody.events.built_in"), mouseX, mouseY);
+                IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), thirdX, buttonY, Component.translatable("screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);
             }
         }
 
@@ -1300,25 +1307,25 @@ public class EventScreen extends Screen {
         protected void init() {
             int fieldWidth = Math.min(300, this.width - 40);
             int fieldX = this.width / 2 - fieldWidth / 2;
-            this.nameField = this.addRenderableWidget(new EditBox(this.font, fieldX, 62, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.name")));
+            this.nameField = this.addRenderableWidget(new EditBox(this.font, fieldX, 62, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_theme.name")));
             this.nameField.setMaxLength(80);
             this.nameField.setResponder(value -> {
                 updatePathHint();
                 refreshCreateState();
             });
-            this.descriptionField = this.addRenderableWidget(new EditBox(this.font, fieldX, 104, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.description")));
+            this.descriptionField = this.addRenderableWidget(new EditBox(this.font, fieldX, 104, fieldWidth, 20, Component.translatable("screen.music_and_melody.theme.description")));
             this.descriptionField.setMaxLength(256);
             this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, 146, fieldWidth, 20, Component.translatable("screen.music_and_melody.event_editor.icon")));
             this.iconField.setMaxLength(256);
             this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
             this.iconField.setResponder(value -> refreshCreateState());
-            this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 188, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_event.path")));
+            this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, 188, fieldWidth, 20, Component.translatable("screen.music_and_melody.create_theme.path")));
             this.pathField.setMaxLength(256);
             this.pathField.setResponder(value -> refreshCreateState());
             updatePathHint();
 
             int buttonY = this.height - 27;
-            int rowWidth = Math.min(ContentBrowserScreen.MAIN_BUTTON_ROW_WIDTH, this.width - 20);
+            int rowWidth = Math.min(BROWSER_ROW_WIDTH, this.width - 20);
             int rowX = this.width / 2 - rowWidth / 2;
             int buttonWidth = (rowWidth - 4) / 2;
             this.createButton = this.addRenderableWidget(Button.builder(Component.translatable("button.music_and_melody.create"), button -> create())
@@ -1337,10 +1344,10 @@ public class EventScreen extends Screen {
             super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             graphics.centeredText(this.font, this.title, this.width / 2, 15, TEXT_TITLE);
             int fieldX = this.nameField.getX();
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), fieldX, 50, TEXT_DESCRIPTION);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), fieldX, 92, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.name"), fieldX, 50, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description"), fieldX, 92, TEXT_DESCRIPTION);
             graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), fieldX, 134, TEXT_DESCRIPTION);
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), fieldX, 176, TEXT_DESCRIPTION);
+            graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), fieldX, 176, TEXT_DESCRIPTION);
         }
 
         @Override

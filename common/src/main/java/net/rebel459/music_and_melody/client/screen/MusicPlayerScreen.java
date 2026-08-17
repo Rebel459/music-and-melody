@@ -211,6 +211,10 @@ public class MusicPlayerScreen extends Screen {
         if (this.page == pageBeforeRebuild) restoreCurrentPageScroll(pageScroll);
     }
 
+    public void onStatsUpdated() {
+        if (this.page == Page.DETAILS) rebuildWidgets();
+    }
+
     @Override
     protected void repositionElements() {
         calculateLayout();
@@ -674,7 +678,7 @@ public class MusicPlayerScreen extends Screen {
             case NOW_PLAYING -> {
                 SourceInfo source = customPlaylistSource();
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
-                graphics.text(this.font, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
+                graphics.text(this.font, Component.translatable("screen.music_and_melody.content_details", source.typeLabel(), source.originLabel()), this.middleX + 34, PANEL_TOP + 27, TEXT_DESCRIPTION);
             }
             case DETAILS -> {
                 if (this.viewedContent != null) {
@@ -813,7 +817,7 @@ public class MusicPlayerScreen extends Screen {
         renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.state", remoteStateMessage(RemoteContentManager.state(pack)), x, fieldY + 52, width);
 
         int descriptionY = fieldY + 78;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.remote_details.description").withStyle(ChatFormatting.UNDERLINE),
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE),
                 x, descriptionY, TEXT_DESCRIPTION);
         descriptionY += 12;
         int descriptionBottom = this.panelBottom - 62;
@@ -1919,7 +1923,7 @@ public class MusicPlayerScreen extends Screen {
             case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
             case UPDATE_AVAILABLE -> Component.translatable("button.music_and_melody.update");
             case FAILED -> Component.translatable("button.music_and_melody.retry");
-            case INSTALLED -> Component.translatable("screen.music_and_melody.remote_album.state.installed");
+            case INSTALLED -> Component.translatable("screen.music_and_melody.content_origin.downloaded");
             case REMOTE -> Component.translatable("button.music_and_melody.download");
         };
     }
@@ -1929,8 +1933,16 @@ public class MusicPlayerScreen extends Screen {
         return state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
     }
 
+    static String remoteStateTranslationKey(RemoteContentManager.State state) {
+        return switch (state) {
+            case INSTALLED -> "screen.music_and_melody.content_origin.downloaded";
+            case REMOTE -> "screen.music_and_melody.tag.remote";
+            default -> "screen.music_and_melody.remote_album.state." + state.name().toLowerCase(Locale.ROOT);
+        };
+    }
+
     private static Component remoteStateMessage(RemoteContentManager.State state) {
-        return Component.translatable("screen.music_and_melody.remote_album.state." + state.name().toLowerCase(Locale.ROOT));
+        return Component.translatable(remoteStateTranslationKey(state));
     }
 
     private static int clamp(int value, int min, int max) {
@@ -2137,12 +2149,12 @@ public class MusicPlayerScreen extends Screen {
     private enum LibraryTag implements Tag {
         ALBUM("screen.music_and_melody.tag.album"),
         PLAYLIST("screen.music_and_melody.tag.playlist"),
-        BUILT_IN("screen.music_and_melody.tag.built_in"),
-        CUSTOM("screen.music_and_melody.tag.custom"),
-        FAVOURITED("screen.music_and_melody.tag.favourited"),
-        DOWNLOADED("screen.music_and_melody.tag.downloaded"),
-        ENABLED("screen.music_and_melody.tag.enabled"),
-        DISABLED("screen.music_and_melody.tag.disabled");
+        BUILT_IN("screen.music_and_melody.content_origin.built_in"),
+        CUSTOM("screen.music_and_melody.content_origin.custom"),
+        FAVOURITED("screen.music_and_melody.favourites"),
+        DOWNLOADED("screen.music_and_melody.content_origin.downloaded"),
+        ENABLED("screen.music_and_melody.album_details.enabled"),
+        DISABLED("screen.music_and_melody.album_details.disabled");
 
         private final String translationKey;
 
@@ -2170,11 +2182,11 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private enum EventTag implements Tag {
-        BUILT_IN("screen.music_and_melody.tag.built_in"),
-        CUSTOM("screen.music_and_melody.tag.custom"),
-        DOWNLOADED("screen.music_and_melody.tag.downloaded"),
-        ENABLED("screen.music_and_melody.tag.enabled"),
-        DISABLED("screen.music_and_melody.tag.disabled");
+        BUILT_IN("screen.music_and_melody.content_origin.built_in"),
+        CUSTOM("screen.music_and_melody.content_origin.custom"),
+        DOWNLOADED("screen.music_and_melody.content_origin.downloaded"),
+        ENABLED("screen.music_and_melody.album_details.enabled"),
+        DISABLED("screen.music_and_melody.album_details.disabled");
 
         private final String translationKey;
 
@@ -2200,9 +2212,9 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private enum ThemeTag implements Tag {
-        BUILT_IN("screen.music_and_melody.tag.built_in"),
-        CUSTOM("screen.music_and_melody.tag.custom"),
-        DOWNLOADED("screen.music_and_melody.tag.downloaded");
+        BUILT_IN("screen.music_and_melody.content_origin.built_in"),
+        CUSTOM("screen.music_and_melody.content_origin.custom"),
+        DOWNLOADED("screen.music_and_melody.content_origin.downloaded");
 
         private final String translationKey;
 
@@ -2231,7 +2243,7 @@ public class MusicPlayerScreen extends Screen {
         PLAYLIST("screen.music_and_melody.tag.playlist"),
         EVENT("screen.music_and_melody.tag.event"),
         THEME("screen.music_and_melody.tag.theme"),
-        DOWNLOADED("screen.music_and_melody.tag.downloaded"),
+        DOWNLOADED("screen.music_and_melody.content_origin.downloaded"),
         REMOTE("screen.music_and_melody.tag.remote"),
         NEEDS_UPDATE("screen.music_and_melody.tag.needs_update");
 
@@ -2382,7 +2394,18 @@ public class MusicPlayerScreen extends Screen {
         }
 
         List<SafeIdentifier> queueSongs(Minecraft minecraft) {
-            if (this.album != null) return AlbumDetailsScreen.queueSongs(this.album, minecraft);
+            if (this.album != null) {
+                List<SafeIdentifier> songs = new ArrayList<>();
+                this.album.tracks.stream()
+                        .map(this.album::trackId)
+                        .forEach(songs::add);
+                this.album.discs.stream()
+                        .map(disc -> MusicDiscHelper.discSoundId(minecraft, this.album, disc))
+                        .flatMap(Optional::stream)
+                        .map(SafeIdentifier::convert)
+                        .forEach(songs::add);
+                return songs;
+            }
             List<SafeIdentifier> songs = new ArrayList<>(this.playlist.tracks);
             this.playlist.discs.stream()
                     .map(disc -> MusicDiscHelper.discSoundId(minecraft, disc))
@@ -2422,7 +2445,7 @@ public class MusicPlayerScreen extends Screen {
             int textWidth = Math.max(1, this.getWidth() - iconSize - 15);
             this.screen.drawTruncated(graphics, source.name(), textX, this.getY() + 7, textWidth,
                     source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE);
-            this.screen.drawTruncated(graphics, Component.translatable("screen.music_and_melody.content_type_origin", source.typeLabel(), source.originLabel()),
+            this.screen.drawTruncated(graphics, Component.translatable("screen.music_and_melody.content_details", source.typeLabel(), source.originLabel()),
                     textX, this.getY() + 21, textWidth, TEXT_DESCRIPTION);
         }
     }

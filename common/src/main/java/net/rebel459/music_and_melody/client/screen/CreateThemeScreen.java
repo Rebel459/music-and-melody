@@ -47,7 +47,7 @@ final class CreateThemeScreen extends Screen {
             updatePathHint();
             refreshCreateState();
         });
-        this.descriptionField = field(Component.translatable("screen.music_and_melody.create_theme.description"), fieldX, y + 76, fieldWidth);
+        this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), fieldX, y + 76, fieldWidth);
         this.iconField = field(Component.translatable("screen.music_and_melody.create_theme.icon"), fieldX, y + 112, fieldWidth);
         this.iconField.setHint(Component.literal(Theme.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.iconField.setResponder(value -> refreshCreateState());
