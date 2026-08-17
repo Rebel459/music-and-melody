@@ -11,7 +11,6 @@ import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
 import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
-import net.rebel459.music_and_melody.config.MaMConfigScreen;
 
 @Mod(value = MusicAndMelody.MOD_ID, dist = Dist.CLIENT)
 public class MusicAndMelodyNeoForgeClient {

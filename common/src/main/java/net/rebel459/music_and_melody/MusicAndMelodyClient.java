@@ -7,7 +7,7 @@ import net.rebel459.music_and_melody.client.AlbumListener;
 import net.rebel459.music_and_melody.client.EventListener;
 import net.rebel459.music_and_melody.client.PlaylistListener;
 import net.rebel459.music_and_melody.client.ThemeListener;
-import net.rebel459.music_and_melody.client.screen.PlaylistScreen;
+import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.api.client.core.UnifiedClientEvents;
 import net.rebel459.unified.api.client.core.UnifiedClientHelpers;
@@ -42,7 +42,7 @@ public final class MusicAndMelodyClient {
     public static void init() {
         UnifiedClientEvents.Instance.onTick(EventTiming.POST, client -> {
             while (PLAYLIST_KEY.get().consumeClick()) {
-                client.gui.setScreen(new PlaylistScreen(client.gui.screen()));
+                client.gui.setScreen(new MusicPlayerScreen(client.gui.screen()));
             }
         });
     }

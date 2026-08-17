@@ -52,13 +52,13 @@ class SavePlaylistScreen extends Screen {
         });
 
         this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 91, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.save_playlist.icon")));
+                Component.translatable("screen.music_and_melody.create_theme.icon")));
         this.iconField.setMaxLength(256);
         this.iconField.setResponder(value -> refreshSaveState());
         this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
 
         this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 132, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.save_playlist.path")));
+                Component.translatable("screen.music_and_melody.create_theme.path")));
         this.pathField.setMaxLength(256);
         this.pathField.setResponder(value -> refreshSaveState());
         updatePathHint();
@@ -124,8 +124,8 @@ class SavePlaylistScreen extends Screen {
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), x + 12, y + 38, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.path"), x + 12, y + 120, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 120, TEXT_DESCRIPTION);
     }
 
     @Override

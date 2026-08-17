@@ -1,0 +1,23 @@
+{
+  "name": {
+    "translate": "theme.music_and_melody.ore_ui"
+  },
+  "description": {
+    "translate": "theme.music_and_melody.ore_ui.description"
+  },
+  "icon": "music_and_melody:textures/theme/ore_ui/icon.png",
+  "panels": {
+    "panel_background": "#E6282828",
+    "panel_highlight": "#DC286533"
+  },
+  "elements": {
+    "button_background": "#A0FFFFFF",
+    "button_highlight": "#7D7FFF62"
+  },
+  "text": {
+    "selected": "#FFFFFFFF",
+    "primary": "#FFD2D2D2",
+    "disabled": "#FF8C8C8C",
+    "warning": "#FFFF556E"
+  }
+}

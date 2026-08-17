@@ -42,19 +42,19 @@ final class CreateEventScreen extends Screen {
         int fieldX = x + 12;
         int fieldWidth = panelWidth() - 24;
 
-        this.nameField = field(Component.translatable("screen.music_and_melody.create_event.name"), fieldX, y + 40, fieldWidth);
+        this.nameField = field(Component.translatable("screen.music_and_melody.create_theme.name"), fieldX, y + 40, fieldWidth);
         this.nameField.setMaxLength(80);
         this.nameField.setResponder(value -> {
             updatePathHint();
             refreshCreateState();
         });
 
-        this.descriptionField = field(Component.translatable("screen.music_and_melody.create_event.description"), fieldX, y + 76, fieldWidth);
+        this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), fieldX, y + 76, fieldWidth);
         this.iconField = field(Component.translatable("screen.music_and_melody.event_editor.icon"), fieldX, y + 112, fieldWidth);
         this.iconField.setHint(Component.literal(Event.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.iconField.setResponder(value -> refreshCreateState());
 
-        this.pathField = field(Component.translatable("screen.music_and_melody.create_event.path"), fieldX, y + 148, fieldWidth);
+        this.pathField = field(Component.translatable("screen.music_and_melody.create_theme.path"), fieldX, y + 148, fieldWidth);
         this.pathField.setResponder(value -> refreshCreateState());
         updatePathHint();
 
@@ -124,10 +124,10 @@ final class CreateEventScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.name"), x + 12, y + 28, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.description"), x + 12, y + 64, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 28, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description"), x + 12, y + 64, TEXT_DESCRIPTION);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.icon"), x + 12, y + 100, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_event.path"), x + 12, y + 136, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 136, TEXT_DESCRIPTION);
     }
 
     @Override
