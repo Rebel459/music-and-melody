@@ -20,18 +20,14 @@
     "button_highlight": "#CC365985",
     "outline": "#FF3B4963",
     "bar_background": "#FF334057",
-    "bar_thumb": "#FF627492",
-    "button_textures": false
+    "bar_thumb": "#FF627492"
   },
   "text": {
     "selected": "#FF9ED9A0",
     "title": "#FFFFFFFF",
-    "primary": "#FFE6EBF5",
     "description": "#FF9DA9BF",
     "header": "#FF78A6FF",
-    "favourite": "#FFD7D272",
     "example": "#FF555555",
-    "disabled": "#FF888888",
-    "warning": "#FFFF8888"
+    "disabled": "#FF888888"
   }
 }
