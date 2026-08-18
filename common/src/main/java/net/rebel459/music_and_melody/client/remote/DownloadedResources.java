@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 public final class DownloadedResources {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
-    private static final Path PACK_DIRECTORY = DIRECTORY.resolve(".packs");
     private static final Map<Identifier, List<Path>> RESOURCES = new HashMap<>();
     private static boolean dirty = true;
 
@@ -76,10 +75,12 @@ public final class DownloadedResources {
         }
         if (!Files.isDirectory(DIRECTORY)) return;
 
+        Set<String> installedNamespaces = installedNamespaces();
         try (var namespaces = Files.list(DIRECTORY)) {
             namespaces
                     .filter(Files::isDirectory)
                     .filter(path -> !path.getFileName().toString().startsWith("."))
+                    .filter(path -> installedNamespaces.contains(path.getFileName().toString().toLowerCase(Locale.ROOT)))
                     .forEach(DownloadedResources::scanNamespace);
         } catch (IOException ignored) {
         }
@@ -89,22 +90,28 @@ public final class DownloadedResources {
 
     private static void scanPackDirectories() {
         Set<Path> scanned = new HashSet<>();
-        for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
+        MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
+        if (remote == null || remote.downloads == null) return;
+        for (MaMDataConfig.DownloadedPack pack : remote.downloads) {
+            if (pack == null) continue;
             Identifier id = Identifier.tryParse(pack.id);
             if (id == null) continue;
             RemotePack.Tag tag = RemotePack.Tag.fromSerialized(pack.tag);
             Path directory = RemoteContentManager.packDirectory(new RemotePack.Key(id, tag));
             if (scanned.add(directory)) scanPack(directory);
         }
+    }
 
-        if (!Files.isDirectory(PACK_DIRECTORY)) return;
-        try (var directories = Files.list(PACK_DIRECTORY)) {
-            directories.filter(Files::isDirectory)
-                    .sorted()
-                    .filter(scanned::add)
-                    .forEach(DownloadedResources::scanPack);
-        } catch (IOException ignored) {
+    private static Set<String> installedNamespaces() {
+        Set<String> namespaces = new HashSet<>();
+        MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
+        if (remote == null || remote.downloads == null) return namespaces;
+        for (MaMDataConfig.DownloadedPack pack : remote.downloads) {
+            if (pack == null) continue;
+            Identifier id = Identifier.tryParse(pack.id);
+            if (id != null) namespaces.add(id.getNamespace().toLowerCase(Locale.ROOT));
         }
+        return namespaces;
     }
 
     private static void scanPack(Path packDirectory) {

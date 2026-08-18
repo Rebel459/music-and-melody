@@ -73,10 +73,6 @@ public class Event {
 
     public static synchronized void reloadResourceEvents(Map<Identifier, Record> records) {
         RESOURCE_SOURCES.clear();
-        if (!MaMClientConfig.get().allow_events) {
-            clearLoadedEvents();
-            return;
-        }
         records.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().toString(), String.CASE_INSENSITIVE_ORDER))
                 .map(entry -> new Source(entry.getKey(), entry.getValue(), null))
@@ -95,10 +91,6 @@ public class Event {
 
     public static synchronized void reloadConfigEvents() {
         CONFIG_SOURCES.clear();
-        if (!MaMClientConfig.get().allow_events) {
-            clearLoadedEvents();
-            return;
-        }
 
         try {
             Files.createDirectories(CONFIG_DIR);
@@ -123,12 +115,6 @@ public class Event {
             if (shouldLoad) CONFIG_SOURCES.add(new Source(id, record, file));
         }
 
-        rebuildEvents();
-    }
-
-    private static void clearLoadedEvents() {
-        RESOURCE_SOURCES.clear();
-        CONFIG_SOURCES.clear();
         rebuildEvents();
     }
 
