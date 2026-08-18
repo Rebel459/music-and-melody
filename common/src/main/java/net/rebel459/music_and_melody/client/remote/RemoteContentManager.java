@@ -384,19 +384,24 @@ public final class RemoteContentManager {
         if (!hash.equalsIgnoreCase(pack.sha256())) throw new IOException("Imported hash mismatch");
         if (installed(pack) != null) {
             deleteInstalledFiles(pack.key());
+        } else {
+            // A previous deletion may have removed the config record while
+            // leaving an orphaned pack directory behind. Clear it before
+            // extracting a replacement, including legacy namespace storage.
+            deleteDirectory(packDirectory(pack.key()));
+            if (!hasOtherInstalledPackInNamespace(pack.id(), pack.key())) {
+                deleteDirectory(DIRECTORY.resolve(pack.id().getNamespace()));
+            }
         }
         List<Path> extracted = extractZip(zip, packDirectory(pack.key()));
         writeManifest(pack.key(), extracted);
     }
 
     private static void deleteInstalledFiles(RemotePack.Key key) {
-        boolean deletedFiles = deleteFromManifest(key);
-
-        if (!deletedFiles) {
-            deleteDirectory(packDirectory(key));
-            if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
-                deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
-            }
+        deleteFromManifest(key);
+        deleteDirectory(packDirectory(key));
+        if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
+            deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
         }
 
         DownloadedResources.invalidate();
@@ -537,13 +542,11 @@ public final class RemoteContentManager {
         MaMDataConfig.DownloadedPack record = installed(key.id(), key.tag());
         if (record == null) return false;
 
-        boolean deletedFiles = deleteFromManifest(key);
-
-        if (!deletedFiles) {
-            deleteDirectory(packDirectory(key));
-            if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
-                deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
-            }
+        deleteFromManifest(key);
+        deleteDirectory(packDirectory(key));
+        boolean otherInstalledInNamespace = hasOtherInstalledPackInNamespace(key.id(), key);
+        if (!otherInstalledInNamespace) {
+            deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
         }
 
         config.remote.downloads.removeIf(pack -> pack == record);
@@ -551,7 +554,7 @@ public final class RemoteContentManager {
         config.albums.disabled_albums.remove(idString);
         config.albums.favourites.remove(idString);
 
-        if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
+        if (!otherInstalledInNamespace) {
             String namespacePrefix = key.id().getNamespace() + ":";
             config.albums.disabled_tracks.removeIf(track -> track.startsWith(namespacePrefix));
         }
@@ -586,30 +589,45 @@ public final class RemoteContentManager {
 
     private static boolean deleteFromManifest(RemotePack.Key key) {
         Path manifest = manifestPath(key);
+        if (!Files.isRegularFile(manifest) && key.tag() != null) {
+            Path legacyManifest = manifestPath(new RemotePack.Key(key.id(), null));
+            if (Files.isRegularFile(legacyManifest)) manifest = legacyManifest;
+        }
         if (!Files.isRegularFile(manifest)) return false;
 
         Path root = DIRECTORY.toAbsolutePath().normalize();
         Set<Path> otherPackFiles = filesOwnedByOtherManifests(manifest, root);
+        List<Path> paths;
 
         try {
-            List<Path> paths = Files.readAllLines(manifest).stream()
+            paths = Files.readAllLines(manifest).stream()
                     .map(line -> root.resolve(line).normalize())
                     .filter(path -> path.startsWith(root))
                     .sorted(Comparator.reverseOrder())
                     .toList();
+        } catch (IOException ignored) {
+            return false;
+        }
 
-            for (Path path : paths) {
-                if (otherPackFiles.contains(path)) continue;
+        boolean complete = true;
+        for (Path path : paths) {
+            if (otherPackFiles.contains(path)) continue;
+            try {
                 Files.deleteIfExists(path);
                 deleteEmptyParents(path.getParent(), root);
+            } catch (IOException ignored) {
+                complete = false;
             }
+        }
 
+        try {
             Files.deleteIfExists(manifest);
             deleteEmptyParents(manifest.getParent(), root);
         } catch (IOException ignored) {
+            complete = false;
         }
 
-        return true;
+        return complete;
     }
 
     private static Set<Path> filesOwnedByOtherManifests(Path excludedManifest, Path root) {
@@ -667,11 +685,12 @@ public final class RemoteContentManager {
     }
 
     private static boolean hasOtherInstalledPackInNamespace(Identifier id, RemotePack.Key excluded) {
+        MaMDataConfig.DownloadedPack excludedRecord = installed(id, excluded.tag());
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
+            if (pack == null) continue;
+            if (pack == excludedRecord) continue;
             Identifier other = Identifier.tryParse(pack.id);
             if (other == null) continue;
-            RemotePack.Tag otherTag = RemotePack.Tag.fromSerialized(pack.tag);
-            if (other.equals(excluded.id()) && otherTag == excluded.tag()) continue;
             if (other.getNamespace().equals(id.getNamespace())) return true;
         }
 

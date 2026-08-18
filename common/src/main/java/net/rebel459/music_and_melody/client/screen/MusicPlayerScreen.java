@@ -2208,7 +2208,7 @@ public class MusicPlayerScreen extends Screen {
                 case CUSTOM -> "custom".equals(originKeyFor(item.id(), item.playlist()));
                 case FAVOURITED -> item.favourite();
                 case DOWNLOADED -> "downloaded".equals(originKeyFor(item.id(), item.playlist()));
-                case ENABLED -> item.album() == null || item.album().isEnabled();
+                case ENABLED -> item.album() != null && item.album().isEnabled();
                 case DISABLED -> item.album() != null && !item.album().isEnabled();
             };
         }
