@@ -25,6 +25,7 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.client.util.EventHelper;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
@@ -82,6 +83,7 @@ public class EventScreen extends Screen {
     private Button saveButton;
     private Button removeButton;
     private IconButton deleteButton;
+    private IconButton playPauseButton;
     private int selectedIndex = -1;
     private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
     private int priorityIndex = Event.PriorityType.LOW.ordinal();
@@ -152,12 +154,10 @@ public class EventScreen extends Screen {
         this.weightField.setMaxLength(8);
         this.weightField.setResponder(value -> markDirty());
 
-        int bottomX = layout.leftX + 8;
-        int labelWidth = this.font.width(Component.translatable("screen.music_and_melody.event_editor.conditions")) + 8;
-        int fieldX = bottomX + labelWidth;
-        int fieldWidth = Math.max(48, layout.bottomRight() - fieldX - 8);
-        int musicY = layout.bottomPanelTop + 2;
-        int conditionsY = layout.bottomPanelTop + 26;
+        int fieldX = layout.middleX + 8;
+        int fieldWidth = Math.max(48, layout.middleWidth - 16);
+        int musicY = PANEL_TOP + 38;
+        int conditionsY = PANEL_TOP + 76;
         this.musicField = this.addRenderableWidget(new ExampleHintEditBox(this.font, fieldX, musicY, fieldWidth, 20,
                 Component.translatable("screen.music_and_melody.event_editor.music")));
         this.musicField.setMaxLength(256);
@@ -169,22 +169,15 @@ public class EventScreen extends Screen {
                 .build(this.font, fieldWidth, CONDITIONS_TWO_LINE_HEIGHT, Component.translatable("screen.music_and_melody.event_editor.conditions")));
         this.conditionsField.setValueListener(value -> markDirty());
 
-        int descriptionTop = PANEL_TOP + 53;
         int listBottom = layout.bottomPanelTop - 6;
-        // Two compact description lines are enough context; entries remain
-        // the dominant, immediately reachable part of the middle panel.
-        int descriptionBottom = Math.max(descriptionTop + 1,
-                Math.min(descriptionTop + (this.font.lineHeight + 2) * 2, listBottom - 46 - 6));
-        this.descriptionList = this.addRenderableWidget(new EventDescriptionList(this, this.minecraft, layout.middleX, layout.middleWidth,
-                descriptionTop, descriptionBottom));
-        int listTop = descriptionBottom + 6;
+        int listTop = conditionsY + CONDITIONS_TWO_LINE_HEIGHT + 8;
         this.list = this.addRenderableWidget(new EventList(this, this.minecraft, layout.middleX, layout.middleWidth, listTop, listBottom));
 
         int actionX = layout.rightX + 7;
         int actionWidth = layout.rightWidth - 14;
         // Match the Event Browser's Filter by Tags section exactly: heading
         // at +14 and its first control at +38.
-        int actionY = PANEL_TOP + 38;
+        int actionY = PANEL_TOP + 132;
 
         this.addButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY, actionWidth, 20,
                 Component.translatable("button.music_and_melody.add"), false, button -> addEntry()));
@@ -197,6 +190,7 @@ public class EventScreen extends Screen {
         this.deleteButton.setY(layout.panelBottom - 52);
         this.addRenderableWidget(new WorkspaceButton(actionX, layout.panelBottom - 28, actionWidth, 20,
                 CommonComponents.GUI_DONE, false, button -> this.onClose()));
+        buildPlaybackControls(layout);
 
         if (this.selectedIndex >= 0 && this.selectedIndex < this.entries.size()) {
             select(this.selectedIndex);
@@ -241,16 +235,27 @@ public class EventScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return super.mouseClicked(toLayoutMouse(event), doubleClick);
+        MouseButtonEvent layoutEvent = toLayoutMouse(event);
+        EditorLayout layout = editorLayout();
+        if (this.parent instanceof MusicPlayerScreen musicPlayer
+                && musicPlayer.handlePlaybackClick(layoutEvent.x(), layoutEvent.y(), layout.middleX, layout.middleWidth, layout.bottomPanelTop)) {
+            return true;
+        }
+        return super.mouseClicked(layoutEvent, doubleClick);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        return super.mouseDragged(toLayoutMouse(event), dragX / MaMDataConfig.get().gui_multiplier, dragY / MaMDataConfig.get().gui_multiplier);
+        MouseButtonEvent layoutEvent = toLayoutMouse(event);
+        EditorLayout layout = editorLayout();
+        if (this.parent instanceof MusicPlayerScreen musicPlayer
+                && musicPlayer.handlePlaybackDrag(layoutEvent.x(), layoutEvent.y(), layout.middleX, layout.middleWidth)) return true;
+        return super.mouseDragged(layoutEvent, dragX / MaMDataConfig.get().gui_multiplier, dragY / MaMDataConfig.get().gui_multiplier);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (this.parent instanceof MusicPlayerScreen musicPlayer && musicPlayer.handlePlaybackRelease()) return true;
         return super.mouseReleased(toLayoutMouse(event));
     }
 
@@ -302,37 +307,74 @@ public class EventScreen extends Screen {
         return new EditorLayout(leftX, leftWidth, middleX, middleWidth, rightX, rightWidth, panelBottom, bottomPanelTop);
     }
 
+    private void buildPlaybackControls(EditorLayout layout) {
+        int groupWidth = IconButton.SIZE * 5 + 16;
+        int x = layout.middleX + (layout.middleWidth - groupWidth) / 2;
+        int y = layout.bottomPanelTop + 29;
+        IconButton search = this.addRenderableWidget(new IconButton(
+                Component.translatable("screen.music_and_melody.search"), IconButton.icon("search"), ignored -> {}));
+        search.setX(layout.middleX + 8);
+        search.setY(layout.bottomPanelTop + 5);
+        search.active = false;
+        IconButton shuffle = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.shuffle"),
+                IconButton.icon(PlaylistHelper.isShuffleQueue() ? "shuffle_on" : "shuffle_off"), ignored -> {
+            PlaylistHelper.shuffleQueue();
+            this.rebuildWidgets();
+        }));
+        IconButton previous = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.previous"),
+                IconButton.icon("previous"), ignored -> PlaylistHelper.previousQueue()));
+        this.playPauseButton = this.addRenderableWidget(new IconButton(
+                Component.translatable(PlaylistHelper.isQueuePlaying() ? "button.music_and_melody.pause" : "button.music_and_melody.play"),
+                IconButton.icon(PlaylistHelper.isQueuePlaying() ? "pause" : "play"), ignored -> {
+            if (PlaylistHelper.isQueuePlaying()) PlaylistHelper.pauseQueue();
+            else PlaylistHelper.playNextNow();
+        }));
+        IconButton next = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.next"),
+                IconButton.icon("next"), ignored -> PlaylistHelper.skipQueue()));
+        IconButton loop = this.addRenderableWidget(new IconButton(Component.translatable("button.music_and_melody.loop"),
+                IconButton.icon(PlaylistHelper.isLoopingQueue() ? "looping" : "loop"), ignored -> {
+            PlaylistHelper.setLoopingQueue(!PlaylistHelper.isLoopingQueue());
+            this.rebuildWidgets();
+        }));
+        IconButton[] controls = {shuffle, previous, this.playPauseButton, next, loop};
+        for (int i = 0; i < controls.length; i++) {
+            controls[i].setX(x + i * (IconButton.SIZE + 4));
+            controls[i].setY(y);
+        }
+    }
+
     private void renderEditorShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         EditorLayout layout = editorLayout();
         graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, SCREEN_BACKGROUND);
-        drawPanel(graphics, layout.leftX, PANEL_TOP, layout.leftWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
+        drawPanel(graphics, layout.leftX, PANEL_TOP, layout.leftWidth, layout.panelBottom - PANEL_TOP);
         drawPanel(graphics, layout.middleX, PANEL_TOP, layout.middleWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
-        drawPanel(graphics, layout.leftX, layout.bottomPanelTop, layout.bottomRight() - layout.leftX, layout.panelBottom - layout.bottomPanelTop);
-        // The footer belongs to Settings + Entries only.  Actions stays a
-        // full-height right panel so its Done control remains inside it.
+        drawPanel(graphics, layout.middleX, layout.bottomPanelTop, layout.middleWidth, layout.panelBottom - layout.bottomPanelTop);
         drawPanel(graphics, layout.rightX, PANEL_TOP, layout.rightWidth, layout.panelBottom - PANEL_TOP);
 
         graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.settings").withStyle(ChatFormatting.BOLD), layout.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.entries").withStyle(ChatFormatting.BOLD), layout.middleX + 8, PANEL_TOP + 11, TEXT_HEADER);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.actions").withStyle(ChatFormatting.BOLD), layout.rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
 
         Event.Source source = activeSource();
-        int titleX = layout.middleX + 8;
+        int titleX = layout.rightX + 8;
         if (source != null) {
             int iconSize = 18;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, source.icon()), titleX, PANEL_TOP + 31,
+            graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, source.icon()), titleX, PANEL_TOP + 14,
                     0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             titleX += iconSize + 6;
         }
-        int titleWidth = Math.max(1, layout.middleWidth - (titleX - layout.middleX) - 8);
+        int titleWidth = Math.max(1, layout.rightWidth - (titleX - layout.rightX) - 8);
         if (source == null) {
-            drawMarquee(graphics, title(), titleX, PANEL_TOP + 35, titleWidth, TEXT_TITLE);
+            drawMarquee(graphics, title(), titleX, PANEL_TOP + 18, titleWidth, TEXT_TITLE);
         } else {
             Component sourceId = Component.literal(source.id.toString());
-            int idWidth = Math.min(this.font.width(sourceId), Math.max(1, titleWidth - 8));
-            int nameWidth = Math.max(1, titleWidth - idWidth - 8);
-            drawMarquee(graphics, source.record.name(), titleX, PANEL_TOP + 35, nameWidth, TEXT_TITLE);
-            drawMarquee(graphics, sourceId, titleX + nameWidth + 8, PANEL_TOP + 35, idWidth, TEXT_DESCRIPTION);
+            drawMarquee(graphics, source.record.name(), titleX, PANEL_TOP + 15, titleWidth, TEXT_TITLE);
+            drawMarquee(graphics, sourceId, titleX, PANEL_TOP + 27, titleWidth, TEXT_DESCRIPTION);
+            int descriptionY = PANEL_TOP + 50;
+            for (FormattedCharSequence line : this.font.split(source.record.description(), Math.max(1, layout.rightWidth - 16))) {
+                if (descriptionY + this.font.lineHeight > PANEL_TOP + 124) break;
+                graphics.text(this.font, line, layout.rightX + 8, descriptionY, TEXT_PRIMARY);
+                descriptionY += this.font.lineHeight + 2;
+            }
         }
 
         int controlLabelY = PANEL_TOP + 30;
@@ -344,9 +386,11 @@ public class EventScreen extends Screen {
         graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
 
-        int bottomX = layout.leftX + 8;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), bottomX, layout.bottomPanelTop + 7, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), bottomX, layout.bottomPanelTop + 31, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), layout.middleX + 8, PANEL_TOP + 27, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), layout.middleX + 8, PANEL_TOP + 65, TEXT_DESCRIPTION);
+        if (this.parent instanceof MusicPlayerScreen musicPlayer) {
+            musicPlayer.renderPlaybackStrip(graphics, layout.middleX, layout.middleWidth, layout.bottomPanelTop);
+        }
     }
 
     private static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
@@ -588,6 +632,11 @@ public class EventScreen extends Screen {
     }
 
     private void refreshEditorState() {
+        if (this.playPauseButton != null) {
+            boolean playing = PlaylistHelper.isQueuePlaying();
+            this.playPauseButton.setIconAndTooltip(IconButton.icon(playing ? "pause" : "play"),
+                    Component.translatable(playing ? "button.music_and_melody.pause" : "button.music_and_melody.play"));
+        }
         Event.ScreenEntry selected = selectedEntry();
         boolean configSelected = selected != null && selected.source().isConfig();
         if (this.categoryButton != null) this.categoryButton.setMessage(categoryMessage());
