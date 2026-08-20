@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.client.Minecraft;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
@@ -72,6 +73,11 @@ public final class RemoteContentManager {
 
     public static boolean remoteDownloadsAllowed() {
         return PlatformContentManager.allowRemoteDownloads();
+    }
+
+    /** Opens the platform's manual-download prompt, if this build needs one. */
+    public static boolean openManualDownloadScreen(MusicPlayerScreen parent, RemotePack pack) {
+        return PlatformContentManager.openManualDownloadScreen(parent, pack);
     }
 
     public static synchronized void refreshIfNeeded() {
