@@ -796,7 +796,7 @@ final class ThemeEditorScreen extends Screen {
     private void renderMiddleScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (this.middleScrollMax <= 0.0D) return;
         int x = middleScrollbarX();
-        graphics.fill(x, this.middleViewportTop, x + 2, this.middleViewportBottom, BUTTON_PASSIVE);
+        graphics.fill(x, this.middleViewportTop, x + 2, this.middleViewportBottom, BAR_BACKGROUND);
         int y = middleScrollbarY();
         int colour = mouseX >= x - 4 && mouseX <= x + 5 && mouseY >= y && mouseY < y + middleScrollbarHeight()
                 ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;

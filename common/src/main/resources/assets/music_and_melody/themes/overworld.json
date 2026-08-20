@@ -1,0 +1,23 @@
+{
+  "name": {
+    "translate": "theme.music_and_melody.overworld"
+  },
+  "description": {
+    "translate": "theme.music_and_melody.overworld.description"
+  },
+  "icon": "minecraft:textures/block/grass_block_side.png",
+  "panels": {
+    "panel_background": "#28AE8051",
+    "panel_outline": "#FF412D1E",
+    "panel_highlight": "#FF70C2FF",
+    "popup_panel_background": "#FF28140A",
+    "popup_outline": "#FF3C1E0F"
+  },
+  "elements": {
+    "button_background": "#32FFC191",
+    "button_highlight": "#649BFF7D",
+    "bar_background": "#32FFC191",
+    "bar_thumb": "#FF5B7E3D"
+  },
+  "text": {}
+}

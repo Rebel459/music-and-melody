@@ -11,7 +11,7 @@
     "panel_background": "#50000000",
     "panel_outline": "#FF1E1E1E",
     "panel_highlight": "#FF89DF81",
-    "popup_panel_background": "#92000000",
+    "popup_panel_background": "#FF1E1E1E",
     "popup_outline": "#FF323232",
     "popup_overlay": "#81000000"
   },

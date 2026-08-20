@@ -846,7 +846,7 @@ public class EventScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 1;
             int bottom = this.getY() + this.getHeight() - 1;
-            graphics.fill(x, top, x + 3, bottom, BUTTON_PASSIVE);
+            graphics.fill(x, top, x + 3, bottom, BAR_BACKGROUND);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             graphics.fill(x, thumbTop, x + 3, thumbBottom,
@@ -912,7 +912,7 @@ public class EventScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 2;
             int bottom = this.getY() + this.getHeight() - 2;
-            graphics.fill(x, top, x + 4, bottom, BUTTON_PASSIVE);
+            graphics.fill(x, top, x + 4, bottom, BAR_BACKGROUND);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
