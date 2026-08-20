@@ -42,6 +42,7 @@ public final class RemoteContentManager {
     public static String COMMUNITY_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/community-catalogs.json";
     public static String SUPPORTERS = "https://github.com/Rebel459/music-and-melody-remote/supporters.json";
     public static String COMPOSERS = "https://github.com/Rebel459/music-and-melody-remote/composers.json";
+    public static String SPLASHES = "https://raw.githubusercontent.com/Rebel459/music-and-melody-remote/main/splashes.txt";
     public static String SUPPORTER_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/supporter-catalogs.json";
 
     public enum State {
@@ -66,18 +67,24 @@ public final class RemoteContentManager {
     private static final List<RemotePack> PACKS = new ArrayList<>();
     private static volatile List<String> supporters = List.of();
     private static volatile List<String> composers = List.of();
+    private static volatile List<String> splashes = List.of();
     private static CompletableFuture<Void> refreshTask;
+    private static CompletableFuture<Void> creditsTask;
     private static boolean loaded;
 
     private RemoteContentManager() {}
 
     public static boolean remoteDownloadsAllowed() {
-        return PlatformContentManager.allowRemoteDownloads();
+        return onlineFunctionalityEnabled() && PlatformContentManager.allowRemoteDownloads();
+    }
+
+    public static boolean onlineFunctionalityEnabled() {
+        return MaMClientConfig.get().online_functionality;
     }
 
     /** Opens the platform's manual-download prompt, if this build needs one. */
     public static boolean openManualDownloadScreen(MusicPlayerScreen parent, RemotePack pack) {
-        return PlatformContentManager.openManualDownloadScreen(parent, pack);
+        return onlineFunctionalityEnabled() && PlatformContentManager.openManualDownloadScreen(parent, pack);
     }
 
     public static synchronized void refreshIfNeeded() {
@@ -89,9 +96,9 @@ public final class RemoteContentManager {
     public static synchronized void refresh() {
         loaded = true;
         MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
-        List<String> repositories = remote == null || remote.added_repositories == null
+        List<String> repositories = remote == null || remote.catalogs == null
                 ? List.of()
-                : remote.added_repositories.stream().filter(Objects::nonNull).filter(value -> !value.isBlank()).toList();
+                : remote.catalogs.stream().filter(Objects::nonNull).filter(value -> !value.isBlank()).toList();
         List<ProviderSource> providers = new ArrayList<>();
         if (remote != null && remote.official_provider) {
             providers.add(new ProviderSource(OFFICIAL_PROVIDER, RemotePack.Provenance.OFFICIAL));
@@ -99,7 +106,7 @@ public final class RemoteContentManager {
         if (remote != null && remote.community_provider) {
             providers.add(new ProviderSource(COMMUNITY_PROVIDER, RemotePack.Provenance.VERIFIED));
         }
-        if (!MaMClientConfig.get().remote_downloads || providers.isEmpty() && repositories.isEmpty()) {
+        if (!onlineFunctionalityEnabled() || providers.isEmpty() && repositories.isEmpty()) {
             PACKS.clear();
             refreshTask = null;
             return;
@@ -123,6 +130,7 @@ public final class RemoteContentManager {
     }
 
     public static synchronized List<RemotePack> packs() {
+        if (!onlineFunctionalityEnabled()) return List.of();
         refreshIfNeeded();
         return List.copyOf(PACKS);
     }
@@ -157,19 +165,44 @@ public final class RemoteContentManager {
         return DownloadedResources.owner(id, tag).map(key -> installed(key.id()) != null).orElse(false);
     }
 
-    public static void refreshCredits() {
-        CompletableFuture.runAsync(() -> {
+    public static synchronized void refreshCredits() {
+        if (!onlineFunctionalityEnabled()) {
+            supporters = List.of();
+            composers = List.of();
+            return;
+        }
+        if (creditsTask != null) return;
+        creditsTask = CompletableFuture.runAsync(() -> {
             supporters = loadStringArray(SUPPORTERS);
             composers = loadStringArray(COMPOSERS);
+            splashes = loadLines(SPLASHES);
+            cacheNextWelcomeValues();
+        }).whenComplete((ignored, throwable) -> {
+            synchronized (RemoteContentManager.class) {
+                creditsTask = null;
+            }
         });
+    }
+
+    public static boolean creditsLoading() {
+        return creditsTask != null;
     }
 
     public static List<String> supporters() {
         return supporters;
     }
 
+    /** Supporter entries containing only a UUID grant access without appearing in credits. */
+    public static List<String> displaySupporters() {
+        return supporters.stream().filter(entry -> entry.indexOf('=') >= 0 || !isUuidOnly(entry)).toList();
+    }
+
     public static List<String> composers() {
         return composers;
+    }
+
+    public static List<String> splashes() {
+        return splashes;
     }
 
     public static Optional<RemotePack> owner(Identifier contentId, RemotePack.Tag tag) {
@@ -187,7 +220,7 @@ public final class RemoteContentManager {
     }
 
     public static void download(RemotePack pack) {
-        if (!remoteDownloadsAllowed() || !missingDependencies(pack).isEmpty()) return;
+        if (!onlineFunctionalityEnabled() || !remoteDownloadsAllowed() || !missingDependencies(pack).isEmpty()) return;
         RemotePack.Key key = pack.key();
         if (!DOWNLOADING.add(key)) return;
         DOWNLOAD_PROGRESS.put(key, 0.0D);
@@ -299,14 +332,62 @@ public final class RemoteContentManager {
         }
     }
 
+    private static List<String> loadLines(String url) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(20))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
+            return response.body().lines().map(String::trim).filter(line -> !line.isEmpty()).toList();
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private static void cacheNextWelcomeValues() {
+        List<String> displaySupporters = displaySupporters();
+        String supporter = randomEntry(displaySupporters);
+        String composer = randomEntry(composers);
+        String splash = randomEntry(splashes);
+        if (supporter == null && composer == null && splash == null) return;
+        Minecraft.getInstance().execute(() -> {
+            MaMDataConfig.Cache cache = MaMDataConfig.get().cache;
+            boolean changed = false;
+            if (supporter != null) {
+                cache.supporter = supporter;
+                changed = true;
+            }
+            if (composer != null) {
+                cache.composer = composer;
+                changed = true;
+            }
+            if (splash != null) {
+                cache.splash = splash;
+                changed = true;
+            }
+            if (changed) AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        });
+    }
+
+    private static String randomEntry(List<String> entries) {
+        return entries.isEmpty() ? null : entries.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(entries.size()));
+    }
+
     private static boolean isSupporter(SupporterIdentity identity) {
         List<String> entries = loadStringArray(SUPPORTERS);
         if (!entries.isEmpty()) supporters = entries;
         for (String entry : entries) {
             int separator = entry.indexOf('=');
-            if (separator < 0) continue;
+            if (separator < 0) {
+                if (isUuidOnly(entry) && normalizedUuid(entry).equals(normalizedUuid(identity.uuid()))) return true;
+                continue;
+            }
             String listedIdentity = entry.substring(separator + 1).trim();
-            if (listedIdentity.equalsIgnoreCase(identity.name()) || normalizedUuid(listedIdentity).equals(normalizedUuid(identity.uuid()))) return true;
+            String listedUuid = normalizedUuid(listedIdentity);
+            if (!listedIdentity.isBlank() && listedIdentity.equalsIgnoreCase(identity.name())) return true;
+            if (!listedUuid.isEmpty() && listedUuid.equals(normalizedUuid(identity.uuid()))) return true;
         }
         return false;
     }
@@ -319,7 +400,11 @@ public final class RemoteContentManager {
     private record SupporterIdentity(String name, String uuid) {}
 
     private static String normalizedUuid(String value) {
-        return value == null ? "" : value.replace("-", "").trim().toLowerCase(Locale.ROOT);
+        return value == null ? "" : value.replace("[", "").replace("]", "").replace("-", "").trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isUuidOnly(String value) {
+        return normalizedUuid(value).matches("[0-9a-f]{32}");
     }
 
     private static List<RemotePack> loadCatalog(String repositoryUrl, Set<RemotePack.Key> ids, RemotePack.Provenance provenance) throws IOException, InterruptedException {

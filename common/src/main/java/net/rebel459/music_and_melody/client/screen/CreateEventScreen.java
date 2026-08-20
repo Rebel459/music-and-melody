@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
@@ -35,6 +36,10 @@ final class CreateEventScreen extends Screen {
 
     @Override
     protected void init() {
+        if (!MaMClientConfig.get().allow_events) {
+            this.minecraft.gui.setScreen(this.parent);
+            return;
+        }
         calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
@@ -76,7 +81,7 @@ final class CreateEventScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        this.parent.extractRenderState(graphics, -1, -1, tickDelta);
         IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
         try {

@@ -16,11 +16,6 @@ import java.util.*;
 @Config(name = MusicAndMelody.MOD_ID + "/" + "server")
 public class MaMServerConfig implements ConfigData {
 
-	@Contract(pure = true)
-	public static @NotNull Path configPath(boolean json5) {
-		return Path.of("./config/" + MusicAndMelody.MOD_ID + "/server." + (json5 ? "json5" : "json"));
-	}
-
 	public static MaMServerConfig get() {
 		if (!MusicAndMelody.registeredServerConfig) {
 			AutoConfig.register(MaMServerConfig.class, JanksonConfigSerializer::new);

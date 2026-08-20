@@ -32,43 +32,12 @@ final class MusicScreenHelper {
         return FALLBACK_ALBUM_ICON;
     }
 
-    static void addSocialButtons(Screen screen) {
-        int y = screen.height - 27;
-        if (MaMClientConfig.get().discord_button) {
-            screen.addRenderableWidget(new IconButton(8, y, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            screen.addRenderableWidget(new IconButton(screen.width - IconButton.SIZE - 8, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(KOFI)
-            ));
-        }
-    }
-
-    static void addSocialButtons(Screen screen, int x, int width, int y) {
-        if (MaMClientConfig.get().discord_button) {
-            screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button ->
-                    Util.getPlatform().openUri(DISCORD)
-            ));
-        }
-        if (MaMClientConfig.get().kofi_button) {
-            screen.addRenderableWidget(new IconButton(x + width - IconButton.SIZE, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
-                    Util.getPlatform().openUri(KOFI)
-            ));
-        }
-    }
-
     static void addCenteredSocialButtons(Screen screen, int centerX, int y) {
-        boolean discord = MaMClientConfig.get().discord_button;
-        boolean kofi = MaMClientConfig.get().kofi_button;
-        int width = (discord ? IconButton.SIZE : 0) + (discord && kofi ? 4 : 0) + (kofi ? IconButton.SIZE : 0);
+        int width = IconButton.SIZE + 4 + IconButton.SIZE;
         int x = centerX - width / 2;
-        if (discord) {
-            screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button -> Util.getPlatform().openUri(DISCORD)));
-            x += IconButton.SIZE + 4;
-        }
-        if (kofi) screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button -> Util.getPlatform().openUri(KOFI)));
+        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button -> Util.getPlatform().openUri(DISCORD)));
+        x += IconButton.SIZE + 4;
+        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button -> Util.getPlatform().openUri(KOFI)));
     }
 
     static void openKofi() {

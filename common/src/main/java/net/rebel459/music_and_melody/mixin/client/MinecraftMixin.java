@@ -19,6 +19,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SoundEngineStopper;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.tag.MaMBiomeTags;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +96,6 @@ public abstract class MinecraftMixin {
 
         EventHelper.clearStoredEvent();
 
-        if (!MaMClientConfig.get().vanilla_music) cir.setReturnValue(PlaylistHelper.EMPTY);
+        if (!MaMDataConfig.get().vanilla_music) cir.setReturnValue(PlaylistHelper.EMPTY);
     }
 }

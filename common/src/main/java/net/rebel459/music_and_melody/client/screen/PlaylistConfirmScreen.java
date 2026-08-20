@@ -15,7 +15,7 @@ import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 import java.util.List;
 
 /** A focused confirmation before replacing a non-empty Custom Playlist. */
-final class QueueMutationConfirmScreen extends Screen {
+final class PlaylistConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 110;
     private static final int DIALOG_MAX_WIDTH = 310;
@@ -27,7 +27,7 @@ final class QueueMutationConfirmScreen extends Screen {
     private int layoutWidth;
     private int layoutHeight;
 
-    QueueMutationConfirmScreen(MusicPlayerScreen parent, Component title, Component message, Component confirmLabel, Runnable confirmedAction) {
+    PlaylistConfirmScreen(MusicPlayerScreen parent, Component title, Component message, Component confirmLabel, Runnable confirmedAction) {
         super(title);
         this.parent = parent;
         this.message = message;
@@ -67,7 +67,7 @@ final class QueueMutationConfirmScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         // Keep the workspace visible beneath the confirmation instead of
         // replacing it with the normal full-screen screen background.
-        this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        this.parent.extractRenderState(graphics, -1, -1, tickDelta);
         IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
         try {
