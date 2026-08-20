@@ -2466,8 +2466,10 @@ public class MusicPlayerScreen extends Screen {
         protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
             boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                     && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
-            int background = !this.active ? BUTTON_DISABLED : hovered ? BUTTON_HIGHLIGHT : PANEL_BACKGROUND;
-            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
+            if (!this.active || hovered) {
+                int background = !this.active ? BUTTON_DISABLED : BUTTON_HIGHLIGHT;
+                graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
+            }
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHT : PANEL_OUTLINE);
 
             SourceInfo source = this.screen.currentSource();
@@ -2777,7 +2779,7 @@ public class MusicPlayerScreen extends Screen {
             int x = scrollBarX();
             int top = this.getY() + 2;
             int bottom = this.getY() + this.getHeight() - 2;
-            graphics.fill(x, top, x + 4, bottom, BUTTON_PASSIVE);
+            graphics.fill(x, top, x + 4, bottom, BAR_BACKGROUND);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
@@ -3344,7 +3346,7 @@ public class MusicPlayerScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
-            int color = this.addRepository ? PANEL_HIGHLIGHT : TEXT_TITLE;
+            int color = this.addRepository ? TEXT_HEADER_SECONDARY : TEXT_TITLE;
             Component text = this.addRepository ? this.label : Component.literal("\u25B8 ").append(this.label);
             int textY = this.getContentYMiddle() - this.screen.font.lineHeight / 2;
             if (this.provenance == null) {
