@@ -128,6 +128,7 @@ public final class ThemeHelper {
             IconButton.icon("locked"),
             IconButton.icon("loop"),
             IconButton.icon("looping"),
+            IconButton.icon("manage"),
             IconButton.icon("next"),
             IconButton.icon("pause"),
             IconButton.icon("play"),

@@ -12,6 +12,7 @@ import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.unified.api.util.VanillaVersion;
+import net.rebel459.unified.api.core.UnifiedInstance;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -135,15 +136,29 @@ public final class RemoteContentManager {
     }
 
     public static boolean isDownloadedAlbum(Identifier id) {
-        return installed(id, RemotePack.Tag.ALBUM) != null;
+        return isDownloaded(id, RemotePack.Tag.ALBUM);
     }
 
     public static boolean isDownloaded(Identifier id, RemotePack.Tag tag) {
-        return installed(id, tag) != null;
+        return DownloadedResources.owner(id, tag).map(key -> installed(key.id()) != null).orElse(false);
+    }
+
+    public static Optional<RemotePack> owner(Identifier contentId, RemotePack.Tag tag) {
+        return DownloadedResources.owner(contentId, tag)
+                .flatMap(key -> packs().stream().filter(pack -> pack.key().equals(key)).findFirst());
+    }
+
+    public static List<String> missingDependencies(RemotePack pack) {
+        return pack.dependencies().stream().filter(dependency -> !UnifiedInstance.isModLoaded(dependency)).toList();
+    }
+
+    public static boolean isDownloadable(RemotePack pack) {
+        State state = state(pack);
+        return (state == State.REMOTE || state == State.FAILED) && missingDependencies(pack).isEmpty();
     }
 
     public static void download(RemotePack pack) {
-        if (!remoteDownloadsAllowed()) return;
+        if (!remoteDownloadsAllowed() || !missingDependencies(pack).isEmpty()) return;
         RemotePack.Key key = pack.key();
         if (!DOWNLOADING.add(key)) return;
         DOWNLOAD_PROGRESS.put(key, 0.0D);
@@ -350,11 +365,12 @@ public final class RemoteContentManager {
 
     private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri, RemotePack.Provenance provenance) {
         Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
-        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size") || !object.has("tag")) {
+        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size") || !object.has("tags")) {
             return null;
         }
-        RemotePack.Tag tag = RemotePack.Tag.fromSerialized(object.get("tag").getAsString());
-        if (tag == null) return null;
+        List<RemotePack.Tag> tags = stringArray(object, "tags").stream().map(RemotePack.Tag::fromSerialized).toList();
+        if (tags.isEmpty() || tags.contains(null)) return null;
+        List<String> dependencies = stringArray(object, "dependencies");
         String icon = object.has("icon")
                 ? object.get("icon").getAsString()
                 : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png").toString();
@@ -372,9 +388,22 @@ public final class RemoteContentManager {
                 icon,
                 atLeastVersion,
                 belowVersion,
-                tag,
+                tags,
+                dependencies,
                 provenance
         );
+    }
+
+    private static List<String> stringArray(JsonObject object, String name) {
+        JsonArray array = object.getAsJsonArray(name);
+        if (array == null) return List.of();
+        List<String> values = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) continue;
+            String value = element.getAsString().trim();
+            if (!value.isEmpty()) values.add(value);
+        }
+        return List.copyOf(values);
     }
 
     private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
@@ -450,18 +479,15 @@ public final class RemoteContentManager {
     }
 
     private static MaMDataConfig.DownloadedPack installed(RemotePack pack) {
-        return installed(pack.id(), pack.tag());
+        return installed(pack.id());
     }
 
-    private static MaMDataConfig.DownloadedPack installed(Identifier id, RemotePack.Tag tag) {
-        MaMDataConfig.DownloadedPack legacy = null;
+    private static MaMDataConfig.DownloadedPack installed(Identifier id) {
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
             if (pack == null || !pack.id.equals(id.toString())) continue;
-            RemotePack.Tag storedTag = RemotePack.Tag.fromSerialized(pack.tag);
-            if (storedTag == tag) return pack;
-            if (storedTag == null) legacy = pack;
+            return pack;
         }
-        return legacy;
+        return null;
     }
 
     private static MaMDataConfig.DownloadedPack installedAny(Identifier id) {
@@ -479,11 +505,12 @@ public final class RemoteContentManager {
             config.remote.downloads.add(record);
         }
         record.id = pack.id().toString();
-        record.tag = pack.tag() == null ? "" : pack.tag().name().toLowerCase(Locale.ROOT);
+        record.tags = pack.tags().stream().map(tag -> tag.name().toLowerCase(Locale.ROOT)).toList();
         record.version = pack.version();
         record.sha256 = pack.sha256();
         record.file = pack.fileName();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        DownloadedResources.invalidate();
     }
 
     public record InstalledPack(
@@ -500,7 +527,7 @@ public final class RemoteContentManager {
         for (MaMDataConfig.DownloadedPack record : MaMDataConfig.get().remote.downloads) {
             Identifier id = Identifier.tryParse(record.id);
             if (id == null) continue;
-            RemotePack.Tag tag = RemotePack.Tag.fromSerialized(record.tag);
+            RemotePack.Tag tag = record.tags == null || record.tags.isEmpty() ? null : RemotePack.Tag.fromSerialized(record.tags.getFirst());
 
             packs.add(new InstalledPack(
                     installedName(id, tag),
@@ -523,7 +550,7 @@ public final class RemoteContentManager {
         }
 
         for (RemotePack pack : PACKS) {
-            if (pack.id().equals(id) && (tag == null || pack.tag() == tag)) {
+            if (pack.id().equals(id) && (tag == null || pack.tags().contains(tag))) {
                 return pack.name();
             }
         }
@@ -539,7 +566,7 @@ public final class RemoteContentManager {
         if (DOWNLOADING.contains(key)) return false;
 
         MaMDataConfig config = MaMDataConfig.get();
-        MaMDataConfig.DownloadedPack record = installed(key.id(), key.tag());
+        MaMDataConfig.DownloadedPack record = installed(key.id());
         if (record == null) return false;
 
         deleteFromManifest(key);
@@ -570,8 +597,7 @@ public final class RemoteContentManager {
     public static synchronized boolean deleteInstalled(Identifier id) {
         MaMDataConfig.DownloadedPack record = installedAny(id);
         if (record == null) return false;
-        RemotePack.Tag tag = RemotePack.Tag.fromSerialized(record.tag);
-        return deleteInstalled(new RemotePack.Key(id, tag));
+        return deleteInstalled(new RemotePack.Key(id));
     }
 
     private static void writeManifest(RemotePack.Key key, List<Path> extracted) throws IOException {
@@ -589,10 +615,6 @@ public final class RemoteContentManager {
 
     private static boolean deleteFromManifest(RemotePack.Key key) {
         Path manifest = manifestPath(key);
-        if (!Files.isRegularFile(manifest) && key.tag() != null) {
-            Path legacyManifest = manifestPath(new RemotePack.Key(key.id(), null));
-            if (Files.isRegularFile(legacyManifest)) manifest = legacyManifest;
-        }
         if (!Files.isRegularFile(manifest)) return false;
 
         Path root = DIRECTORY.toAbsolutePath().normalize();
@@ -685,7 +707,7 @@ public final class RemoteContentManager {
     }
 
     private static boolean hasOtherInstalledPackInNamespace(Identifier id, RemotePack.Key excluded) {
-        MaMDataConfig.DownloadedPack excludedRecord = installed(id, excluded.tag());
+        MaMDataConfig.DownloadedPack excludedRecord = installed(id);
         for (MaMDataConfig.DownloadedPack pack : MaMDataConfig.get().remote.downloads) {
             if (pack == null) continue;
             if (pack == excludedRecord) continue;
@@ -699,19 +721,12 @@ public final class RemoteContentManager {
 
     private static Path manifestPath(RemotePack.Key key) {
         String path = key.id().getPath().replace('/', '-');
-        if (key.tag() == null) return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + ".txt");
-        String tag = key.tag() == null ? "unknown" : key.tag().name().toLowerCase(Locale.ROOT);
-        return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + "-" + tag + ".txt");
+        return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + ".txt");
     }
 
     static Path packDirectory(RemotePack.Key key) {
-        if (key.tag() == null) {
-            return PACK_DIRECTORY.resolve(Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(key.id().toString().getBytes(StandardCharsets.UTF_8)));
-        }
-        String tag = key.tag() == null ? "unknown" : key.tag().name().toLowerCase(Locale.ROOT);
         String name = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString((key.id() + "|" + tag).getBytes(StandardCharsets.UTF_8));
+                .encodeToString(key.id().toString().getBytes(StandardCharsets.UTF_8));
         return PACK_DIRECTORY.resolve(name);
     }
 }

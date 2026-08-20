@@ -133,6 +133,7 @@ public class MusicPlayerScreen extends Screen {
     private WorkspaceButton loadButton;
     private WorkspaceButton queueButton;
     private IconButton contentDeleteButton;
+    private IconButton contentManageButton;
     private WorkspaceButton remoteActionButton;
     private WorkspaceButton remoteDeleteButton;
     private WorkspaceButton remoteBackButton;
@@ -411,14 +412,25 @@ public class MusicPlayerScreen extends Screen {
         }
         addBackButton();
         this.contentTrackList = this.addRenderableWidget(new ContentTrackList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 42, this.contentBottom - 6));
-        int actionWidth = this.rightWidth - 16;
+        if (this.viewedRemotePack != null) {
+            buildRemoteDetailsAction();
+            return;
+        }
+        int actionWidth = this.rightWidth - 14;
         int buttonWidth = Math.max(1, (actionWidth - IconButton.SIZE - 8) / 2);
-        int actionX = this.rightX + 8;
+        int actionX = this.rightX + 7;
         int actionY = playerActionY();
         this.loadButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.load"), false, button -> loadViewedContent()));
         int deleteX = actionX + buttonWidth + 4;
-        if (viewedContentDeleteable()) {
+        RemotePack remotePack = viewedContentRemotePack();
+        if (remotePack != null) {
+            this.contentManageButton = this.addRenderableWidget(new IconButton(
+                    Component.translatable("button.music_and_melody.manage"), IconButton.icon("manage"),
+                    button -> viewRemotePack(remotePack)));
+            this.contentManageButton.setX(deleteX);
+            this.contentManageButton.setY(actionY);
+        } else if (viewedContentDeleteable()) {
             this.contentDeleteButton = this.addRenderableWidget(new IconButton(contentDeleteMessage(), contentDeleteIcon(),
                     button -> toggleViewedContentDelete()));
             this.contentDeleteButton.setX(deleteX);
@@ -433,10 +445,10 @@ public class MusicPlayerScreen extends Screen {
     private void buildMusicToggles() {
         MaMClientConfig config = MaMClientConfig.get();
         int togglesY = musicToggleY();
-        int toggleWidth = this.rightWidth - 16;
-        this.vanillaMusicButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY, toggleWidth, 20,
+        int toggleWidth = this.rightWidth - 14;
+        this.vanillaMusicButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, togglesY, toggleWidth, 20,
                 Component.translatable("screen.music_and_melody.vanilla_music"), config.vanilla_music, button -> toggleVanillaMusic()));
-        this.eventsButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 8, togglesY + 24, toggleWidth, 20,
+        this.eventsButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, togglesY + 24, toggleWidth, 20,
                 Component.translatable("screen.music_and_melody.event_music"), config.allow_events, button -> toggleEventMusic()));
     }
 
@@ -448,15 +460,18 @@ public class MusicPlayerScreen extends Screen {
 
     private void buildEventsPage() {
         addBackButton();
-        buildTagButtons(EventTag.values(), this.eventTags, this::toggleEventTag);
+        if (this.viewedRemotePack == null) buildTagButtons(EventTag.values(), this.eventTags, this::toggleEventTag);
+        else buildRemoteDetailsAction();
         if (this.selectedEventNamespace == null) {
             this.eventFolderList = this.addRenderableWidget(new EventFolderList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 38, this.contentBottom - 6));
         } else {
             this.eventSourceList = this.addRenderableWidget(new EventSourceList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 38, this.contentBottom - 6, this.selectedEventNamespace));
         }
-        this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
-                Component.translatable("button.music_and_melody.new_event"), false,
-                button -> openCreateEventScreen()));
+        if (this.viewedRemotePack == null) {
+            this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
+                    Component.translatable("button.music_and_melody.new_event"), false,
+                    button -> openCreateEventScreen()));
+        }
     }
 
     private void buildOnlinePage() {
@@ -492,7 +507,9 @@ public class MusicPlayerScreen extends Screen {
         addBackButton();
         this.themeList = this.addRenderableWidget(new ThemeList(this, this.minecraft, this.middleX, this.middleWidth,
                 PANEL_TOP + 38, this.contentBottom - 6));
-        if (this.viewedTheme == null) {
+        if (this.viewedRemotePack != null) {
+            buildRemoteDetailsAction();
+        } else if (this.viewedTheme == null) {
             buildTagButtons(ThemeTag.values(), this.themeTags, this::toggleThemeTag);
             this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
                     Component.translatable("button.music_and_melody.new_theme"), false,
@@ -537,11 +554,8 @@ public class MusicPlayerScreen extends Screen {
         if (state == RemoteContentManager.State.DOWNLOADING) return;
 
         boolean canDelete = remoteDeleteAvailable(pack);
-        if (canDelete && remoteActionActive(pack)) {
-            int actionWidth = (width - 4) / 2;
-            this.remoteDeleteButton = this.addRenderableWidget(new WorkspaceButton(x, backY - 24, actionWidth, 20,
-                    remoteDeleteMessage(pack), isRemoteDeletePending(pack), button -> toggleRemoteDeletePending(pack)));
-            this.remoteActionButton = this.addRenderableWidget(new WorkspaceButton(x + actionWidth + 4, backY - 24, width - actionWidth - 4, 20,
+        if (remoteActionActive(pack) && !isRemoteDeletePending(pack)) {
+            this.remoteActionButton = this.addRenderableWidget(new WorkspaceButton(x, backY - 24, width, 20,
                     remoteActionMessage(pack), false, button -> activateRemotePack(pack)));
             return;
         }
@@ -552,10 +566,6 @@ public class MusicPlayerScreen extends Screen {
             return;
         }
 
-        if (remoteActionActive(pack)) {
-            this.remoteActionButton = this.addRenderableWidget(new WorkspaceButton(x, backY - 24, width, 20,
-                    remoteActionMessage(pack), false, button -> activateRemotePack(pack)));
-        }
     }
 
     private void buildThemeDetailsActions() {
@@ -701,24 +711,24 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderRightPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (this.viewedRemotePack != null) {
+            renderRemoteDetails(graphics, this.viewedRemotePack);
+            return;
+        }
+
         if (this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) {
             SourceInfo source = this.page == Page.NOW_PLAYING ? customPlaylistSource() : viewedContentSource();
             if (source != null) {
                 renderSourceCard(graphics, source);
                 renderVolumeSlider(graphics, mouseX, mouseY);
             }
-            if (this.page == Page.DETAILS && !viewedContentDeleteable()) {
-                int actionWidth = this.rightWidth - 16;
+            if (this.page == Page.DETAILS && !viewedContentDeleteable() && viewedContentRemotePack() == null) {
+                int actionWidth = this.rightWidth - 14;
                 int buttonWidth = Math.max(1, (actionWidth - IconButton.SIZE - 8) / 2);
-                int iconX = this.rightX + 8 + buttonWidth + 4;
+                int iconX = this.rightX + 7 + buttonWidth + 4;
                 IconButton.renderIconWithTooltip(graphics, IconButton.icon("built_in"), iconX, playerActionY(),
                         Component.translatable("screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);
             }
-            return;
-        }
-
-        if (this.page == Page.ONLINE && this.viewedRemotePack != null) {
-            renderRemoteDetails(graphics, this.viewedRemotePack);
             return;
         }
 
@@ -816,8 +826,14 @@ public class MusicPlayerScreen extends Screen {
         renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, fieldY, width);
         renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, fieldY + 26, width);
         renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.state", remoteStateMessage(RemoteContentManager.state(pack)), x, fieldY + 52, width);
+        List<String> missing = RemoteContentManager.missingDependencies(pack);
+        Component dependencies = pack.dependencies().isEmpty() ? Component.literal("-")
+                : Component.literal(String.join(", ", pack.dependencies()));
+        if (!missing.isEmpty()) dependencies = dependencies.copy().append(Component.literal(" · ")).append(Component.translatable(
+                "screen.music_and_melody.remote_details.missing_dependencies", String.join(", ", missing)));
+        renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.dependencies", dependencies, x, fieldY + 78, width);
 
-        int descriptionY = fieldY + 78;
+        int descriptionY = fieldY + 104;
         graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE),
                 x, descriptionY, TEXT_DESCRIPTION);
         descriptionY += 12;
@@ -832,16 +848,13 @@ public class MusicPlayerScreen extends Screen {
 
     private RemotePack viewedContentRemotePack() {
         if (this.viewedContent == null) return null;
-        return RemoteContentManager.packs().stream()
-                .filter(pack -> pack.id().equals(this.viewedContent.id()))
-                .findFirst().orElse(null);
+        RemotePack.Tag tag = this.viewedContent.playlist() == null ? RemotePack.Tag.ALBUM : RemotePack.Tag.PLAYLIST;
+        return RemoteContentManager.owner(this.viewedContent.id(), tag).orElse(null);
     }
 
     private boolean viewedContentDeleteable() {
         if (this.viewedContent == null) return false;
-        if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) return true;
-        RemotePack pack = viewedContentRemotePack();
-        return pack != null && remoteDeleteAvailable(pack);
+        return this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom();
     }
 
     private boolean viewedContentDeletePending() {
@@ -1511,6 +1524,14 @@ public class MusicPlayerScreen extends Screen {
         this.rebuildWidgets();
     }
 
+    void manageRemoteContent(Identifier contentId, RemotePack.Tag tag) {
+        RemoteContentManager.owner(contentId, tag).ifPresent(pack -> {
+            this.viewedRemotePack = pack;
+            this.minecraft.gui.setScreen(this);
+            this.rebuildWidgets();
+        });
+    }
+
     void openRepositoryEditor() {
         closeSearch();
         this.minecraft.gui.setScreen(new RepositoryScreen(this));
@@ -1579,7 +1600,8 @@ public class MusicPlayerScreen extends Screen {
     private boolean isContentDeletePending(ContentItem item) {
         if (item == null) return false;
         if (item.playlist() != null && item.playlist().isCustom()) return this.pendingPlaylistDeletes.contains(item.id());
-        RemotePack pack = viewedContentRemotePack();
+        RemotePack.Tag tag = item.playlist() == null ? RemotePack.Tag.ALBUM : RemotePack.Tag.PLAYLIST;
+        RemotePack pack = RemoteContentManager.owner(item.id(), tag).orElse(null);
         return pack != null && this.pendingRemoteDeletes.contains(pack.key());
     }
 
@@ -1592,7 +1614,10 @@ public class MusicPlayerScreen extends Screen {
     }
 
     boolean isEventDeletePending(Identifier id) {
-        return id != null && this.pendingEventDeletes.contains(id);
+        if (id == null) return false;
+        if (this.pendingEventDeletes.contains(id)) return true;
+        return RemoteContentManager.owner(id, RemotePack.Tag.EVENT)
+                .map(pack -> this.pendingRemoteDeletes.contains(pack.key())).orElse(false);
     }
 
     boolean toggleEventDeletePending(Identifier id) {
@@ -1603,7 +1628,10 @@ public class MusicPlayerScreen extends Screen {
     }
 
     boolean isThemeDeletePending(Identifier id) {
-        return id != null && this.pendingThemeDeletes.contains(id);
+        if (id == null) return false;
+        if (this.pendingThemeDeletes.contains(id)) return true;
+        return RemoteContentManager.owner(id, RemotePack.Tag.THEME)
+                .map(pack -> this.pendingRemoteDeletes.contains(pack.key())).orElse(false);
     }
 
     boolean toggleThemeDeletePending(Identifier id) {
@@ -1944,7 +1972,8 @@ public class MusicPlayerScreen extends Screen {
 
     private static boolean remoteActionActive(RemotePack pack) {
         RemoteContentManager.State state = RemoteContentManager.state(pack);
-        return state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
+        return RemoteContentManager.missingDependencies(pack).isEmpty()
+                && state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
     }
 
     static String remoteStateTranslationKey(RemoteContentManager.State state) {
@@ -1960,12 +1989,17 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private static Component remoteTypeMessage(RemotePack pack) {
-        return Component.translatable(switch (pack.tag()) {
-            case ALBUM -> "screen.music_and_melody.tag.album";
-            case PLAYLIST -> "screen.music_and_melody.tag.playlist";
-            case EVENT -> "screen.music_and_melody.tag.event";
-            case THEME -> "screen.music_and_melody.tag.theme";
-        });
+        MutableComponent result = Component.empty();
+        for (int i = 0; i < pack.tags().size(); i++) {
+            if (i > 0) result.append(Component.literal(" · "));
+            result.append(Component.translatable(switch (pack.tags().get(i)) {
+                case ALBUM -> "screen.music_and_melody.tag.album";
+                case PLAYLIST -> "screen.music_and_melody.tag.playlist";
+                case EVENT -> "screen.music_and_melody.tag.event";
+                case THEME -> "screen.music_and_melody.tag.theme";
+            }));
+        }
+        return result;
     }
 
     private static int clamp(int value, int min, int max) {
@@ -2277,7 +2311,7 @@ public class MusicPlayerScreen extends Screen {
         EVENT("screen.music_and_melody.tag.event"),
         THEME("screen.music_and_melody.tag.theme"),
         DOWNLOADED("screen.music_and_melody.content_origin.downloaded"),
-        REMOTE("screen.music_and_melody.tag.remote"),
+        DOWNLOADABLE("screen.music_and_melody.tag.downloadable"),
         NEEDS_UPDATE("screen.music_and_melody.tag.needs_update");
 
         private final String translationKey;
@@ -2294,14 +2328,14 @@ public class MusicPlayerScreen extends Screen {
         boolean matches(RemotePack pack) {
             RemoteContentManager.State state = RemoteContentManager.state(pack);
             return switch (this) {
-                case ALBUM -> pack.tag() == RemotePack.Tag.ALBUM;
-                case PLAYLIST -> pack.tag() == RemotePack.Tag.PLAYLIST;
-                case EVENT -> pack.tag() == RemotePack.Tag.EVENT;
-                case THEME -> pack.tag() == RemotePack.Tag.THEME;
+                case ALBUM -> pack.tags().contains(RemotePack.Tag.ALBUM);
+                case PLAYLIST -> pack.tags().contains(RemotePack.Tag.PLAYLIST);
+                case EVENT -> pack.tags().contains(RemotePack.Tag.EVENT);
+                case THEME -> pack.tags().contains(RemotePack.Tag.THEME);
                 case DOWNLOADED -> state == RemoteContentManager.State.INSTALLED
                         || state == RemoteContentManager.State.NEEDS_RELOAD
                         || state == RemoteContentManager.State.UPDATE_AVAILABLE;
-                case REMOTE -> state == RemoteContentManager.State.REMOTE || state == RemoteContentManager.State.FAILED;
+                case DOWNLOADABLE -> RemoteContentManager.isDownloadable(pack);
                 case NEEDS_UPDATE -> state == RemoteContentManager.State.UPDATE_AVAILABLE;
             };
         }
@@ -3397,7 +3431,7 @@ public class MusicPlayerScreen extends Screen {
             this.minecraft = minecraft;
             this.pack = pack;
             this.actionButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.download"), IconButton.icon("download"), ignored -> {
-                if (RemoteContentManager.state(this.pack) == RemoteContentManager.State.INSTALLED) {
+                if (showRemoteDeleteAction(this.screen, this.pack)) {
                     this.screen.toggleRemoteDeletePending(this.pack);
                 } else {
                     this.screen.activateRemotePack(this.pack);
@@ -3431,7 +3465,7 @@ public class MusicPlayerScreen extends Screen {
 
         private void updateAction() {
             RemoteContentManager.State state = RemoteContentManager.state(this.pack);
-            if (state == RemoteContentManager.State.INSTALLED) {
+            if (showRemoteDeleteAction(this.screen, this.pack)) {
                 this.actionButton.setIconAndTooltip(IconButton.icon(this.screen.isRemoteDeletePending(this.pack) ? "restore" : "delete"),
                         this.screen.remoteDeleteMessage(this.pack));
                 this.actionButton.active = remoteDeleteAvailable(this.pack);
@@ -3446,7 +3480,12 @@ public class MusicPlayerScreen extends Screen {
                 case REMOTE -> IconButton.icon("download");
             };
             this.actionButton.setIconAndTooltip(icon, remoteActionMessage(this.pack));
-            this.actionButton.active = state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
+            this.actionButton.active = remoteActionActive(this.pack);
+        }
+
+        private static boolean showRemoteDeleteAction(MusicPlayerScreen screen, RemotePack pack) {
+            return remoteDeleteAvailable(pack)
+                    && (screen.isRemoteDeletePending(pack) || !remoteActionActive(pack));
         }
 
         @Override
