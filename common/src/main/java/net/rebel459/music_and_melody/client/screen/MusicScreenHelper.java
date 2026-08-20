@@ -46,6 +46,42 @@ final class MusicScreenHelper {
         }
     }
 
+    static void addSocialButtons(Screen screen, int x, int width, int y) {
+        if (MaMClientConfig.get().discord_button) {
+            screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button ->
+                    Util.getPlatform().openUri(DISCORD)
+            ));
+        }
+        if (MaMClientConfig.get().kofi_button) {
+            screen.addRenderableWidget(new IconButton(x + width - IconButton.SIZE, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button ->
+                    Util.getPlatform().openUri(KOFI)
+            ));
+        }
+    }
+
+    static void addCenteredSocialButtons(Screen screen, int centerX, int y) {
+        boolean discord = MaMClientConfig.get().discord_button;
+        boolean kofi = MaMClientConfig.get().kofi_button;
+        int width = (discord ? IconButton.SIZE : 0) + (discord && kofi ? 4 : 0) + (kofi ? IconButton.SIZE : 0);
+        int x = centerX - width / 2;
+        if (discord) {
+            screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button -> Util.getPlatform().openUri(DISCORD)));
+            x += IconButton.SIZE + 4;
+        }
+        if (kofi) screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button -> Util.getPlatform().openUri(KOFI)));
+    }
+
+    static void openKofi() {
+        Util.getPlatform().openUri(KOFI);
+    }
+
+    static void openUri(String value) {
+        try {
+            Util.getPlatform().openUri(URI.create(value));
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
     static Component trackName(Album album, String song) {
         return trackName(album.trackId(song), fallbackName(song));
     }

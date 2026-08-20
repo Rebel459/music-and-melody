@@ -166,6 +166,11 @@ public class MusicPlayerScreen extends Screen {
     private final Set<Identifier> pendingEventDeletes = new HashSet<>();
     private final Set<Identifier> pendingThemeDeletes = new HashSet<>();
     private final List<BreadcrumbHit> breadcrumbHits = new ArrayList<>();
+    private final List<BreadcrumbHit> welcomeLinks = new ArrayList<>();
+    private String featuredSupporter;
+    private String featuredComposer;
+    private String featuredComposerUrl;
+    private int welcomeSocialY;
 
     public MusicPlayerScreen(Screen parent) {
         this(parent, Page.NOW_PLAYING);
@@ -189,6 +194,7 @@ public class MusicPlayerScreen extends Screen {
         calculateLayout();
         MusicDiscHelper.requestStats(this.minecraft);
         RemoteContentManager.refreshIfNeeded();
+        RemoteContentManager.refreshCredits();
         this.tagFilterList = null;
 
         // Rendered first, before every list and widget added below.
@@ -486,6 +492,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildHomePage() {
+        buildWelcomePanel();
         int listTop = PANEL_TOP + HOME_MENU_TOP;
         int listBottom = this.contentBottom - 6;
         if (listBottom - listTop < HOME_MENU_HEIGHT) {
@@ -520,6 +527,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildConfigPage() {
+        buildWelcomePanel();
         addBackButton();
         int buttonWidth = mainMenuButtonWidth();
         int x = this.middleX + this.middleWidth / 2 - buttonWidth / 2;
@@ -742,6 +750,7 @@ public class MusicPlayerScreen extends Screen {
             case HOME, CONFIG, NOW_PLAYING, DETAILS -> Component.empty();
         };
         if (!title.getString().isEmpty()) graphics.text(this.font, title.copy().withStyle(ChatFormatting.BOLD), this.rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
+        if (this.page == Page.HOME || this.page == Page.CONFIG) renderWelcomePanel(graphics, mouseX, mouseY);
         if (this.page == Page.ONLINE) renderOnlineDownloadProgress(graphics);
     }
 
@@ -1138,6 +1147,13 @@ public class MusicPlayerScreen extends Screen {
                 return true;
             }
         }
+        for (BreadcrumbHit hit : this.welcomeLinks) {
+            if (hit.contains(event.x(), event.y())) {
+                AbstractWidget.playButtonClickSound(this.minecraft.getSoundManager());
+                hit.action.run();
+                return true;
+            }
+        }
         if (handlePlaybackClick(event.x(), event.y(), this.middleX, this.middleWidth, this.bottomPanelTop)) return true;
         if ((this.page == Page.NOW_PLAYING || this.page == Page.DETAILS) && isInVolumeSlider(event.x(), event.y())) {
             this.draggingVolume = true;
@@ -1522,6 +1538,67 @@ public class MusicPlayerScreen extends Screen {
         closeSearch();
         this.viewedRemotePack = pack;
         this.rebuildWidgets();
+    }
+
+    private void renderWelcomePanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        updateFeaturedCredits();
+        this.welcomeLinks.clear();
+        int x = this.rightX + 8;
+        int width = Math.max(1, this.rightWidth - 16);
+        int y = PANEL_TOP + 14;
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.welcome").withStyle(ChatFormatting.BOLD), x, y, TEXT_HEADER);
+        y += 16;
+        for (FormattedCharSequence line : this.font.split(Component.translatable("screen.music_and_melody.message"), width)) {
+            graphics.text(this.font, line, x, y, TEXT_DESCRIPTION);
+            y += this.font.lineHeight + 2;
+        }
+        y = Math.max(y + 14, this.welcomeSocialY + IconButton.SIZE + 10);
+        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.supporter_thanks"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
+        renderWelcomeLink(graphics, this.featuredSupporter, x, y + 14, width, mouseX, mouseY, MusicScreenHelper::openKofi);
+        y += 42;
+        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.composer_credits"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
+        renderWelcomeLink(graphics, this.featuredComposer, x, y + 14, width, mouseX, mouseY,
+                this.featuredComposerUrl == null ? null : () -> MusicScreenHelper.openUri(this.featuredComposerUrl));
+        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.mod_credits"), this.rightX + this.rightWidth / 2, this.panelBottom - 18, TEXT_DESCRIPTION);
+    }
+
+    private void renderWelcomeLink(GuiGraphicsExtractor graphics, String text, int x, int y, int width, int mouseX, int mouseY, Runnable action) {
+        if (text == null || text.isBlank()) return;
+        boolean hovered = action != null && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + this.font.lineHeight;
+        Component label = Component.literal(text);
+        if (hovered) label = label.copy().withStyle(ChatFormatting.UNDERLINE);
+        drawCenteredTrackMarquee(graphics, label, x, y, width, TEXT_PRIMARY);
+        if (action != null) this.welcomeLinks.add(new BreadcrumbHit(x, y, width, this.font.lineHeight, action));
+    }
+
+    private void drawCenteredTrackMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
+        if (this.font.width(text) <= width) {
+            graphics.centeredText(this.font, text, x + width / 2, y, color);
+        } else {
+            drawTrackMarquee(graphics, text, x, y, width, color);
+        }
+    }
+
+    private void updateFeaturedCredits() {
+        if (this.featuredSupporter == null && !RemoteContentManager.supporters().isEmpty()) {
+            String entry = RemoteContentManager.supporters().get((int) (Util.getMillis() % RemoteContentManager.supporters().size()));
+            int separator = entry.indexOf('=');
+            this.featuredSupporter = (separator < 0 ? entry : entry.substring(0, separator)).trim();
+        }
+        if (this.featuredComposer == null && !RemoteContentManager.composers().isEmpty()) {
+            String entry = RemoteContentManager.composers().get((int) (Util.getMillis() % RemoteContentManager.composers().size()));
+            int separator = entry.indexOf('=');
+            this.featuredComposer = (separator < 0 ? entry : entry.substring(0, separator)).trim();
+            this.featuredComposerUrl = separator < 0 ? null : entry.substring(separator + 1).trim();
+            if (this.featuredComposerUrl != null && this.featuredComposerUrl.isBlank()) this.featuredComposerUrl = null;
+        }
+    }
+
+    private void buildWelcomePanel() {
+        int width = Math.max(1, this.rightWidth - 16);
+        int messageLines = this.font.split(Component.translatable("screen.music_and_melody.message"), width).size();
+        this.welcomeSocialY = PANEL_TOP + 14 + 16 + messageLines * (this.font.lineHeight + 2) + 10;
+        MusicScreenHelper.addCenteredSocialButtons(this, this.rightX + this.rightWidth / 2, this.welcomeSocialY);
     }
 
     void manageRemoteContent(Identifier contentId, RemotePack.Tag tag) {
@@ -2421,7 +2498,7 @@ public class MusicPlayerScreen extends Screen {
         }
 
         private static String formattedMultiplier(float multiplier) {
-            return String.format(Locale.ROOT, "%.2fF", multiplier);
+            return String.format(Locale.ROOT, "%.2f%%", multiplier);
         }
     }
 
