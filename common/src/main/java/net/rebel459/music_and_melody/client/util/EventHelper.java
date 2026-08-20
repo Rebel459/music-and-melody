@@ -23,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.Playlist;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
 import net.rebel459.unified.api.core.UnifiedInstance;
@@ -58,7 +59,7 @@ public class EventHelper {
     }
 
     public static Music processEventMusic() {
-        if (!isEnabled()) {
+        if (!eventSystemEnabled() || !eventMusicEnabled()) {
             stopDisabledEventActivity();
             return null;
         }
@@ -352,7 +353,15 @@ public class EventHelper {
     }
 
     private static boolean isEnabled() {
+        return eventSystemEnabled() && eventMusicEnabled();
+    }
+
+    private static boolean eventSystemEnabled() {
         return MaMClientConfig.get().allow_events;
+    }
+
+    private static boolean eventMusicEnabled() {
+        return MaMDataConfig.get().event_music;
     }
 
     private static void stopDisabledEventActivity() {

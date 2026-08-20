@@ -75,7 +75,7 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        this.parent.extractRenderState(graphics, -1, -1, tickDelta);
         IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
         try {

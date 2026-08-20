@@ -66,7 +66,7 @@ public final class PlaylistHelper {
     public static void add(SafeIdentifier song) {
         ensureLoaded();
         if (!QUEUED_SONGS.contains(song)) {
-            clearQueueSource();
+            clearQueueType();
             QUEUED_SONGS.add(song);
             rebuildShuffleOrderAfterQueueChange();
             save();
@@ -82,23 +82,23 @@ public final class PlaylistHelper {
                 changed = true;
             }
         }
-        if (changed) clearQueueSource();
+        if (changed) clearQueueType();
         if (changed) rebuildShuffleOrderAfterQueueChange();
         if (changed) save();
     }
 
-    public static void setQueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {
+    public static void setQueueType(MaMDataConfig.QueueType type, String id, String name) {
         ensureLoaded();
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_source_type = type;
-        config.playlists.queue_source_id = id;
-        config.playlists.queue_source_name = name;
+        config.playlists.queue_type = type;
+        config.playlists.queue_id = id;
+        config.playlists.queue_name = name;
         touchRecentSource(type, id);
         save();
     }
 
     /** Replaces the queue without turning the loaded album or playlist into a custom list. */
-    public static boolean loadQueueSource(Collection<SafeIdentifier> songs, MaMDataConfig.QueueSourceType type, String id, String name) {
+    public static boolean loadQueueType(Collection<SafeIdentifier> songs, MaMDataConfig.QueueType type, String id, String name) {
         ensureLoaded();
         if (songs == null) return false;
 
@@ -117,9 +117,9 @@ public final class PlaylistHelper {
         rebuildShuffleOrder(null);
 
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_source_type = type;
-        config.playlists.queue_source_id = id;
-        config.playlists.queue_source_name = name;
+        config.playlists.queue_type = type;
+        config.playlists.queue_id = id;
+        config.playlists.queue_name = name;
         touchRecentSource(type, id);
         save();
         return !QUEUED_SONGS.isEmpty();
@@ -142,16 +142,16 @@ public final class PlaylistHelper {
         currentQueueIndex = -1;
         queuePaused = true;
         currentShuffleIndex = -1;
-        clearQueueSource();
+        clearQueueType();
         rebuildShuffleOrder(null);
         save();
         return !QUEUED_SONGS.isEmpty();
     }
 
-    public static Optional<QueueSource> queueSource() {
+    public static Optional<QueueType> queueSource() {
         MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
-        if (playlists.queue_source_type == MaMDataConfig.QueueSourceType.NONE || playlists.queue_source_name.isBlank()) return Optional.empty();
-        return Optional.of(new QueueSource(playlists.queue_source_type, playlists.queue_source_id, playlists.queue_source_name));
+        if (playlists.queue_type == MaMDataConfig.QueueType.NONE || playlists.queue_name.isBlank()) return Optional.empty();
+        return Optional.of(new QueueType(playlists.queue_type, playlists.queue_id, playlists.queue_name));
     }
 
     public static boolean isQueued(SafeIdentifier song) {
@@ -258,7 +258,7 @@ public final class PlaylistHelper {
         queueIndex = remapMovedIndex(queueIndex, fromIndex, toIndex);
         currentQueueIndex = remapMovedIndex(currentQueueIndex, fromIndex, toIndex);
         pausedQueueIndex = remapMovedIndex(pausedQueueIndex, fromIndex, toIndex);
-        clearQueueSource();
+        clearQueueType();
         rebuildShuffleOrderAfterQueueChange();
         save();
         return true;
@@ -275,7 +275,7 @@ public final class PlaylistHelper {
             else if (index < pausedQueueIndex) pausedQueueIndex--;
             if (currentSongFromQueue && DirectSoundFiles.samePlayable(removed, currentSongId)) stop();
             queueIndex = clampQueueIndex(queueIndex);
-            clearQueueSource();
+            clearQueueType();
             rebuildShuffleOrderAfterQueueChange();
             save();
         }
@@ -293,7 +293,7 @@ public final class PlaylistHelper {
         currentShuffleIndex = -1;
         SHUFFLE_ORDER.clear();
         shuffleIndex = 0;
-        clearQueueSource();
+        clearQueueType();
         save();
     }
 
@@ -986,21 +986,11 @@ public final class PlaylistHelper {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
-        boolean migrated = !config.playlists.custom_playlist_migrated;
-        if (config.playlists.custom_playlist_songs == null) {
-            config.playlists.custom_playlist_songs = new ArrayList<>();
-        }
-        if (migrated && config.playlists.custom_playlist_songs.isEmpty()
-                && config.playlists.queue_source_type == MaMDataConfig.QueueSourceType.NONE) {
-            config.playlists.custom_playlist_songs.addAll(config.playlists.queued_songs);
-        }
-        config.playlists.custom_playlist_migrated = true;
         for (String song : config.playlists.custom_playlist_songs) {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !CUSTOM_PLAYLIST_SONGS.contains(id)) CUSTOM_PLAYLIST_SONGS.add(id);
         }
         if (shuffle) rebuildShuffleOrder(null);
-        if (migrated) save();
     }
 
     private static void save() {
@@ -1009,15 +999,14 @@ public final class PlaylistHelper {
         config.playlists.shuffle = shuffle;
         config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
         config.playlists.custom_playlist_songs = new ArrayList<>(CUSTOM_PLAYLIST_SONGS.stream().map(SafeIdentifier::toString).toList());
-        config.playlists.custom_playlist_migrated = true;
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
-    private static void clearQueueSource() {
+    private static void clearQueueType() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_source_type = MaMDataConfig.QueueSourceType.NONE;
-        config.playlists.queue_source_id = "";
-        config.playlists.queue_source_name = "";
+        config.playlists.queue_type = MaMDataConfig.QueueType.NONE;
+        config.playlists.queue_id = "";
+        config.playlists.queue_name = "";
     }
 
     private static int remapMovedIndex(int index, int fromIndex, int toIndex) {
@@ -1028,18 +1017,18 @@ public final class PlaylistHelper {
         return index;
     }
 
-    private static void touchRecentSource(MaMDataConfig.QueueSourceType type, String id) {
-        if (type == MaMDataConfig.QueueSourceType.NONE || id == null || id.isBlank()) return;
+    private static void touchRecentSource(MaMDataConfig.QueueType type, String id) {
+        if (type == MaMDataConfig.QueueType.NONE || id == null || id.isBlank()) return;
         MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
         String key = type.name() + "|" + id;
-        playlists.recent_sources.remove(key);
-        playlists.recent_sources.addFirst(key);
+        playlists.recent_favourites.remove(key);
+        playlists.recent_favourites.addFirst(key);
     }
 
     /** Returns {@code 0} for the most recently played source, or a large rank when unseen. */
-    public static int recentSourceRank(MaMDataConfig.QueueSourceType type, String id) {
-        if (type == MaMDataConfig.QueueSourceType.NONE || id == null) return Integer.MAX_VALUE;
-        int index = MaMDataConfig.get().playlists.recent_sources.indexOf(type.name() + "|" + id);
+    public static int recentSourceRank(MaMDataConfig.QueueType type, String id) {
+        if (type == MaMDataConfig.QueueType.NONE || id == null) return Integer.MAX_VALUE;
+        int index = MaMDataConfig.get().playlists.recent_favourites.indexOf(type.name() + "|" + id);
         return index < 0 ? Integer.MAX_VALUE : index;
     }
 
@@ -1116,5 +1105,5 @@ public final class PlaylistHelper {
         return false;
     }
 
-    public record QueueSource(MaMDataConfig.QueueSourceType type, String id, String name) {}
+    public record QueueType(MaMDataConfig.QueueType type, String id, String name) {}
 }

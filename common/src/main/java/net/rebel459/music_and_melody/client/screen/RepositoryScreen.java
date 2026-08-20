@@ -58,12 +58,12 @@ final class RepositoryScreen extends Screen {
         this.officialButton = this.addRenderableWidget(new WorkspaceButton(entriesX, providerTop, providerWidth, 20,
                 Component.translatable("button.music_and_melody.official_catalogs"), remote.official_provider,
                 ignored -> toggleProvider(true)));
-        this.officialButton.setTooltip(Tooltip.create(Component.translatable("screen.music_and_melody.repositories.official_tooltip")));
+        this.officialButton.setTooltip(Tooltip.create(Component.translatable("button.music_and_melody.official_catalogs.tooltip")));
         this.communityButton = this.addRenderableWidget(new WorkspaceButton(entriesX + providerWidth + 4, providerTop,
                 entriesWidth - providerWidth - 4, 20,
                 Component.translatable("button.music_and_melody.community_catalogs"), remote.community_provider,
                 ignored -> toggleProvider(false)));
-        this.communityButton.setTooltip(Tooltip.create(Component.translatable("screen.music_and_melody.repositories.community_tooltip")));
+        this.communityButton.setTooltip(Tooltip.create(Component.translatable("button.music_and_melody.community_catalogs.tooltip")));
         this.list = this.addRenderableWidget(new RepositoryList(this, this.minecraft, entriesX, entriesWidth, providerTop + 24, y + height - 70));
         this.urlField = this.addRenderableWidget(new EditBox(this.font, x + 10, y + height - 31, Math.max(110, width - 82), 20,
                 Component.translatable("screen.music_and_melody.repositories.url")));
@@ -79,7 +79,7 @@ final class RepositoryScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        this.parent.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        this.parent.extractRenderState(graphics, -1, -1, tickDelta);
         super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
     }
 
@@ -141,12 +141,12 @@ final class RepositoryScreen extends Screen {
         }
 
         MaMDataConfig config = MaMDataConfig.get();
-        if (config.remote.added_repositories == null) config.remote.added_repositories = new ArrayList<>();
-        if (config.remote.added_repositories.stream().anyMatch(value::equalsIgnoreCase)) {
+        if (config.remote.catalogs == null) config.remote.catalogs = new ArrayList<>();
+        if (config.remote.catalogs.stream().anyMatch(value::equalsIgnoreCase)) {
             setFeedback(Component.translatable("screen.music_and_melody.repositories.duplicate"), true);
             return;
         }
-        config.remote.added_repositories.add(value);
+        config.remote.catalogs.add(value);
         saveChanges();
         this.urlField.setValue("");
         setFeedback(Component.translatable("screen.music_and_melody.repositories.added"), false);
@@ -165,7 +165,7 @@ final class RepositoryScreen extends Screen {
 
     void removeRepository(String value) {
         MaMDataConfig config = MaMDataConfig.get();
-        if (config.remote.added_repositories == null || !config.remote.added_repositories.remove(value)) return;
+        if (config.remote.catalogs == null || !config.remote.catalogs.remove(value)) return;
         saveChanges();
         setFeedback(Component.translatable("screen.music_and_melody.repositories.removed"), false);
         if (this.list != null) this.list.refresh();
@@ -234,7 +234,7 @@ final class RepositoryScreen extends Screen {
 
         void refresh() {
             this.clearEntries();
-            List<String> repositories = MaMDataConfig.get().remote.added_repositories;
+            List<String> repositories = MaMDataConfig.get().remote.catalogs;
             if (repositories == null) return;
             for (String repository : repositories) {
                 if (repository != null && !repository.isBlank()) this.addEntry(new RepositoryEntry(this.screen, this.minecraft, repository));

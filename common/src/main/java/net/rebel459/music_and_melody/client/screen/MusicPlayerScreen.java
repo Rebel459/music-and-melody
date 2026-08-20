@@ -170,7 +170,15 @@ public class MusicPlayerScreen extends Screen {
     private String featuredSupporter;
     private String featuredComposer;
     private String featuredComposerUrl;
+    private String featuredSplash;
     private int welcomeSocialY;
+    private double welcomeScroll;
+    private double welcomeScrollMax;
+    private int welcomeViewportTop;
+    private int welcomeViewportBottom;
+    private boolean renderingWelcomeScrollableContent;
+    private boolean draggingWelcomeScrollbar;
+    private double welcomeScrollbarDragOffset;
 
     public MusicPlayerScreen(Screen parent) {
         this(parent, Page.NOW_PLAYING);
@@ -192,6 +200,7 @@ public class MusicPlayerScreen extends Screen {
     protected void init() {
         lastOpenedPage = this.page;
         calculateLayout();
+        loadCachedWelcomeValues();
         MusicDiscHelper.requestStats(this.minecraft);
         RemoteContentManager.refreshIfNeeded();
         RemoteContentManager.refreshCredits();
@@ -449,13 +458,12 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildMusicToggles() {
-        MaMClientConfig config = MaMClientConfig.get();
         int togglesY = musicToggleY();
         int toggleWidth = this.rightWidth - 14;
         this.vanillaMusicButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, togglesY, toggleWidth, 20,
-                Component.translatable("screen.music_and_melody.vanilla_music"), config.vanilla_music, button -> toggleVanillaMusic()));
+                Component.translatable("screen.music_and_melody.vanilla_music"), MaMDataConfig.get().vanilla_music, button -> toggleVanillaMusic()));
         this.eventsButton = this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, togglesY + 24, toggleWidth, 20,
-                Component.translatable("screen.music_and_melody.event_music"), config.allow_events, button -> toggleEventMusic()));
+                Component.translatable("screen.music_and_melody.event_music"), MaMDataConfig.get().event_music, button -> toggleEventMusic()));
     }
 
     private void buildLibraryPage() {
@@ -465,6 +473,10 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void buildEventsPage() {
+        if (!MaMClientConfig.get().allow_events) {
+            setPage(Page.HOME);
+            return;
+        }
         addBackButton();
         if (this.viewedRemotePack == null) buildTagButtons(EventTag.values(), this.eventTags, this::toggleEventTag);
         else buildRemoteDetailsAction();
@@ -503,9 +515,13 @@ public class MusicPlayerScreen extends Screen {
         int x = this.middleX + this.middleWidth / 2 - buttonWidth / 2;
         int y = PANEL_TOP + Math.max(HOME_MENU_TOP, (this.contentBottom - PANEL_TOP - HOME_MENU_HEIGHT) / 2);
         addHomeButton(Component.translatable("screen.music_and_melody.albums"), x, y, buttonWidth, () -> setPage(Page.LIBRARY));
-        addHomeButton(Component.translatable("button.music_and_melody.events"), x, y + HOME_BUTTON_STEP, buttonWidth, () -> setPage(Page.EVENTS));
+        WorkspaceButton events = this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP, buttonWidth, 22,
+                Component.translatable("button.music_and_melody.events"), false, button -> setPage(Page.EVENTS)));
+        events.active = MaMClientConfig.get().allow_events;
         addHomeButton(Component.translatable("screen.music_and_melody.themes"), x, y + HOME_BUTTON_STEP * 2, buttonWidth, () -> setPage(Page.THEMES));
-        addHomeButton(Component.translatable("screen.music_and_melody.online_browser"), x, y + HOME_BUTTON_STEP * 3, buttonWidth, () -> setPage(Page.ONLINE));
+        WorkspaceButton onlineBrowser = this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP * 3, buttonWidth, 22,
+                Component.translatable("screen.music_and_melody.online_browser"), false, button -> setPage(Page.ONLINE)));
+        onlineBrowser.active = RemoteContentManager.onlineFunctionalityEnabled();
         addHomeButton(Component.translatable("screen.music_and_melody.config"), x, y + HOME_BUTTON_STEP * 4, buttonWidth, () -> setPage(Page.CONFIG));
         addHomeButton(CommonComponents.GUI_DONE, x, y + HOME_BUTTON_STEP * 5, buttonWidth, this::onClose);
     }
@@ -556,7 +572,7 @@ public class MusicPlayerScreen extends Screen {
         int width = this.rightWidth - 14;
         int backY = this.panelBottom - 28;
         this.remoteBackButton = this.addRenderableWidget(new WorkspaceButton(x, backY, width, 20,
-                Component.translatable("button.music_and_melody.back"), false, button -> closeRemoteDetails()));
+                Component.translatable("gui.done"), false, button -> closeRemoteDetails()));
 
         RemoteContentManager.State state = RemoteContentManager.state(pack);
         if (state == RemoteContentManager.State.DOWNLOADING) return;
@@ -713,7 +729,14 @@ public class MusicPlayerScreen extends Screen {
             case HOME -> {
                 renderBreadcrumbs(graphics, breadcrumbsForCurrentPage());
                 graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.music_player").withStyle(ChatFormatting.BOLD), this.middleX + this.middleWidth / 2, PANEL_TOP + 34, TEXT_TITLE);
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.choose_section"), this.middleX + this.middleWidth / 2, PANEL_TOP + 48, TEXT_DESCRIPTION);
+                if (RemoteContentManager.onlineFunctionalityEnabled()) {
+                    updateFeaturedCredits();
+                    Component splash = this.featuredSplash == null && RemoteContentManager.creditsLoading()
+                            ? Component.translatable("screen.music_and_melody.news.loading")
+                            : this.featuredSplash == null ? Component.translatable("screen.music_and_melody.choose_section")
+                            : Component.literal(this.featuredSplash);
+                    graphics.centeredText(this.font, splash, this.middleX + this.middleWidth / 2, PANEL_TOP + 48, TEXT_DESCRIPTION);
+                }
             }
         }
     }
@@ -1047,18 +1070,18 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void toggleVanillaMusic() {
-        MaMClientConfig config = MaMClientConfig.get();
+        MaMDataConfig config = MaMDataConfig.get();
         config.vanilla_music = !config.vanilla_music;
-        AutoConfig.getConfigHolder(MaMClientConfig.class).save();
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         if (!config.vanilla_music) this.minecraft.getMusicManager().stopPlaying();
         this.rebuildWidgets();
     }
 
     private void toggleEventMusic() {
-        MaMClientConfig config = MaMClientConfig.get();
-        config.allow_events = !config.allow_events;
-        AutoConfig.getConfigHolder(MaMClientConfig.class).save();
-        if (!config.allow_events) EventHelper.stopDisabledEventMusic();
+        MaMDataConfig config = MaMDataConfig.get();
+        config.event_music = !config.event_music;
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        if (!config.event_music) EventHelper.stopDisabledEventMusic();
         this.rebuildWidgets();
     }
 
@@ -1068,6 +1091,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void openCreateEventScreen() {
+        if (!MaMClientConfig.get().allow_events) return;
         closeSearch();
         this.minecraft.gui.setScreen(new CreateEventScreen(this));
     }
@@ -1134,6 +1158,18 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         event = toLayoutMouse(event);
+        if (isWelcomePage() && this.welcomeScrollMax > 0
+                && event.x() >= this.rightX + this.rightWidth - 8 && event.x() <= this.rightX + this.rightWidth) {
+            int thumbY = welcomeScrollbarY();
+            int thumbHeight = welcomeScrollbarHeight();
+            if (event.y() >= this.welcomeViewportTop && event.y() < this.welcomeViewportBottom) {
+                this.draggingWelcomeScrollbar = true;
+                this.welcomeScrollbarDragOffset = event.y() >= thumbY && event.y() < thumbY + thumbHeight
+                        ? event.y() - thumbY : thumbHeight / 2.0D;
+                setWelcomeScrollFromThumb(event.y() - this.welcomeScrollbarDragOffset);
+                return true;
+            }
+        }
         // The expanded search field intentionally covers the seek strip. It
         // must receive the click first, otherwise the concealed seek target
         // changes playback position beneath an active text field.
@@ -1147,7 +1183,7 @@ public class MusicPlayerScreen extends Screen {
                 return true;
             }
         }
-        for (BreadcrumbHit hit : this.welcomeLinks) {
+        if (isWelcomePage()) for (BreadcrumbHit hit : this.welcomeLinks) {
             if (hit.contains(event.x(), event.y())) {
                 AbstractWidget.playButtonClickSound(this.minecraft.getSoundManager());
                 hit.action.run();
@@ -1168,6 +1204,10 @@ public class MusicPlayerScreen extends Screen {
         event = toLayoutMouse(event);
         dragX /= MaMDataConfig.get().gui_multiplier;
         dragY /= MaMDataConfig.get().gui_multiplier;
+        if (this.draggingWelcomeScrollbar) {
+            setWelcomeScrollFromThumb(event.y() - this.welcomeScrollbarDragOffset);
+            return true;
+        }
         if (handlePlaybackDrag(event.x(), event.y(), this.middleX, this.middleWidth)) return true;
         if (this.draggingVolume) {
             setVolumeFromY(event.y());
@@ -1179,6 +1219,10 @@ public class MusicPlayerScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         event = toLayoutMouse(event);
+        if (this.draggingWelcomeScrollbar) {
+            this.draggingWelcomeScrollbar = false;
+            return true;
+        }
         if (handlePlaybackRelease()) return true;
         if (this.draggingVolume) {
             this.draggingVolume = false;
@@ -1205,7 +1249,19 @@ public class MusicPlayerScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return super.mouseScrolled(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier, scrollX, scrollY);
+        double x = mouseX / MaMDataConfig.get().gui_multiplier;
+        double y = mouseY / MaMDataConfig.get().gui_multiplier;
+        if (isWelcomePage() && this.welcomeScrollMax > 0
+                && x >= this.rightX && x < this.rightX + this.rightWidth
+                && y >= this.welcomeViewportTop && y < this.welcomeViewportBottom) {
+            double next = Math.max(0, Math.min(this.welcomeScrollMax, this.welcomeScroll - scrollY * 24));
+            if (next != this.welcomeScroll) {
+                this.welcomeScroll = next;
+                this.rebuildWidgets();
+            }
+            return true;
+        }
+        return super.mouseScrolled(x, y, scrollX, scrollY);
     }
 
     private boolean isInVolumeSlider(double mouseX, double mouseY) {
@@ -1331,7 +1387,7 @@ public class MusicPlayerScreen extends Screen {
             action.run();
             return;
         }
-        this.minecraft.gui.setScreen(new QueueMutationConfirmScreen(
+        this.minecraft.gui.setScreen(new PlaylistConfirmScreen(
                 this,
                 Component.translatable("screen.music_and_melody.discard_custom_playlist"),
                 Component.translatable("screen.music_and_melody.discard_custom_playlist.warning"),
@@ -1482,7 +1538,7 @@ public class MusicPlayerScreen extends Screen {
         List<SafeIdentifier> songs = this.viewedContent.queueSongs(this.minecraft);
         if (index < 0 || index >= songs.size() || !MusicDiscHelper.isSoundUnlocked(this.minecraft, songs.get(index))) return;
 
-        if (!isViewedContentQueueSource()) {
+        if (!isViewedContentQueueType()) {
             loadAndPlayViewedContentTrack(songs, index);
             return;
         }
@@ -1490,7 +1546,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void loadAndPlayViewedContentTrack(List<SafeIdentifier> songs, int index) {
-        if (this.viewedContent == null || !PlaylistHelper.loadQueueSource(songs, this.viewedContent.type(), this.viewedContent.id().toString(), this.viewedContent.name().getString())) return;
+        if (this.viewedContent == null || !PlaylistHelper.loadQueueType(songs, this.viewedContent.type(), this.viewedContent.id().toString(), this.viewedContent.name().getString())) return;
         finishPlayingViewedContentTrack(index);
     }
 
@@ -1501,7 +1557,7 @@ public class MusicPlayerScreen extends Screen {
         this.rebuildWidgets();
     }
 
-    private boolean isViewedContentQueueSource() {
+    private boolean isViewedContentQueueType() {
         if (this.viewedContent == null) return false;
         return PlaylistHelper.queueSource()
                 .filter(source -> source.type() == this.viewedContent.type())
@@ -1523,6 +1579,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void openEvent(Event.Source source) {
+        if (!MaMClientConfig.get().allow_events) return;
         closeSearch();
         this.minecraft.gui.setScreen(new EventScreen(this, source.id));
     }
@@ -1545,32 +1602,52 @@ public class MusicPlayerScreen extends Screen {
         this.welcomeLinks.clear();
         int x = this.rightX + 8;
         int width = Math.max(1, this.rightWidth - 16);
-        int y = PANEL_TOP + 14;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.welcome").withStyle(ChatFormatting.BOLD), x, y, TEXT_HEADER);
-        y += 16;
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.welcome").withStyle(ChatFormatting.BOLD), x, PANEL_TOP + 14, TEXT_HEADER);
+
+        int y = this.welcomeViewportTop - (int) Math.round(this.welcomeScroll);
+        graphics.enableScissor(this.rightX + 2, this.welcomeViewportTop, this.rightX + this.rightWidth - 2, this.welcomeViewportBottom);
+        this.renderingWelcomeScrollableContent = true;
         for (FormattedCharSequence line : this.font.split(Component.translatable("screen.music_and_melody.message"), width)) {
-            graphics.text(this.font, line, x, y, TEXT_DESCRIPTION);
+            graphics.centeredText(this.font, line, this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
             y += this.font.lineHeight + 2;
         }
-        y = Math.max(y + 14, this.welcomeSocialY + IconButton.SIZE + 10);
-        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.supporter_thanks"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
-        renderWelcomeLink(graphics, this.featuredSupporter, x, y + 14, width, mouseX, mouseY, MusicScreenHelper::openKofi);
-        y += 42;
-        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.composer_credits"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
-        renderWelcomeLink(graphics, this.featuredComposer, x, y + 14, width, mouseX, mouseY,
-                this.featuredComposerUrl == null ? null : () -> MusicScreenHelper.openUri(this.featuredComposerUrl));
+        y += 5;
+        y += IconButton.SIZE + 4;
+        renderWelcomeLink(graphics, Component.translatable("button.music_and_melody.report_issues").getString(), x, y, width,
+                mouseX, mouseY, () -> MusicScreenHelper.openUri("https://github.com/Rebel459/music-and-melody/issues"));
+        if (RemoteContentManager.onlineFunctionalityEnabled()) {
+            y += 28;
+            graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.supporter_thanks"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
+            String supporter = this.featuredSupporter == null && RemoteContentManager.creditsLoading()
+                    ? Component.translatable("screen.music_and_melody.news.loading").getString() : this.featuredSupporter;
+            renderWelcomeLink(graphics, supporter, x, y + 14, width, mouseX, mouseY,
+                    this.featuredSupporter == null ? null : MusicScreenHelper::openKofi);
+            y += 42;
+            graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.composer_credits"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
+            String composer = this.featuredComposer == null && RemoteContentManager.creditsLoading()
+                    ? Component.translatable("screen.music_and_melody.news.loading").getString() : this.featuredComposer;
+            renderWelcomeLink(graphics, composer, x, y + 14, width, mouseX, mouseY,
+                    this.featuredComposerUrl == null ? null : () -> MusicScreenHelper.openUri(this.featuredComposerUrl));
+        }
+        this.renderingWelcomeScrollableContent = false;
+        graphics.disableScissor();
+
         renderWelcomeLink(graphics, Component.translatable("screen.music_and_melody.mod_credits").getString(), x,
                 this.panelBottom - 18, width, mouseX, mouseY,
                 () -> MusicScreenHelper.openUri("https://modrinth.com/user/Rebel459"));
+        renderWelcomeScrollbar(graphics, mouseX, mouseY);
     }
 
     private void renderWelcomeLink(GuiGraphicsExtractor graphics, String text, int x, int y, int width, int mouseX, int mouseY, Runnable action) {
         if (text == null || text.isBlank()) return;
-        boolean hovered = action != null && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + this.font.lineHeight;
+        boolean insideViewport = !this.renderingWelcomeScrollableContent
+                || y >= this.welcomeViewportTop && y + this.font.lineHeight <= this.welcomeViewportBottom;
+        boolean hovered = action != null && insideViewport
+                && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + this.font.lineHeight;
         Component label = Component.literal(text);
         if (hovered) label = label.copy().withStyle(ChatFormatting.UNDERLINE);
         drawCenteredTrackMarquee(graphics, label, x, y, width, TEXT_PRIMARY);
-        if (action != null) this.welcomeLinks.add(new BreadcrumbHit(x, y, width, this.font.lineHeight, action));
+        if (action != null && insideViewport) this.welcomeLinks.add(new BreadcrumbHit(x, y, width, this.font.lineHeight, action));
     }
 
     private void drawCenteredTrackMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
@@ -1582,8 +1659,12 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void updateFeaturedCredits() {
-        if (this.featuredSupporter == null && !RemoteContentManager.supporters().isEmpty()) {
-            String entry = RemoteContentManager.supporters().get((int) (Util.getMillis() % RemoteContentManager.supporters().size()));
+        if (this.featuredSplash == null && !RemoteContentManager.splashes().isEmpty()) {
+            this.featuredSplash = RemoteContentManager.splashes().get((int) (Util.getMillis() % RemoteContentManager.splashes().size()));
+        }
+        if (this.featuredSupporter == null && !RemoteContentManager.displaySupporters().isEmpty()) {
+            List<String> displaySupporters = RemoteContentManager.displaySupporters();
+            String entry = displaySupporters.get((int) (Util.getMillis() % displaySupporters.size()));
             int separator = entry.indexOf('=');
             this.featuredSupporter = (separator < 0 ? entry : entry.substring(0, separator)).trim();
         }
@@ -1596,11 +1677,81 @@ public class MusicPlayerScreen extends Screen {
         }
     }
 
+    private void loadCachedWelcomeValues() {
+        MaMDataConfig.Cache cache = MaMDataConfig.get().cache;
+        if (this.featuredSplash == null && cache.splash != null && !cache.splash.isBlank()) this.featuredSplash = cache.splash;
+        if (this.featuredSupporter == null && cache.supporter != null && !cache.supporter.isBlank()) {
+            this.featuredSupporter = displayName(cache.supporter);
+        }
+        if (this.featuredComposer == null && cache.composer != null && !cache.composer.isBlank()) {
+            int separator = cache.composer.indexOf('=');
+            this.featuredComposer = displayName(cache.composer);
+            this.featuredComposerUrl = separator < 0 ? null : cache.composer.substring(separator + 1).trim();
+            if (this.featuredComposerUrl != null && this.featuredComposerUrl.isBlank()) this.featuredComposerUrl = null;
+        }
+    }
+
+    private static String displayName(String entry) {
+        int separator = entry.indexOf('=');
+        return (separator < 0 ? entry : entry.substring(0, separator)).trim();
+    }
+
     private void buildWelcomePanel() {
         int width = Math.max(1, this.rightWidth - 16);
         int messageLines = this.font.split(Component.translatable("screen.music_and_melody.message"), width).size();
-        this.welcomeSocialY = PANEL_TOP + 14 + 16 + messageLines * (this.font.lineHeight + 2) + 10;
-        MusicScreenHelper.addCenteredSocialButtons(this, this.rightX + this.rightWidth / 2, this.welcomeSocialY);
+        boolean online = RemoteContentManager.onlineFunctionalityEnabled();
+        int buttonX = this.rightX + 7;
+        int buttonWidth = this.rightWidth - 14;
+        int newsY = PANEL_TOP + 30;
+        this.welcomeViewportTop = newsY + 26;
+        this.welcomeViewportBottom = this.panelBottom - 30;
+        this.welcomeScrollMax = Math.max(0, welcomeContentHeight(messageLines, online) - Math.max(1, this.welcomeViewportBottom - this.welcomeViewportTop));
+        this.welcomeScroll = Math.max(0, Math.min(this.welcomeScroll, this.welcomeScrollMax));
+        WorkspaceButton news = this.addRenderableWidget(new WorkspaceButton(buttonX, newsY, buttonWidth, 20,
+                Component.translatable("button.music_and_melody.news"), false,
+                ignored -> this.minecraft.gui.setScreen(new NewsScreen(this))));
+        news.active = online;
+        this.welcomeSocialY = this.welcomeViewportTop - (int) Math.round(this.welcomeScroll)
+                + messageLines * (this.font.lineHeight + 2) + 5;
+        if (this.welcomeSocialY >= this.welcomeViewportTop
+                && this.welcomeSocialY + IconButton.SIZE <= this.welcomeViewportBottom) {
+            MusicScreenHelper.addCenteredSocialButtons(this, this.rightX + this.rightWidth / 2, this.welcomeSocialY);
+        }
+    }
+
+    private int welcomeContentHeight(int messageLines, boolean online) {
+        return messageLines * (this.font.lineHeight + 2) + 5
+                + IconButton.SIZE + 4 + 28 + (online ? 42 + 42 : 0);
+    }
+
+    private boolean isWelcomePage() {
+        return this.page == Page.HOME || this.page == Page.CONFIG;
+    }
+
+    private void renderWelcomeScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (this.welcomeScrollMax <= 0) return;
+        int y = welcomeScrollbarY();
+        int thumb = welcomeScrollbarHeight();
+        graphics.fill(this.rightX + this.rightWidth - 5, y, this.rightX + this.rightWidth - 2, y + thumb,
+                mouseX >= this.rightX + this.rightWidth - 7 ? PANEL_HIGHLIGHT : POPUP_OUTLINE);
+    }
+
+    private int welcomeScrollbarHeight() {
+        int viewport = Math.max(1, this.welcomeViewportBottom - this.welcomeViewportTop);
+        return Math.max(16, (int) Math.round(viewport * viewport / (viewport + this.welcomeScrollMax)));
+    }
+
+    private int welcomeScrollbarY() {
+        int viewport = Math.max(1, this.welcomeViewportBottom - this.welcomeViewportTop);
+        int travel = Math.max(0, viewport - welcomeScrollbarHeight());
+        return this.welcomeViewportTop + (int) Math.round(travel * this.welcomeScroll / Math.max(1.0D, this.welcomeScrollMax));
+    }
+
+    private void setWelcomeScrollFromThumb(double thumbTop) {
+        int travel = Math.max(1, this.welcomeViewportBottom - this.welcomeViewportTop - welcomeScrollbarHeight());
+        double fraction = (thumbTop - this.welcomeViewportTop) / travel;
+        this.welcomeScroll = Math.max(0, Math.min(this.welcomeScrollMax, fraction * this.welcomeScrollMax));
+        this.rebuildWidgets();
     }
 
     void manageRemoteContent(Identifier contentId, RemotePack.Tag tag) {
@@ -1746,6 +1897,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void setPage(Page page) {
+        if (page == Page.EVENTS && !MaMClientConfig.get().allow_events) page = Page.HOME;
         if (this.page == Page.THEMES && page != Page.THEMES && this.previewingTheme) {
             ThemeListener.restoreActive();
             this.previewingTheme = false;
@@ -1758,6 +1910,12 @@ public class MusicPlayerScreen extends Screen {
         this.viewedRemotePack = null;
         this.viewedTheme = null;
         this.rebuildWidgets();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.page == Page.EVENTS && !MaMClientConfig.get().allow_events) setPage(Page.HOME);
     }
 
     private void goBack() {
@@ -1822,16 +1980,16 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private ContentItem currentSourceContent() {
-        Optional<PlaylistHelper.QueueSource> queuedSource = PlaylistHelper.queueSource();
+        Optional<PlaylistHelper.QueueType> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) return null;
-        PlaylistHelper.QueueSource source = queuedSource.get();
+        PlaylistHelper.QueueType source = queuedSource.get();
         Identifier id = Identifier.tryParse(source.id());
         if (id == null) return null;
-        if (source.type() == MaMDataConfig.QueueSourceType.ALBUM) {
+        if (source.type() == MaMDataConfig.QueueType.ALBUM) {
             for (Album album : Album.ALBUMS) {
                 if (album.album.equals(id)) return new ContentItem(album, null);
             }
-        } else if (source.type() == MaMDataConfig.QueueSourceType.PLAYLIST) {
+        } else if (source.type() == MaMDataConfig.QueueType.PLAYLIST) {
             for (Playlist playlist : Playlist.PLAYLISTS) {
                 if (playlist.playlist.equals(id)) return new ContentItem(null, playlist);
             }
@@ -1840,24 +1998,24 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private SourceInfo currentSource() {
-        Optional<PlaylistHelper.QueueSource> queuedSource = PlaylistHelper.queueSource();
+        Optional<PlaylistHelper.QueueType> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) {
             return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
                     Component.literal("custom"),
-                    sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
+                    sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
         }
-        PlaylistHelper.QueueSource source = queuedSource.get();
+        PlaylistHelper.QueueType source = queuedSource.get();
         Identifier id = Identifier.tryParse(source.id());
-        if (id != null && source.type() == MaMDataConfig.QueueSourceType.ALBUM) {
+        if (id != null && source.type() == MaMDataConfig.QueueType.ALBUM) {
             for (Album album : Album.ALBUMS) {
                 if (album.album.equals(id)) return new SourceInfo(album.name, album.icon, Component.literal(album.album.toString()),
-                        sourceTypeLabel(MaMDataConfig.QueueSourceType.ALBUM), originFor(id, null), album.isFavourite());
+                        sourceTypeLabel(MaMDataConfig.QueueType.ALBUM), originFor(id, null), album.isFavourite());
             }
         }
-        if (id != null && source.type() == MaMDataConfig.QueueSourceType.PLAYLIST) {
+        if (id != null && source.type() == MaMDataConfig.QueueType.PLAYLIST) {
             for (Playlist playlist : Playlist.PLAYLISTS) {
                 if (playlist.playlist.equals(id)) return new SourceInfo(playlist.name, playlist.icon, Component.literal(playlist.playlist.toString()),
-                        sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
+                        sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
             }
         }
         return new SourceInfo(Component.literal(source.name()), MusicScreenHelper.FALLBACK_ALBUM_ICON,
@@ -1865,8 +2023,8 @@ public class MusicPlayerScreen extends Screen {
                 sourceTypeLabel(source.type()), Component.translatable("screen.music_and_melody.content_origin.built_in"), false);
     }
 
-    private static Component sourceTypeLabel(MaMDataConfig.QueueSourceType type) {
-        return Component.translatable(type == MaMDataConfig.QueueSourceType.ALBUM
+    private static Component sourceTypeLabel(MaMDataConfig.QueueType type) {
+        return Component.translatable(type == MaMDataConfig.QueueType.ALBUM
                 ? "screen.music_and_melody.tag.album"
                 : "screen.music_and_melody.tag.playlist");
     }
@@ -1988,7 +2146,7 @@ public class MusicPlayerScreen extends Screen {
     private static SourceInfo customPlaylistSource() {
         return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
                 Component.literal("custom"),
-                sourceTypeLabel(MaMDataConfig.QueueSourceType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
+                sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
     }
 
     private static RemotePack.Provenance preferredProvenance(RemotePack.Provenance first, RemotePack.Provenance second) {
@@ -2502,7 +2660,7 @@ public class MusicPlayerScreen extends Screen {
         }
 
         private static String formattedMultiplier(float multiplier) {
-            return String.format(Locale.ROOT, "%.2f%%", multiplier);
+            return String.format(Locale.ROOT, "%.0f%%", multiplier * 100.0F);
         }
     }
 
@@ -2521,8 +2679,8 @@ public class MusicPlayerScreen extends Screen {
             return this.album != null ? this.album.icon : this.playlist.icon;
         }
 
-        MaMDataConfig.QueueSourceType type() {
-            return this.album != null ? MaMDataConfig.QueueSourceType.ALBUM : MaMDataConfig.QueueSourceType.PLAYLIST;
+        MaMDataConfig.QueueType type() {
+            return this.album != null ? MaMDataConfig.QueueType.ALBUM : MaMDataConfig.QueueType.PLAYLIST;
         }
 
         boolean favourite() {
@@ -2906,9 +3064,11 @@ public class MusicPlayerScreen extends Screen {
         HomeMenuList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom) {
             super(screen, minecraft, panelX, panelWidth, top, Math.max(top + 29, bottom), 29);
             this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.albums"), () -> screen.setPage(Page.LIBRARY)));
-            this.addEntry(new HomeMenuEntry(screen, Component.translatable("button.music_and_melody.events"), () -> screen.setPage(Page.EVENTS)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("button.music_and_melody.events"),
+                    MaMClientConfig.get().allow_events, () -> screen.setPage(Page.EVENTS)));
             this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.themes"), () -> screen.setPage(Page.THEMES)));
-            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.online_browser"), () -> screen.setPage(Page.ONLINE)));
+            this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.online_browser"),
+                    RemoteContentManager.onlineFunctionalityEnabled(), () -> screen.setPage(Page.ONLINE)));
             this.addEntry(new HomeMenuEntry(screen, Component.translatable("screen.music_and_melody.config"), () -> screen.setPage(Page.CONFIG)));
             this.addEntry(new HomeMenuEntry(screen, CommonComponents.GUI_DONE, screen::onClose));
         }
@@ -2919,8 +3079,13 @@ public class MusicPlayerScreen extends Screen {
         private final WorkspaceButton button;
 
         HomeMenuEntry(MusicPlayerScreen screen, Component label, Runnable action) {
+            this(screen, label, true, action);
+        }
+
+        HomeMenuEntry(MusicPlayerScreen screen, Component label, boolean active, Runnable action) {
             this.screen = screen;
             this.button = new WorkspaceButton(0, 0, 1, 22, label, false, ignored -> action.run());
+            this.button.active = active;
         }
 
         @Override

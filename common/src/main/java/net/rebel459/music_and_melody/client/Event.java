@@ -16,7 +16,6 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.unified.api.core.UnifiedInstance;
 
@@ -616,21 +615,21 @@ public class Event {
             MaMDataConfig.Events events = MaMDataConfig.get().events;
             String id = this.id.toString();
             if (isDefaultDisabled()) {
-                return events.enabled_events.contains(id);
+                return events.enabled.contains(id);
             }
-            return !events.disabled_events.contains(id);
+            return !events.disabled.contains(id);
         }
 
         public void setEnabled(boolean enabled) {
             MaMDataConfig config = MaMDataConfig.get();
             String id = this.id.toString();
-            config.events.enabled_events.remove(id);
-            config.events.disabled_events.remove(id);
+            config.events.enabled.remove(id);
+            config.events.disabled.remove(id);
             if (enabled != defaultEnabled()) {
                 if (enabled) {
-                    config.events.enabled_events.add(id);
+                    config.events.enabled.add(id);
                 } else {
-                    config.events.disabled_events.add(id);
+                    config.events.disabled.add(id);
                 }
             }
             AutoConfig.getConfigHolder(MaMDataConfig.class).save();
@@ -643,8 +642,8 @@ public class Event {
                 if (Files.deleteIfExists(this.path)) {
                     MaMDataConfig config = MaMDataConfig.get();
                     String id = this.id.toString();
-                    config.events.disabled_events.remove(id);
-                    config.events.enabled_events.remove(id);
+                    config.events.disabled.remove(id);
+                    config.events.enabled.remove(id);
                     AutoConfig.getConfigHolder(MaMDataConfig.class).save();
                     reloadConfigEvents();
                     return true;
