@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.client.Minecraft;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
@@ -38,6 +39,9 @@ public final class RemoteContentManager {
     public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
     public static String OFFICIAL_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/official-catalogs.json";
     public static String COMMUNITY_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/community-catalogs.json";
+    public static String SUPPORTERS = "https://github.com/Rebel459/music-and-melody-remote/supporters.json";
+    public static String COMPOSERS = "https://github.com/Rebel459/music-and-melody-remote/composers.json";
+    public static String SUPPORTER_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/supporter-catalogs.json";
 
     public enum State {
         REMOTE,
@@ -59,6 +63,8 @@ public final class RemoteContentManager {
     private static final Set<RemotePack.Key> DOWNLOADING = ConcurrentHashMap.newKeySet();
     private static final Map<RemotePack.Key, Double> DOWNLOAD_PROGRESS = new ConcurrentHashMap<>();
     private static final List<RemotePack> PACKS = new ArrayList<>();
+    private static volatile List<String> supporters = List.of();
+    private static volatile List<String> composers = List.of();
     private static CompletableFuture<Void> refreshTask;
     private static boolean loaded;
 
@@ -92,7 +98,9 @@ public final class RemoteContentManager {
             refreshTask = null;
             return;
         }
-        refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(providers, repositories))
+        SupporterIdentity identity = supporterIdentity();
+        boolean officialEnabled = remote != null && remote.official_provider;
+        refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(providers, repositories, officialEnabled, identity))
                 .thenAccept(packs -> {
                     synchronized (RemoteContentManager.class) {
                         PACKS.clear();
@@ -141,6 +149,21 @@ public final class RemoteContentManager {
 
     public static boolean isDownloaded(Identifier id, RemotePack.Tag tag) {
         return DownloadedResources.owner(id, tag).map(key -> installed(key.id()) != null).orElse(false);
+    }
+
+    public static void refreshCredits() {
+        CompletableFuture.runAsync(() -> {
+            supporters = loadStringArray(SUPPORTERS);
+            composers = loadStringArray(COMPOSERS);
+        });
+    }
+
+    public static List<String> supporters() {
+        return supporters;
+    }
+
+    public static List<String> composers() {
+        return composers;
     }
 
     public static Optional<RemotePack> owner(Identifier contentId, RemotePack.Tag tag) {
@@ -212,11 +235,14 @@ public final class RemoteContentManager {
         OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
     }
 
-    private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories) {
+    private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories,
+                                                  boolean officialEnabled, SupporterIdentity identity) {
+        List<ProviderSource> sources = new ArrayList<>(providers);
+        if (officialEnabled && isSupporter(identity)) sources.add(new ProviderSource(SUPPORTER_PROVIDER, RemotePack.Provenance.OFFICIAL));
         List<RemotePack> packs = new ArrayList<>();
         Set<RemotePack.Key> ids = new HashSet<>();
         Set<String> loadedCatalogs = new HashSet<>();
-        for (ProviderSource provider : providers) {
+        for (ProviderSource provider : sources) {
             for (String catalog : loadProvider(provider.url())) {
                 if (!loadedCatalogs.add(catalog)) continue;
                 try {
@@ -239,6 +265,11 @@ public final class RemoteContentManager {
     private record ProviderSource(String url, RemotePack.Provenance provenance) {}
 
     private static List<String> loadProvider(String providerUrl) {
+        URI providerUri = catalogUri(providerUrl);
+        return loadStringArray(providerUrl).stream().map(value -> providerUri.resolve(value).toString()).toList();
+    }
+
+    private static List<String> loadStringArray(String providerUrl) {
         try {
             URI providerUri = catalogUri(providerUrl);
             HttpRequest request = HttpRequest.newBuilder(providerUri)
@@ -254,12 +285,35 @@ public final class RemoteContentManager {
             for (JsonElement element : root.getAsJsonArray()) {
                 if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) continue;
                 String value = element.getAsString().trim();
-                if (!value.isEmpty()) catalogs.add(providerUri.resolve(value).toString());
+                if (!value.isEmpty()) catalogs.add(value);
             }
             return catalogs;
         } catch (Exception ignored) {
             return List.of();
         }
+    }
+
+    private static boolean isSupporter(SupporterIdentity identity) {
+        List<String> entries = loadStringArray(SUPPORTERS);
+        if (!entries.isEmpty()) supporters = entries;
+        for (String entry : entries) {
+            int separator = entry.indexOf('=');
+            if (separator < 0) continue;
+            String listedIdentity = entry.substring(separator + 1).trim();
+            if (listedIdentity.equalsIgnoreCase(identity.name()) || normalizedUuid(listedIdentity).equals(normalizedUuid(identity.uuid()))) return true;
+        }
+        return false;
+    }
+
+    private static SupporterIdentity supporterIdentity() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return new SupporterIdentity(minecraft.getUser().getName(), minecraft.player == null ? "" : minecraft.player.getUUID().toString());
+    }
+
+    private record SupporterIdentity(String name, String uuid) {}
+
+    private static String normalizedUuid(String value) {
+        return value == null ? "" : value.replace("-", "").trim().toLowerCase(Locale.ROOT);
     }
 
     private static List<RemotePack> loadCatalog(String repositoryUrl, Set<RemotePack.Key> ids, RemotePack.Provenance provenance) throws IOException, InterruptedException {
