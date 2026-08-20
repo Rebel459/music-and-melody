@@ -1559,7 +1559,9 @@ public class MusicPlayerScreen extends Screen {
         graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.composer_credits"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
         renderWelcomeLink(graphics, this.featuredComposer, x, y + 14, width, mouseX, mouseY,
                 this.featuredComposerUrl == null ? null : () -> MusicScreenHelper.openUri(this.featuredComposerUrl));
-        graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.mod_credits"), this.rightX + this.rightWidth / 2, this.panelBottom - 18, TEXT_DESCRIPTION);
+        renderWelcomeLink(graphics, Component.translatable("screen.music_and_melody.mod_credits").getString(), x,
+                this.panelBottom - 18, width, mouseX, mouseY,
+                () -> MusicScreenHelper.openUri("https://modrinth.com/user/Rebel459"));
     }
 
     private void renderWelcomeLink(GuiGraphicsExtractor graphics, String text, int x, int y, int width, int mouseX, int mouseY, Runnable action) {
@@ -1626,7 +1628,9 @@ public class MusicPlayerScreen extends Screen {
         if (state == RemoteContentManager.State.REMOTE
                 || state == RemoteContentManager.State.UPDATE_AVAILABLE
                 || state == RemoteContentManager.State.FAILED) {
-            RemoteContentManager.download(pack);
+            if (!RemoteContentManager.openManualDownloadScreen(this, pack)) {
+                RemoteContentManager.download(pack);
+            }
         } else if (state == RemoteContentManager.State.NEEDS_RELOAD) {
             this.minecraft.reloadResourcePacks().thenRun(RemoteContentManager::markReloaded);
         }

@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.remote;
 
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,10 @@ final class PlatformContentManager {
 
     static boolean allowRemoteDownloads() {
         return true;
+    }
+
+    static boolean openManualDownloadScreen(MusicPlayerScreen parent, RemotePack pack) {
+        return false;
     }
 
     static Path download(RemotePack pack, LongConsumer progress) throws IOException, InterruptedException {
