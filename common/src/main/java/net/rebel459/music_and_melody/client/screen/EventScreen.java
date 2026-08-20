@@ -22,6 +22,8 @@ import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.element.ExampleHintEditBox;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -400,6 +402,11 @@ public class EventScreen extends Screen {
 
     private void toggleDelete() {
         Event.Source source = activeSource();
+        if (source != null && this.parent instanceof MusicPlayerScreen musicPlayer
+                && RemoteContentManager.owner(source.id, RemotePack.Tag.EVENT).isPresent()) {
+            musicPlayer.manageRemoteContent(source.id, RemotePack.Tag.EVENT);
+            return;
+        }
         if (source == null || !source.isConfig()) return;
         if (this.parent instanceof MusicPlayerScreen musicPlayer) {
             this.deletePending = musicPlayer.toggleEventDeletePending(source.id);
@@ -410,10 +417,18 @@ public class EventScreen extends Screen {
     }
 
     private Component deleteMessage() {
+        Event.Source source = activeSource();
+        if (source != null && RemoteContentManager.owner(source.id, RemotePack.Tag.EVENT).isPresent()) {
+            return Component.translatable("button.music_and_melody.manage");
+        }
         return Component.translatable(this.deletePending ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
     }
 
     private Identifier deleteIcon() {
+        Event.Source source = activeSource();
+        if (source != null && RemoteContentManager.owner(source.id, RemotePack.Tag.EVENT).isPresent()) {
+            return IconButton.icon("manage");
+        }
         return IconButton.icon(this.deletePending ? "restore" : "delete");
     }
 
@@ -599,7 +614,9 @@ public class EventScreen extends Screen {
         if (this.removeButton != null) this.removeButton.active = configSelected;
         if (this.deleteButton != null) {
             this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
-            this.deleteButton.active = editable;
+            Event.Source managedSource = activeSource();
+            this.deleteButton.active = editable || managedSource != null
+                    && RemoteContentManager.owner(managedSource.id, RemotePack.Tag.EVENT).isPresent();
         }
     }
 

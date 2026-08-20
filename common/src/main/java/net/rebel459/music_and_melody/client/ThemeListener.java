@@ -153,7 +153,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
     public static synchronized boolean isDownloaded(Identifier id) {
         if (id == null) return false;
         return RemoteContentManager.packs().stream()
-                .anyMatch(pack -> pack.id().equals(id) && pack.tag() == RemotePack.Tag.THEME
+                .anyMatch(pack -> pack.tags().contains(RemotePack.Tag.THEME)
                         && RemoteContentManager.isDownloaded(id, RemotePack.Tag.THEME));
     }
 

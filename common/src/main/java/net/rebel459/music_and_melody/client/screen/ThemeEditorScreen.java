@@ -16,6 +16,8 @@ import net.rebel459.music_and_melody.client.ThemeListener;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.ExampleHintEditBox;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
+import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -307,8 +309,9 @@ final class ThemeEditorScreen extends Screen {
         this.blueSlider.active = !readOnly && colour;
         updateMiddleScroll();
         this.saveButton.active = !readOnly && dirty && isValidDraft() && !pendingDelete;
-        this.deleteButton.visible = !readOnly;
-        this.deleteButton.active = !readOnly;
+        boolean remote = theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent();
+        this.deleteButton.visible = !readOnly || remote;
+        this.deleteButton.active = !readOnly || remote;
         this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
         updateTextColours();
         refreshColourControls();
@@ -583,16 +586,26 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private void toggleDelete() {
+        if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
+            parent.manageRemoteContent(theme.theme, RemotePack.Tag.THEME);
+            return;
+        }
         if (readOnly) return;
         pendingDelete = parent.toggleThemeDeletePending(theme.theme);
         updateWidgets();
     }
 
     private Component deleteMessage() {
+        if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
+            return Component.translatable("button.music_and_melody.manage");
+        }
         return Component.translatable(pendingDelete ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
     }
 
     private Identifier deleteIcon() {
+        if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
+            return IconButton.icon("manage");
+        }
         return IconButton.icon(pendingDelete ? "restore" : "delete");
     }
 

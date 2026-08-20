@@ -44,7 +44,7 @@ public class MaMDataConfig implements ConfigData {
 
 	public static class DownloadedPack {
 		public String id = "";
-		public String tag = "";
+		public List<String> tags = new ArrayList<>();
 		public String version = "";
 		public String sha256 = "";
 		public String file = "";
@@ -106,7 +106,7 @@ public class MaMDataConfig implements ConfigData {
 		for (DownloadedPack legacy : this.albums.downloads) {
 			if (legacy == null || legacy.id == null || legacy.id.isBlank()) continue;
 			boolean exists = this.remote.downloads.stream().anyMatch(current -> current != null
-					&& current.id.equals(legacy.id) && current.tag.equalsIgnoreCase(legacy.tag));
+					&& current.id.equals(legacy.id));
 			if (!exists) this.remote.downloads.add(legacy);
 		}
 		this.albums.downloads.clear();

@@ -23,6 +23,7 @@ public final class DownloadedResources {
 
     private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads");
     private static final Map<Identifier, List<Path>> RESOURCES = new HashMap<>();
+    private static final Map<RemotePack.Tag, Map<Identifier, RemotePack.Key>> OWNERS = new HashMap<>();
     private static boolean dirty = true;
 
     private DownloadedResources() {}
@@ -48,6 +49,11 @@ public final class DownloadedResources {
         return paths == null ? List.of() : paths.stream().map(DownloadedResources::resource).toList();
     }
 
+    public static synchronized Optional<RemotePack.Key> owner(Identifier contentId, RemotePack.Tag tag) {
+        reload();
+        return Optional.ofNullable(OWNERS.getOrDefault(tag, Map.of()).get(contentId));
+    }
+
     public static synchronized Map<Identifier, Resource> listResources(String directory, Predicate<Identifier> filter) {
         reload();
         String prefix = directory + "/";
@@ -68,6 +74,7 @@ public final class DownloadedResources {
         if (!dirty) return;
         dirty = false;
         RESOURCES.clear();
+        OWNERS.clear();
         try {
             Files.createDirectories(DIRECTORY);
         } catch (IOException ignored) {
@@ -96,9 +103,9 @@ public final class DownloadedResources {
             if (pack == null) continue;
             Identifier id = Identifier.tryParse(pack.id);
             if (id == null) continue;
-            RemotePack.Tag tag = RemotePack.Tag.fromSerialized(pack.tag);
-            Path directory = RemoteContentManager.packDirectory(new RemotePack.Key(id, tag));
-            if (scanned.add(directory)) scanPack(directory);
+            RemotePack.Key key = new RemotePack.Key(id);
+            Path directory = RemoteContentManager.packDirectory(key);
+            if (scanned.add(directory)) scanPack(directory, key);
         }
     }
 
@@ -114,30 +121,45 @@ public final class DownloadedResources {
         return namespaces;
     }
 
-    private static void scanPack(Path packDirectory) {
+    private static void scanPack(Path packDirectory, RemotePack.Key key) {
         if (!Files.isDirectory(packDirectory)) return;
         try (var namespaces = Files.list(packDirectory)) {
             namespaces.filter(Files::isDirectory)
-                    .forEach(DownloadedResources::scanNamespace);
+                    .forEach(namespace -> scanNamespace(namespace, key));
         } catch (IOException ignored) {
         }
     }
 
     private static void scanNamespace(Path namespaceDirectory) {
+        scanNamespace(namespaceDirectory, null);
+    }
+
+    private static void scanNamespace(Path namespaceDirectory, RemotePack.Key owner) {
         String namespace = namespaceDirectory.getFileName().toString().toLowerCase(Locale.ROOT);
         if (!isValidNamespace(namespace)) return;
         try (var files = Files.walk(namespaceDirectory)) {
             files.filter(Files::isRegularFile)
-                    .forEach(file -> addResource(namespaceDirectory, namespace, file));
+                    .forEach(file -> addResource(namespaceDirectory, namespace, file, owner));
         } catch (IOException ignored) {
         }
     }
 
-    private static void addResource(Path namespaceDirectory, String namespace, Path file) {
+    private static void addResource(Path namespaceDirectory, String namespace, Path file, RemotePack.Key owner) {
         String path = namespaceDirectory.relativize(file).toString().replace('\\', '/').toLowerCase(Locale.ROOT);
         Identifier id = Identifier.tryParse(namespace + ":" + path);
         if (id != null) {
             RESOURCES.computeIfAbsent(id, ignored -> new ArrayList<>()).add(file);
+            if (owner != null) recordOwner(namespace, path, owner);
+        }
+    }
+
+    private static void recordOwner(String namespace, String resourcePath, RemotePack.Key owner) {
+        for (RemotePack.Tag tag : RemotePack.Tag.values()) {
+            String directory = tag.name().toLowerCase(Locale.ROOT) + "s/";
+            if (!resourcePath.startsWith(directory) || !resourcePath.endsWith(".json")) continue;
+            String path = resourcePath.substring(directory.length(), resourcePath.length() - 5);
+            Identifier contentId = Identifier.tryParse(namespace + ":" + path);
+            if (contentId != null) OWNERS.computeIfAbsent(tag, ignored -> new HashMap<>()).put(contentId, owner);
         }
     }
 
@@ -155,5 +177,6 @@ public final class DownloadedResources {
     public static synchronized void invalidate() {
         dirty = true;
         RESOURCES.clear();
+        OWNERS.clear();
     }
 }

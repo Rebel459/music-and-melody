@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.client.remote;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.util.List;
 import java.util.Locale;
 
 public record RemotePack(
@@ -17,17 +18,23 @@ public record RemotePack(
         String icon,
         String minimumVanillaVersion,
         String belowVanillaVersion,
-        Tag tag,
+        List<Tag> tags,
+        List<String> dependencies,
         Provenance provenance
 ) {
-    public record Key(Identifier id, Tag tag) {
+    public RemotePack {
+        tags = List.copyOf(tags);
+        dependencies = List.copyOf(dependencies);
+    }
+
+    public record Key(Identifier id) {
         public static Key of(RemotePack pack) {
-            return new Key(pack.id(), pack.tag());
+            return new Key(pack.id());
         }
     }
 
     public Key key() {
-        return new Key(this.id, this.tag);
+        return new Key(this.id);
     }
 
     public enum Tag {
@@ -63,7 +70,6 @@ public record RemotePack(
 
     public String fileName() {
         String path = this.id.getPath().replace('/', '-');
-        String tagName = this.tag == null ? "unknown" : this.tag.name().toLowerCase(Locale.ROOT);
-        return this.id.getNamespace() + "-" + path + "-" + tagName + ".zip";
+        return this.id.getNamespace() + "-" + path + ".zip";
     }
 }
