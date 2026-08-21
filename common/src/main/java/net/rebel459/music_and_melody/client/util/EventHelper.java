@@ -365,16 +365,21 @@ public class EventHelper {
     private static int vanillaMusicPriority(boolean activeMusic) {
         if (!activeMusic) return getPriority(Event.PriorityType.LOW);
 
-        ResourceLocation gameMusic = SoundEvents.MUSIC_GAME.value().getLocation();
+        Identifier gameMusic = SoundEvents.MUSIC_GAME.value().getLocation();
+        Identifier creativeMusic = SoundEvents.MUSIC_CREATIVE.value().getLocation();
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
+        boolean creativeFix = MaMClientConfig.get().creative_fix;
         for (SoundInstance instance : instances) {
             if (gameMusic.equals(instance.getLocation()) && manager.isActive(instance)) {
                 return getPriority(Event.PriorityType.VERY_LOW) - 1;
             }
+            if (creativeFix && creativeMusic.equals(instance.getIdentifier()) && manager.isActive(instance)) {
+                return getPriority(Event.PriorityType.MEDIUM) - 1;
+            }
         }
 
-        return getPriority(Event.PriorityType.VERY_LOW) + 1;
+        return getPriority(Event.PriorityType.LOW) - 1;
     }
 
     private static Music playEventOrBlockVanilla(Minecraft client, Event event, boolean replaceCurrentMusic) {
