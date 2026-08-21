@@ -11,7 +11,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.Map;
+import java.util.Set;
 
 public final class RemoteIconManager {
 
@@ -30,7 +34,7 @@ public final class RemoteIconManager {
         Identifier identifier = Identifier.tryParse(value);
         if (identifier != null) return identifier;
 
-        URI uri = pngUri(value);
+        URI uri = imageUri(value);
         if (uri == null) return FALLBACK;
 
         Identifier loaded = LOADED.get(value);
@@ -92,24 +96,12 @@ public final class RemoteIconManager {
         }
     }
 
-    private static URI pngUri(String value) {
-        try {
-            URI uri = URI.create(value);
-            String scheme = uri.getScheme();
-            String path = uri.getPath();
-            if (scheme == null || path == null) return null;
-            if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) return null;
-            return path.toLowerCase(Locale.ROOT).endsWith(".png") ? uri : null;
-        } catch (IllegalArgumentException exception) {
-            return null;
-        }
-    }
-
     private static URI imageUri(String value) {
         try {
             URI uri = URI.create(value);
             String scheme = uri.getScheme();
-            return scheme != null && (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) ? uri : null;
+            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) return null;
+            return RemoteContentManager.rawGithubBlobUri(uri);
         } catch (IllegalArgumentException exception) {
             return null;
         }

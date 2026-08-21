@@ -302,13 +302,18 @@ public final class RemoteContentManager {
     private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories,
                                                   boolean officialEnabled, SupporterIdentity identity) {
         List<ProviderSource> sources = new ArrayList<>(providers);
-        if (officialEnabled && isSupporter(identity)) sources.add(new ProviderSource(SUPPORTER_PROVIDER, RemotePack.Provenance.OFFICIAL));
+        boolean supporter = (officialEnabled || !repositories.isEmpty()) && isSupporter(identity);
+        if (officialEnabled && supporter) sources.add(new ProviderSource(SUPPORTER_PROVIDER, RemotePack.Provenance.OFFICIAL));
+        Set<String> restrictedCatalogs = supporter || repositories.isEmpty() ? Set.of()
+                : loadProvider(SUPPORTER_PROVIDER).stream()
+                .map(RemoteContentManager::catalogKey)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
         List<RemotePack> packs = new ArrayList<>();
         Set<RemotePack.Key> ids = new HashSet<>();
         Set<String> loadedCatalogs = new HashSet<>();
         for (ProviderSource provider : sources) {
             for (String catalog : loadProvider(provider.url())) {
-                if (!loadedCatalogs.add(catalog)) continue;
+                if (!loadedCatalogs.add(catalogKey(catalog))) continue;
                 try {
                     packs.addAll(loadCatalog(catalog, ids, provider.provenance()));
                 } catch (Exception ignored) {
@@ -316,7 +321,8 @@ public final class RemoteContentManager {
             }
         }
         for (String repository : repositories) {
-            if (!loadedCatalogs.add(repository)) continue;
+            String catalog = catalogKey(repository);
+            if (restrictedCatalogs.contains(catalog) || !loadedCatalogs.add(catalog)) continue;
             try {
                 packs.addAll(loadCatalog(repository, ids, RemotePack.Provenance.UNVERIFIED));
             } catch (Exception ignored) {
@@ -419,7 +425,9 @@ public final class RemoteContentManager {
 
     private static SupporterIdentity supporterIdentity() {
         Minecraft minecraft = Minecraft.getInstance();
-        return new SupporterIdentity(minecraft.getUser().getName(), minecraft.player == null ? "" : minecraft.player.getUUID().toString());
+        // Catalogs refresh before a local player exists, so use the logged-in
+        // account profile rather than the world-session player UUID.
+        return new SupporterIdentity(minecraft.getUser().getName(), minecraft.getUser().getProfileId().toString());
     }
 
     private record SupporterIdentity(String name, String uuid) {}
@@ -527,10 +535,33 @@ public final class RemoteContentManager {
         return path != null && path.toLowerCase(Locale.ROOT).endsWith(".json");
     }
 
+    /** Canonicalizes equivalent catalog links before comparing provider and user-entered URLs. */
+    private static String catalogKey(String catalog) {
+        try {
+            return catalogUri(catalog).normalize().toString();
+        } catch (RuntimeException ignored) {
+            return catalog == null ? "" : catalog.trim();
+        }
+    }
+
     private static String repositoryName(JsonObject root, String fallback) {
         JsonObject repository = root.getAsJsonObject("repository");
         if (repository != null && repository.has("name")) return repository.get("name").getAsString();
         return fallback;
+    }
+
+    /** Converts a GitHub file-view URL into the direct raw asset URL. */
+    static URI rawGithubBlobUri(URI uri) {
+        if (!"github.com".equalsIgnoreCase(uri.getHost())) return uri;
+        String[] parts = uri.getPath().replaceFirst("^/", "").split("/");
+        if (parts.length < 5 || !"blob".equals(parts[2])) return uri;
+        StringBuilder path = new StringBuilder();
+        for (int index = 4; index < parts.length; index++) {
+            if (!path.isEmpty()) path.append('/');
+            path.append(parts[index]);
+        }
+        return URI.create("https://raw.githubusercontent.com/" + parts[0] + "/" + parts[1]
+                + "/" + parts[3] + "/" + path);
     }
 
     private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri, RemotePack.Provenance provenance) {
@@ -542,7 +573,7 @@ public final class RemoteContentManager {
         if (tags.isEmpty() || tags.contains(null)) return null;
         List<String> dependencies = stringArray(object, "dependencies");
         String icon = object.has("icon")
-                ? object.get("icon").getAsString()
+                ? resolveIcon(catalogUri, object.get("icon").getAsString())
                 : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png").toString();
         String showFromVersion = object.has("show_from_version") ? object.get("show_from_version").getAsString() : "";
         String showBelowVersion = object.has("show_below_version") ? object.get("show_below_version").getAsString() : "";
@@ -552,7 +583,7 @@ public final class RemoteContentManager {
                 Component.literal(object.has("description") ? object.get("description").getAsString() : ""),
                 repositoryName,
                 object.get("version").getAsString(),
-                catalogUri.resolve(object.get("url").getAsString()).toString(),
+                rawGithubBlobUri(catalogUri.resolve(object.get("url").getAsString())).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
                 icon,
@@ -562,6 +593,12 @@ public final class RemoteContentManager {
                 dependencies,
                 provenance
         );
+    }
+
+    /** Keeps Minecraft resource IDs intact while resolving catalog-relative icon URLs. */
+    private static String resolveIcon(URI catalogUri, String icon) {
+        if (icon.indexOf(':') > 0 && Identifier.tryParse(icon) != null) return icon;
+        return catalogUri.resolve(icon).toString();
     }
 
     private static List<String> stringArray(JsonObject object, String name) {

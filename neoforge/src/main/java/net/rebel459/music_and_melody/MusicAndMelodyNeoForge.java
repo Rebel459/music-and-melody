@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody;
+   package net.rebel459.music_and_melody;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;

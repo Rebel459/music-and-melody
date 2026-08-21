@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -17,11 +19,13 @@ import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.ExampleHintEditBox;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
+import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.EnumMap;
+import net.minecraft.util.FormattedCharSequence;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +58,9 @@ final class ThemeEditorScreen extends Screen {
     private boolean buttonTextures;
     private boolean parentButtonTextures;
     private boolean overriddenButtonTextures;
+    private boolean textShadow;
+    private boolean parentTextShadow;
+    private boolean overriddenTextShadow;
     private final Map<Category, WorkspaceButton> categoryButtons = new EnumMap<>(Category.class);
     private final Map<Role, RoleButton> roleButtons = new EnumMap<>(Role.class);
     private Category category = Category.MAIN;
@@ -66,6 +73,7 @@ final class ThemeEditorScreen extends Screen {
     private EditBox parentField;
     private EditBox hexField;
     private WorkspaceButton buttonTexturesButton;
+    private WorkspaceButton textShadowButton;
     private ColourSlider alphaSlider;
     private ColourSlider redSlider;
     private ColourSlider greenSlider;
@@ -77,6 +85,7 @@ final class ThemeEditorScreen extends Screen {
     private boolean loading;
     private boolean dirty;
     private boolean pendingDelete;
+    private RemotePack managedRemotePack;
     private int layoutWidth;
     private int layoutHeight;
     private int leftX;
@@ -135,6 +144,9 @@ final class ThemeEditorScreen extends Screen {
         this.buttonTexturesButton = this.addRenderableWidget(new WorkspaceButton(middleFieldX, buttonTexturesBaseY(),
                 middleFieldWidth, 20, buttonTexturesMessage(), this.buttonTextures,
                 ignored -> toggleButtonTextures()));
+        this.textShadowButton = this.addRenderableWidget(new WorkspaceButton(middleFieldX, textShadowBaseY(),
+                middleFieldWidth, 20, textShadowMessage(), this.textShadow,
+                ignored -> toggleTextShadow()));
         this.loading = true;
         this.nameField.setValue(theme.name.getString());
         this.descriptionField.setValue(theme.description.getString());
@@ -236,6 +248,9 @@ final class ThemeEditorScreen extends Screen {
         this.buttonTextures = theme != null && theme.elements.buttonTextures();
         this.parentButtonTextures = this.inheritedTheme != null && this.inheritedTheme.elements.buttonTextures();
         this.overriddenButtonTextures = this.buttonTextures != this.parentButtonTextures;
+        this.textShadow = theme == null || theme.text.shadow();
+        this.parentTextShadow = this.inheritedTheme == null || this.inheritedTheme.text.shadow();
+        this.overriddenTextShadow = this.textShadow != this.parentTextShadow;
         if (theme == null) return;
         Theme.Record record = theme.record;
         if (record == null) return;
@@ -251,6 +266,10 @@ final class ThemeEditorScreen extends Screen {
         record.elements().flatMap(Theme.RawElements::buttonTextures).ifPresent(value -> {
             this.buttonTextures = value;
             this.overriddenButtonTextures = value != this.parentButtonTextures;
+        });
+        record.text().flatMap(Theme.RawText::shadow).ifPresent(value -> {
+            this.textShadow = value;
+            this.overriddenTextShadow = value != this.parentTextShadow;
         });
     }
 
@@ -284,12 +303,14 @@ final class ThemeEditorScreen extends Screen {
             entry.getValue().active = visible;
         }
         boolean elements = this.category == Category.ELEMENTS;
+        boolean text = this.category == Category.TEXT;
         this.nameField.visible = main;
         this.descriptionField.visible = main;
         this.iconField.visible = main;
         this.parentField.visible = main;
         this.buttonTexturesButton.visible = elements;
-        boolean colour = !main;
+        this.textShadowButton.visible = text;
+        boolean colour = !main && this.managedRemotePack == null;
         this.hexField.visible = colour;
         this.alphaSlider.visible = colour;
         this.redSlider.visible = colour;
@@ -300,8 +321,11 @@ final class ThemeEditorScreen extends Screen {
         this.iconField.active = !readOnly && this.iconField.visible;
         this.parentField.active = !readOnly && this.parentField.visible;
         this.buttonTexturesButton.active = !readOnly && this.buttonTexturesButton.visible;
+        this.textShadowButton.active = !readOnly && this.textShadowButton.visible;
         this.buttonTexturesButton.setSelected(this.buttonTextures);
         this.buttonTexturesButton.setMessage(buttonTexturesMessage());
+        this.textShadowButton.setSelected(this.textShadow);
+        this.textShadowButton.setMessage(textShadowMessage());
         this.hexField.active = !readOnly && colour;
         this.alphaSlider.active = !readOnly && colour;
         this.redSlider.active = !readOnly && colour;
@@ -319,11 +343,14 @@ final class ThemeEditorScreen extends Screen {
 
     private void updateMiddleScroll() {
         this.middleViewportTop = PANEL_TOP + 32;
-        this.middleViewportBottom = Math.max(this.middleViewportTop + 20, this.bottomPanelTop - 4);
+        // Keep the viewport (and its scrollbar) inside the upper middle panel.
+        this.middleViewportBottom = Math.max(this.middleViewportTop + 20,
+                this.bottomPanelTop - PANEL_GAP - 2);
         int contentBottom = switch (this.category) {
             case MAIN -> PANEL_TOP + 204;
             case ELEMENTS -> buttonTexturesBaseY() + 24;
-            case PANELS, TEXT -> PANEL_TOP + 38 + roleCount(this.category) * 24;
+            case PANELS -> PANEL_TOP + 38 + roleCount(this.category) * 24;
+            case TEXT -> textShadowBaseY() + 24;
         };
         this.middleScrollMax = Math.max(0.0D, contentBottom - this.middleViewportBottom);
         this.middleScroll = Math.max(0.0D, Math.min(this.middleScroll, this.middleScrollMax));
@@ -343,10 +370,17 @@ final class ThemeEditorScreen extends Screen {
         this.buttonTexturesButton.setY(middleY(buttonTexturesBaseY()));
         this.buttonTexturesButton.visible = this.category == Category.ELEMENTS
                 && middleVisible(this.buttonTexturesButton.getY(), this.buttonTexturesButton.getHeight());
+        this.textShadowButton.setY(middleY(textShadowBaseY()));
+        this.textShadowButton.visible = this.category == Category.TEXT
+                && middleVisible(this.textShadowButton.getY(), this.textShadowButton.getHeight());
     }
 
     private int buttonTexturesBaseY() {
         return PANEL_TOP + 38 + roleCount(Category.ELEMENTS) * 24 + 4;
+    }
+
+    private int textShadowBaseY() {
+        return PANEL_TOP + 38 + roleCount(Category.TEXT) * 24 + 4;
     }
 
     private void setMiddleFieldPosition(EditBox field, int baseY) {
@@ -475,6 +509,14 @@ final class ThemeEditorScreen extends Screen {
         updateWidgets();
     }
 
+    private void toggleTextShadow() {
+        if (loading || readOnly) return;
+        this.textShadow = !this.textShadow;
+        this.overriddenTextShadow = this.textShadow != this.parentTextShadow;
+        dirty = true;
+        updateWidgets();
+    }
+
     private void parentChanged() {
         if (loading || readOnly) return;
         Identifier id = Identifier.tryParse(parentField.getValue().trim());
@@ -494,6 +536,12 @@ final class ThemeEditorScreen extends Screen {
             this.buttonTextures = this.parentButtonTextures;
         }
         this.overriddenButtonTextures = this.buttonTextures != this.parentButtonTextures;
+        boolean previousParentTextShadow = this.parentTextShadow;
+        this.parentTextShadow = this.inheritedTheme == null || this.inheritedTheme.text.shadow();
+        if (!this.overriddenTextShadow || this.textShadow == previousParentTextShadow) {
+            this.textShadow = this.parentTextShadow;
+        }
+        this.overriddenTextShadow = this.textShadow != this.parentTextShadow;
         this.loading = false;
         dirty = true;
         updateWidgets();
@@ -547,7 +595,7 @@ final class ThemeEditorScreen extends Screen {
         Theme.RawText text = new Theme.RawText(
                 roleValue(Role.SELECTED), roleValue(Role.TITLE), roleValue(Role.PRIMARY), roleValue(Role.PRIMARY_HIGHLIGHT),
                 roleValue(Role.DESCRIPTION), roleValue(Role.HEADER), roleValue(Role.HEADER_SECONDARY), roleValue(Role.FAVOURITE),
-                roleValue(Role.EXAMPLE), roleValue(Role.DISABLED), roleValue(Role.WARNING));
+                roleValue(Role.EXAMPLE), roleValue(Role.DISABLED), roleValue(Role.WARNING), textShadowValue());
         return new Theme.Record(theme.theme, componentValue(MainOption.NAME, nameField),
                 componentValue(MainOption.DESCRIPTION, descriptionField), stringValue(MainOption.ICON, iconField), parent,
                 Optional.of(panels), Optional.of(elements), Optional.of(text));
@@ -574,6 +622,15 @@ final class ThemeEditorScreen extends Screen {
                 this.buttonTextures ? Component.translatable("options.on") : Component.translatable("options.off"));
     }
 
+    private Optional<Boolean> textShadowValue() {
+        return this.overriddenTextShadow ? Optional.of(this.textShadow) : Optional.empty();
+    }
+
+    private Component textShadowMessage() {
+        return Component.translatable("screen.music_and_melody.theme_editor.text_shadow",
+                this.textShadow ? Component.translatable("options.on") : Component.translatable("options.off"));
+    }
+
     private boolean saveChanges() {
         if (readOnly || pendingDelete || !isValidDraft()) return false;
         if (!ThemeListener.saveConfigTheme(draftRecord())) return false;
@@ -586,8 +643,14 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private void toggleDelete() {
+        if (this.managedRemotePack != null) {
+            this.parent.toggleRemoteDeletePending(this.managedRemotePack);
+            updateWidgets();
+            return;
+        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
-            parent.manageRemoteContent(theme.theme, RemotePack.Tag.THEME);
+            this.managedRemotePack = RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).orElse(null);
+            updateWidgets();
             return;
         }
         if (readOnly) return;
@@ -596,6 +659,10 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private Component deleteMessage() {
+        if (this.managedRemotePack != null) {
+            return Component.translatable(parent.isRemoteDeletePending(this.managedRemotePack)
+                    ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
+        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
             return Component.translatable("button.music_and_melody.manage");
         }
@@ -603,6 +670,9 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private Identifier deleteIcon() {
+        if (this.managedRemotePack != null) {
+            return IconButton.icon(parent.isRemoteDeletePending(this.managedRemotePack) ? "restore" : "delete");
+        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
             return IconButton.icon("manage");
         }
@@ -767,22 +837,24 @@ final class ThemeEditorScreen extends Screen {
         drawPanel(graphics, middleX, PANEL_TOP, middleWidth, bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, middleX, bottomPanelTop, middleWidth, panelBottom - bottomPanelTop);
         drawPanel(graphics, rightX, PANEL_TOP, rightWidth, panelBottom - PANEL_TOP);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.theme_editor.categories"), leftX + 8, PANEL_TOP + 14, TEXT_HEADER);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme_editor.categories"), leftX + 8, PANEL_TOP + 14, TEXT_HEADER);
         Component middleHeading = category == Category.MAIN
                 ? Component.translatable("screen.music_and_melody.theme_editor.metadata")
                 : category == Category.ELEMENTS ? category.label()
                 : Component.translatable("screen.music_and_melody.theme_editor.colours");
-        graphics.text(this.font, middleHeading, middleX + 8, PANEL_TOP + 14, TEXT_HEADER);
-        if (category != Category.MAIN) {
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme_editor.value"), rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
+        ThemeHelper.text(graphics, this.font, middleHeading, middleX + 8, PANEL_TOP + 14, TEXT_HEADER);
+        if (this.managedRemotePack != null) {
+            renderManagedRemoteDetails(graphics, this.managedRemotePack);
+        } else if (category != Category.MAIN) {
+            ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme_editor.value"), rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
         }
-        if (category != Category.MAIN && selectedRole != null) {
+        if (this.managedRemotePack == null && category != Category.MAIN && selectedRole != null) {
             int colour = ThemeListener.parseColor(values.get(selectedRole)) == null ? TEXT_PENDING_DELETION
                     : ThemeListener.parseColor(values.get(selectedRole));
-            graphics.text(this.font, selectedRole.label(), rightX + 8, PANEL_TOP + 32, TEXT_TITLE);
+            ThemeHelper.text(graphics, this.font, selectedRole.label(), rightX + 8, PANEL_TOP + 32, TEXT_TITLE);
             graphics.fill(rightX + rightWidth - 25, PANEL_TOP + 29, rightX + rightWidth - 8, PANEL_TOP + 46, colour);
             if (ThemeListener.parseColor(values.get(selectedRole)) == null) {
-                graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.invalid_colour"), rightX + 8, PANEL_TOP + 179, TEXT_PENDING_DELETION);
+                ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme.invalid_colour"), rightX + 8, PANEL_TOP + 179, TEXT_PENDING_DELETION);
             }
         }
         graphics.enableScissor(this.middleX + 2, this.middleViewportTop,
@@ -796,14 +868,45 @@ final class ThemeEditorScreen extends Screen {
         graphics.disableScissor();
         renderMiddleScrollbar(graphics, mouseX, mouseY);
         if (!theme.valid) {
-            graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.invalid"), leftX + 8, panelBottom - 44, TEXT_PENDING_DELETION);
+            ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme.invalid"), leftX + 8, panelBottom - 44, TEXT_PENDING_DELETION);
         }
-        if (readOnly) graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.read_only"), leftX + 8, panelBottom - 28, TEXT_DESCRIPTION);
+        if (readOnly) ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme.read_only"), leftX + 8, panelBottom - 28, TEXT_DESCRIPTION);
         renderPlaybackStrip(graphics);
     }
 
     private void drawMiddleFieldLabel(GuiGraphicsExtractor graphics, Component label, int y, boolean overridden) {
-        graphics.text(this.font, label, middleX + 8, middleY(y), overridden ? TEXT_PRIMARY : TEXT_DISABLED);
+        ThemeHelper.text(graphics, this.font, label, middleX + 8, middleY(y), overridden ? TEXT_PRIMARY : TEXT_DISABLED);
+    }
+
+    private void renderManagedRemoteDetails(GuiGraphicsExtractor graphics, RemotePack pack) {
+        int x = rightX + 8;
+        int width = Math.max(1, rightWidth - 16);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.details"), x, PANEL_TOP + 14, TEXT_HEADER);
+        int iconSize = Math.min(42, width);
+        int iconY = PANEL_TOP + 30;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(pack)),
+                x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        int textX = x + iconSize + 6;
+        int textWidth = Math.max(1, width - iconSize - 6);
+        int titleColour = parent.isRemoteDeletePending(pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
+        drawRemoteDetailValue(graphics, pack.name(), textX, iconY + 1, textWidth, titleColour);
+        drawRemoteDetailValue(graphics, Component.literal(pack.id().toString()), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
+
+        int fieldY = iconY + iconSize + 6;
+        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, fieldY, width);
+        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, fieldY + 26, width);
+        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.state",
+                Component.translatable(MusicPlayerScreen.remoteStateTranslationKey(RemoteContentManager.state(pack))), x, fieldY + 52, width);
+    }
+
+    private void drawRemoteDetailField(GuiGraphicsExtractor graphics, String headingKey, Component value, int x, int y, int width) {
+        ThemeHelper.text(graphics, this.font, Component.translatable(headingKey), x, y, TEXT_DESCRIPTION);
+        drawRemoteDetailValue(graphics, value, x, y + 12, width, TEXT_PRIMARY);
+    }
+
+    private void drawRemoteDetailValue(GuiGraphicsExtractor graphics, Component value, int x, int y, int width, int colour) {
+        List<FormattedCharSequence> lines = this.font.split(value, Math.max(1, width));
+        if (!lines.isEmpty()) ThemeHelper.text(graphics, this.font, lines.getFirst(), x, y, colour);
     }
 
     private void renderMiddleScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -1022,8 +1125,9 @@ final class ThemeEditorScreen extends Screen {
             graphics.fill(x, y, x + filled + 2, y + height, PANEL_HIGHLIGHT);
             int handleX = x + filled;
             graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
-            graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), x + width / 2,
-                    y + (height - 8) / 2, overriddenRoles.contains(selectedRole) ? TEXT_PRIMARY : TEXT_DISABLED);
+            var font = Minecraft.getInstance().font;
+            ThemeHelper.text(graphics, font, this.getMessage(), x + (width - font.width(this.getMessage())) / 2,
+                    y + (height - 8) / 2, overriddenRoles.contains(selectedRole) ? TEXT_PRIMARY : TEXT_DISABLED, TEXT_SHADOW);
         }
     }
 

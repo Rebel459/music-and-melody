@@ -5,22 +5,30 @@
   "description": {
     "translate": "theme.music_and_melody.ore_ui.description"
   },
-  "icon": "music_and_melody:textures/theme/ore_ui/icon.png",
+  "icon": "music_and_melody:textures/theme/ore_ui.png",
+  "parent": "music_and_melody:ore_ui",
   "panels": {
-    "panel_background": "#E6282828",
-    "panel_highlight": "#DC286533"
+    "background": "#FF303234",
+    "panel_background": "#FF484A4B",
+    "panel_outline": "#FF2E3031",
+    "panel_highlight": "#DC204618",
+    "popup_panel_background": "#FF484A4B",
+    "popup_outline": "#FF2E3031"
   },
   "elements": {
-    "button_background": "#B4FFFFFF",
-    "button_highlight": "#7D7FFF62",
-    "button_disabled": "#B4464646"
+    "button_background": "#FFD0D2D6",
+    "button_highlight": "#FF3C8526",
+    "button_disabled": "#B4484A4B"
   },
   "text": {
     "selected": "#FFFFFFFF",
-    "primary": "#FF969696",
+    "primary": "#FF303234",
     "primary_highlight": "#FFFFFFFF",
-    "header_secondary": "#FFC8C8C8",
-    "disabled": "#FF828282",
-    "warning": "#FFFF556E"
+    "description": "#FF959799",
+    "header": "#FFE0E1E1",
+    "header_secondary": "#FFE0E1E1",
+    "disabled": "#FF6E6E6E",
+    "warning": "#FFFF556E",
+    "shadow": false
   }
 }

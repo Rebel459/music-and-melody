@@ -57,10 +57,10 @@ public final class Theme {
                            String outline, String barBackground, String barThumb, boolean buttonTextures) {
     }
 
-    /** Fully resolved text colours. */
+    /** Fully resolved text colours and button/bar label rendering mode. */
     public record Text(String selected, String title, String primary, String primaryHighlight,
                        String description, String header, String headerSecondary, String favourite,
-                       String example, String disabled, String warning) {
+                       String example, String disabled, String warning, boolean shadow) {
     }
 
     /**
@@ -126,7 +126,7 @@ public final class Theme {
     public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary,
                           Optional<String> primaryHighlight, Optional<String> description, Optional<String> header,
                           Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example,
-                          Optional<String> disabled, Optional<String> warning) {
+                          Optional<String> disabled, Optional<String> warning, Optional<Boolean> shadow) {
 
         public static final Codec<RawText> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("selected").forGetter(RawText::selected),
@@ -139,7 +139,8 @@ public final class Theme {
                 Codec.STRING.optionalFieldOf("favourite").forGetter(RawText::favourite),
                 Codec.STRING.optionalFieldOf("example").forGetter(RawText::example),
                 Codec.STRING.optionalFieldOf("disabled").forGetter(RawText::disabled),
-                Codec.STRING.optionalFieldOf("warning").forGetter(RawText::warning)
+                Codec.STRING.optionalFieldOf("warning").forGetter(RawText::warning),
+                Codec.BOOL.optionalFieldOf("shadow").forGetter(RawText::shadow)
         ).apply(instance, RawText::new));
     }
 }

@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -122,10 +124,10 @@ class SavePlaylistScreen extends Screen {
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 38, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 120, TEXT_DESCRIPTION);
+        ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 38, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 120, TEXT_DESCRIPTION);
     }
 
     @Override

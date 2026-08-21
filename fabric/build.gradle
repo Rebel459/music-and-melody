@@ -19,6 +19,8 @@ dependencies {
     implementation("maven.modrinth:fzzy-config:$fzzy_version")
     implementation("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
 
+    localRuntime("net.litetex.mcm:dev-auth-neo:$devauth_fabric")
+
     compileOnly("maven.modrinth:enderscape:$enderscape_fabric")
     compileOnly("maven.modrinth:fancymenu:$fancymenu_version-fabric")
 }
@@ -34,6 +36,7 @@ loom {
             setConfigName('Fabric Client')
             ideConfigGenerated(true)
             runDir('runs/client')
+            vmArg '-Ddevauth.enabled=1'
         }
         server {
             server()
