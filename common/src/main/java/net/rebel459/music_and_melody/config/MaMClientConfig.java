@@ -24,12 +24,6 @@ public class MaMClientConfig implements ConfigData {
 		return AutoConfig.getConfigHolder(MaMClientConfig.class).getConfig();
 	}
 
-	private static void init() {
-		if (MusicAndMelody.registeredClientConfig) return;
-		AutoConfig.register(MaMClientConfig.class, JanksonConfigSerializer::new);
-		MusicAndMelody.registeredClientConfig = true;
-	}
-
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	public boolean music_rebalance = true;

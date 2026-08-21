@@ -39,7 +39,7 @@ import java.util.Set;
 public class Playlist {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "playlists");
+    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "playlist");
     private static final Set<Playlist> CONFIG_PLAYLISTS = new HashSet<>();
 
     public static Set<Playlist> PLAYLISTS = new HashSet<>();
@@ -64,7 +64,7 @@ public class Playlist {
     }
 
     public boolean isFavourite() {
-        return MaMDataConfig.get().playlists.favourites.contains(this.playlist.toString());
+        return MaMDataConfig.get().playlist.favourites.contains(this.playlist.toString());
     }
 
     public void setFavourite(boolean favourite) {
@@ -72,11 +72,11 @@ public class Playlist {
         MaMDataConfig config = MaMDataConfig.get();
 
         if (favourite) {
-            if (!config.playlists.favourites.contains(id)) {
-                config.playlists.favourites.add(id);
+            if (!config.playlist.favourites.contains(id)) {
+                config.playlist.favourites.add(id);
             }
         } else {
-            config.playlists.favourites.remove(id);
+            config.playlist.favourites.remove(id);
         }
 
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
@@ -90,7 +90,7 @@ public class Playlist {
         if (this.source == null) return false;
         try {
             if (Files.deleteIfExists(this.source)) {
-                MaMDataConfig.get().playlists.favourites.remove(this.playlist.toString());
+                MaMDataConfig.get().playlist.favourites.remove(this.playlist.toString());
                 AutoConfig.getConfigHolder(MaMDataConfig.class).save();
                 reloadConfigPlaylists();
                 return true;

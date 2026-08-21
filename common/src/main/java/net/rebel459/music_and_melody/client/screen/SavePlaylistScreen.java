@@ -44,7 +44,7 @@ class SavePlaylistScreen extends Screen {
         int fieldWidth = width - 24;
 
         this.nameField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 50, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.save_playlist.name")));
+                Component.translatable("screen.music_and_melody.create_theme.name")));
         this.nameField.setMaxLength(80);
         this.nameField.setResponder(value -> {
             updatePathHint();
@@ -123,7 +123,7 @@ class SavePlaylistScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.save_playlist.name"), x + 12, y + 38, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 38, TEXT_DESCRIPTION);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
         graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 120, TEXT_DESCRIPTION);
     }

@@ -90,9 +90,9 @@ public final class PlaylistHelper {
     public static void setQueueType(MaMDataConfig.QueueType type, String id, String name) {
         ensureLoaded();
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_type = type;
-        config.playlists.queue_id = id;
-        config.playlists.queue_name = name;
+        config.playlist.queue_type = type;
+        config.playlist.queue_id = id;
+        config.playlist.queue_name = name;
         touchRecentSource(type, id);
         save();
     }
@@ -117,9 +117,9 @@ public final class PlaylistHelper {
         rebuildShuffleOrder(null);
 
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_type = type;
-        config.playlists.queue_id = id;
-        config.playlists.queue_name = name;
+        config.playlist.queue_type = type;
+        config.playlist.queue_id = id;
+        config.playlist.queue_name = name;
         touchRecentSource(type, id);
         save();
         return !QUEUED_SONGS.isEmpty();
@@ -149,9 +149,9 @@ public final class PlaylistHelper {
     }
 
     public static Optional<QueueType> queueSource() {
-        MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
-        if (playlists.queue_type == MaMDataConfig.QueueType.NONE || playlists.queue_name.isBlank()) return Optional.empty();
-        return Optional.of(new QueueType(playlists.queue_type, playlists.queue_id, playlists.queue_name));
+        MaMDataConfig.Playlist playlist = MaMDataConfig.get().playlist;
+        if (playlist.queue_type == MaMDataConfig.QueueType.NONE || playlist.queue_name.isBlank()) return Optional.empty();
+        return Optional.of(new QueueType(playlist.queue_type, playlist.queue_id, playlist.queue_name));
     }
 
     public static boolean isQueued(SafeIdentifier song) {
@@ -980,13 +980,13 @@ public final class PlaylistHelper {
         CUSTOM_PLAYLIST_SONGS.clear();
         queuePaused = true;
         MaMDataConfig config = MaMDataConfig.get();
-        loop = config.playlists.loop;
-        shuffle = config.playlists.shuffle;
-        for (String song : config.playlists.queued_songs) {
+        loop = config.playlist.loop;
+        shuffle = config.playlist.shuffle;
+        for (String song : config.playlist.queued_songs) {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
         }
-        for (String song : config.playlists.custom_playlist_songs) {
+        for (String song : config.playlist.custom_playlist_songs) {
             SafeIdentifier id = SafeIdentifier.parse(song);
             if (id != null && !CUSTOM_PLAYLIST_SONGS.contains(id)) CUSTOM_PLAYLIST_SONGS.add(id);
         }
@@ -995,18 +995,18 @@ public final class PlaylistHelper {
 
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.loop = loop;
-        config.playlists.shuffle = shuffle;
-        config.playlists.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
-        config.playlists.custom_playlist_songs = new ArrayList<>(CUSTOM_PLAYLIST_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.playlist.loop = loop;
+        config.playlist.shuffle = shuffle;
+        config.playlist.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.playlist.custom_playlist_songs = new ArrayList<>(CUSTOM_PLAYLIST_SONGS.stream().map(SafeIdentifier::toString).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
     private static void clearQueueType() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlists.queue_type = MaMDataConfig.QueueType.NONE;
-        config.playlists.queue_id = "";
-        config.playlists.queue_name = "";
+        config.playlist.queue_type = MaMDataConfig.QueueType.NONE;
+        config.playlist.queue_id = "";
+        config.playlist.queue_name = "";
     }
 
     private static int remapMovedIndex(int index, int fromIndex, int toIndex) {
@@ -1019,16 +1019,16 @@ public final class PlaylistHelper {
 
     private static void touchRecentSource(MaMDataConfig.QueueType type, String id) {
         if (type == MaMDataConfig.QueueType.NONE || id == null || id.isBlank()) return;
-        MaMDataConfig.Playlists playlists = MaMDataConfig.get().playlists;
+        MaMDataConfig.Playlist playlist = MaMDataConfig.get().playlist;
         String key = type.name() + "|" + id;
-        playlists.recent_favourites.remove(key);
-        playlists.recent_favourites.addFirst(key);
+        playlist.recent_favourites.remove(key);
+        playlist.recent_favourites.addFirst(key);
     }
 
     /** Returns {@code 0} for the most recently played source, or a large rank when unseen. */
     public static int recentSourceRank(MaMDataConfig.QueueType type, String id) {
         if (type == MaMDataConfig.QueueType.NONE || id == null) return Integer.MAX_VALUE;
-        int index = MaMDataConfig.get().playlists.recent_favourites.indexOf(type.name() + "|" + id);
+        int index = MaMDataConfig.get().playlist.recent_favourites.indexOf(type.name() + "|" + id);
         return index < 0 ? Integer.MAX_VALUE : index;
     }
 
