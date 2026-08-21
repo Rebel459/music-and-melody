@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -96,10 +98,10 @@ final class PlaylistConfirmScreen extends Screen {
         graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
+        ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
         List<FormattedCharSequence> lines = this.font.split(this.message, width - 24);
         for (int i = 0; i < lines.size() && i < 3; i++) {
-            graphics.text(this.font, lines.get(i), x + 12, y + 31 + i * this.font.lineHeight, TEXT_DESCRIPTION);
+            ThemeHelper.text(graphics, this.font, lines.get(i), x + 12, y + 31 + i * this.font.lineHeight, TEXT_DESCRIPTION);
         }
     }
 

@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -100,9 +102,9 @@ final class RepositoryScreen extends Screen {
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
-        graphics.text(this.font, Component.translatable("button.music_and_melody.add_repository"), x + 10, y + 14, TEXT_HEADER_SECONDARY);
+        ThemeHelper.text(graphics, this.font, Component.translatable("button.music_and_melody.add_repository"), x + 10, y + 14, TEXT_HEADER_SECONDARY);
         if (!this.feedback.getString().isEmpty()) {
-            graphics.text(this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? TEXT_PENDING_DELETION : TEXT_SELECTED);
+            ThemeHelper.text(graphics, this.font, this.feedback, x + 10, y + height - 47, this.feedbackError ? TEXT_PENDING_DELETION : TEXT_SELECTED);
         }
     }
 
@@ -286,7 +288,7 @@ final class RepositoryScreen extends Screen {
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             int textWidth = Math.max(1, this.getContentWidth() - IconButton.SIZE - 10);
             String shown = tail(this.minecraft, this.repository, textWidth);
-            graphics.text(this.minecraft.font, Component.literal(shown), this.getContentX() + 3,
+            ThemeHelper.text(graphics, this.minecraft.font, Component.literal(shown), this.getContentX() + 3,
                     this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_PRIMARY);
             this.removeButton.setX(this.getContentRight() - IconButton.SIZE - 3);
             this.removeButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);

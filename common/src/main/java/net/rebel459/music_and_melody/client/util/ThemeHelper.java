@@ -2,6 +2,9 @@ package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.metadata.gui.GuiMetadataSection;
 import net.minecraft.client.resources.metadata.gui.GuiSpriteScaling;
@@ -49,6 +52,7 @@ public final class ThemeHelper {
     public static int TEXT_EXAMPLE;
     public static int TEXT_DISABLED;
     public static int TEXT_PENDING_DELETION;
+    public static boolean TEXT_SHADOW;
 
     private static Identifier appliedTheme;
 
@@ -96,6 +100,7 @@ public final class ThemeHelper {
         TEXT_EXAMPLE = argb(theme.text.example());
         TEXT_DISABLED = argb(theme.text.disabled());
         TEXT_PENDING_DELETION = argb(theme.text.warning());
+        TEXT_SHADOW = theme.text.shadow();
     }
 
     private static int argb(String value) {
@@ -107,6 +112,48 @@ public final class ThemeHelper {
         } catch (NumberFormatException ignored) {
             return 0;
         }
+    }
+
+    /** Draws themed text using the active theme's shadow preference. */
+    public static void text(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
+        graphics.text(font, text, x, y, colour, TEXT_SHADOW);
+    }
+
+    /** Draws themed text using the active theme's shadow preference. */
+    public static void text(GuiGraphicsExtractor graphics, Font font, FormattedCharSequence text, int x, int y, int colour) {
+        graphics.text(font, text, x, y, colour, TEXT_SHADOW);
+    }
+
+    /** Draws themed text using the active theme's shadow preference. */
+    public static void text(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour) {
+        graphics.text(font, text, x, y, colour, TEXT_SHADOW);
+    }
+
+    /** Allows callers migrated from a direct text draw to use the theme setting. */
+    public static void text(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour,
+                            boolean ignoredShadow) {
+        text(graphics, font, text, x, y, colour);
+    }
+
+    /** Draws centred themed text using the active theme's shadow preference. */
+    public static void centeredText(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
+        text(graphics, font, text, x - font.width(text) / 2, y, colour);
+    }
+
+    /** Draws centred themed text using the active theme's shadow preference. */
+    public static void centeredText(GuiGraphicsExtractor graphics, Font font, FormattedCharSequence text, int x, int y, int colour) {
+        text(graphics, font, text, x - font.width(text) / 2, y, colour);
+    }
+
+    /** Draws centred themed text using the active theme's shadow preference. */
+    public static void centeredText(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour) {
+        text(graphics, font, text, x - font.width(text) / 2, y, colour);
+    }
+
+    /** Draws wrapped themed text using the active theme's shadow preference. */
+    public static void textWithWordWrap(GuiGraphicsExtractor graphics, Font font, net.minecraft.network.chat.FormattedText text,
+                                        int x, int y, int width, int colour) {
+        graphics.textWithWordWrap(font, text, x, y, width, colour, TEXT_SHADOW);
     }
 
     public static final Identifier VANILLA_BUTTON = Identifier.withDefaultNamespace("widget/button");

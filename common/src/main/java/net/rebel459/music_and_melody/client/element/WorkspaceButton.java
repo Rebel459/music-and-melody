@@ -57,8 +57,9 @@ public class WorkspaceButton extends Button {
         // WithInactiveMessage decorates getMessage() with Minecraft's fixed
         // grey style while inactive. Use the raw message so the theme's
         // disabled colour supplied above is actually respected.
-        graphics.centeredText(Minecraft.getInstance().font, this.message, this.getX() + this.getWidth() / 2,
-                this.getY() + (this.getHeight() - 8) / 2, textColor);
+        var font = Minecraft.getInstance().font;
+        ThemeHelper.text(graphics, font, this.message, this.getX() + (this.getWidth() - font.width(this.message)) / 2,
+                this.getY() + (this.getHeight() - 8) / 2, textColor, ThemeHelper.TEXT_SHADOW);
     }
 
     protected int textColor(boolean highlighted) {

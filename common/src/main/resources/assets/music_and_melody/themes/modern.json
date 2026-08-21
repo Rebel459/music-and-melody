@@ -5,7 +5,7 @@
   "description": {
     "translate": "theme.music_and_melody.modern.description"
   },
-  "icon": "music_and_melody:textures/theme/modern/icon.png",
+  "icon": "music_and_melody:textures/theme/modern.png",
   "panels": {
     "background": "#C9070A10",
     "panel_background": "#E5151B28",

@@ -103,6 +103,7 @@
   "screen.music_and_melody.theme_editor.parent": "Parent Theme ID",
   "screen.music_and_melody.theme_editor.hex": "#AARRGGBB",
   "screen.music_and_melody.theme_editor.button_textures": "Vanilla Button Textures: %s",
+  "screen.music_and_melody.theme_editor.text_shadow": "Button & Bar Text Shadow: %s",
   "screen.music_and_melody.theme_editor.main": "Main",
   "screen.music_and_melody.theme_editor.panels": "Panels",
   "screen.music_and_melody.theme_editor.elements": "Elements",

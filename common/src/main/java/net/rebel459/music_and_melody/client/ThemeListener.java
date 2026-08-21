@@ -307,7 +307,9 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
                 color(text == null ? Optional.empty() : text.favourite(), inherited == null ? null : inherited.text.favourite(), "text.favourite", errors),
                 color(text == null ? Optional.empty() : text.example(), inherited == null ? null : inherited.text.example(), "text.example", errors),
                 color(text == null ? Optional.empty() : text.disabled(), inherited == null ? null : inherited.text.disabled(), "text.disabled", errors),
-                color(text == null ? Optional.empty() : text.warning(), inherited == null ? null : inherited.text.warning(), "text.warning", errors)
+                color(text == null ? Optional.empty() : text.warning(), inherited == null ? null : inherited.text.warning(), "text.warning", errors),
+                text == null ? inherited == null || inherited.text.shadow()
+                        : text.shadow().orElse(inherited == null || inherited.text.shadow())
         );
 
         Theme resolved = new Theme(id, name, description, icon, parentId, resolvedPanels, resolvedElements,

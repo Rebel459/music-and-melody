@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -341,8 +343,8 @@ public class EventScreen extends Screen {
         drawPanel(graphics, layout.middleX, layout.bottomPanelTop, layout.middleWidth, layout.panelBottom - layout.bottomPanelTop);
         drawPanel(graphics, layout.rightX, PANEL_TOP, layout.rightWidth, layout.panelBottom - PANEL_TOP);
 
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.settings").withStyle(ChatFormatting.BOLD), layout.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.entries").withStyle(ChatFormatting.BOLD), layout.middleX + 8, PANEL_TOP + 11, TEXT_HEADER);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.settings").withStyle(ChatFormatting.BOLD), layout.leftX + 8, PANEL_TOP + 11, TEXT_HEADER);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.entries").withStyle(ChatFormatting.BOLD), layout.middleX + 8, PANEL_TOP + 11, TEXT_HEADER);
 
         Event.Source source = activeSource();
         int titleX = layout.rightX + 8;
@@ -362,7 +364,7 @@ public class EventScreen extends Screen {
             int descriptionY = PANEL_TOP + 50;
             for (FormattedCharSequence line : this.font.split(source.record.description(), Math.max(1, layout.rightWidth - 16))) {
                 if (descriptionY + this.font.lineHeight > PANEL_TOP + 124) break;
-                graphics.text(this.font, line, layout.rightX + 8, descriptionY, TEXT_PRIMARY);
+                ThemeHelper.text(graphics, this.font, line, layout.rightX + 8, descriptionY, TEXT_PRIMARY);
                 descriptionY += this.font.lineHeight + 2;
             }
         }
@@ -370,14 +372,14 @@ public class EventScreen extends Screen {
         int controlLabelY = PANEL_TOP + 30;
         int controlStep = settingsStep(layout);
         int settingsX = layout.leftX + 8;
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
 
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.music"), layout.middleX + 8, PANEL_TOP + 27, TEXT_DESCRIPTION);
-        graphics.text(this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), layout.middleX + 8, PANEL_TOP + 65, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.music"), layout.middleX + 8, PANEL_TOP + 27, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), layout.middleX + 8, PANEL_TOP + 65, TEXT_DESCRIPTION);
         if (this.parent instanceof MusicPlayerScreen musicPlayer) {
             musicPlayer.renderPlaybackStrip(graphics, layout.middleX, layout.middleWidth, layout.bottomPanelTop);
         }
@@ -394,7 +396,7 @@ public class EventScreen extends Screen {
     private void drawMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         int textWidth = this.font.width(text);
         if (textWidth <= width) {
-            graphics.text(this.font, text, x, y, color);
+            ThemeHelper.text(graphics, this.font, text, x, y, color);
             return;
         }
         int travel = textWidth - width;
@@ -409,7 +411,7 @@ public class EventScreen extends Screen {
         else fraction = 1.0F - (elapsed - pause - move - pause) / (float) move;
         int offset = Math.round(travel * Math.max(0.0F, Math.min(1.0F, fraction)));
         graphics.enableScissor(x, y, x + width, y + this.font.lineHeight);
-        graphics.text(this.font, text, x - offset, y, color);
+        ThemeHelper.text(graphics, this.font, text, x - offset, y, color);
         graphics.disableScissor();
     }
 
@@ -919,7 +921,7 @@ public class EventScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            graphics.text(Minecraft.getInstance().font, this.line, this.getContentX(),
+            ThemeHelper.text(graphics, Minecraft.getInstance().font, this.line, this.getContentX(),
                     this.getContentYMiddle() - Minecraft.getInstance().font.lineHeight / 2, TEXT_DESCRIPTION);
         }
     }

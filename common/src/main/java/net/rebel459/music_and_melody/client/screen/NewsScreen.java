@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.ThemeHelper;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -97,7 +99,7 @@ final class NewsScreen extends Screen {
             } else if (line.startsWith("# ")) {
                 this.blocks.add(new TextBlock(line.substring(2), Kind.HEADING_LARGE));
             } else if (line.startsWith("- ") || line.startsWith("* ")) {
-                this.blocks.add(new TextBlock("• " + line.substring(2), Kind.BODY));
+                this.blocks.add(new TextBlock("Ã¢â‚¬Â¢ " + line.substring(2), Kind.BODY));
             } else if (line.startsWith("> ")) {
                 this.blocks.add(new TextBlock(line.substring(2), Kind.QUOTE));
             } else if (line.equals("---") || line.equals("***")) {
@@ -135,15 +137,15 @@ final class NewsScreen extends Screen {
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
+        ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
 
         int top = y + 31, bottom = y + height - 35;
         if (this.loading) {
-            graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, top + 8, TEXT_DESCRIPTION);
+            ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, top + 8, TEXT_DESCRIPTION);
             return;
         }
         if (this.error != null) {
-            graphics.centeredText(this.font, Component.literal("Unable to load news: " + this.error), x + width / 2, top + 8, TEXT_HEADER_SECONDARY);
+            ThemeHelper.centeredText(graphics, this.font, Component.literal("Unable to load news: " + this.error), x + width / 2, top + 8, TEXT_HEADER_SECONDARY);
             return;
         }
         int contentWidth = width - 32;
@@ -186,7 +188,7 @@ final class NewsScreen extends Screen {
             int imageHeight = height(image, width) - 8;
             if (loaded == null) {
                 graphics.fill(x, y, x + width, y + imageHeight, PANEL_HIGHLIGHT);
-                graphics.centeredText(this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
+                ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
             } else if (y >= top && y + imageHeight <= bottom) {
                 graphics.blit(GUI_TEXTURED, loaded.texture(), x, y, 0.0F, 0.0F, width, imageHeight, loaded.width(), loaded.height());
             }
@@ -204,7 +206,7 @@ final class NewsScreen extends Screen {
         List<FormattedCharSequence> lines = this.font.split(component, width);
         for (int i = 0; i < lines.size(); i++) {
             int lineY = y + i * (this.font.lineHeight + 2);
-            if (lineY >= top && lineY + this.font.lineHeight <= bottom) graphics.text(this.font, lines.get(i), x, lineY, color);
+            if (lineY >= top && lineY + this.font.lineHeight <= bottom) ThemeHelper.text(graphics, this.font, lines.get(i), x, lineY, color);
         }
     }
 
