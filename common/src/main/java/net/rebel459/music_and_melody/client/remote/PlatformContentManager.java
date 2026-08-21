@@ -13,13 +13,10 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.LongConsumer;
 
 final class PlatformContentManager {
 
-    private static final int MAX_ICON_BYTES = 5 * 1024 * 1024;
     private static final Path TEMP_DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads", ".tmp");
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -61,28 +58,5 @@ final class PlatformContentManager {
             }
         }
         return zip;
-    }
-
-    static CompletableFuture<byte[]> loadIcon(URI uri) {
-        if (!MaMClientConfig.get().online_functionality) return CompletableFuture.completedFuture(null);
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(Duration.ofSeconds(20))
-                .GET()
-                .build();
-        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
-                .thenApply(response -> {
-                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                        throw new CompletionException(new IOException("Icon download failed: " + response.statusCode()));
-                    }
-                    try (InputStream input = response.body()) {
-                        byte[] bytes = input.readNBytes(MAX_ICON_BYTES + 1);
-                        if (bytes.length > MAX_ICON_BYTES) {
-                            throw new IOException("Remote icon exceeds " + MAX_ICON_BYTES + " bytes");
-                        }
-                        return bytes;
-                    } catch (IOException exception) {
-                        throw new CompletionException(exception);
-                    }
-                });
     }
 }
