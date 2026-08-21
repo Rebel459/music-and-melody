@@ -56,7 +56,7 @@ public final class RemoteIconManager {
         if (loaded != null) return loaded;
         URI uri = imageUri(value);
         if (uri == null || !REQUESTED_IMAGES.add(value)) return null;
-        PlatformContentManager.loadIcon(uri).thenAccept(bytes -> {
+        RemoteContentManager.loadIcon(uri).thenAccept(bytes -> {
             if (bytes == null) return;
             Minecraft minecraft = Minecraft.getInstance();
             minecraft.execute(() -> registerImage(minecraft, value, bytes));
