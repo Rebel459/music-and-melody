@@ -372,15 +372,20 @@ public class EventHelper {
         if (!activeMusic) return getPriority(Event.PriorityType.LOW);
 
         Identifier gameMusic = SoundEvents.MUSIC_GAME.value().location();
+        Identifier creativeMusic = SoundEvents.MUSIC_CREATIVE.value().location();
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
+        boolean creativeFix = MaMClientConfig.get().creative_fix;
         for (SoundInstance instance : instances) {
             if (gameMusic.equals(instance.getIdentifier()) && manager.isActive(instance)) {
                 return getPriority(Event.PriorityType.VERY_LOW) - 1;
             }
+            if (creativeFix && creativeMusic.equals(instance.getIdentifier()) && manager.isActive(instance)) {
+                return getPriority(Event.PriorityType.MEDIUM) - 1;
+            }
         }
 
-        return getPriority(Event.PriorityType.VERY_LOW) + 1;
+        return getPriority(Event.PriorityType.LOW) - 1;
     }
 
     private static Music playEventOrBlockVanilla(Minecraft client, Event event, boolean replaceCurrentMusic) {
