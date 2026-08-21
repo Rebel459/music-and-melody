@@ -591,9 +591,7 @@ public class EventHelper {
                         case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
                     }
                 }
-                case AT_LEAST_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() >= condition.intValue().get();
                 case BELOW_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
-                case AT_LEAST_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) <= 0;
                 case BELOW_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
                 case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
                 case MOD_LOADED -> shouldBeActive = shouldBeActive && MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get());
