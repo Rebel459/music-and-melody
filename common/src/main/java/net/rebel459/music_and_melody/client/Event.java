@@ -352,7 +352,7 @@ public class Event {
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<SpecialCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.AT_LEAST_Y || type == ConditionType.BELOW_Y) {
+        if (type == ConditionType.BELOW_Y) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
             intValue = Optional.of(integer);
         }
@@ -366,7 +366,7 @@ public class Event {
         } else {
             if (!(value instanceof Record.Condition.Value.String(String string))) return Optional.empty();
 
-            if (type == ConditionType.MOD_LOADED || type == ConditionType.BOSSBAR || type == ConditionType.AT_LEAST_VERSION || type == ConditionType.BELOW_VERSION) {
+            if (type == ConditionType.MOD_LOADED || type == ConditionType.BOSSBAR || type == ConditionType.BELOW_VERSION) {
                 if (string.isBlank()) return Optional.empty();
                 stringValue = Optional.of(string);
             } else if (type == ConditionType.TIME) {
@@ -440,11 +440,9 @@ public class Event {
             case "any_of" -> ConditionType.ANY_OF;
             case "not" -> ConditionType.NOT;
             case "below_y" -> ConditionType.BELOW_Y;
-            case "at_least_y" -> ConditionType.AT_LEAST_Y;
             case "mod_loaded" -> ConditionType.MOD_LOADED;
             case "random_chance" -> ConditionType.RANDOM_CHANCE;
             case "bossbar" -> ConditionType.BOSSBAR;
-            case "at_least_version" -> ConditionType.AT_LEAST_VERSION;
             case "below_version" -> ConditionType.BELOW_VERSION;
             case "album_loaded" -> ConditionType.ALBUM_LOADED;
             default -> null;
@@ -559,7 +557,6 @@ public class Event {
         WEATHER,
         GAME_MODE,
         BELOW_Y,
-        AT_LEAST_Y,
         SPECIAL,
         ALL_OF,
         ANY_OF,
@@ -567,7 +564,6 @@ public class Event {
         MOD_LOADED,
         RANDOM_CHANCE,
         BOSSBAR,
-        AT_LEAST_VERSION,
         BELOW_VERSION,
         ALBUM_LOADED
     }

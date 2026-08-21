@@ -220,10 +220,10 @@ public final class RemoteContentManager {
 
     private static boolean supportsCurrentVersion(RemotePack pack) {
         VanillaVersion version = VanillaVersion.getVanillaVersion();
-        boolean withinMaxExclusive = pack.belowVersion().isEmpty()
-                || VanillaVersion.parse(pack.belowVersion()).compareTo(version) > 0;
-        boolean withinMinInclusive = pack.atLeastVersion().isEmpty()
-                || VanillaVersion.parse(pack.atLeastVersion()).compareTo(version) <= 0;
+        boolean withinMaxExclusive = pack.showBelowVersion().isEmpty()
+                || VanillaVersion.parse(pack.showBelowVersion()).compareTo(version) > 0;
+        boolean withinMinInclusive = pack.showFromVersion().isEmpty()
+                || VanillaVersion.parse(pack.showFromVersion()).compareTo(version) <= 0;
         return withinMaxExclusive && withinMinInclusive;
     }
 
@@ -277,8 +277,18 @@ public final class RemoteContentManager {
             return null;
         }
         Identifier icon = object.has("icon") ? Identifier.tryParse(object.get("icon").getAsString()) : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
-        String atLeastVersion = object.has("at_least_version") ? object.get("at_least_version").getAsString() : "";
-        String belowVersion = object.has("below_version") ? object.get("below_version").getAsString() : "";
+        String showFromVersion = object.has("show_from_version") ? object.get("show_from_version").getAsString() : "";
+        String showBelowVersion = object.has("show_below_version") ? object.get("show_below_version").getAsString() : "";
+
+        List<String> tags = stringArray(object, "tags");
+        if (!tags.isEmpty() && (tags.size() != 1 || !Objects.equals(tags.getFirst(), "album"))) {
+            return null;
+        }
+        List<String> dependencies = stringArray(object, "dependencies");
+        for (String mod : dependencies) {
+            if (!UnifiedInstance.isModLoaded(mod)) return null;
+        }
+
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -288,10 +298,22 @@ public final class RemoteContentManager {
                 catalogUri.resolve(object.get("url").getAsString()).toString(),
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
-                icon == null ? Identifier.withDefaultNamespace("textures/misc/unknown_pack.png") : icon,
-                atLeastVersion,
-                belowVersion
+                icon,
+                showFromVersion,
+                showBelowVersion
         );
+    }
+
+    private static List<String> stringArray(JsonObject object, String name) {
+        JsonArray array = object.getAsJsonArray(name);
+        if (array == null) return List.of();
+        List<String> values = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) continue;
+            String value = element.getAsString().trim();
+            if (!value.isEmpty()) values.add(value);
+        }
+        return List.copyOf(values);
     }
 
     private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
