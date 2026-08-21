@@ -11,6 +11,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.rebel459.unified.platform.UnifiedPlatform;
 import net.rebel459.unified.util.VanillaVersion;
 
 import java.io.IOException;
@@ -19,10 +20,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -289,7 +290,7 @@ public final class RemoteContentManager {
         }
         List<String> dependencies = stringArray(object, "dependencies");
         for (String mod : dependencies) {
-            if (!UnifiedInstance.isModLoaded(mod)) return null;
+            if (!UnifiedPlatform.isModLoaded(mod)) return null;
         }
 
         return new RemotePack(
