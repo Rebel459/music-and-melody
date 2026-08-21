@@ -16,7 +16,6 @@ import java.util.concurrent.CompletionException;
 
 final class PlatformContentManager {
 
-    private static final int MAX_ICON_BYTES = 5 * 1024 * 1024;
     private static final Path TEMP_DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "downloads", ".tmp");
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
