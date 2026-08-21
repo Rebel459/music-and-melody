@@ -80,7 +80,8 @@
           "type": "game_mode",
           "value": "creative"
         }
-      ]
+      ],
+      "priority": "medium"
     },
     {
       "category": "playlist",
