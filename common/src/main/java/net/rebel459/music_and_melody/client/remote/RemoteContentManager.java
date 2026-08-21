@@ -451,10 +451,10 @@ public final class RemoteContentManager {
 
     private static boolean supportsCurrentVersion(RemotePack pack) {
         VanillaVersion version = VanillaVersion.getVanillaVersion();
-        boolean withinMaxExclusive = pack.belowVanillaVersion().isEmpty()
-                || VanillaVersion.parse(pack.belowVanillaVersion()).compareTo(version) > 0;
-        boolean withinMinInclusive = pack.minimumVanillaVersion().isEmpty()
-                || VanillaVersion.parse(pack.minimumVanillaVersion()).compareTo(version) <= 0;
+        boolean withinMaxExclusive = pack.showBelowVersion().isEmpty()
+                || VanillaVersion.parse(pack.showBelowVersion()).compareTo(version) > 0;
+        boolean withinMinInclusive = pack.showFromVersion().isEmpty()
+                || VanillaVersion.parse(pack.showFromVersion()).compareTo(version) <= 0;
         return withinMaxExclusive && withinMinInclusive;
     }
 
@@ -519,8 +519,8 @@ public final class RemoteContentManager {
         String icon = object.has("icon")
                 ? object.get("icon").getAsString()
                 : Identifier.withDefaultNamespace("textures/misc/unknown_pack.png").toString();
-        String atLeastVersion = object.has("at_least_version") ? object.get("at_least_version").getAsString() : "";
-        String belowVersion = object.has("below_version") ? object.get("below_version").getAsString() : "";
+        String showFromVersion = object.has("show_from_version") ? object.get("show_from_version").getAsString() : "";
+        String showBelowVersion = object.has("show_below_version") ? object.get("show_below_version").getAsString() : "";
         return new RemotePack(
                 id,
                 Component.literal(object.get("name").getAsString()),
@@ -531,8 +531,8 @@ public final class RemoteContentManager {
                 object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
                 object.get("size").getAsLong(),
                 icon,
-                atLeastVersion,
-                belowVersion,
+                showFromVersion,
+                showBelowVersion,
                 tags,
                 dependencies,
                 provenance
