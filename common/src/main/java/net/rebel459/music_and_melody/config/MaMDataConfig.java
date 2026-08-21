@@ -36,9 +36,9 @@ public class MaMDataConfig implements ConfigData {
 		public String file = "";
 	}
 
-	public Playlists playlists = new Playlists();
+	public Playlist playlist = new Playlist();
 
-	public static class Playlists {
+	public static class Playlist {
 		public boolean loop = false;
 		public boolean shuffle = false;
 		public QueueType queue_type = QueueType.NONE;
@@ -80,12 +80,7 @@ public class MaMDataConfig implements ConfigData {
 		public String composer = "";
 	}
 
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
 	public boolean event_music = true;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
 	public boolean vanilla_music = true;
 
 	public String active_theme = "music_and_melody:default";

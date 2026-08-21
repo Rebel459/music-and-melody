@@ -12,12 +12,12 @@ import java.util.*;
 
 public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.Record> {
 
-    public static final Identifier ID = MusicAndMelody.id("playlists");
+    public static final Identifier ID = MusicAndMelody.id("playlist");
 
     private final Set<Playlist> loadedPlaylists = new HashSet<>();
 
     public PlaylistListener() {
-        super(Playlist.Record.CODEC, FileToIdConverter.json("playlists"));
+        super(Playlist.Record.CODEC, FileToIdConverter.json("playlist"));
     }
 
     @Override

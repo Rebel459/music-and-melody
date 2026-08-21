@@ -165,6 +165,10 @@ final class CreateThemeScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         graphics.centeredText(this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 28, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.theme.description"), x + 12, y + 64, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 100, TEXT_DESCRIPTION);
+        graphics.text(this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 136, TEXT_DESCRIPTION);
     }
 
     private int panelWidth() {

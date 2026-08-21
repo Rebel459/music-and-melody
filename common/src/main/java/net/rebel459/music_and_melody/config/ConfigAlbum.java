@@ -76,7 +76,7 @@ public final class ConfigAlbum {
         if (id.getNamespace().equals(MusicAndMelody.MOD_ID) && id.getPath().startsWith(INTERNAL_SOUND_PATH)) {
             return SafeIdentifier.fromNamespaceAndPath("config", id.getPath().substring(INTERNAL_SOUND_PATH.length()));
         }
-        // Keep existing playlists and saved state readable after config sound
+        // Keep existing playlist and saved state readable after config sound
         // identifiers lose their redundant `album/` path segment.
         if (id.getNamespace().equals("config") && id.getPath().startsWith(INTERNAL_SOUND_PATH)) {
             return SafeIdentifier.fromNamespaceAndPath("config", id.getPath().substring(INTERNAL_SOUND_PATH.length()));
