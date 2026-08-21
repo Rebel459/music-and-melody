@@ -16,8 +16,4 @@ final class PlatformContentManager {
     static Path download(RemotePack pack) throws IOException {
         throw new IOException("Automatic remote downloads are unavailable in CurseForge builds");
     }
-
-    static CompletableFuture<byte[]> loadIcon(URI uri) {
-        return CompletableFuture.completedFuture(null);
-    }
 }
