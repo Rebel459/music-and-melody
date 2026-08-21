@@ -42,26 +42,4 @@ final class PlatformContentManager {
         }
         return zip;
     }
-
-    static CompletableFuture<byte[]> loadIcon(URI uri) {
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(Duration.ofSeconds(20))
-                .GET()
-                .build();
-        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
-                .thenApply(response -> {
-                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                        throw new CompletionException(new IOException("Icon download failed: " + response.statusCode()));
-                    }
-                    try (InputStream input = response.body()) {
-                        byte[] bytes = input.readNBytes(MAX_ICON_BYTES + 1);
-                        if (bytes.length > MAX_ICON_BYTES) {
-                            throw new IOException("Remote icon exceeds " + MAX_ICON_BYTES + " bytes");
-                        }
-                        return bytes;
-                    } catch (IOException exception) {
-                        throw new CompletionException(exception);
-                    }
-                });
-    }
 }

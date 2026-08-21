@@ -11,12 +11,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.HexFormat;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class RemoteIconManager {
 
@@ -39,7 +34,7 @@ public final class RemoteIconManager {
         if (loaded != null) return loaded;
         if (!REQUESTED.add(value)) return FALLBACK;
 
-        PlatformContentManager.loadIcon(uri).thenAccept(bytes -> {
+        RemoteContentManager.loadIcon(uri).thenAccept(bytes -> {
             if (bytes == null) return;
             Minecraft minecraft = Minecraft.getInstance();
             minecraft.execute(() -> register(minecraft, value, bytes));

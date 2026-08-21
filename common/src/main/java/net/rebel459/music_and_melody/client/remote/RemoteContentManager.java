@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -596,5 +597,28 @@ public final class RemoteContentManager {
         String name = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
         return PACK_DIRECTORY.resolve(name);
+    }
+
+    static CompletableFuture<byte[]> loadIcon(URI uri) {
+        if (!MaMClientConfig.get().remote_downloads) return CompletableFuture.completedFuture(null);
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofSeconds(20))
+                .GET()
+                .build();
+        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+                .thenApply(response -> {
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        throw new CompletionException(new IOException("Icon download failed: " + response.statusCode()));
+                    }
+                    try (InputStream input = response.body()) {
+                        byte[] bytes = input.readNBytes(5242880 + 1);
+                        if (bytes.length > 5242880) {
+                            throw new IOException("Remote icon exceeds " + 5242880 + " bytes");
+                        }
+                        return bytes;
+                    } catch (IOException exception) {
+                        throw new CompletionException(exception);
+                    }
+                });
     }
 }
