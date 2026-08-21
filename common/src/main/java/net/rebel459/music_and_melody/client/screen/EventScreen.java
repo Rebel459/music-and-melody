@@ -541,7 +541,7 @@ public class EventScreen extends Screen {
 
         Event.Record.Condition.Value parsedValue;
 
-        if (type.equals("at_least_y") || type.equals("below_y")) {
+        if (type.equals("below_y")) {
             try {
                 parsedValue = new Event.Record.Condition.Value.Integer(Integer.parseInt(conditionValue));
             } catch (NumberFormatException exception) {
@@ -566,14 +566,7 @@ public class EventScreen extends Screen {
     }
 
     private static boolean isStringCondition(String type) {
-        return type.equals("time")
-                || type.equals("weather")
-                || type.equals("game_mode")
-                || type.equals("special")
-                || type.equals("mod_loaded")
-                || type.equals("bossbar")
-                || type.equals("at_least_version")
-                || type.equals("below_version");
+        return type.equals("time") || type.equals("weather") || type.equals("game_mode") || type.equals("special") || type.equals("mod_loaded") || type.equals("bossbar") || type.equals("below_version");
     }
 
     private static List<String> splitConditionParts(String value) {
