@@ -129,7 +129,7 @@ public class MaMFabricPlatform {
         public static ResourcePackActivationType getActivationType(PackType info) {
             return switch (info) {
                 case REQUIRED_DATA, REQUIRED_RESOURCES -> ResourcePackActivationType.ALWAYS_ENABLED;
-                case OPTIONAL_DATA, OPTIONAL_RESOURCES -> ResourcePackActivationType.DEFAULT_ENABLED;
+                case OPTIONAL_DATA, OPTIONAL_RESOURCES -> ResourcePackActivationType.NORMAL;
             };
         }
     }
