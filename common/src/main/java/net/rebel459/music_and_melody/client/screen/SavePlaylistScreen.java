@@ -22,6 +22,7 @@ class SavePlaylistScreen extends Screen {
     private static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
 
     private final MusicPlayerScreen parent;
+    private final Playlist replacing;
     private EditBox nameField;
     private EditBox iconField;
     private EditBox pathField;
@@ -30,8 +31,13 @@ class SavePlaylistScreen extends Screen {
     private int layoutHeight;
 
     SavePlaylistScreen(MusicPlayerScreen parent) {
+        this(parent, null);
+    }
+
+    SavePlaylistScreen(MusicPlayerScreen parent, Playlist replacing) {
         super(TITLE);
         this.parent = parent;
+        this.replacing = replacing;
     }
 
     @Override
@@ -51,18 +57,23 @@ class SavePlaylistScreen extends Screen {
             updatePathHint();
             refreshSaveState();
         });
+        if (this.replacing != null) this.nameField.setValue(this.replacing.name.getString());
 
         this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 91, fieldWidth, 20,
                 Component.translatable("screen.music_and_melody.create_theme.icon")));
         this.iconField.setMaxLength(256);
         this.iconField.setResponder(value -> refreshSaveState());
         this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
+        if (this.replacing != null) this.iconField.setValue(this.replacing.icon.toString());
 
         this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 132, fieldWidth, 20,
                 Component.translatable("screen.music_and_melody.create_theme.path")));
         this.pathField.setMaxLength(256);
         this.pathField.setResponder(value -> refreshSaveState());
-        updatePathHint();
+        if (this.replacing != null) {
+            this.pathField.setValue(Playlist.configPlaylistPath(this.replacing));
+            this.pathField.setEditable(false);
+        } else updatePathHint();
 
         int buttonY = y + panelHeight() - 29;
         int buttonWidth = (fieldWidth - 5) / 2;

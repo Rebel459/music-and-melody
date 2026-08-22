@@ -46,7 +46,8 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             TrackSet trackSet = expandTracks(albumId, record.tracks(), resourceManager);
             Set<String> tracks = new HashSet<>();
             for (String track : trackSet.tracks()) {
-                tracks.add(SafeIdentifier.parse(track).getPath());
+                SafeIdentifier trackId = SafeIdentifier.parse(track);
+                tracks.add(trackId.getNamespace().equals(albumId.getNamespace()) ? trackId.getPath() : trackId.toString());
             }
             Set<String> forcedEnabledTracks = trackSet.forcedEnabledTracks();
 
@@ -77,11 +78,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             this.loadedAlbums.add(album);
         }
 
-        Album configAlbum = ConfigAlbum.createAlbum(registeredDiscs);
-
-        if (configAlbum != null) {
-            this.loadedAlbums.add(configAlbum);
-        }
+        this.loadedAlbums.addAll(ConfigAlbum.createAlbums(registeredDiscs));
     }
 
     private static TrackSet expandTracks(
@@ -135,6 +132,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
+        tracks.addAll(ConfigAlbum.tracksInFolder(folderId));
         if (RemoteContentManager.isDownloaded(albumId, net.rebel459.music_and_melody.client.remote.RemotePack.Tag.ALBUM)) {
             tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
         }
