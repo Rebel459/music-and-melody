@@ -19,7 +19,6 @@ import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.ExampleHintEditBox;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
-import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
@@ -85,6 +84,8 @@ final class ThemeEditorScreen extends Screen {
     private boolean dirty;
     private boolean pendingDelete;
     private RemotePack managedRemotePack;
+    private double remoteDetailsScroll;
+    private double remoteDetailsScrollMax;
     private int layoutWidth;
     private int layoutHeight;
     private int leftX;
@@ -169,15 +170,21 @@ final class ThemeEditorScreen extends Screen {
         this.greenSlider = this.addRenderableWidget(new ColourSlider(fieldX, PANEL_TOP + 130, sliderWidth, 20, Channel.GREEN));
         this.blueSlider = this.addRenderableWidget(new ColourSlider(fieldX, PANEL_TOP + 154, sliderWidth, 20, Channel.BLUE));
 
-        int actionX = rightX + 7;
-        int actionWidth = Math.max(40, rightWidth - 14);
-        this.deleteButton = this.addRenderableWidget(new IconButton(deleteMessage(), deleteIcon(), ignored -> toggleDelete()));
-        this.deleteButton.setX(actionX + (actionWidth - IconButton.SIZE) / 2);
-        this.deleteButton.setY(panelBottom - 76);
-        this.saveButton = this.addRenderableWidget(new WorkspaceButton(actionX, panelBottom - 52, actionWidth, 20,
-                Component.translatable("button.music_and_melody.save"), false, ignored -> saveChanges()));
-        this.addRenderableWidget(new WorkspaceButton(actionX, panelBottom - 28, actionWidth, 20,
-                CommonComponents.GUI_DONE, false, ignored -> done()));
+        this.deleteButton = null;
+        this.saveButton = null;
+        if (this.managedRemotePack != null) {
+            buildManagedRemoteDetailsActions();
+        } else {
+            int actionX = rightX + 7;
+            int actionWidth = Math.max(40, rightWidth - 14);
+            this.deleteButton = this.addRenderableWidget(new IconButton(deleteMessage(), deleteIcon(), ignored -> toggleDelete()));
+            this.deleteButton.setX(actionX + (actionWidth - IconButton.SIZE) / 2);
+            this.deleteButton.setY(panelBottom - 76);
+            this.saveButton = this.addRenderableWidget(new WorkspaceButton(actionX, panelBottom - 52, actionWidth, 20,
+                    Component.translatable("button.music_and_melody.save"), false, ignored -> saveChanges()));
+            this.addRenderableWidget(new WorkspaceButton(actionX, panelBottom - 28, actionWidth, 20,
+                    CommonComponents.GUI_DONE, false, ignored -> done()));
+        }
         buildPlaybackControls();
         updateWidgets();
     }
@@ -219,6 +226,33 @@ final class ThemeEditorScreen extends Screen {
         }));
         loop.setX(x + (IconButton.SIZE + 4) * 4);
         loop.setY(y);
+    }
+
+    private void buildManagedRemoteDetailsActions() {
+        RemotePack pack = this.managedRemotePack;
+        int x = this.rightX + 7;
+        int width = this.rightWidth - 14;
+        int backY = this.panelBottom - 28;
+        this.addRenderableWidget(new WorkspaceButton(x, backY, width, 20, CommonComponents.GUI_DONE, false, ignored -> {
+            this.managedRemotePack = null;
+            this.rebuildWidgets();
+        }));
+
+        RemoteContentManager.State state = RemoteContentManager.state(pack);
+        if (state == RemoteContentManager.State.DOWNLOADING) return;
+        if (MusicPlayerScreen.remoteActionActive(pack) && !this.parent.isRemoteDeletePending(pack)) {
+            this.addRenderableWidget(new WorkspaceButton(x, backY - 24, width, 20,
+                    MusicPlayerScreen.remoteActionMessage(pack), false, ignored -> {
+                this.parent.activateRemotePack(pack);
+                this.rebuildWidgets();
+            }));
+        } else if (MusicPlayerScreen.remoteDeleteAvailable(pack)) {
+            this.addRenderableWidget(new WorkspaceButton(x, backY - 24, width, 20,
+                    this.parent.remoteDeleteMessage(pack), this.parent.isRemoteDeletePending(pack), ignored -> {
+                this.parent.toggleRemoteDeletePending(pack);
+                this.rebuildWidgets();
+            }));
+        }
     }
 
     private static Component playPauseMessage() {
@@ -328,11 +362,13 @@ final class ThemeEditorScreen extends Screen {
         this.greenSlider.active = !readOnly && colour;
         this.blueSlider.active = !readOnly && colour;
         updateMiddleScroll();
-        this.saveButton.active = !readOnly && dirty && isValidDraft() && !pendingDelete;
+        if (this.saveButton != null) this.saveButton.active = !readOnly && dirty && isValidDraft() && !pendingDelete;
         boolean remote = theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent();
-        this.deleteButton.visible = !readOnly || remote;
-        this.deleteButton.active = !readOnly || remote;
-        this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
+        if (this.deleteButton != null) {
+            this.deleteButton.visible = !readOnly || remote;
+            this.deleteButton.active = !readOnly || remote;
+            this.deleteButton.setIconAndTooltip(deleteIcon(), deleteMessage());
+        }
         updateTextColours();
         refreshColourControls();
     }
@@ -638,14 +674,10 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private void toggleDelete() {
-        if (this.managedRemotePack != null) {
-            this.parent.toggleRemoteDeletePending(this.managedRemotePack);
-            updateWidgets();
-            return;
-        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
             this.managedRemotePack = RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).orElse(null);
-            updateWidgets();
+            this.remoteDetailsScroll = 0.0D;
+            this.rebuildWidgets();
             return;
         }
         if (readOnly) return;
@@ -654,10 +686,6 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private Component deleteMessage() {
-        if (this.managedRemotePack != null) {
-            return Component.translatable(parent.isRemoteDeletePending(this.managedRemotePack)
-                    ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
-        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
             return Component.translatable("button.music_and_melody.manage");
         }
@@ -665,9 +693,6 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private Identifier deleteIcon() {
-        if (this.managedRemotePack != null) {
-            return IconButton.icon(parent.isRemoteDeletePending(this.managedRemotePack) ? "restore" : "delete");
-        }
         if (theme != null && RemoteContentManager.owner(theme.theme, RemotePack.Tag.THEME).isPresent()) {
             return IconButton.icon("manage");
         }
@@ -814,6 +839,13 @@ final class ThemeEditorScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         double x = mouseX / MaMDataConfig.get().gui_multiplier;
         double y = mouseY / MaMDataConfig.get().gui_multiplier;
+        if (this.managedRemotePack != null && this.remoteDetailsScrollMax > 0.0D
+                && x >= this.rightX && x < this.rightX + this.rightWidth
+                && y >= PANEL_TOP && y < this.panelBottom - 62) {
+            this.remoteDetailsScroll = Math.max(0.0D, Math.min(this.remoteDetailsScrollMax,
+                    this.remoteDetailsScroll - scrollY * 24.0D));
+            return true;
+        }
         if (this.middleScrollMax > 0.0D && inMiddleViewport(x, y)) {
             setMiddleScroll(this.middleScroll - scrollY * 24.0D);
             return true;
@@ -839,7 +871,11 @@ final class ThemeEditorScreen extends Screen {
                 : Component.translatable("screen.music_and_melody.theme_editor.colours");
         ThemeHelper.text(graphics, this.font, middleHeading, middleX + 8, PANEL_TOP + 14, TEXT_HEADER);
         if (this.managedRemotePack != null) {
-            renderManagedRemoteDetails(graphics, this.managedRemotePack);
+            this.remoteDetailsScrollMax = RemoteDetailsPanel.render(graphics, this.minecraft, this.font, this.managedRemotePack,
+                    this.rightX, this.rightWidth, PANEL_TOP, this.panelBottom,
+                    this.parent.isRemoteDeletePending(this.managedRemotePack), this.remoteDetailsScroll,
+                    this.parent::drawTrackMarquee);
+            this.remoteDetailsScroll = Math.min(this.remoteDetailsScroll, this.remoteDetailsScrollMax);
         } else if (category != Category.MAIN) {
             ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme_editor.value"), rightX + 8, PANEL_TOP + 14, TEXT_HEADER);
         }
@@ -871,37 +907,6 @@ final class ThemeEditorScreen extends Screen {
 
     private void drawMiddleFieldLabel(GuiGraphicsExtractor graphics, Component label, int y, boolean overridden) {
         ThemeHelper.text(graphics, this.font, label, middleX + 8, middleY(y), overridden ? TEXT_PRIMARY : TEXT_DISABLED);
-    }
-
-    private void renderManagedRemoteDetails(GuiGraphicsExtractor graphics, RemotePack pack) {
-        int x = rightX + 8;
-        int width = Math.max(1, rightWidth - 16);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.details"), x, PANEL_TOP + 14, TEXT_HEADER);
-        int iconSize = Math.min(42, width);
-        int iconY = PANEL_TOP + 30;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(pack)),
-                x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        int textX = x + iconSize + 6;
-        int textWidth = Math.max(1, width - iconSize - 6);
-        int titleColour = parent.isRemoteDeletePending(pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
-        drawRemoteDetailValue(graphics, pack.name(), textX, iconY + 1, textWidth, titleColour);
-        drawRemoteDetailValue(graphics, Component.literal(pack.id().toString()), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
-
-        int fieldY = iconY + iconSize + 6;
-        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, fieldY, width);
-        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, fieldY + 26, width);
-        drawRemoteDetailField(graphics, "screen.music_and_melody.remote_details.state",
-                Component.translatable(MusicPlayerScreen.remoteStateTranslationKey(RemoteContentManager.state(pack))), x, fieldY + 52, width);
-    }
-
-    private void drawRemoteDetailField(GuiGraphicsExtractor graphics, String headingKey, Component value, int x, int y, int width) {
-        ThemeHelper.text(graphics, this.font, Component.translatable(headingKey), x, y, TEXT_DESCRIPTION);
-        drawRemoteDetailValue(graphics, value, x, y + 12, width, TEXT_PRIMARY);
-    }
-
-    private void drawRemoteDetailValue(GuiGraphicsExtractor graphics, Component value, int x, int y, int width, int colour) {
-        List<FormattedCharSequence> lines = this.font.split(value, Math.max(1, width));
-        if (!lines.isEmpty()) ThemeHelper.text(graphics, this.font, lines.getFirst(), x, y, colour);
     }
 
     private void renderMiddleScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {

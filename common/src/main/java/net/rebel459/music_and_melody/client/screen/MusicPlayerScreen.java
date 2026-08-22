@@ -156,6 +156,8 @@ public class MusicPlayerScreen extends Screen {
     private String selectedOnlineCatalog;
     private ContentItem viewedContent;
     private RemotePack viewedRemotePack;
+    private double remoteDetailsScroll;
+    private double remoteDetailsScrollMax;
     private Theme viewedTheme;
     private Identifier selectedThemeId;
     private boolean previewingTheme;
@@ -796,7 +798,9 @@ public class MusicPlayerScreen extends Screen {
         int titleColor = this.page == Page.DETAILS && isContentDeletePending(this.viewedContent)
                 ? TEXT_PENDING_DELETION : source.favourite() ? TEXT_FAVOURITE : TEXT_TITLE;
         drawMarquee(graphics, source.name(), cardX + 4, cardY + cardSize - 25, cardSize - 8, titleColor);
-        drawMarquee(graphics, source.id(), cardX + 4, cardY + cardSize - 12, cardSize - 8, TEXT_DESCRIPTION);
+        if (!source.id().getString().isBlank()) {
+            drawMarquee(graphics, source.id(), cardX + 4, cardY + cardSize - 12, cardSize - 8, TEXT_DESCRIPTION);
+        }
     }
 
     private void renderVolumeSlider(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -833,44 +837,10 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderRemoteDetails(GuiGraphicsExtractor graphics, RemotePack pack) {
-        int x = this.rightX + 8;
-        int width = this.rightWidth - 16;
-        int headingY = PANEL_TOP + 14;
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, headingY, TEXT_HEADER);
-
-        int iconSize = Math.min(42, width);
-        int iconY = PANEL_TOP + 30;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(pack)),
-                x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-        int textX = x + iconSize + 6;
-        int textWidth = Math.max(1, width - iconSize - 6);
-        int titleColor = isRemoteDeletePending(pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
-        drawTrackMarquee(graphics, pack.name(), textX, iconY + 1, textWidth, titleColor);
-        drawTrackMarquee(graphics, Component.literal(pack.id().getNamespace() + ":"), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
-        drawTrackMarquee(graphics, Component.literal(pack.id().getPath()), textX, iconY + 25, textWidth, TEXT_DESCRIPTION);
-
-        int fieldY = iconY + iconSize + 5;
-        renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, fieldY, width);
-        renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, fieldY + 26, width);
-        renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.state", remoteStateMessage(RemoteContentManager.state(pack)), x, fieldY + 52, width);
-        List<String> missing = RemoteContentManager.missingDependencies(pack);
-        Component dependencies = pack.dependencies().isEmpty() ? Component.literal("-")
-                : Component.literal(String.join(", ", pack.dependencies()));
-        if (!missing.isEmpty()) dependencies = dependencies.copy().append(Component.literal(" Ã‚Â· ")).append(Component.translatable(
-                "screen.music_and_melody.remote_details.missing_dependencies", String.join(", ", missing)));
-        renderRemoteDetailField(graphics, "screen.music_and_melody.remote_details.dependencies", dependencies, x, fieldY + 78, width);
-
-        int descriptionY = fieldY + 104;
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE),
-                x, descriptionY, TEXT_DESCRIPTION);
-        descriptionY += 12;
-        int descriptionBottom = this.panelBottom - 62;
-        for (FormattedCharSequence line : this.font.split(pack.description(), Math.max(1, width))) {
-            if (descriptionY + this.font.lineHeight > descriptionBottom) break;
-            ThemeHelper.text(graphics, this.font, line, x, descriptionY, TEXT_PRIMARY);
-            descriptionY += this.font.lineHeight + 2;
-        }
-        renderRemoteDownloadProgress(graphics, pack);
+        this.remoteDetailsScrollMax = RemoteDetailsPanel.render(graphics, this.minecraft, this.font, pack,
+                this.rightX, this.rightWidth, PANEL_TOP, this.panelBottom, isRemoteDeletePending(pack),
+                this.remoteDetailsScroll, this::drawTrackMarquee);
+        this.remoteDetailsScroll = Math.min(this.remoteDetailsScroll, this.remoteDetailsScrollMax);
     }
 
     private RemotePack viewedContentRemotePack() {
@@ -1260,6 +1230,13 @@ public class MusicPlayerScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         double x = mouseX / MaMDataConfig.get().gui_multiplier;
         double y = mouseY / MaMDataConfig.get().gui_multiplier;
+        if (this.viewedRemotePack != null && this.remoteDetailsScrollMax > 0.0D
+                && x >= this.rightX && x < this.rightX + this.rightWidth
+                && y >= PANEL_TOP && y < this.panelBottom - 62) {
+            this.remoteDetailsScroll = Math.max(0.0D, Math.min(this.remoteDetailsScrollMax,
+                    this.remoteDetailsScroll - scrollY * 24.0D));
+            return true;
+        }
         if (isWelcomePage() && this.welcomeScrollMax > 0
                 && x >= this.rightX && x < this.rightX + this.rightWidth
                 && y >= this.welcomeViewportTop && y < this.welcomeViewportBottom) {
@@ -1600,6 +1577,7 @@ public class MusicPlayerScreen extends Screen {
     void viewRemotePack(RemotePack pack) {
         closeSearch();
         this.viewedRemotePack = pack;
+        this.remoteDetailsScroll = 0.0D;
         this.rebuildWidgets();
     }
 
@@ -1763,6 +1741,7 @@ public class MusicPlayerScreen extends Screen {
     void manageRemoteContent(Identifier contentId, RemotePack.Tag tag) {
         RemoteContentManager.owner(contentId, tag).ifPresent(pack -> {
             this.viewedRemotePack = pack;
+            this.remoteDetailsScroll = 0.0D;
             this.minecraft.gui.setScreen(this);
             this.rebuildWidgets();
         });
@@ -1795,7 +1774,7 @@ public class MusicPlayerScreen extends Screen {
         if (this.viewedRemotePack != null && this.viewedRemotePack.id().equals(pack.id())) this.rebuildWidgets();
     }
 
-    private static boolean remoteDeleteAvailable(RemotePack pack) {
+    static boolean remoteDeleteAvailable(RemotePack pack) {
         RemoteContentManager.State state = RemoteContentManager.state(pack);
         return state == RemoteContentManager.State.INSTALLED
                 || state == RemoteContentManager.State.UPDATE_AVAILABLE
@@ -1813,7 +1792,7 @@ public class MusicPlayerScreen extends Screen {
         this.rebuildWidgets();
     }
 
-    private Component remoteDeleteMessage(RemotePack pack) {
+    Component remoteDeleteMessage(RemotePack pack) {
         return Component.translatable(isRemoteDeletePending(pack) ? "button.music_and_melody.restore" : "button.music_and_melody.delete");
     }
 
@@ -2015,7 +1994,7 @@ public class MusicPlayerScreen extends Screen {
         Optional<PlaylistHelper.QueueType> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) {
             return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ICON,
-                    Component.literal("custom"),
+                    Component.empty(),
                     sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
         }
         PlaylistHelper.QueueType source = queuedSource.get();
@@ -2158,7 +2137,7 @@ public class MusicPlayerScreen extends Screen {
 
     private static SourceInfo customPlaylistSource() {
         return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ICON,
-                Component.literal("custom"),
+                Component.empty(),
                 sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
     }
 
@@ -2211,7 +2190,7 @@ public class MusicPlayerScreen extends Screen {
         return IconButton.icon(PlaylistHelper.isLoopingQueue() ? "looping" : "loop");
     }
 
-    private static Component remoteActionMessage(RemotePack pack) {
+    static Component remoteActionMessage(RemotePack pack) {
         return switch (RemoteContentManager.state(pack)) {
             case DOWNLOADING -> Component.translatable("button.music_and_melody.downloading");
             case NEEDS_RELOAD -> Component.translatable("button.music_and_melody.reload");
@@ -2222,7 +2201,7 @@ public class MusicPlayerScreen extends Screen {
         };
     }
 
-    private static boolean remoteActionActive(RemotePack pack) {
+    static boolean remoteActionActive(RemotePack pack) {
         RemoteContentManager.State state = RemoteContentManager.state(pack);
         return RemoteContentManager.missingDependencies(pack).isEmpty()
                 && state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
@@ -2284,7 +2263,7 @@ public class MusicPlayerScreen extends Screen {
             return;
         }
 
-        int travel = textWidth - width;
+        int travel = textWidth - width + this.font.width(" ");
         long pause = 850L;
         long move = Math.max(1L, travel * 42L);
         long cycle = pause * 2L + move * 2L;
@@ -2301,14 +2280,14 @@ public class MusicPlayerScreen extends Screen {
         graphics.disableScissor();
     }
 
-    private void drawTrackMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
+    void drawTrackMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         int textWidth = this.font.width(text);
         if (textWidth <= width) {
             ThemeHelper.text(graphics, this.font, text, x, y, color);
             return;
         }
 
-        int travel = textWidth - width;
+        int travel = textWidth - width + this.font.width(" ");
         long pause = 850L;
         long move = Math.max(1L, travel * 42L);
         long cycle = pause * 2L + move * 2L;
@@ -3720,8 +3699,11 @@ public class MusicPlayerScreen extends Screen {
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 16;
             int titleColor = this.screen.isRemoteDeletePending(this.pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
             this.screen.drawTrackMarquee(graphics, this.pack.name(), textX, this.getContentYMiddle() - 10, Math.max(1, textWidth), titleColor);
+            Component state = RemoteContentManager.missingDependencies(this.pack).isEmpty()
+                    ? remoteStateMessage(RemoteContentManager.state(this.pack))
+                    : Component.translatable("screen.music_and_melody.remote_details.missing_dependencies_status");
             Component details = Component.translatable("screen.music_and_melody.content_details",
-                    remoteTypeMessage(this.pack), remoteStateMessage(RemoteContentManager.state(this.pack)));
+                    remoteTypeMessage(this.pack), state);
             this.screen.drawTrackMarquee(graphics, details, textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             updateAction();
             this.actionButton.setX(this.getContentRight() - IconButton.SIZE - 3);
