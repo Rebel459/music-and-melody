@@ -5,9 +5,8 @@ import net.minecraft.client.resources.sounds.SoundEventRegistration;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +28,7 @@ public class SoundManagerPreparationsMixin {
 
     @Inject(method = "listResources", at = @At("RETURN"))
     private void addConfigAlbumSounds(ResourceManager resourceManager, CallbackInfo ci) {
-        ConfigAlbum.addSoundResources(this.soundCache);
+        CustomAlbums.addSoundResources(this.soundCache);
     }
 
     @Inject(method = "handleRegistration", at = @At("HEAD"), cancellable = true)

@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.config;
+package net.rebel459.music_and_melody.client.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,7 +15,6 @@ import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -36,12 +35,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
-/** User-managed albums stored outside resource packs. */
-public final class ConfigAlbum {
+public final class CustomAlbums {
 
     public static final Identifier MOD_DISCS_ID = Identifier.fromNamespaceAndPath("config", "mod_discs");
     private static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
@@ -56,9 +56,8 @@ public final class ConfigAlbum {
     private static final Map<Identifier, List<String>> TRACK_FILES = new HashMap<>();
     private static final Map<Identifier, Identifier> DYNAMIC_ICONS = new HashMap<>();
 
-    private ConfigAlbum() {}
+    private CustomAlbums() {}
 
-    /** Called with the albums resource listener, after pack-defined albums have been collected. */
     public static synchronized List<Album> createAlbums(Set<Identifier> registeredDiscs) {
         reload();
         List<Album> albums = new ArrayList<>();
@@ -100,7 +99,6 @@ public final class ConfigAlbum {
         return Optional.ofNullable(FILES.get(id));
     }
 
-    /** Expands config folder references for both config and resource-pack album records. */
     public static synchronized List<String> tracksInFolder(SafeIdentifier folder) {
         reload();
         return tracksInFolderLoaded(folder);
@@ -115,7 +113,6 @@ public final class ConfigAlbum {
                 .toList();
     }
 
-    /** Config album ids are already directly playable in the new layout. */
     public static SafeIdentifier playableId(SafeIdentifier id) {
         return id;
     }
@@ -198,7 +195,7 @@ public final class ConfigAlbum {
         if (icon == null) return DEFAULT_ICON;
         if (!icon.getNamespace().equals("config") || !icon.getPath().toLowerCase(Locale.ROOT).endsWith(".png")) return icon;
         Identifier loaded;
-        synchronized (ConfigAlbum.class) {
+        synchronized (CustomAlbums.class) {
             loaded = DYNAMIC_ICONS.get(icon);
         }
         if (loaded != null) return loaded;
@@ -208,7 +205,7 @@ public final class ConfigAlbum {
             NativeImage image = NativeImage.read(Files.newInputStream(iconFile));
             Identifier dynamic = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "config_icons/" + icon.getPath());
             minecraft.getTextureManager().register(dynamic, new DynamicTexture(() -> "Config icon " + icon, image));
-            synchronized (ConfigAlbum.class) {
+            synchronized (CustomAlbums.class) {
                 DYNAMIC_ICONS.put(icon, dynamic);
             }
             return dynamic;
@@ -299,7 +296,7 @@ public final class ConfigAlbum {
                     .filter(path -> path.getFileName().toString().equalsIgnoreCase(ALBUM_FILE))
                     .map(Path::getParent)
                     .sorted(Comparator.comparing(path -> path.toString(), String.CASE_INSENSITIVE_ORDER))
-                    .forEach(ConfigAlbum::loadAlbum);
+                    .forEach(CustomAlbums::loadAlbum);
         } catch (IOException ignored) {
         }
     }
@@ -313,7 +310,7 @@ public final class ConfigAlbum {
         METADATA.put(metadata.id(), metadata);
         List<Path> files;
         try (var stream = Files.walk(directory)) {
-            files = stream.filter(Files::isRegularFile).filter(ConfigAlbum::isSupportedAudio)
+            files = stream.filter(Files::isRegularFile).filter(CustomAlbums::isSupportedAudio)
                     .sorted(Comparator.comparing(path -> path.getFileName().toString(), String.CASE_INSENSITIVE_ORDER)).toList();
         } catch (IOException ignored) {
             return;

@@ -17,7 +17,6 @@ import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** Selects the saved config playlist that the current custom queue should replace. */
 final class ReplacePlaylistScreen extends Screen {
 
     private final MusicPlayerScreen parent;

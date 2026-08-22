@@ -9,7 +9,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,7 +78,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             this.loadedAlbums.add(album);
         }
 
-        this.loadedAlbums.addAll(ConfigAlbum.createAlbums(registeredDiscs));
+        this.loadedAlbums.addAll(CustomAlbums.createAlbums(registeredDiscs));
     }
 
     private static TrackSet expandTracks(
@@ -132,7 +132,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 
         tracks.addAll(resourceFolderTracks(folderId, resourceManager));
-        tracks.addAll(ConfigAlbum.tracksInFolder(folderId));
+        tracks.addAll(CustomAlbums.tracksInFolder(folderId));
         if (RemoteContentManager.isDownloaded(albumId, net.rebel459.music_and_melody.client.remote.RemotePack.Tag.ALBUM)) {
             tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
         }

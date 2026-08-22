@@ -8,9 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
-import net.rebel459.music_and_melody.client.Album.Disc;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.HashSet;
@@ -49,7 +48,7 @@ public class Album {
     }
 
     public boolean isEnabled() {
-        if (ConfigAlbum.isConfigAlbum(this)) return true;
+        if (CustomAlbums.isConfigAlbum(this)) return true;
         return !MaMDataConfig.get().albums.disabled_albums.contains(this.album.toString());
     }
 
@@ -73,7 +72,7 @@ public class Album {
     }
 
     public void setEnabled(boolean enabled) {
-        if (ConfigAlbum.isConfigAlbum(this)) return;
+        if (CustomAlbums.isConfigAlbum(this)) return;
         String id = this.album.toString();
         MaMDataConfig config = MaMDataConfig.get();
 
@@ -97,7 +96,7 @@ public class Album {
     }
 
     public boolean isTrackEnabled(String song) {
-        if (ConfigAlbum.isConfigAlbum(this)) return true;
+        if (CustomAlbums.isConfigAlbum(this)) return true;
         String id = trackId(song).toString();
         return this.forcedEnabledTracks.contains(id) || !MaMDataConfig.get().albums.disabled_tracks.contains(id);
     }
@@ -107,7 +106,7 @@ public class Album {
     }
 
     public void setTrackEnabled(String song, boolean enabled) {
-        if (ConfigAlbum.isConfigAlbum(this)) return;
+        if (CustomAlbums.isConfigAlbum(this)) return;
         if (isTrackForcedEnabled(song)) return;
         String id = trackId(song).toString();
         MaMDataConfig config = MaMDataConfig.get();

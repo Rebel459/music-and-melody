@@ -189,7 +189,7 @@
   "screen.music_and_melody.event_editor.priority.very_high": "Very High",
   "screen.music_and_melody.save_playlist": "Save Playlist",
   "screen.music_and_melody.replace_playlist": "Replace Playlist",
-  "screen.music_and_melody.manage_album": "Manage Album",
+  "screen.music_and_melody.edit_album": "Edit Album",
   "screen.music_and_melody.album_tracks": "Tracks (%s)",
   "screen.music_and_melody.album_import_music": "Import Music",
   "screen.music_and_melody.save_playlist.name": "Playlist Name",

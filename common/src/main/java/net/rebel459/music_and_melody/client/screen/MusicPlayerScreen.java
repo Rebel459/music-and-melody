@@ -39,7 +39,7 @@ import net.rebel459.music_and_melody.client.util.EventHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
 
@@ -882,7 +882,7 @@ public class MusicPlayerScreen extends Screen {
     private boolean viewedContentDeleteable() {
         if (this.viewedContent == null) return false;
         return this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()
-                || this.viewedContent.album() != null && ConfigAlbum.isConfigAlbum(this.viewedContent.album());
+                || this.viewedContent.album() != null && CustomAlbums.isConfigAlbum(this.viewedContent.album());
     }
 
     private boolean viewedContentDeletePending() {
@@ -890,7 +890,7 @@ public class MusicPlayerScreen extends Screen {
         if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) {
             return this.pendingPlaylistDeletes.contains(this.viewedContent.id());
         }
-        if (this.viewedContent.album() != null && ConfigAlbum.isConfigAlbum(this.viewedContent.album())) {
+        if (this.viewedContent.album() != null && CustomAlbums.isConfigAlbum(this.viewedContent.album())) {
             return this.pendingConfigAlbumDeletes.contains(this.viewedContent.id());
         }
         RemotePack pack = viewedContentRemotePack();
@@ -910,7 +910,7 @@ public class MusicPlayerScreen extends Screen {
         if (!viewedContentDeleteable()) return;
         if (this.viewedContent.playlist() != null && this.viewedContent.playlist().isCustom()) {
             if (!this.pendingPlaylistDeletes.remove(this.viewedContent.id())) this.pendingPlaylistDeletes.add(this.viewedContent.id());
-        } else if (this.viewedContent.album() != null && ConfigAlbum.isConfigAlbum(this.viewedContent.album())) {
+        } else if (this.viewedContent.album() != null && CustomAlbums.isConfigAlbum(this.viewedContent.album())) {
             if (!this.pendingConfigAlbumDeletes.remove(this.viewedContent.id())) this.pendingConfigAlbumDeletes.add(this.viewedContent.id());
         } else {
             RemotePack pack = viewedContentRemotePack();
@@ -1092,7 +1092,7 @@ public class MusicPlayerScreen extends Screen {
 
     private void openConfigAlbumEditor(Album album) {
         closeSearch();
-        this.minecraft.gui.setScreen(album == null ? new ConfigAlbumEditorScreen(this) : new ConfigAlbumEditorScreen(this, album.album));
+        this.minecraft.gui.setScreen(album == null ? new AlbumEditorScreen(this) : new AlbumEditorScreen(this, album.album));
     }
 
     void configAlbumsChanged() {
@@ -1436,7 +1436,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void toggleAlbumEnabled(Album album) {
-        if (album == null || ConfigAlbum.isConfigAlbum(album)) return;
+        if (album == null || CustomAlbums.isConfigAlbum(album)) return;
         album.setEnabled(!album.isEnabled());
         this.reloadPending = true;
         if (this.libraryList != null) this.libraryList.refresh();
@@ -1838,7 +1838,7 @@ public class MusicPlayerScreen extends Screen {
     private boolean isContentDeletePending(ContentItem item) {
         if (item == null) return false;
         if (item.playlist() != null && item.playlist().isCustom()) return this.pendingPlaylistDeletes.contains(item.id());
-        if (item.album() != null && ConfigAlbum.isConfigAlbum(item.album())) return this.pendingConfigAlbumDeletes.contains(item.id());
+        if (item.album() != null && CustomAlbums.isConfigAlbum(item.album())) return this.pendingConfigAlbumDeletes.contains(item.id());
         RemotePack.Tag tag = item.playlist() == null ? RemotePack.Tag.ALBUM : RemotePack.Tag.PLAYLIST;
         RemotePack pack = RemoteContentManager.owner(item.id(), tag).orElse(null);
         return pack != null && this.pendingRemoteDeletes.contains(pack.key());
@@ -1854,7 +1854,7 @@ public class MusicPlayerScreen extends Screen {
 
     private void applyPendingConfigAlbumDeletes() {
         if (this.pendingConfigAlbumDeletes.isEmpty()) return;
-        for (Identifier id : List.copyOf(this.pendingConfigAlbumDeletes)) ConfigAlbum.delete(id);
+        for (Identifier id : List.copyOf(this.pendingConfigAlbumDeletes)) CustomAlbums.delete(id);
         this.pendingConfigAlbumDeletes.clear();
         this.reloadPending = true;
     }
@@ -2047,7 +2047,7 @@ public class MusicPlayerScreen extends Screen {
 
     private static String originKeyFor(Identifier id, Playlist playlist) {
         if (playlist != null && playlist.isCustom()) return "custom";
-        if (playlist == null && ConfigAlbum.isConfigAlbum(id)) return "custom";
+        if (playlist == null && CustomAlbums.isConfigAlbum(id)) return "custom";
         RemotePack.Tag tag = playlist == null ? RemotePack.Tag.ALBUM : RemotePack.Tag.PLAYLIST;
         return RemoteContentManager.isDownloaded(id, tag) ? "downloaded" : "built_in";
     }
@@ -2076,7 +2076,7 @@ public class MusicPlayerScreen extends Screen {
             if (matchesLibrary(item)) items.add(item);
         }
         items.sort(Comparator.comparing(item -> item.name().getString(), String.CASE_INSENSITIVE_ORDER));
-        items.sort(Comparator.comparingInt(item -> item.album() != null && item.album().album.equals(ConfigAlbum.MOD_DISCS_ID) ? 1 : 0));
+        items.sort(Comparator.comparingInt(item -> item.album() != null && item.album().album.equals(CustomAlbums.MOD_DISCS_ID) ? 1 : 0));
         return items;
     }
 
@@ -2483,8 +2483,8 @@ public class MusicPlayerScreen extends Screen {
                 case CUSTOM -> "custom".equals(originKeyFor(item.id(), item.playlist()));
                 case FAVOURITED -> item.favourite();
                 case DOWNLOADED -> "downloaded".equals(originKeyFor(item.id(), item.playlist()));
-                case ENABLED -> item.album() != null && !ConfigAlbum.isConfigAlbum(item.album()) && item.album().isEnabled();
-                case DISABLED -> item.album() != null && !ConfigAlbum.isConfigAlbum(item.album()) && !item.album().isEnabled();
+                case ENABLED -> item.album() != null && !CustomAlbums.isConfigAlbum(item.album()) && item.album().isEnabled();
+                case DISABLED -> item.album() != null && !CustomAlbums.isConfigAlbum(item.album()) && !item.album().isEnabled();
             };
         }
     }
@@ -2782,19 +2782,19 @@ public class MusicPlayerScreen extends Screen {
         }
 
         private void addAlbum(Album album, List<SafeIdentifier> queue) {
-            if (ConfigAlbum.isConfigAlbum(album)) {
+            if (CustomAlbums.isConfigAlbum(album)) {
                 this.addEntry(ContentTrackEntry.manage(this.screen, this.minecraft, () -> this.screen.openConfigAlbumEditor(album)));
             }
             boolean tracksHeader = false;
             for (String track : album.tracks) {
                 SafeIdentifier song = album.trackId(track);
-                TrackStatus status = ConfigAlbum.isConfigAlbum(album) ? null : TrackStatus.forAlbumTrack(album, track);
+                TrackStatus status = CustomAlbums.isConfigAlbum(album) ? null : TrackStatus.forAlbumTrack(album, track);
                 if (!matches(song, MusicScreenHelper.trackName(album, track))) continue;
                 if (!tracksHeader) {
                     this.addEntry(ContentTrackEntry.header(this.minecraft, Component.translatable("screen.music_and_melody.album_details.tracks")));
                     tracksHeader = true;
                 }
-                addSong(queue.indexOf(song), song, status, ConfigAlbum.isConfigAlbum(album));
+                addSong(queue.indexOf(song), song, status, CustomAlbums.isConfigAlbum(album));
             }
 
             boolean discsHeader = false;
@@ -2901,7 +2901,7 @@ public class MusicPlayerScreen extends Screen {
             this.status = null;
             this.addButton = null;
             this.toggleButton = null;
-            this.manageButton = new WorkspaceButton(0, 0, 1, 20, Component.translatable("screen.music_and_melody.manage_album"), false,
+            this.manageButton = new WorkspaceButton(0, 0, 1, 20, Component.translatable("screen.music_and_melody.edit_album"), false,
                     ignored -> action.run());
             this.configTrack = false;
         }
@@ -3349,12 +3349,12 @@ public class MusicPlayerScreen extends Screen {
             this.minecraft = minecraft;
             this.item = item;
             this.favouriteButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.favourite"), IconButton.icon(item.favourite() ? "favourited" : "favourite"), ignored -> this.screen.toggleFavourite(this.item));
-            this.albumEnabledButton = item.album() == null || ConfigAlbum.isConfigAlbum(item.album()) ? null : IconButton.createListIcon(
+            this.albumEnabledButton = item.album() == null || CustomAlbums.isConfigAlbum(item.album()) ? null : IconButton.createListIcon(
                     Component.translatable(item.album().isEnabled() ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled"),
                     IconButton.icon(item.album().isEnabled() ? "enabled" : "disabled"),
                     ignored -> this.screen.toggleAlbumEnabled(this.item.album()));
             boolean custom = item.playlist() != null && item.playlist().isCustom()
-                    || item.album() != null && ConfigAlbum.isConfigAlbum(item.album());
+                    || item.album() != null && CustomAlbums.isConfigAlbum(item.album());
             this.contentOriginIcon = item.playlist() != null || custom ? IconButton.icon(custom ? "config" : "built_in") : null;
         }
 
@@ -3391,7 +3391,7 @@ public class MusicPlayerScreen extends Screen {
                 this.albumEnabledButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             } else if (this.contentOriginIcon != null) {
                 boolean custom = this.item.playlist() != null && this.item.playlist().isCustom()
-                        || this.item.album() != null && ConfigAlbum.isConfigAlbum(this.item.album());
+                        || this.item.album() != null && CustomAlbums.isConfigAlbum(this.item.album());
                 IconButton.renderIconWithTooltip(graphics, this.contentOriginIcon, favouriteX - IconButton.SIZE - 4,
                         this.getContentYMiddle() - IconButton.SIZE / 2,
                         Component.translatable(custom ? "screen.music_and_melody.content_origin.custom" : "screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);

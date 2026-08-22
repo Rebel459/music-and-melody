@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.nio.file.Path;
@@ -22,8 +22,7 @@ import java.util.Set;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** Creation and management UI for local config albums. */
-final class ConfigAlbumEditorScreen extends Screen {
+final class AlbumEditorScreen extends Screen {
 
     private final MusicPlayerScreen parent;
     private final Identifier albumId;
@@ -39,15 +38,15 @@ final class ConfigAlbumEditorScreen extends Screen {
     private int layoutWidth;
     private int layoutHeight;
 
-    ConfigAlbumEditorScreen(MusicPlayerScreen parent) {
+    AlbumEditorScreen(MusicPlayerScreen parent) {
         this(parent, null);
     }
 
-    ConfigAlbumEditorScreen(MusicPlayerScreen parent, Identifier albumId) {
-        super(Component.translatable(albumId == null ? "button.music_and_melody.new_album" : "screen.music_and_melody.manage_album"));
+    AlbumEditorScreen(MusicPlayerScreen parent, Identifier albumId) {
+        super(Component.translatable(albumId == null ? "button.music_and_melody.new_album" : "screen.music_and_melody.edit_album"));
         this.parent = parent;
         this.albumId = albumId;
-        this.existingTracks = albumId == null ? List.of() : ConfigAlbum.trackFiles(albumId);
+        this.existingTracks = albumId == null ? List.of() : CustomAlbums.trackFiles(albumId);
     }
 
     @Override
@@ -58,7 +57,7 @@ final class ConfigAlbumEditorScreen extends Screen {
         int y = panelY();
         int fieldX = x + 12;
         int fieldWidth = panelWidth() - 24;
-        ConfigAlbum.Metadata metadata = this.albumId == null ? null : ConfigAlbum.metadata(this.albumId).orElse(null);
+        CustomAlbums.Metadata metadata = this.albumId == null ? null : CustomAlbums.metadata(this.albumId).orElse(null);
 
         this.nameField = field(Component.translatable("screen.music_and_melody.name"), fieldX, y + 42, fieldWidth);
         this.nameField.setMaxLength(80);
@@ -101,7 +100,7 @@ final class ConfigAlbumEditorScreen extends Screen {
     }
 
     private void selectMusic() {
-        ConfigAlbum.chooseAudioFiles(files -> {
+        CustomAlbums.chooseAudioFiles(files -> {
             this.addedTracks.addAll(files);
             refreshTrackList();
             refreshSaveState();
@@ -111,8 +110,8 @@ final class ConfigAlbumEditorScreen extends Screen {
     private void save() {
         List<Path> keptAddedTracks = this.addedTracks.stream().filter(track -> !this.removedAddedTracks.contains(track)).toList();
         boolean saved = this.albumId == null
-                ? ConfigAlbum.create(this.nameField.getValue(), this.iconField.getValue(), this.identifierField.getValue(), keptAddedTracks)
-                : ConfigAlbum.update(this.albumId, this.nameField.getValue(), this.iconField.getValue(), keptAddedTracks, this.removedTracks);
+                ? CustomAlbums.create(this.nameField.getValue(), this.iconField.getValue(), this.identifierField.getValue(), keptAddedTracks)
+                : CustomAlbums.update(this.albumId, this.nameField.getValue(), this.iconField.getValue(), keptAddedTracks, this.removedTracks);
         if (saved) finish();
     }
 
@@ -129,17 +128,17 @@ final class ConfigAlbumEditorScreen extends Screen {
         if (this.saveButton == null) return;
         boolean hasTracks = this.addedTracks.stream().anyMatch(track -> !this.removedAddedTracks.contains(track))
                 || this.existingTracks.stream().anyMatch(track -> !this.removedTracks.contains(track));
-        boolean identifierValid = this.albumId != null || ConfigAlbum.canUseIdentifier(this.identifierField.getValue().isBlank() ? this.nameField.getValue() : this.identifierField.getValue());
+        boolean identifierValid = this.albumId != null || CustomAlbums.canUseIdentifier(this.identifierField.getValue().isBlank() ? this.nameField.getValue() : this.identifierField.getValue());
         this.saveButton.active = !this.nameField.getValue().trim().isEmpty() && hasTracks && identifierValid && validIcon();
     }
 
     private boolean validIcon() {
-        return ConfigAlbum.validIconInput(this.iconField.getValue());
+        return CustomAlbums.validIconInput(this.iconField.getValue());
     }
 
     private void updateIdentifierHint() {
         if (this.identifierField == null || this.albumId != null) return;
-        String preview = ConfigAlbum.previewIdentifier(this.nameField.getValue());
+        String preview = CustomAlbums.previewIdentifier(this.nameField.getValue());
         this.identifierField.setHint(preview.isBlank() ? Component.empty() : Component.literal(preview).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
     }
 
