@@ -16,7 +16,6 @@ import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 import java.util.List;
 
-/** A focused confirmation before replacing a non-empty Custom Playlist. */
 final class PlaylistConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 110;
@@ -67,8 +66,6 @@ final class PlaylistConfirmScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // Keep the workspace visible beneath the confirmation instead of
-        // replacing it with the normal full-screen screen background.
         this.parent.extractRenderState(graphics, -1, -1, tickDelta);
         IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
         graphics.pose().pushMatrix();
@@ -82,18 +79,14 @@ final class PlaylistConfirmScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // The workspace is rendered manually beneath this modal. Suppressing
-        // Screen's own background also avoids requesting a second blur pass
-        // when another UI layer is already blurred this frame.
-    }
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
 
     private void renderPopup(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int width = dialogWidth();
         int x = dialogX();
         int y = dialogY();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, POPUP_OUTLINE);

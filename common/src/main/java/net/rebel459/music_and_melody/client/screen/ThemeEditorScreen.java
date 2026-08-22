@@ -26,7 +26,7 @@ import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.EnumMap;
 import net.minecraft.util.FormattedCharSequence;
-import java.util.LinkedHashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +35,6 @@ import java.util.EnumSet;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** Three-panel editor for a custom theme, and a read-only preview for other themes. */
 final class ThemeEditorScreen extends Screen {
 
     private static final int OUTER_MARGIN = 10;
@@ -232,9 +231,6 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private EditBox field(Component message, int x, int y, int width) {
-        // IDs, metadata, and texture paths are ordinary text values. Keep
-        // them visually consistent with the event editor's text fields;
-        // colour values alone use the colour editor below.
         EditBox field = this.addRenderableWidget(new ExampleHintEditBox(this.font, x, y, width, 20, message));
         field.setMaxLength(512);
         return field;
@@ -343,7 +339,6 @@ final class ThemeEditorScreen extends Screen {
 
     private void updateMiddleScroll() {
         this.middleViewportTop = PANEL_TOP + 32;
-        // Keep the viewport (and its scrollbar) inside the upper middle panel.
         this.middleViewportBottom = Math.max(this.middleViewportTop + 20,
                 this.bottomPanelTop - PANEL_GAP - 2);
         int contentBottom = switch (this.category) {
@@ -832,7 +827,7 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private void renderShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        graphics.fill(0, 0, layoutWidth, layoutHeight, SCREEN_BACKGROUND);
+        graphics.fill(0, 0, layoutWidth, layoutHeight, BACKGROUND);
         drawPanel(graphics, leftX, PANEL_TOP, leftWidth, panelBottom - PANEL_TOP);
         drawPanel(graphics, middleX, PANEL_TOP, middleWidth, bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, middleX, bottomPanelTop, middleWidth, panelBottom - bottomPanelTop);
@@ -1126,8 +1121,7 @@ final class ThemeEditorScreen extends Screen {
             int handleX = x + filled;
             graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
             var font = Minecraft.getInstance().font;
-            ThemeHelper.text(graphics, font, this.getMessage(), x + (width - font.width(this.getMessage())) / 2,
-                    y + (height - 8) / 2, overriddenRoles.contains(selectedRole) ? TEXT_PRIMARY : TEXT_DISABLED, TEXT_SHADOW);
+            ThemeHelper.text(graphics, font, this.getMessage(), x + (width - font.width(this.getMessage())) / 2, y + (height - 8) / 2, overriddenRoles.contains(selectedRole) ? TEXT_PRIMARY : TEXT_DISABLED);
         }
     }
 

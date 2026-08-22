@@ -10,8 +10,7 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import java.util.List;
 import java.util.Optional;
 
-/** A resolved, usable theme together with its original decoded JSON record. */
-public final class Theme {
+public class Theme {
 
     public static final Identifier DEFAULT_ID = MusicAndMelody.id("default");
     public static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
@@ -28,8 +27,7 @@ public final class Theme {
     public final boolean valid;
     public final List<String> errors;
 
-    public Theme(Identifier theme, Component name, Component description, Identifier icon, Identifier parent,
-                 Panels panels, Elements elements, Text text, Record record, boolean valid, List<String> errors) {
+    public Theme(Identifier theme, Component name, Component description, Identifier icon, Identifier parent, Panels panels, Elements elements, Text text, Record record, boolean valid, List<String> errors) {
         this.theme = theme;
         this.name = name;
         this.description = description;
@@ -47,33 +45,13 @@ public final class Theme {
         return this.theme != null && "config".equals(this.theme.getNamespace());
     }
 
-    /** Fully resolved panel colours. */
-    public record Panels(String background, String panelBackground, String panelOutline, String panelHighlight,
-                         String popupPanelBackground, String popupOutline, String popupOverlay) {
-    }
+    public record Panels(String background, String panelBackground, String panelOutline, String panelHighlight, String popupPanelBackground, String popupOutline, String popupOverlay) {}
 
-    /** Fully resolved interactive-element colours and button rendering mode. */
-    public record Elements(String buttonBackground, String buttonHighlight, String buttonDisabled,
-                           String outline, String barBackground, String barThumb, boolean buttonTextures) {
-    }
+    public record Elements(String buttonBackground, String buttonHighlight, String buttonDisabled, String outline, String barBackground, String barThumb, boolean buttonTextures) {}
 
-    /** Fully resolved text colours and button/bar label rendering mode. */
-    public record Text(String selected, String title, String primary, String primaryHighlight,
-                       String description, String header, String headerSecondary, String favourite,
-                       String example, String disabled, String warning, boolean shadow) {
-    }
+    public record Text(String selected, String title, String primary, String primaryHighlight, String description, String header, String headerSecondary, String favourite, String example, String disabled, String warning, boolean shadow) {}
 
-    /**
-     * Raw decoded theme data. Visual fields are optional so a child theme can
-     * inherit them from its parent; metadata remains optional so incomplete
-     * records can still be displayed and corrected in the editor. Colour
-     * values remain strings here so parseable but invalid entries can still be
-     * displayed and corrected in the editor.
-     */
-    public record Record(Identifier id, Optional<Component> name, Optional<Component> description,
-                         Optional<String> icon, Optional<String> parent, Optional<RawPanels> panels,
-                         Optional<RawElements> elements, Optional<RawText> text) {
-
+    public record Record(Identifier id, Optional<Component> name, Optional<Component> description, Optional<String> icon, Optional<String> parent, Optional<RawPanels> panels, Optional<RawElements> elements, Optional<RawText> text) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(Record::name),
                 ComponentSerialization.CODEC.optionalFieldOf("description").forGetter(Record::description),
@@ -91,11 +69,7 @@ public final class Theme {
         }
     }
 
-    public record RawPanels(Optional<String> background, Optional<String> panelBackground,
-                            Optional<String> panelOutline, Optional<String> panelHighlight,
-                            Optional<String> popupPanelBackground, Optional<String> popupOutline,
-                            Optional<String> popupOverlay) {
-
+    public record RawPanels(Optional<String> background, Optional<String> panelBackground, Optional<String> panelOutline, Optional<String> panelHighlight, Optional<String> popupPanelBackground, Optional<String> popupOutline, Optional<String> popupOverlay) {
         public static final Codec<RawPanels> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("background").forGetter(RawPanels::background),
                 Codec.STRING.optionalFieldOf("panel_background").forGetter(RawPanels::panelBackground),
@@ -107,11 +81,7 @@ public final class Theme {
         ).apply(instance, RawPanels::new));
     }
 
-    public record RawElements(Optional<String> buttonBackground, Optional<String> buttonHighlight,
-                              Optional<String> buttonDisabled, Optional<String> outline,
-                              Optional<String> barBackground, Optional<String> barThumb,
-                              Optional<Boolean> buttonTextures) {
-
+    public record RawElements(Optional<String> buttonBackground, Optional<String> buttonHighlight, Optional<String> buttonDisabled, Optional<String> outline, Optional<String> barBackground, Optional<String> barThumb, Optional<Boolean> buttonTextures) {
         public static final Codec<RawElements> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("button_background").forGetter(RawElements::buttonBackground),
                 Codec.STRING.optionalFieldOf("button_highlight").forGetter(RawElements::buttonHighlight),
@@ -123,11 +93,7 @@ public final class Theme {
         ).apply(instance, RawElements::new));
     }
 
-    public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary,
-                          Optional<String> primaryHighlight, Optional<String> description, Optional<String> header,
-                          Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example,
-                          Optional<String> disabled, Optional<String> warning, Optional<Boolean> shadow) {
-
+    public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary, Optional<String> primaryHighlight, Optional<String> description, Optional<String> header, Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example, Optional<String> disabled, Optional<String> warning, Optional<Boolean> shadow) {
         public static final Codec<RawText> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("selected").forGetter(RawText::selected),
                 Codec.STRING.optionalFieldOf("title").forGetter(RawText::title),

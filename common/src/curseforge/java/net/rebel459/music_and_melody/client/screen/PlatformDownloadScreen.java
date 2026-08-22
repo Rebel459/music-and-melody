@@ -18,7 +18,6 @@ import java.nio.file.Path;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** CurseForge's manual ZIP-download flow, presented in the workspace modal style. */
 public final class PlatformDownloadScreen extends Screen {
 
     private final MusicPlayerScreen parent;
@@ -79,9 +78,7 @@ public final class PlatformDownloadScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // The parent workspace supplies the visible background beneath this modal.
-    }
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
@@ -102,8 +99,8 @@ public final class PlatformDownloadScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);

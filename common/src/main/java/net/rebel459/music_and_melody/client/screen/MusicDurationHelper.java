@@ -7,8 +7,8 @@ import net.minecraft.client.sounds.JOrbisAudioStream;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
+import net.rebel459.music_and_melody.client.util.AudioStreams;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
-import net.rebel459.music_and_melody.client.util.ExternalAudioStreams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,12 +23,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sound.sampled.AudioFormat;
 
-/** Small OGG/Vorbis duration reader used by the non-seekable player timeline. */
 final class MusicDurationHelper {
 
-    /** Successful reads only: resources may not be registered on the first frame. */
+    // Successful reads only: resources may not be registered on the first frame
     private static final Map<Identifier, Long> DURATIONS = new ConcurrentHashMap<>();
-    /** Duration probes run off the render thread; a long OGG must not stall the player UI. */
+    // Duration probes run off the render thread; a long OGG must not stall the player UI
     private static final Map<Identifier, CompletableFuture<Optional<Long>>> PENDING = new ConcurrentHashMap<>();
     private static final Map<Identifier, Long> RETRY_AFTER = new ConcurrentHashMap<>();
     private static final long FAILED_PROBE_RETRY_DELAY = 1_000L;
@@ -146,7 +145,7 @@ final class MusicDurationHelper {
         Optional<java.nio.file.Path> direct = DirectSoundFiles.get(location);
         if (direct.isPresent() && !direct.get().getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
             input.close();
-            return ExternalAudioStreams.open(direct.get());
+            return AudioStreams.open(direct.get());
         }
         return new JOrbisAudioStream(input);
     }
@@ -188,16 +187,11 @@ final class MusicDurationHelper {
 
     private static int sampleRate(byte[] packet) {
         // Vorbis identification header: packet type, "vorbis", version, channels, rate.
-        if (packet.length >= 16
-                && packet[0] == 1
-                && packet[1] == 'v' && packet[2] == 'o' && packet[3] == 'r'
-                && packet[4] == 'b' && packet[5] == 'i' && packet[6] == 's') {
+        if (packet.length >= 16 && packet[0] == 1 && packet[1] == 'v' && packet[2] == 'o' && packet[3] == 'r' && packet[4] == 'b' && packet[5] == 'i' && packet[6] == 's') {
             return littleEndianInt(packet, 12);
         }
         // Opus specifies a fixed 48 kHz output rate; accepting it makes remote content future-safe.
-        if (packet.length >= 19
-                && packet[0] == 'O' && packet[1] == 'p' && packet[2] == 'u' && packet[3] == 's'
-                && packet[4] == 'H' && packet[5] == 'e' && packet[6] == 'a' && packet[7] == 'd') {
+        if (packet.length >= 19 && packet[0] == 'O' && packet[1] == 'p' && packet[2] == 'u' && packet[3] == 's' && packet[4] == 'H' && packet[5] == 'e' && packet[6] == 'a' && packet[7] == 'd') {
             return 48_000;
         }
         return 0;

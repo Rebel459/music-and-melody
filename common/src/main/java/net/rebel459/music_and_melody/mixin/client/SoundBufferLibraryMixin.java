@@ -4,8 +4,8 @@ import com.mojang.blaze3d.audio.SoundBuffer;
 import net.minecraft.client.sounds.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
+import net.rebel459.music_and_melody.client.util.AudioStreams;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
-import net.rebel459.music_and_melody.client.util.ExternalAudioStreams;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -39,7 +39,7 @@ public abstract class SoundBufferLibraryMixin {
 			CompletableFuture<SoundBuffer> future = this.cache.computeIfAbsent(location, ignored ->
 					CompletableFuture.supplyAsync(() -> {
 						try (AudioStream audioStream = openDirectStream(path, false)) {
-							ByteBuffer data = ExternalAudioStreams.readAll(audioStream);
+							ByteBuffer data = AudioStreams.readAll(audioStream);
 							return new SoundBuffer(data, audioStream.getFormat());
 						} catch (IOException exception) {
 							throw new CompletionException(exception);
@@ -110,8 +110,8 @@ public abstract class SoundBufferLibraryMixin {
 	}
 
 	private static AudioStream openDirectStream(java.nio.file.Path path, boolean looping) throws IOException {
-		if (ExternalAudioStreams.isSupported(path) && !path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
-			return looping ? ExternalAudioStreams.openLooping(path) : ExternalAudioStreams.open(path);
+		if (AudioStreams.isSupported(path) && !path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
+			return looping ? AudioStreams.openLooping(path) : AudioStreams.open(path);
 		}
 		InputStream inputStream = Files.newInputStream(path);
 		return looping

@@ -25,10 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-/** Decoders used exclusively by the player's direct-file sound path. */
-public final class ExternalAudioStreams {
+public final class AudioStreams {
 
-    private ExternalAudioStreams() {}
+    private AudioStreams() {}
 
     public static boolean isSupported(Path path) {
         return switch (extension(path)) {
@@ -39,15 +38,15 @@ public final class ExternalAudioStreams {
 
     public static AudioStream open(Path path) throws IOException {
         return switch (extension(path)) {
-            case "mp3" -> new Mp3Stream(Files.newInputStream(path));
-            case "flac" -> new FlacStream(Files.newInputStream(path));
-            case "wav" -> new WavStream(Files.newInputStream(path));
+            case "mp3" -> new Mp3(Files.newInputStream(path));
+            case "flac" -> new Flac(Files.newInputStream(path));
+            case "wav" -> new Wav(Files.newInputStream(path));
             default -> throw new IOException("No external decoder for '" + path + "'.");
         };
     }
 
     public static AudioStream openLooping(Path path) throws IOException {
-        return new LoopingStream(path, open(path));
+        return new Looping(path, open(path));
     }
 
     public static ByteBuffer readAll(AudioStream stream) throws IOException {
@@ -68,14 +67,14 @@ public final class ExternalAudioStreams {
         return dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
     }
 
-    /** LWJGL/OpenAL receives these buffers directly, so a heap ByteBuffer is not usable. */
+    // LWJGL/OpenAL receives these buffers directly, so a heap ByteBuffer is not usable
     private static ByteBuffer directBuffer(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder());
         buffer.put(bytes);
         return buffer.flip();
     }
 
-    private abstract static class BufferedStream implements AudioStream {
+    private abstract static class Buffered implements AudioStream {
         protected ByteBuffer remaining = ByteBuffer.allocate(0);
 
         @Override
@@ -98,14 +97,14 @@ public final class ExternalAudioStreams {
         protected abstract ByteBuffer nextBlock() throws IOException;
     }
 
-    private static final class Mp3Stream implements FloatSampleSource {
+    private static final class Mp3 implements FloatSampleSource {
         private final InputStream input;
         private final Bitstream bits;
         private final Decoder decoder = new Decoder();
         private AudioFormat format;
         private SampleBuffer pending;
 
-        private Mp3Stream(InputStream input) throws IOException {
+        private Mp3(InputStream input) throws IOException {
             this.input = input;
             this.bits = new Bitstream(input);
             this.pending = decodeFrame();
@@ -155,13 +154,13 @@ public final class ExternalAudioStreams {
         }
     }
 
-    private static final class FlacStream implements FloatSampleSource {
+    private static final class Flac implements FloatSampleSource {
         private final InputStream input;
         private final FLACDecoder decoder;
         private final StreamInfo info;
         private final AudioFormat format;
 
-        private FlacStream(InputStream input) throws IOException {
+        private Flac(InputStream input) throws IOException {
             this.input = input;
             this.decoder = new FLACDecoder(input);
             this.info = decoder.readStreamInfo();
@@ -217,11 +216,11 @@ public final class ExternalAudioStreams {
         }
     }
 
-    private static final class WavStream extends BufferedStream {
+    private static final class Wav extends Buffered {
         private final AudioInputStream input;
         private final AudioFormat format;
 
-        private WavStream(InputStream input) throws IOException {
+        private Wav(InputStream input) throws IOException {
             try {
                 this.input = AudioSystem.getAudioInputStream(input);
             } catch (UnsupportedAudioFileException exception) {
@@ -253,12 +252,12 @@ public final class ExternalAudioStreams {
         }
     }
 
-    private static final class LoopingStream implements AudioStream {
+    private static final class Looping implements AudioStream {
         private final Path path;
         private AudioStream stream;
         private final AudioFormat format;
 
-        private LoopingStream(Path path, AudioStream stream) {
+        private Looping(Path path, AudioStream stream) {
             this.path = path;
             this.stream = stream;
             this.format = stream.getFormat();

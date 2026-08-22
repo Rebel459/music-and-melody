@@ -15,7 +15,6 @@ import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** Save/discard/cancel prompt used when leaving a changed theme editor. */
 final class ThemeExitConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 118;
@@ -82,8 +81,8 @@ final class ThemeExitConfirmScreen extends Screen {
         int width = dialogWidth();
         int x = dialogX();
         int y = dialogY();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, layoutWidth, layoutHeight, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, layoutWidth, layoutHeight, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + DIALOG_HEIGHT, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + DIALOG_HEIGHT - 1, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + DIALOG_HEIGHT, POPUP_OUTLINE);

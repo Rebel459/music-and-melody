@@ -9,7 +9,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
@@ -30,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import static net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED;
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** A compact, intentionally basic Markdown reader for the remote news page. */
 final class NewsScreen extends Screen {
 
     private static final String NEWS_URL = "https://raw.githubusercontent.com/Rebel459/music-and-melody-remote/main/news.md";
@@ -111,9 +109,7 @@ final class NewsScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // The parent workspace is kept visible behind the reader.
-    }
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
@@ -131,8 +127,8 @@ final class NewsScreen extends Screen {
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int x = dialogX(), y = dialogY(), width = dialogWidth(), height = dialogHeight();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
@@ -141,7 +137,7 @@ final class NewsScreen extends Screen {
 
         int top = y + 31, bottom = y + height - 35;
         if (this.loading) {
-            ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, top + 8, TEXT_DESCRIPTION);
+            ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.loading"), x + width / 2, top + 8, TEXT_DESCRIPTION);
             return;
         }
         if (this.error != null) {
@@ -188,7 +184,7 @@ final class NewsScreen extends Screen {
             int imageHeight = height(image, width) - 8;
             if (loaded == null) {
                 graphics.fill(x, y, x + width, y + imageHeight, PANEL_HIGHLIGHT);
-                ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.news.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
+                ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
             } else if (y >= top && y + imageHeight <= bottom) {
                 graphics.blit(GUI_TEXTURED, loaded.texture(), x, y, 0.0F, 0.0F, width, imageHeight, loaded.width(), loaded.height());
             }

@@ -8,10 +8,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
-/**
- * The action treatment used throughout the compact music workspace. Themes
- * can opt into the normal vanilla button sprites for all ordinary buttons.
- */
 public class WorkspaceButton extends Button {
 
     private static final Identifier VANILLA_BUTTON = Identifier.withDefaultNamespace("widget/button");
@@ -31,9 +27,6 @@ public class WorkspaceButton extends Button {
 
     @Override
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // AbstractWidget's hover flag is calculated against the vanilla
-        // scissor rectangle. MusicPlayerScreen renders in a fractional
-        // logical scale, so use the same local bounds as click handling here.
         boolean highlighted = this.active && (this.selected
                 || this.isMouseOver(mouseX, mouseY) || this.isFocused());
         if (ThemeHelper.BUTTON_TEXTURES) {
@@ -54,12 +47,8 @@ public class WorkspaceButton extends Button {
             }
         }
         int textColor = textColor(highlighted);
-        // WithInactiveMessage decorates getMessage() with Minecraft's fixed
-        // grey style while inactive. Use the raw message so the theme's
-        // disabled colour supplied above is actually respected.
         var font = Minecraft.getInstance().font;
-        ThemeHelper.text(graphics, font, this.message, this.getX() + (this.getWidth() - font.width(this.message)) / 2,
-                this.getY() + (this.getHeight() - 8) / 2, textColor, ThemeHelper.TEXT_SHADOW);
+        ThemeHelper.text(graphics, font, this.message, this.getX() + (this.getWidth() - font.width(this.message)) / 2, this.getY() + (this.getHeight() - 8) / 2, textColor);
     }
 
     protected int textColor(boolean highlighted) {

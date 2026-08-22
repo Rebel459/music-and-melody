@@ -7,10 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
-/**
- * Single-line edit box whose hint uses the same opacity as vanilla's
- * multi-line placeholder text.
- */
 public class ExampleHintEditBox extends EditBox {
 
     private static final int MULTI_LINE_PLACEHOLDER_ALPHA = 0xCC;

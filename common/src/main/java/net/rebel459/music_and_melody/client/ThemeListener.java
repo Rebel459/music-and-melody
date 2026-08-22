@@ -40,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/** Loads resource and config themes, resolves inheritance, and owns the active theme. */
 public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record> {
 
     public static final Identifier ID = MusicAndMelody.id("themes");
@@ -70,7 +69,6 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         rebuild();
     }
 
-    /** Ensures UI tokens exist before Minecraft's first asynchronous resource reload completes. */
     private static synchronized void bootstrapDefault() {
         if (RESOURCE_RECORDS.containsKey(Theme.DEFAULT_ID) && !THEMES.isEmpty()) return;
         Theme.Record fallback = bundledDefault();
@@ -117,10 +115,6 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         if (active == null || !active.valid) {
             active = THEMES.get(Theme.DEFAULT_ID);
             if (active == null || !active.valid) return null;
-            // This method is also called by bootstrapDefault(), before the
-            // asynchronous resource reload has populated all bundled themes.
-            // Persisting the fallback here would overwrite a valid configured
-            // theme before it has had a chance to resolve.
         }
         return active;
     }
@@ -265,9 +259,6 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         var elements = record.elements().orElse(null);
         var text = record.text().orElse(null);
 
-        // Metadata belongs to the theme itself. Parent themes provide visual
-        // tokens only; an omitted name or description stays empty, and an
-        // omitted/invalid icon uses the neutral unknown-pack icon.
         net.minecraft.network.chat.Component name = record.name()
                 .orElse(net.minecraft.network.chat.CommonComponents.EMPTY);
         net.minecraft.network.chat.Component description = record.description()

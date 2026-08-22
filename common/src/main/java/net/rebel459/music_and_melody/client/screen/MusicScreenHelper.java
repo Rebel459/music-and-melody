@@ -11,7 +11,6 @@ import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.config.ConfigAlbum;
-import net.rebel459.music_and_melody.config.MaMClientConfig;
 
 import java.net.URI;
 
@@ -19,17 +18,16 @@ final class MusicScreenHelper {
 
     private MusicScreenHelper() {}
 
-    static final Identifier FALLBACK_ALBUM_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
-    /** Relative to Minecraft's current GUI scale; 7 displays approximately like the previous 6. */
+    static final Identifier FALLBACK_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
 
     private static final URI DISCORD = URI.create("https://discord.com/invite/TGbBb47Gr5");
     private static final URI KOFI = URI.create("https://ko-fi.com/rebel459");
 
     static Identifier albumIcon(Minecraft minecraft, Identifier icon) {
-        if (icon == null) return FALLBACK_ALBUM_ICON;
+        if (icon == null) return FALLBACK_ICON;
         if (RemoteIconManager.isDynamic(icon)) return icon;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
-        return FALLBACK_ALBUM_ICON;
+        return FALLBACK_ICON;
     }
 
     static void addCenteredSocialButtons(Screen screen, int centerX, int y) {

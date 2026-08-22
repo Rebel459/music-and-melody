@@ -107,7 +107,6 @@ public final class RemoteContentManager {
                 });
     }
 
-    /** Opens the platform's manual-download prompt, if this build needs one. */
     public static boolean openManualDownloadScreen(MusicPlayerScreen parent, RemotePack pack) {
         return onlineFunctionalityEnabled() && PlatformContentManager.openManualDownloadScreen(parent, pack);
     }
@@ -217,7 +216,6 @@ public final class RemoteContentManager {
         return supporters;
     }
 
-    /** Supporter entries containing only a UUID grant access without appearing in credits. */
     public static List<String> displaySupporters() {
         return supporters.stream().filter(entry -> entry.indexOf('=') >= 0 || !isUuidOnly(entry)).toList();
     }
@@ -425,8 +423,6 @@ public final class RemoteContentManager {
 
     private static SupporterIdentity supporterIdentity() {
         Minecraft minecraft = Minecraft.getInstance();
-        // Catalogs refresh before a local player exists, so use the logged-in
-        // account profile rather than the world-session player UUID.
         return new SupporterIdentity(minecraft.getUser().getName(), minecraft.getUser().getProfileId().toString());
     }
 
@@ -535,7 +531,6 @@ public final class RemoteContentManager {
         return path != null && path.toLowerCase(Locale.ROOT).endsWith(".json");
     }
 
-    /** Canonicalizes equivalent catalog links before comparing provider and user-entered URLs. */
     private static String catalogKey(String catalog) {
         try {
             return catalogUri(catalog).normalize().toString();
@@ -550,7 +545,6 @@ public final class RemoteContentManager {
         return fallback;
     }
 
-    /** Converts a GitHub file-view URL into the direct raw asset URL. */
     static URI rawGithubBlobUri(URI uri) {
         if (!"github.com".equalsIgnoreCase(uri.getHost())) return uri;
         String[] parts = uri.getPath().replaceFirst("^/", "").split("/");
@@ -595,7 +589,6 @@ public final class RemoteContentManager {
         );
     }
 
-    /** Keeps Minecraft resource IDs intact while resolving catalog-relative icon URLs. */
     private static String resolveIcon(URI catalogUri, String icon) {
         if (icon.indexOf(':') > 0 && Identifier.tryParse(icon) != null) return icon;
         return catalogUri.resolve(icon).toString();
@@ -621,9 +614,6 @@ public final class RemoteContentManager {
         if (installed(pack) != null) {
             deleteInstalledFiles(pack.key());
         } else {
-            // A previous deletion may have removed the config record while
-            // leaving an orphaned pack directory behind. Clear it before
-            // extracting a replacement, including legacy namespace storage.
             deleteDirectory(packDirectory(pack.key()));
             if (!hasOtherInstalledPackInNamespace(pack.id(), pack.key())) {
                 deleteDirectory(DIRECTORY.resolve(pack.id().getNamespace()));
@@ -800,7 +790,6 @@ public final class RemoteContentManager {
         return true;
     }
 
-    /** Compatibility overload for callers that only have an identifier. */
     public static synchronized boolean deleteInstalled(Identifier id) {
         MaMDataConfig.DownloadedPack record = installedAny(id);
         if (record == null) return false;
