@@ -28,21 +28,16 @@ final class RemoteDetailsPanel {
         void render(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color);
     }
 
-    static double render(GuiGraphicsExtractor graphics, Minecraft minecraft, Font font, RemotePack pack,
-                         int rightX, int rightWidth, int panelTop, int panelBottom, boolean deletePending,
-                         double scroll, MarqueeRenderer marquee) {
+    static double render(GuiGraphicsExtractor graphics, Minecraft minecraft, Font font, RemotePack pack, int rightX, int rightWidth, int panelTop, int panelBottom, boolean deletePending, double scroll, MarqueeRenderer marquee) {
         int x = rightX + 8;
         int width = rightWidth - 16;
-        ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD),
-                x, panelTop + 14, TEXT_HEADER);
+        ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, panelTop + 14, TEXT_HEADER);
         int iconSize = Math.min(42, width);
         int iconY = panelTop + 30;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(minecraft, RemoteIconManager.icon(pack)),
-                x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(minecraft, RemoteIconManager.icon(pack)), x, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
         int textX = x + iconSize + 6;
         int textWidth = Math.max(1, width - iconSize - 6);
-        marquee.render(graphics, pack.name(), textX, iconY + 1, textWidth,
-                deletePending ? TEXT_PENDING_DELETION : TEXT_TITLE);
+        marquee.render(graphics, pack.name(), textX, iconY + 1, textWidth, deletePending ? TEXT_PENDING_DELETION : TEXT_TITLE);
         marquee.render(graphics, Component.literal(pack.id().getNamespace() + ":"), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
         marquee.render(graphics, Component.literal(pack.id().getPath()), textX, iconY + 25, textWidth, TEXT_DESCRIPTION);
 
@@ -55,16 +50,12 @@ final class RemoteDetailsPanel {
 
         graphics.enableScissor(rightX + 2, bodyTop, rightX + rightWidth - 2, bodyBottom);
         int y = bodyTop - offset;
-        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.repository",
-                Component.literal(pack.repository()), x, y, width);
-        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.version",
-                Component.literal(pack.version()), x, y + 26, width);
-        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.state",
-                Component.translatable(MusicPlayerScreen.remoteStateTranslationKey(RemoteContentManager.state(pack))), x, y + 52, width);
+        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.repository", Component.literal(pack.repository()), x, y, width);
+        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, y + 26, width);
+        renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.state", Component.translatable(MusicPlayerScreen.remoteStateTranslationKey(RemoteContentManager.state(pack))), x, y + 52, width);
 
         int cursor = y + 78;
-        ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE),
-                x, cursor, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE), x, cursor, TEXT_DESCRIPTION);
         cursor += 12;
         for (FormattedCharSequence line : body.description()) {
             ThemeHelper.text(graphics, font, line, x, cursor, TEXT_PRIMARY);
@@ -73,8 +64,7 @@ final class RemoteDetailsPanel {
 
         if (!body.dependencies().isEmpty()) {
             cursor += 6;
-            ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.remote_details.dependencies").withStyle(ChatFormatting.UNDERLINE),
-                    x, cursor, TEXT_DESCRIPTION);
+            ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.remote_details.dependencies").withStyle(ChatFormatting.UNDERLINE), x, cursor, TEXT_DESCRIPTION);
             cursor += 12;
             for (FormattedCharSequence line : body.dependencies()) {
                 ThemeHelper.text(graphics, font, line, x, cursor, TEXT_PRIMARY);
@@ -125,8 +115,7 @@ final class RemoteDetailsPanel {
         return result;
     }
 
-    private static void renderField(GuiGraphicsExtractor graphics, Font font, MarqueeRenderer marquee,
-                                    String headingKey, Component value, int x, int y, int width) {
+    private static void renderField(GuiGraphicsExtractor graphics, Font font, MarqueeRenderer marquee, String headingKey, Component value, int x, int y, int width) {
         ThemeHelper.text(graphics, font, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, TEXT_DESCRIPTION);
         marquee.render(graphics, value, x, y + 12, width, TEXT_PRIMARY);
     }
