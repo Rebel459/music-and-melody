@@ -233,8 +233,7 @@ public final class ConfigAlbum {
                 PointerBuffer filters = stack.mallocPointer(extensions.length);
                 for (String extension : extensions) filters.put(stack.UTF8(extension));
                 filters.flip();
-                String result = TinyFileDialogs.tinyfd_openFileDialog(title, "", filters,
-                        "Music files", multiple);
+                String result = TinyFileDialogs.tinyfd_openFileDialog(title, "", filters, ".ogg, .mp3, .flac or .wav", multiple);
                 if (result != null && !result.isBlank()) {
                     for (String file : result.split("\\|")) {
                         Path path = Path.of(file);

@@ -51,7 +51,7 @@ class SavePlaylistScreen extends Screen {
         int fieldWidth = width - 24;
 
         this.nameField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 50, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.create_theme.name")));
+                Component.translatable("screen.music_and_melody.name")));
         this.nameField.setMaxLength(80);
         this.nameField.setResponder(value -> {
             updatePathHint();
@@ -60,14 +60,14 @@ class SavePlaylistScreen extends Screen {
         if (this.replacing != null) this.nameField.setValue(this.replacing.name.getString());
 
         this.iconField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 91, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.create_theme.icon")));
+                Component.translatable("screen.music_and_melody.icon")));
         this.iconField.setMaxLength(256);
         this.iconField.setResponder(value -> refreshSaveState());
         this.iconField.setHint(Component.literal(DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         if (this.replacing != null) this.iconField.setValue(this.replacing.icon.toString());
 
         this.pathField = this.addRenderableWidget(new EditBox(this.font, fieldX, y + 132, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.create_theme.path")));
+                Component.translatable("screen.music_and_melody.path")));
         this.pathField.setMaxLength(256);
         this.pathField.setResponder(value -> refreshSaveState());
         if (this.replacing != null) {
@@ -133,9 +133,9 @@ class SavePlaylistScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 38, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 120, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.name"), x + 12, y + 38, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.icon"), x + 12, y + 79, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.path"), x + 12, y + 120, TEXT_DESCRIPTION);
     }
 
     @Override

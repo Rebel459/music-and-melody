@@ -42,17 +42,17 @@ final class CreateThemeScreen extends Screen {
         int fieldX = x + 12;
         int fieldWidth = panelWidth() - 24;
 
-        this.nameField = field(Component.translatable("screen.music_and_melody.create_theme.name"), fieldX, y + 40, fieldWidth);
+        this.nameField = field(Component.translatable("screen.music_and_melody.name"), fieldX, y + 40, fieldWidth);
         this.nameField.setMaxLength(80);
         this.nameField.setResponder(value -> {
             updatePathHint();
             refreshCreateState();
         });
         this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), fieldX, y + 76, fieldWidth);
-        this.iconField = field(Component.translatable("screen.music_and_melody.create_theme.icon"), fieldX, y + 112, fieldWidth);
+        this.iconField = field(Component.translatable("screen.music_and_melody.icon"), fieldX, y + 112, fieldWidth);
         this.iconField.setHint(Component.literal(Theme.DEFAULT_ICON.toString()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.iconField.setResponder(value -> refreshCreateState());
-        this.pathField = field(Component.translatable("screen.music_and_melody.create_theme.path"), fieldX, y + 148, fieldWidth);
+        this.pathField = field(Component.translatable("screen.music_and_melody.path"), fieldX, y + 148, fieldWidth);
         this.pathField.setResponder(value -> refreshCreateState());
         updatePathHint();
 
@@ -164,10 +164,10 @@ final class CreateThemeScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 28, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.name"), x + 12, y + 28, TEXT_DESCRIPTION);
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.theme.description"), x + 12, y + 64, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 100, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.path"), x + 12, y + 136, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.icon"), x + 12, y + 100, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.path"), x + 12, y + 136, TEXT_DESCRIPTION);
     }
 
     private int panelWidth() {

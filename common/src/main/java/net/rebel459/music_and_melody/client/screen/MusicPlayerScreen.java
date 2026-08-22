@@ -467,7 +467,7 @@ public class MusicPlayerScreen extends Screen {
         this.libraryList = this.addRenderableWidget(new LibraryList(this, this.minecraft, this.middleX, this.middleWidth, PANEL_TOP + 38, this.contentBottom - 6));
         buildTagButtons(LibraryTag.values(), this.libraryTags, this::toggleLibraryTag);
         this.addRenderableWidget(new WorkspaceButton(this.rightX + 7, this.panelBottom - 28, this.rightWidth - 14, 20,
-                Component.translatable("button.music_and_melody.import_music"), false,
+                Component.translatable("button.music_and_melody.new_album"), false,
                 button -> openConfigAlbumEditor(null)));
     }
 
