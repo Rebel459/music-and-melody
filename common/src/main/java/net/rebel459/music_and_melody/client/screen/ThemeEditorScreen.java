@@ -136,9 +136,9 @@ final class ThemeEditorScreen extends Screen {
 
         int middleFieldX = middleX + 8;
         int middleFieldWidth = Math.max(40, middleWidth - 16);
-        this.nameField = field(Component.translatable("screen.music_and_melody.create_theme.name"), middleFieldX, PANEL_TOP + 50, middleFieldWidth);
+        this.nameField = field(Component.translatable("screen.music_and_melody.name"), middleFieldX, PANEL_TOP + 50, middleFieldWidth);
         this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), middleFieldX, PANEL_TOP + 88, middleFieldWidth);
-        this.iconField = field(Component.translatable("screen.music_and_melody.create_theme.icon"), middleFieldX, PANEL_TOP + 126, middleFieldWidth);
+        this.iconField = field(Component.translatable("screen.music_and_melody.icon"), middleFieldX, PANEL_TOP + 126, middleFieldWidth);
         this.parentField = field(Component.translatable("screen.music_and_melody.theme_editor.parent"), middleFieldX, PANEL_TOP + 164, middleFieldWidth);
         this.buttonTexturesButton = this.addRenderableWidget(new WorkspaceButton(middleFieldX, buttonTexturesBaseY(),
                 middleFieldWidth, 20, buttonTexturesMessage(), this.buttonTextures,
@@ -949,9 +949,9 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private enum MainOption {
-        NAME("screen.music_and_melody.create_theme.name"),
+        NAME("screen.music_and_melody.name"),
         DESCRIPTION("screen.music_and_melody.theme.description"),
-        ICON("screen.music_and_melody.create_theme.icon");
+        ICON("screen.music_and_melody.icon");
 
         private final String key;
         MainOption(String key) { this.key = key; }

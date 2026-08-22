@@ -44,7 +44,7 @@ final class ConfigAlbumEditorScreen extends Screen {
     }
 
     ConfigAlbumEditorScreen(MusicPlayerScreen parent, Identifier albumId) {
-        super(Component.translatable(albumId == null ? "screen.music_and_melody.import_album" : "screen.music_and_melody.manage_album"));
+        super(Component.translatable(albumId == null ? "button.music_and_melody.new_album" : "screen.music_and_melody.manage_album"));
         this.parent = parent;
         this.albumId = albumId;
         this.existingTracks = albumId == null ? List.of() : ConfigAlbum.trackFiles(albumId);
@@ -60,7 +60,7 @@ final class ConfigAlbumEditorScreen extends Screen {
         int fieldWidth = panelWidth() - 24;
         ConfigAlbum.Metadata metadata = this.albumId == null ? null : ConfigAlbum.metadata(this.albumId).orElse(null);
 
-        this.nameField = field(Component.translatable("screen.music_and_melody.create_theme.name"), fieldX, y + 42, fieldWidth);
+        this.nameField = field(Component.translatable("screen.music_and_melody.name"), fieldX, y + 42, fieldWidth);
         this.nameField.setMaxLength(80);
         this.nameField.setValue(metadata == null ? "" : metadata.name().getString());
         this.nameField.setResponder(value -> {
@@ -68,12 +68,12 @@ final class ConfigAlbumEditorScreen extends Screen {
             refreshSaveState();
         });
 
-        this.iconField = field(Component.translatable("screen.music_and_melody.create_theme.icon"), fieldX, y + 78, fieldWidth);
+        this.iconField = field(Component.translatable("screen.music_and_melody.icon"), fieldX, y + 78, fieldWidth);
         this.iconField.setHint(Component.literal("minecraft:textures/misc/unknown_pack.png").withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.iconField.setValue(metadata == null ? "" : metadata.icon().toString());
         this.iconField.setResponder(value -> refreshSaveState());
 
-        this.identifierField = field(Component.translatable("screen.music_and_melody.album_identifier"), fieldX, y + 114, fieldWidth);
+        this.identifierField = field(Component.translatable("screen.music_and_melody.path"), fieldX, y + 114, fieldWidth);
         this.identifierField.setValue(this.albumId == null ? "" : this.albumId.getPath());
         this.identifierField.setEditable(this.albumId == null);
         this.identifierField.setResponder(value -> refreshSaveState());
@@ -81,7 +81,7 @@ final class ConfigAlbumEditorScreen extends Screen {
 
         int selectorY = y + 150;
         this.addRenderableWidget(new WorkspaceButton(fieldX, selectorY, fieldWidth, 20,
-                Component.translatable("screen.music_and_melody.album_select_music"), false, ignored -> selectMusic()));
+                Component.translatable("screen.music_and_melody.album_import_music"), false, ignored -> selectMusic()));
 
         this.trackList = this.addRenderableWidget(new TrackList(this.minecraft, fieldX, fieldWidth, selectorY + 26, y + panelHeight() - 34));
         int buttonY = y + panelHeight() - 29;
@@ -217,9 +217,9 @@ final class ConfigAlbumEditorScreen extends Screen {
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
         centeredText(graphics, this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.name"), x + 12, y + 30, TEXT_DESCRIPTION);
-        text(graphics, this.font, Component.translatable("screen.music_and_melody.create_theme.icon"), x + 12, y + 66, TEXT_DESCRIPTION);
-        text(graphics, this.font, Component.translatable("screen.music_and_melody.album_identifier"), x + 12, y + 102, TEXT_DESCRIPTION);
+        text(graphics, this.font, Component.translatable("screen.music_and_melody.name"), x + 12, y + 30, TEXT_DESCRIPTION);
+        text(graphics, this.font, Component.translatable("screen.music_and_melody.icon"), x + 12, y + 66, TEXT_DESCRIPTION);
+        text(graphics, this.font, Component.translatable("screen.music_and_melody.path"), x + 12, y + 102, TEXT_DESCRIPTION);
         text(graphics, this.font, Component.translatable("screen.music_and_melody.album_tracks", trackCount()), x + 12, y + 138, TEXT_DESCRIPTION);
     }
 
