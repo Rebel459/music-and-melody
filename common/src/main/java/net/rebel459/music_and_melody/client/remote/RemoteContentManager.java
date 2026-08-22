@@ -38,13 +38,13 @@ import java.util.zip.ZipInputStream;
 
 public final class RemoteContentManager {
 
-    public static Set<Integer> SUPPORTED_REMOTE_SCHEMAS = new HashSet<>(Set.of(1));
+    public static Set<Integer> SUPPORTED_SCHEMAS = new HashSet<>(Set.of(1));
     public static String OFFICIAL_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/official-catalogs.json";
+    public static String SUPPORTER_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/supporter-catalogs.json";
     public static String COMMUNITY_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/community-catalogs.json";
     public static String SUPPORTERS = "https://github.com/Rebel459/music-and-melody-remote/supporters.json";
     public static String COMPOSERS = "https://github.com/Rebel459/music-and-melody-remote/composers.json";
     public static String SPLASHES = "https://raw.githubusercontent.com/Rebel459/music-and-melody-remote/main/splashes.txt";
-    public static String SUPPORTER_PROVIDER = "https://github.com/Rebel459/music-and-melody-remote/supporter-catalogs.json";
 
     public enum State {
         REMOTE,
@@ -472,7 +472,7 @@ public final class RemoteContentManager {
         }
 
         try {
-            return SUPPORTED_REMOTE_SCHEMAS.contains(schema.getAsBigDecimal().intValueExact());
+            return SUPPORTED_SCHEMAS.contains(schema.getAsBigDecimal().intValueExact());
         } catch (ArithmeticException exception) {
             return false;
         }
