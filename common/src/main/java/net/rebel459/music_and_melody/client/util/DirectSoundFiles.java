@@ -93,7 +93,7 @@ public final class DirectSoundFiles {
 
 	/**
 	 * The sound engine may ask for either a generated playable id or the
-	 * physical {@code sounds/...ogg} resource. Treat both aliases as the same
+	 * physical {@code sounds/...<extension>} resource. Treat both aliases as the same
 	 * stream so restart-at-offset seeking reaches the reopened song.
 	 */
 	public static boolean sameStreamResource(Identifier a, Identifier b) {
@@ -110,7 +110,10 @@ public final class DirectSoundFiles {
 
 	private static String normalizedStreamPath(String path) {
 		String normalized = path.startsWith("sounds/") ? path.substring("sounds/".length()) : path;
-		return normalized.endsWith(".ogg") ? normalized.substring(0, normalized.length() - ".ogg".length()) : normalized;
+		for (String extension : new String[] {".ogg", ".mp3", ".flac", ".wav"}) {
+			if (normalized.endsWith(extension)) return normalized.substring(0, normalized.length() - extension.length());
+		}
+		return normalized;
 	}
 
 	public static boolean contains(Identifier soundResourceId) {

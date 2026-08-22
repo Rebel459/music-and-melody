@@ -18,6 +18,10 @@ dependencies {
     implementation("maven.modrinth:simple-music-control:$simple_music_control-fabric")
     implementation("maven.modrinth:fzzy-config:$fzzy_version")
     implementation("maven.modrinth:fabric-language-kotlin:$kotlin_fabric")
+    implementation("javazoom:jlayer:1.0.1")
+    implementation("org.jflac:jflac-codec:1.5.2")
+    include("javazoom:jlayer:1.0.1")
+    include("org.jflac:jflac-codec:1.5.2")
 
     localRuntime("net.litetex.mcm:dev-auth-neo:$devauth_fabric")
 

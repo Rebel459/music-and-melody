@@ -150,7 +150,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	private static ResolvedSound createDirectFileSound(SafeIdentifier originalLocation, Path source) {
-		String safePath = SafeMusicHelper.sanitize(originalLocation.getPath());
+		String safePath = stripAudioExtension(SafeMusicHelper.sanitize(originalLocation.getPath()));
 
 		if (safePath.isBlank()) {
 			safePath = "sound";
@@ -162,6 +162,10 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
 		Identifier soundResourceId = Identifier.fromNamespaceAndPath(
 				MusicAndMelody.MOD_ID,
+				// Minecraft's Sound#getPath always requests FILE sounds through
+				// a synthetic .ogg resource. Keep that logical alias regardless of
+				// the physical file type; DirectSoundFiles routes it to the real file
+				// and SoundBufferLibraryMixin chooses the appropriate decoder.
 				"sounds/" + playablePath + ".ogg"
 		);
 
@@ -178,6 +182,13 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	private static String fileNameOnly(String path) {
 		int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
 		return slash == -1 ? path : path.substring(slash + 1);
+	}
+
+	private static String stripAudioExtension(String value) {
+		for (String extension : new String[] {".ogg", ".mp3", ".flac", ".wav"}) {
+			if (value.endsWith(extension)) return value.substring(0, value.length() - extension.length());
+		}
+		return value;
 	}
 
 	private static String shortHash(String value) {

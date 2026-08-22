@@ -18,6 +18,10 @@ dependencies {
     annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.3"
     implementation "org.ow2.asm:asm:9.9.1"
     implementation "org.ow2.asm:asm-tree:9.9.1"
+    // Decoders are packaged by each loader project; keeping these compile-only
+    // avoids leaking them from the common source artifact.
+    compileOnly "javazoom:jlayer:1.0.1"
+    compileOnly "org.jflac:jflac-codec:1.5.2"
 
     compileOnly("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
     compileOnly("maven.modrinth:unified-api:$unified_version-fabric")

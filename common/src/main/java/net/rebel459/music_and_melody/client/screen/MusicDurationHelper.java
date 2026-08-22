@@ -8,6 +8,7 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
+import net.rebel459.music_and_melody.client.util.ExternalAudioStreams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -88,9 +89,9 @@ final class MusicDurationHelper {
 
         String path = location.getPath();
         boolean isSoundPath = path.startsWith("sounds/");
-        boolean isOgg = path.endsWith(".ogg");
+        boolean hasAudioExtension = path.endsWith(".ogg") || path.endsWith(".mp3") || path.endsWith(".flac") || path.endsWith(".wav");
         if (!isSoundPath) addUnique(locations, Identifier.fromNamespaceAndPath(location.getNamespace(), "sounds/" + path));
-        if (!isOgg) {
+        if (!hasAudioExtension) {
             addUnique(locations, Identifier.fromNamespaceAndPath(location.getNamespace(), path + ".ogg"));
             if (!isSoundPath) addUnique(locations, Identifier.fromNamespaceAndPath(location.getNamespace(), "sounds/" + path + ".ogg"));
         }
@@ -122,7 +123,7 @@ final class MusicDurationHelper {
             return Optional.empty();
         }
         if (opened == null) return Optional.empty();
-        try (InputStream input = opened; JOrbisAudioStream stream = new JOrbisAudioStream(input)) {
+        try (InputStream input = opened; net.minecraft.client.sounds.AudioStream stream = decode(location, input)) {
             AudioFormat format = stream.getFormat();
             int frameSize = Math.max(1, format.getFrameSize());
             float frameRate = format.getFrameRate() > 0.0F ? format.getFrameRate() : format.getSampleRate();
@@ -139,6 +140,15 @@ final class MusicDurationHelper {
         } catch (Exception ignored) {
             return Optional.empty();
         }
+    }
+
+    private static net.minecraft.client.sounds.AudioStream decode(Identifier location, InputStream input) throws IOException {
+        Optional<java.nio.file.Path> direct = DirectSoundFiles.get(location);
+        if (direct.isPresent() && !direct.get().getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
+            input.close();
+            return ExternalAudioStreams.open(direct.get());
+        }
+        return new JOrbisAudioStream(input);
     }
 
     private static InputStream open(Minecraft minecraft, Identifier location) throws IOException {

@@ -6,6 +6,10 @@ plugins {
 dependencies {
     api("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
     api("maven.modrinth:unified-api:$unified_version-neoforge")
+    implementation("javazoom:jlayer:1.0.1")
+    implementation("org.jflac:jflac-codec:1.5.2")
+    jarJar("javazoom:jlayer:1.0.1")
+    jarJar("org.jflac:jflac-codec:1.5.2")
 
     compileOnly("maven.modrinth:simple-music-control:$simple_music_control-neoforge")
     compileOnly("maven.modrinth:fzzy-config:$fzzy_version+neoforge")
