@@ -39,7 +39,7 @@ import java.util.Set;
 public class Playlist {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "playlist");
+    private static final Path DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID, "playlists");
     private static final Set<Playlist> CONFIG_PLAYLISTS = new HashSet<>();
 
     public static Set<Playlist> PLAYLISTS = new HashSet<>();
@@ -147,6 +147,17 @@ public class Playlist {
 
     public static synchronized boolean canWriteConfigPlaylist(String playlistName, String pathOverride) {
         return configTarget(playlistName, pathOverride) != null;
+    }
+
+    public static String configPlaylistPath(Playlist playlist) {
+        if (playlist == null || playlist.source == null) return "";
+        try {
+            String path = DIRECTORY.toAbsolutePath().normalize().relativize(playlist.source.toAbsolutePath().normalize())
+                    .toString().replace('\\', '/');
+            return path.endsWith(".json") ? path.substring(0, path.length() - ".json".length()) : path;
+        } catch (IllegalArgumentException ignored) {
+            return "";
+        }
     }
 
     public static synchronized boolean saveCustomPlaylist(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {

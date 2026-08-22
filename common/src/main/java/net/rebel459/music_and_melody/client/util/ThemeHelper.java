@@ -147,6 +147,7 @@ public final class ThemeHelper {
             IconButton.icon("queue"),
             IconButton.icon("reload"),
             IconButton.icon("remove"),
+            IconButton.icon("replace"),
             IconButton.icon("restore"),
             IconButton.icon("retry_download"),
             IconButton.icon("save"),

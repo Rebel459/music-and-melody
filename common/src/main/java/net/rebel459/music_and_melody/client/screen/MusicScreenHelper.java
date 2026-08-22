@@ -25,6 +25,8 @@ final class MusicScreenHelper {
 
     static Identifier albumIcon(Minecraft minecraft, Identifier icon) {
         if (icon == null) return FALLBACK_ICON;
+        icon = ConfigAlbum.resolveIcon(minecraft, icon);
+        if (ConfigAlbum.isDynamicIcon(icon)) return icon;
         if (RemoteIconManager.isDynamic(icon)) return icon;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
         return FALLBACK_ICON;
