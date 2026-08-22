@@ -10,7 +10,7 @@ import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
+import net.rebel459.music_and_melody.client.util.CustomAlbums;
 
 import java.net.URI;
 
@@ -25,8 +25,8 @@ final class MusicScreenHelper {
 
     static Identifier albumIcon(Minecraft minecraft, Identifier icon) {
         if (icon == null) return FALLBACK_ICON;
-        icon = ConfigAlbum.resolveIcon(minecraft, icon);
-        if (ConfigAlbum.isDynamicIcon(icon)) return icon;
+        icon = CustomAlbums.resolveIcon(minecraft, icon);
+        if (CustomAlbums.isDynamicIcon(icon)) return icon;
         if (RemoteIconManager.isDynamic(icon)) return icon;
         if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
         return FALLBACK_ICON;
@@ -60,7 +60,7 @@ final class MusicScreenHelper {
     }
 
     static Component trackName(SafeIdentifier id, String fallback) {
-        String configName = ConfigAlbum.displayName(id);
+        String configName = CustomAlbums.displayName(id);
         if (configName != null) return Component.literal(configName);
         String pathKey = id.getPath().replace('/', '.');
         String key = id.getNamespace().equals("minecraft") ? pathKey : id.getNamespace() + "." + pathKey;

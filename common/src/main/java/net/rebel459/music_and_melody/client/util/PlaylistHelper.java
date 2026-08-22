@@ -13,7 +13,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.SampledFloat;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.config.ConfigAlbum;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
@@ -319,8 +318,8 @@ public final class PlaylistHelper {
             return false;
         }
 
-        SafeIdentifier wanted = ConfigAlbum.playableId(song);
-        SafeIdentifier current = ConfigAlbum.playableId(currentSongId);
+        SafeIdentifier wanted = CustomAlbums.playableId(song);
+        SafeIdentifier current = CustomAlbums.playableId(currentSongId);
         SafeIdentifier soundInstanceId = SafeIdentifier.convert(currentSong.getIdentifier());
 
         if (wanted.equals(current)) return true;
@@ -562,7 +561,7 @@ public final class PlaylistHelper {
             if (directName.isPresent()) return directName.get();
             displayId = SafeIdentifier.convert(currentSound.getLocation());
         }
-        String configName = ConfigAlbum.displayName(displayId);
+        String configName = CustomAlbums.displayName(displayId);
         if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
         var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), displayId);
         if (disc.isPresent()) return MusicDiscHelper.translationKey(disc.get().jukeboxSong());
@@ -765,7 +764,7 @@ public final class PlaylistHelper {
     }
 
     private static boolean playSound(SafeIdentifier id, boolean loop, boolean fromQueue, boolean fromEvent, DirectSoundInstance.Type type) {
-        id = ConfigAlbum.playableId(id);
+        id = CustomAlbums.playableId(id);
         SampledFloat sampledVolume = STORED_VOLUME.get(id);
         float volume = 1.0F;
         RandomSource random = SoundInstance.createUnseededRandom();
