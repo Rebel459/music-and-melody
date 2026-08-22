@@ -31,10 +31,7 @@ public abstract class SoundBufferLibraryMixin {
 	private Map<Identifier, CompletableFuture<SoundBuffer>> cache;
 
 	@Inject(method = "getCompleteBuffer", at = @At("HEAD"), cancellable = true)
-	private void getCompleteDirectBuffer(
-			Identifier location,
-			CallbackInfoReturnable<CompletableFuture<SoundBuffer>> cir
-	) {
+	private void getCompleteDirectBuffer(Identifier location, CallbackInfoReturnable<CompletableFuture<SoundBuffer>> cir) {
 		DirectSoundFiles.get(location).ifPresent(path -> {
 			CompletableFuture<SoundBuffer> future = this.cache.computeIfAbsent(location, ignored ->
 					CompletableFuture.supplyAsync(() -> {
@@ -52,11 +49,7 @@ public abstract class SoundBufferLibraryMixin {
 	}
 
 	@Inject(method = "getStream", at = @At("HEAD"), cancellable = true)
-	private void music_and_melody$getDirectStream(
-			Identifier location,
-			boolean looping,
-			CallbackInfoReturnable<CompletableFuture<AudioStream>> cir
-	) {
+	private void getDirectStream(Identifier location, boolean looping, CallbackInfoReturnable<CompletableFuture<AudioStream>> cir) {
 		DirectSoundFiles.get(location).ifPresent(path -> {
 			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
 				try {
@@ -73,11 +66,7 @@ public abstract class SoundBufferLibraryMixin {
 	}
 
 	@Inject(method = "getStream", at = @At("RETURN"), cancellable = true)
-	private void music_and_melody$seekResourceStream(
-			Identifier location,
-			boolean looping,
-			CallbackInfoReturnable<CompletableFuture<AudioStream>> cir
-	) {
+	private void seekResourceStream(Identifier location, boolean looping, CallbackInfoReturnable<CompletableFuture<AudioStream>> cir) {
 		long offset = PlaylistHelper.consumePendingSeekMillis(location);
 		if (offset <= 0L) return;
 		cir.setReturnValue(cir.getReturnValue().thenApply(stream -> {
