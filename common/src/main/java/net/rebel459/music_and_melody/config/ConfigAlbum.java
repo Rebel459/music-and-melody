@@ -59,8 +59,12 @@ public final class ConfigAlbum {
         FILES.forEach((id, path) -> soundCache.put(idToFile(id), new Resource(null, IoSupplier.create(path))));
     }
 
-    public static Identifier idToFile(SafeIdentifier id) {
-        return Identifier.fromNamespaceAndPath(id.getNamespace(), "sounds/" + id.getPath() + ".ogg");
+    public static synchronized Identifier idToFile(SafeIdentifier id) {
+        Path file = FILES.get(playableId(id));
+        String suffix = file == null ? ".ogg" : extension(file);
+        String path = id.getPath();
+        if (!path.toLowerCase(Locale.ROOT).endsWith(suffix)) path += suffix;
+        return Identifier.fromNamespaceAndPath(id.getNamespace(), "sounds/" + path);
     }
 
     public static synchronized String displayName(SafeIdentifier id) {
@@ -98,7 +102,7 @@ public final class ConfigAlbum {
         try (var stream = Files.walk(DIRECTORY)) {
             files = stream
                     .filter(Files::isRegularFile)
-                    .filter(ConfigAlbum::isOgg)
+                    .filter(ConfigAlbum::isSupportedAudio)
                     .sorted(Comparator.comparing(path -> path.getFileName().toString(), String.CASE_INSENSITIVE_ORDER))
                     .toList();
         } catch (IOException ignored) {
@@ -108,15 +112,16 @@ public final class ConfigAlbum {
         Set<String> usedPaths = new HashSet<>();
         for (Path file : files) {
             String fileName = file.getFileName().toString();
-            String path = uniquePath(sanitize(stem(fileName)), usedPaths);
+            String path = uniquePath(sanitize(playablePath(fileName)), usedPaths);
             SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", path);
             FILES.put(id, file);
             NAMES.put(id, stem(fileName));
         }
     }
 
-    private static boolean isOgg(Path path) {
-        return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".ogg");
+    private static boolean isSupportedAudio(Path path) {
+        String extension = extension(path);
+        return extension.equals(".ogg") || extension.equals(".mp3") || extension.equals(".flac") || extension.equals(".wav");
     }
 
     private static Set<String> unregisteredDiscs(Set<Identifier> registeredDiscs) {
@@ -132,7 +137,21 @@ public final class ConfigAlbum {
     }
 
     private static String stem(String fileName) {
-        return fileName.substring(0, fileName.length() - ".ogg".length());
+        int dot = fileName.lastIndexOf('.');
+        return dot < 0 ? fileName : fileName.substring(0, dot);
+    }
+
+    private static String playablePath(String fileName) {
+        return extension(fileName).equals(".ogg") ? stem(fileName) : fileName;
+    }
+
+    private static String extension(Path path) {
+        return extension(path.getFileName().toString());
+    }
+
+    private static String extension(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot < 0 ? "" : fileName.substring(dot).toLowerCase(Locale.ROOT);
     }
 
     private static String sanitize(String value) {

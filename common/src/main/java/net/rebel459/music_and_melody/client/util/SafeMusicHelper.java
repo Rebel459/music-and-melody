@@ -17,9 +17,9 @@ public final class SafeMusicHelper {
 	public static Optional<Path> resolve(SafeIdentifier id) {
 		String wantedPath = normalize(id.getPath());
 		String wantedFile = fileName(wantedPath);
-		String wantedStem = stripOgg(wantedFile);
+		String wantedStem = stripAudioExtension(wantedFile);
 
-		return findFlatAlbumFile(wantedStem)
+		return findFlatAlbumFile(wantedFile, wantedStem)
 				.or(() -> findDirectDownloadFile(wantedPath))
 				.or(() -> findRecursiveDownloadFile(wantedPath, wantedStem));
 	}
@@ -50,7 +50,7 @@ public final class SafeMusicHelper {
 		}
 	}
 
-	private static Optional<Path> findFlatAlbumFile(String wantedStem) {
+	private static Optional<Path> findFlatAlbumFile(String wantedFile, String wantedStem) {
 		Path root = albumRoot();
 
 		if (!Files.isDirectory(root)) {
@@ -58,11 +58,14 @@ public final class SafeMusicHelper {
 		}
 
 		try (Stream<Path> stream = Files.list(root)) {
-			return stream
-					.filter(Files::isRegularFile)
-					.filter(SafeMusicHelper::isOgg)
-					.filter(path -> sameStem(path, wantedStem))
-					.findFirst();
+			List<Path> files = stream
+				.filter(Files::isRegularFile)
+				.filter(SafeMusicHelper::isSupportedAudio)
+				.toList();
+			return files.stream()
+				.filter(path -> path.getFileName().toString().equalsIgnoreCase(wantedFile))
+				.findFirst()
+				.or(() -> files.stream().filter(path -> sameStem(path, wantedStem)).findFirst());
 		} catch (IOException exception) {
 			throw new IllegalStateException("Failed to scan album folder '" + root + "'.", exception);
 		}
@@ -102,11 +105,12 @@ public final class SafeMusicHelper {
 		try (Stream<Path> stream = Files.walk(root)) {
 			return stream
 					.filter(Files::isRegularFile)
-					.filter(SafeMusicHelper::isOgg)
+				.filter(SafeMusicHelper::isSupportedAudio)
 					.filter(path -> {
 						String relative = normalize(root.relativize(path).toString());
 
-						return relative.equals(wantedWithOgg)
+						return relative.equals(wantedPath)
+								|| relative.equals(wantedWithOgg)
 								|| relative.endsWith("/" + wantedWithOgg)
 								|| sameStem(path, wantedStem);
 					})
@@ -126,7 +130,7 @@ public final class SafeMusicHelper {
 		try {
 			return Files.list(root)
 					.filter(Files::isRegularFile)
-					.filter(SafeMusicHelper::isOgg)
+				.filter(SafeMusicHelper::isSupportedAudio)
 					.map(path -> trackId(namespace, folderPath, path));
 		} catch (IOException exception) {
 			throw new IllegalStateException("Failed to scan album folder '" + root + "'.", exception);
@@ -143,7 +147,7 @@ public final class SafeMusicHelper {
 		try {
 			return Files.walk(root)
 					.filter(Files::isRegularFile)
-					.filter(SafeMusicHelper::isOgg)
+				.filter(SafeMusicHelper::isSupportedAudio)
 					.filter(path -> isInsideRequestedFolder(root, path, folderPath))
 					.map(path -> trackId(namespace, folderPath, path));
 		} catch (IOException exception) {
@@ -164,7 +168,8 @@ public final class SafeMusicHelper {
 	}
 
 	private static String trackId(String namespace, String folderPath, Path file) {
-		String stem = stripOgg(file.getFileName().toString());
+		String name = file.getFileName().toString();
+		String stem = extension(name).equals(".ogg") ? stripAudioExtension(name) : name;
 
 		if (folderPath.isBlank()) {
 			return namespace + ":" + stem;
@@ -174,18 +179,18 @@ public final class SafeMusicHelper {
 	}
 
 	private static boolean sameStem(Path path, String wantedStem) {
-		String actualStem = stripOgg(path.getFileName().toString());
+		String actualStem = stripAudioExtension(path.getFileName().toString());
 
 		return actualStem.equals(wantedStem)
 				|| actualStem.equalsIgnoreCase(wantedStem)
 				|| sanitize(actualStem).equals(sanitize(wantedStem));
 	}
 
-	private static boolean isOgg(Path path) {
-		return path.getFileName()
-				.toString()
-				.toLowerCase(Locale.ROOT)
-				.endsWith(".ogg");
+	private static boolean isSupportedAudio(Path path) {
+		return switch (extension(path.getFileName().toString())) {
+			case ".ogg", ".mp3", ".flac", ".wav" -> true;
+			default -> false;
+		};
 	}
 
 	public static String sanitize(String value) {
@@ -255,10 +260,15 @@ public final class SafeMusicHelper {
 		return value.toLowerCase(Locale.ROOT).endsWith(".ogg") ? value : value + ".ogg";
 	}
 
-	private static String stripOgg(String value) {
-		return value.toLowerCase(Locale.ROOT).endsWith(".ogg")
-				? value.substring(0, value.length() - ".ogg".length())
-				: value;
+	private static String stripAudioExtension(String value) {
+		String extension = extension(value);
+		return extension.equals(".ogg") || extension.equals(".mp3") || extension.equals(".flac") || extension.equals(".wav")
+				? value.substring(0, value.length() - extension.length()) : value;
+	}
+
+	private static String extension(String value) {
+		int dot = value.lastIndexOf('.');
+		return dot < 0 ? "" : value.substring(dot).toLowerCase(Locale.ROOT);
 	}
 
 	private static Path configRoot() {

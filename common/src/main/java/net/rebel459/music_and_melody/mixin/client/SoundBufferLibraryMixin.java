@@ -5,6 +5,7 @@ import net.minecraft.client.sounds.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
+import net.rebel459.music_and_melody.client.util.ExternalAudioStreams;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,11 +38,8 @@ public abstract class SoundBufferLibraryMixin {
 		DirectSoundFiles.get(location).ifPresent(path -> {
 			CompletableFuture<SoundBuffer> future = this.cache.computeIfAbsent(location, ignored ->
 					CompletableFuture.supplyAsync(() -> {
-						try (
-								InputStream inputStream = Files.newInputStream(path);
-								FiniteAudioStream audioStream = new JOrbisAudioStream(inputStream)
-						) {
-							ByteBuffer data = audioStream.readAll();
+						try (AudioStream audioStream = openDirectStream(path, false)) {
+							ByteBuffer data = ExternalAudioStreams.readAll(audioStream);
 							return new SoundBuffer(data, audioStream.getFormat());
 						} catch (IOException exception) {
 							throw new CompletionException(exception);
@@ -62,10 +60,7 @@ public abstract class SoundBufferLibraryMixin {
 		DirectSoundFiles.get(location).ifPresent(path -> {
 			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
 				try {
-					InputStream inputStream = Files.newInputStream(path);
-					AudioStream stream = looping
-							? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
-							: new JOrbisAudioStream(inputStream);
+					AudioStream stream = openDirectStream(path, looping);
 					skipToRequestedOffset(stream, PlaylistHelper.consumePendingSeekMillis(location));
 					return stream;
 				} catch (IOException exception) {
@@ -112,5 +107,15 @@ public abstract class SoundBufferLibraryMixin {
 			if (read <= 0) break;
 			remaining -= read;
 		}
+	}
+
+	private static AudioStream openDirectStream(java.nio.file.Path path, boolean looping) throws IOException {
+		if (ExternalAudioStreams.isSupported(path) && !path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
+			return looping ? ExternalAudioStreams.openLooping(path) : ExternalAudioStreams.open(path);
+		}
+		InputStream inputStream = Files.newInputStream(path);
+		return looping
+				? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
+				: new JOrbisAudioStream(inputStream);
 	}
 }
