@@ -23,11 +23,6 @@ import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/**
- * An in-context editor for remote catalog URLs. It deliberately renders the
- * player below the dialog so adding a repository never feels like leaving the
- * online browser.
- */
 final class RepositoryScreen extends Screen {
 
     private final MusicPlayerScreen parent;
@@ -86,18 +81,15 @@ final class RepositoryScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // See QueueMutationConfirmScreen: this dialog renders its own dimmed
-        // backdrop and must not claim another global blur pass.
-    }
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int x = panelX();
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.width, this.height, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.width, this.height, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);

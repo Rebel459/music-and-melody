@@ -56,11 +56,6 @@ import java.util.Set;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/**
- * The compact, persistent music workspace.  It intentionally keeps the
- * left-hand queue and the transport controls alive while only the middle and
- * right panels change page.
- */
 public class MusicPlayerScreen extends Screen {
 
     public enum Page {
@@ -156,7 +151,6 @@ public class MusicPlayerScreen extends Screen {
     private final Set<ThemeTag> themeTags = EnumSet.noneOf(ThemeTag.class);
     private final Set<OnlineTag> onlineTags = EnumSet.noneOf(OnlineTag.class);
     private String selectedEventNamespace;
-    /** null = choose a catalog, empty = All, any other value = one catalog. */
     private String selectedOnlineCatalog;
     private ContentItem viewedContent;
     private RemotePack viewedRemotePack;
@@ -208,7 +202,6 @@ public class MusicPlayerScreen extends Screen {
         RemoteContentManager.refreshCredits();
         this.tagFilterList = null;
 
-        // Rendered first, before every list and widget added below.
         this.addRenderableOnly(this::renderShell);
         buildLeftPanel();
         buildPlaybackStrip();
@@ -297,8 +290,6 @@ public class MusicPlayerScreen extends Screen {
         int preferredMinimum = MIN_LEFT_WIDTH + MIN_MIDDLE_WIDTH + MIN_RIGHT_WIDTH;
 
         if (usableWidth < preferredMinimum) {
-            // At large GUI scales, keep all three panels inside the vanilla
-            // logical viewport and reduce them proportionally.
             this.leftWidth = Math.max(1, Math.round(usableWidth * (MIN_LEFT_WIDTH / (float) preferredMinimum)));
             this.rightWidth = Math.max(1, Math.round(usableWidth * (MIN_RIGHT_WIDTH / (float) preferredMinimum)));
             this.middleWidth = Math.max(1, usableWidth - this.leftWidth - this.rightWidth);
@@ -316,9 +307,6 @@ public class MusicPlayerScreen extends Screen {
                 this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
             }
         } else {
-            // Below the scale-7 reference, vanilla exposes a wider logical
-            // viewport. Grow the workspace and its columns together instead
-            // of leaving a fixed-width island in the middle of the screen.
             this.leftWidth = Math.round(workspaceWidth * (147.0F / REFERENCE_WORKSPACE_WIDTH));
             this.rightWidth = Math.round(workspaceWidth * (144.0F / REFERENCE_WORKSPACE_WIDTH));
             this.middleWidth = usableWidth - this.leftWidth - this.rightWidth;
@@ -356,8 +344,6 @@ public class MusicPlayerScreen extends Screen {
         this.searchButton.setX(this.middleX + 8);
         this.searchButton.setY(this.bottomPanelTop + 5);
 
-        // Cover the entire seek hit area while expanded.  Leaving even a
-        // couple of pixels exposed makes the bar below the field clickable.
         this.searchField = this.addRenderableWidget(new EditBox(this.font, this.middleX + 30, this.bottomPanelTop + 5, Math.max(32, this.middleWidth - 68), 20, Component.translatable("screen.music_and_melody.search")));
         this.searchField.setValue(this.search);
         this.searchField.setResponder(value -> {
@@ -682,7 +668,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, SCREEN_BACKGROUND);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, BACKGROUND);
         drawPanel(graphics, this.leftX, PANEL_TOP, this.leftWidth, this.panelBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, PANEL_TOP, this.middleWidth, this.contentBottom - PANEL_TOP);
         drawPanel(graphics, this.middleX, this.bottomPanelTop, this.middleWidth, this.panelBottom - this.bottomPanelTop);
@@ -734,7 +720,7 @@ public class MusicPlayerScreen extends Screen {
                 if (RemoteContentManager.onlineFunctionalityEnabled()) {
                     updateFeaturedCredits();
                     Component splash = this.featuredSplash == null && RemoteContentManager.creditsLoading()
-                            ? Component.translatable("screen.music_and_melody.news.loading")
+                            ? Component.translatable("screen.music_and_melody.loading")
                             : this.featuredSplash == null ? Component.translatable("screen.music_and_melody.choose_section")
                             : Component.literal(this.featuredSplash);
                     ThemeHelper.centeredText(graphics, this.font, splash, this.middleX + this.middleWidth / 2, PANEL_TOP + 48, TEXT_DESCRIPTION);
@@ -838,9 +824,6 @@ public class MusicPlayerScreen extends Screen {
     private void renderRemoteDetails(GuiGraphicsExtractor graphics, RemotePack pack) {
         int x = this.rightX + 8;
         int width = this.rightWidth - 16;
-        // Keep the online details heading aligned with the other right-panel
-        // headings.  The old +2 position let the heading and the first icon
-        // sit noticeably higher than the filter/action panels.
         int headingY = PANEL_TOP + 14;
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, headingY, TEXT_HEADER);
 
@@ -852,8 +835,6 @@ public class MusicPlayerScreen extends Screen {
         int textWidth = Math.max(1, width - iconSize - 6);
         int titleColor = isRemoteDeletePending(pack) ? TEXT_PENDING_DELETION : TEXT_TITLE;
         drawTrackMarquee(graphics, pack.name(), textX, iconY + 1, textWidth, titleColor);
-        // Reserve two lines beside the icon for the content namespace.  Both
-        // lines pan independently instead of being cut off in this narrow panel.
         drawTrackMarquee(graphics, Component.literal(pack.id().getNamespace() + ":"), textX, iconY + 13, textWidth, TEXT_DESCRIPTION);
         drawTrackMarquee(graphics, Component.literal(pack.id().getPath()), textX, iconY + 25, textWidth, TEXT_DESCRIPTION);
 
@@ -943,10 +924,6 @@ public class MusicPlayerScreen extends Screen {
                 x, descriptionY, TEXT_DESCRIPTION);
         descriptionY += 12;
         List<FormattedCharSequence> lines = this.font.split(theme.description, Math.max(1, width));
-        // Keep the description clear of the action stack, while allowing the
-        // last complete line to use the space immediately above it. The old
-        // fixed offset left a scale-dependent gap and could make the final
-        // line appear clipped at the bottom of the details panel.
         int bottom = themePreviewY() - 6;
         for (FormattedCharSequence line : lines) {
             if (descriptionY + this.font.lineHeight > bottom) break;
@@ -1000,8 +977,6 @@ public class MusicPlayerScreen extends Screen {
         }
         if (!this.searching && PlaylistHelper.getCurrentSongId() != null) {
             Component track = MusicScreenHelper.playlistName(this.minecraft, PlaylistHelper.getCurrentSongId());
-            // Keep the moving title inside the same horizontal lane as the
-            // seek bar; it must never sweep under the search control.
             drawMarquee(graphics, track, progressX, bottomPanelTop + 17, progressWidth, TEXT_DESCRIPTION);
         }
     }
@@ -1025,9 +1000,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private int toLayoutMouse(double mouse) {
-        // Rendering receives integer coordinates, while click handling keeps
-        // the exact divided double. Floor preserves the half-open widget
-        // bounds under fractional GUI multipliers so hover and click agree.
+        // fixes mouse positioning detection with gui multiplier
         return (int) Math.floor(mouse / MaMDataConfig.get().gui_multiplier);
     }
 
@@ -1113,9 +1086,7 @@ public class MusicPlayerScreen extends Screen {
             closeSearch();
         } else {
             this.searching = true;
-            // Screen's click dispatch focuses the icon after this callback
-            // returns.  Defer the field focus to the next render pass so it
-            // wins that race and is immediately ready for typing.
+            // allows immediate typing on clicking the search icon
             this.focusSearchField = true;
         }
         updateSearchVisibility();
@@ -1173,9 +1144,7 @@ public class MusicPlayerScreen extends Screen {
                 return true;
             }
         }
-        // The expanded search field intentionally covers the seek strip. It
-        // must receive the click first, otherwise the concealed seek target
-        // changes playback position beneath an active text field.
+        // Prioritise search bar over the music bar beneath it
         if (this.searching && this.searchField != null && this.searchField.isMouseOver(event.x(), event.y())) {
             return this.searchField.mouseClicked(event, doubleClick);
         }
@@ -1384,7 +1353,6 @@ public class MusicPlayerScreen extends Screen {
         return PlaylistHelper.hasCustomPlaylistSongs();
     }
 
-    /** Keep the overwrite warning solely for replacing a non-empty editor list. */
     private void requestDiscardCustomPlaylist(Component confirmLabel, Runnable action) {
         if (!hasUnsavedCustomPlaylist()) {
             action.run();
@@ -1485,8 +1453,6 @@ public class MusicPlayerScreen extends Screen {
     private void finishThemePreview() {
         if (this.previewingTheme) ThemeListener.restoreActive();
         this.previewingTheme = false;
-        // Keep the selected item highlighted in the middle list, but return
-        // the right panel to its normal tag-filter state.
         this.viewedTheme = null;
         this.rebuildWidgets();
     }
@@ -1622,13 +1588,13 @@ public class MusicPlayerScreen extends Screen {
             y += 28;
             ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.supporter_thanks"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
             String supporter = this.featuredSupporter == null && RemoteContentManager.creditsLoading()
-                    ? Component.translatable("screen.music_and_melody.news.loading").getString() : this.featuredSupporter;
+                    ? Component.translatable("screen.music_and_melody.loading").getString() : this.featuredSupporter;
             renderWelcomeLink(graphics, supporter, x, y + 14, width, mouseX, mouseY,
                     this.featuredSupporter == null ? null : MusicScreenHelper::openKofi);
             y += 42;
             ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.composer_credits"), this.rightX + this.rightWidth / 2, y, TEXT_DESCRIPTION);
             String composer = this.featuredComposer == null && RemoteContentManager.creditsLoading()
-                    ? Component.translatable("screen.music_and_melody.news.loading").getString() : this.featuredComposer;
+                    ? Component.translatable("screen.music_and_melody.loading").getString() : this.featuredComposer;
             renderWelcomeLink(graphics, composer, x, y + 14, width, mouseX, mouseY,
                     this.featuredComposerUrl == null ? null : () -> MusicScreenHelper.openUri(this.featuredComposerUrl));
         }
@@ -1969,7 +1935,6 @@ public class MusicPlayerScreen extends Screen {
         if (this.reloadPending) this.minecraft.reloadResourcePacks();
     }
 
-    /** Opens the actual source page; Now Playing itself is not a second list type. */
     private void openCurrentPlayback() {
         ContentItem source = currentSourceContent();
         if (source != null) {
@@ -2003,7 +1968,7 @@ public class MusicPlayerScreen extends Screen {
     private SourceInfo currentSource() {
         Optional<PlaylistHelper.QueueType> queuedSource = PlaylistHelper.queueSource();
         if (queuedSource.isEmpty()) {
-            return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+            return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ICON,
                     Component.literal("custom"),
                     sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
         }
@@ -2021,15 +1986,13 @@ public class MusicPlayerScreen extends Screen {
                         sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), originFor(id, playlist), playlist.isFavourite());
             }
         }
-        return new SourceInfo(Component.literal(source.name()), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+        return new SourceInfo(Component.literal(source.name()), MusicScreenHelper.FALLBACK_ICON,
                 Component.literal(source.id()),
                 sourceTypeLabel(source.type()), Component.translatable("screen.music_and_melody.content_origin.built_in"), false);
     }
 
     private static Component sourceTypeLabel(MaMDataConfig.QueueType type) {
-        return Component.translatable(type == MaMDataConfig.QueueType.ALBUM
-                ? "screen.music_and_melody.tag.album"
-                : "screen.music_and_melody.tag.playlist");
+        return Component.translatable(type == MaMDataConfig.QueueType.ALBUM ? "screen.music_and_melody.tag.album" : "screen.music_and_melody.tag.playlist");
     }
 
     private static Component originFor(Identifier id, Playlist playlist) {
@@ -2042,7 +2005,6 @@ public class MusicPlayerScreen extends Screen {
         return RemoteContentManager.isDownloaded(id, tag) ? "downloaded" : "built_in";
     }
 
-    /** Returns every tag that applies to an opened Album or Playlist. */
     private static Component contentTags(ContentItem item) {
         MutableComponent combined = Component.empty();
         boolean first = true;
@@ -2147,7 +2109,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private static SourceInfo customPlaylistSource() {
-        return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ALBUM_ICON,
+        return new SourceInfo(Component.translatable("screen.music_and_melody.custom_playlist"), MusicScreenHelper.FALLBACK_ICON,
                 Component.literal("custom"),
                 sourceTypeLabel(MaMDataConfig.QueueType.PLAYLIST), Component.translatable("screen.music_and_melody.content_origin.custom"), false);
     }
@@ -2258,7 +2220,6 @@ public class MusicPlayerScreen extends Screen {
         ThemeHelper.text(graphics, this.font, line, x, y, color);
     }
 
-    /** Keeps a separator from being stranded when only the first tag fits. */
     private Component fittedContentDetails(Component first, Component second, int width) {
         if (second == null || second.getString().isBlank()) return first;
         int separatorWidth = this.font.width(" \u00b7 ");
@@ -2268,10 +2229,6 @@ public class MusicPlayerScreen extends Screen {
         return first;
     }
 
-    /**
-     * Draws a title within a bounded area. Long titles pause briefly at both
-     * ends instead of jumping back to the beginning.
-     */
     private void drawMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         int textWidth = this.font.width(text);
         if (textWidth <= width) {
@@ -2296,7 +2253,6 @@ public class MusicPlayerScreen extends Screen {
         graphics.disableScissor();
     }
 
-    /** A left-aligned marquee for compact track rows. */
     private void drawTrackMarquee(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         int textWidth = this.font.width(text);
         if (textWidth <= width) {
@@ -2375,11 +2331,6 @@ public class MusicPlayerScreen extends Screen {
         return breadcrumbs;
     }
 
-    /**
-     * A file-explorer-like path that intentionally drops left-most entries
-     * first.  This keeps the active folder or content name readable at narrow
-     * resolutions.
-     */
     private void renderBreadcrumbs(GuiGraphicsExtractor graphics, List<Breadcrumb> breadcrumbs) {
         if (breadcrumbs.isEmpty()) return;
         int left = this.middleX + 34;
@@ -2512,7 +2463,7 @@ public class MusicPlayerScreen extends Screen {
             return switch (this) {
                 case BUILT_IN -> !source.isConfig();
                 case CUSTOM -> source.isConfig();
-                // Downloaded event origins are not distinguished until remote catalogs expose categories.
+                // downloaded event origins are not distinguished until remote catalogs expose categories
                 case DOWNLOADED -> false;
                 case ENABLED -> source.isEnabled();
                 case DISABLED -> !source.isEnabled();
@@ -2636,8 +2587,7 @@ public class MusicPlayerScreen extends Screen {
             graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
             int textColor = this.active ? TEXT_PRIMARY : TEXT_DISABLED;
             var font = Minecraft.getInstance().font;
-            ThemeHelper.text(graphics, font, this.getMessage(), x + (width - font.width(this.getMessage())) / 2,
-                    y + (height - 8) / 2, textColor, TEXT_SHADOW);
+            ThemeHelper.text(graphics, font, this.getMessage(), x + (width - font.width(this.getMessage())) / 2, y + (height - 8) / 2, textColor);
         }
 
         private void commit() {
@@ -2694,13 +2644,9 @@ public class MusicPlayerScreen extends Screen {
         Component details() {
             int tracks = this.album != null ? this.album.tracks.size() : this.playlist.tracks.size();
             int discs = this.album != null ? this.album.discs.size() : this.playlist.discs.size();
-            Component tracksText = Component.translatable(tracks == 1
-                    ? "screen.music_and_melody.track_count.single"
-                    : "screen.music_and_melody.track_count.multiple", tracks);
+            Component tracksText = Component.translatable(tracks == 1 ? "screen.music_and_melody.track_count.single" : "screen.music_and_melody.track_count.multiple", tracks);
             if (discs == 0) return tracksText;
-            Component discsText = Component.translatable(discs == 1
-                    ? "screen.music_and_melody.disc_count.single"
-                    : "screen.music_and_melody.disc_count.multiple", discs);
+            Component discsText = Component.translatable(discs == 1 ? "screen.music_and_melody.disc_count.single" : "screen.music_and_melody.disc_count.multiple", discs);
             return Component.translatable("screen.music_and_melody.content_details", tracksText, discsText);
         }
 
@@ -2730,7 +2676,6 @@ public class MusicPlayerScreen extends Screen {
 
     private record SourceInfo(Component name, Identifier icon, Component id, Component typeLabel, Component originLabel, boolean favourite) {}
 
-    /** The top-left card is a shortcut to the active queue, not a second track list. */
     private static final class CurrentSourceCard extends Button {
         private final MusicPlayerScreen screen;
 
@@ -2928,9 +2873,6 @@ public class MusicPlayerScreen extends Screen {
             this.addButton.setX(addX);
             this.addButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
             this.addButton.active = !alreadyAdded;
-            // Keep the add slot reserved so status/toggle icons do not move,
-            // but do not draw an inactive add icon for tracks already in the
-            // Custom Playlist.
             if (!alreadyAdded) this.addButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
             if (this.status != null) {
                 int statusX = addX - IconButton.SIZE - 4;
@@ -2950,10 +2892,6 @@ public class MusicPlayerScreen extends Screen {
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (this.heading != null) return true;
             this.addButton.active = !PlaylistHelper.isInCustomPlaylist(this.song);
-            // Entry-owned buttons are rendered manually rather than being
-            // screen children. Check their rectangles explicitly so a click
-            // on an inactive/stale icon can never fall through to the row's
-            // play action.
             if (contains(this.addButton, event)) {
                 if (this.addButton.active) {
                     this.addButton.mouseClicked(event, doubleClick);
@@ -3010,10 +2948,6 @@ public class MusicPlayerScreen extends Screen {
         final int panelWidth;
 
         PanelList(MusicPlayerScreen screen, Minecraft minecraft, int panelX, int panelWidth, int top, int bottom, int rowHeight) {
-            // Since 26.1 the third constructor argument is a height, not a
-            // bottom coordinate.  Supplying the latter makes the list extend
-            // from `top` by almost a whole screen and lets it cover the player
-            // strip and neighbouring panels.
             super(minecraft, panelWidth, Math.max(1, bottom - top), top, rowHeight);
             this.screen = screen;
             this.panelX = panelX;
@@ -3023,17 +2957,10 @@ public class MusicPlayerScreen extends Screen {
         }
 
         @Override
-        protected void extractListBackground(GuiGraphicsExtractor graphics) {
-            // The enclosing workspace panel supplies the background.  The
-            // stock list background is full-screen styled and does not belong
-            // inside a compact sub-panel.
-        }
+        protected void extractListBackground(GuiGraphicsExtractor graphics) {}
 
         @Override
-        protected void extractListSeparators(GuiGraphicsExtractor graphics) {
-            // Likewise, do not draw the stock header/footer separator across
-            // a panel-local list.
-        }
+        protected void extractListSeparators(GuiGraphicsExtractor graphics) {}
 
         @Override
         public int getRowLeft() {
@@ -3327,8 +3254,7 @@ public class MusicPlayerScreen extends Screen {
                     Component.translatable(item.album().isEnabled() ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled"),
                     IconButton.icon(item.album().isEnabled() ? "enabled" : "disabled"),
                     ignored -> this.screen.toggleAlbumEnabled(this.item.album()));
-            this.playlistOriginIcon = item.playlist() == null ? null
-                    : IconButton.icon(item.playlist().isCustom() ? "config" : "built_in");
+            this.playlistOriginIcon = item.playlist() == null ? null : IconButton.icon(item.playlist().isCustom() ? "config" : "built_in");
         }
 
         @Override
@@ -3350,9 +3276,7 @@ public class MusicPlayerScreen extends Screen {
             this.screen.drawTrackMarquee(graphics, this.item.name(), textX, this.getContentYMiddle() - 10,
                     Math.max(1, textWidth), titleColor);
             this.screen.drawTrackMarquee(graphics, this.item.details(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
-            this.favouriteButton.setIconAndTooltip(IconButton.icon(this.item.favourite() ? "favourited" : "favourite"), Component.translatable(this.item.favourite()
-                    ? "button.music_and_melody.unfavourite"
-                    : "button.music_and_melody.favourite"));
+            this.favouriteButton.setIconAndTooltip(IconButton.icon(this.item.favourite() ? "favourited" : "favourite"), Component.translatable(this.item.favourite() ? "button.music_and_melody.unfavourite" : "button.music_and_melody.favourite"));
             int favouriteX = this.getContentRight() - IconButton.SIZE - 3;
             this.favouriteButton.setX(favouriteX);
             this.favouriteButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
@@ -3368,9 +3292,7 @@ public class MusicPlayerScreen extends Screen {
                 Playlist playlist = this.item.playlist();
                 IconButton.renderIconWithTooltip(graphics, this.playlistOriginIcon, favouriteX - IconButton.SIZE - 4,
                         this.getContentYMiddle() - IconButton.SIZE / 2,
-                        Component.translatable(playlist.isCustom()
-                                ? "screen.music_and_melody.content_origin.custom"
-                                : "screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);
+                        Component.translatable(playlist.isCustom() ? "screen.music_and_melody.content_origin.custom" : "screen.music_and_melody.content_origin.built_in"), mouseX, mouseY);
             }
         }
 
@@ -3423,9 +3345,7 @@ public class MusicPlayerScreen extends Screen {
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
             ThemeHelper.text(graphics, this.screen.font, Component.literal("\u25B8 ").append(eventFolderLabel(this.namespace)), this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, TEXT_TITLE);
-            Component suffix = Component.translatable(this.count == 1
-                    ? "screen.music_and_melody.event_count.single"
-                    : "screen.music_and_melody.event_count.multiple", this.count);
+            Component suffix = Component.translatable(this.count == 1 ? "screen.music_and_melody.event_count.single" : "screen.music_and_melody.event_count.multiple", this.count);
             int x = this.getContentRight() - this.screen.font.width(suffix) - 3;
             ThemeHelper.text(graphics, this.screen.font, suffix, x, this.getContentYMiddle() - this.screen.font.lineHeight / 2, TEXT_DESCRIPTION);
         }
@@ -3483,14 +3403,11 @@ public class MusicPlayerScreen extends Screen {
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.source.icon()), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 8;
             int textWidth = this.getContentWidth() - iconSize - IconButton.SIZE - 17;
-            int titleColor = this.screen.isEventDeletePending(this.source.id) ? TEXT_PENDING_DELETION
-                    : this.source.isEnabled() ? TEXT_TITLE : TEXT_DESCRIPTION;
+            int titleColor = this.screen.isEventDeletePending(this.source.id) ? TEXT_PENDING_DELETION : this.source.isEnabled() ? TEXT_TITLE : TEXT_DESCRIPTION;
             this.screen.drawTrackMarquee(graphics, this.source.record.name(), textX, this.getContentYMiddle() - 10,
                     Math.max(1, textWidth), titleColor);
             this.screen.drawTrackMarquee(graphics, this.source.record.description(), textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
-            this.toggleButton.setIconAndTooltip(IconButton.icon(this.source.isEnabled() ? "enabled" : "disabled"), Component.translatable(this.source.isEnabled()
-                    ? "button.music_and_melody.disable"
-                    : "button.music_and_melody.enable"));
+            this.toggleButton.setIconAndTooltip(IconButton.icon(this.source.isEnabled() ? "enabled" : "disabled"), Component.translatable(this.source.isEnabled() ? "button.music_and_melody.disable" : "button.music_and_melody.enable"));
             this.toggleButton.setX(this.getContentRight() - IconButton.SIZE - 3);
             this.toggleButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);
             this.toggleButton.extractRenderState(graphics, mouseX, mouseY, tickDelta);
@@ -3512,9 +3429,7 @@ public class MusicPlayerScreen extends Screen {
         }
 
         private static int completeRowsBottom(int top, int bottom, int rowHeight) {
-            // AbstractSelectionList starts its first entry two pixels below
-            // the list top. Include that inset when aligning the viewport, or
-            // the final row would still lose its bottom two pixels.
+            // AbstractSelectionList starts its first entry two pixels below the list top. Include that inset when aligning the viewport, or the final row would still lose its bottom two pixels
             int available = Math.max(0, bottom - top - 2);
             int rows = Math.max(1, available / rowHeight);
             return Math.min(bottom, top + 2 + rows * rowHeight + 2);
@@ -3705,8 +3620,7 @@ public class MusicPlayerScreen extends Screen {
             this.screen.drawTrackMarquee(graphics, this.pack.name(), textX, this.getContentYMiddle() - 10, Math.max(1, textWidth), titleColor);
             Component details = Component.translatable("screen.music_and_melody.content_details",
                     remoteTypeMessage(this.pack), remoteStateMessage(RemoteContentManager.state(this.pack)));
-            this.screen.drawTrackMarquee(graphics, details, textX,
-                    this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
+            this.screen.drawTrackMarquee(graphics, details, textX, this.getContentYMiddle() + 2, Math.max(1, textWidth), TEXT_DESCRIPTION);
             updateAction();
             this.actionButton.setX(this.getContentRight() - IconButton.SIZE - 3);
             this.actionButton.setY(this.getContentYMiddle() - IconButton.SIZE / 2);

@@ -30,9 +30,6 @@ public final class DirectSoundFiles {
 			Path path
 	) {
 		FILES.put(soundResourceId, path.toAbsolutePath().normalize());
-		// The sound engine requests streams by the generated playable id in some
-		// paths and by the actual sounds/... resource in others.  Retain both so
-		// UI metadata (duration/seek) and direct-file streaming resolve equally.
 		FILES.put(playableId, path.toAbsolutePath().normalize());
 
 		DISPLAY_KEYS.put(playableId, displayName);
@@ -91,11 +88,6 @@ public final class DirectSoundFiles {
 		return playableIdOrSelf(a).equals(playableIdOrSelf(b));
 	}
 
-	/**
-	 * The sound engine may ask for either a generated playable id or the
-	 * physical {@code sounds/...<extension>} resource. Treat both aliases as the same
-	 * stream so restart-at-offset seeking reaches the reopened song.
-	 */
 	public static boolean sameStreamResource(Identifier a, Identifier b) {
 		if (a == null || b == null) return false;
 		if (a.equals(b)) return true;

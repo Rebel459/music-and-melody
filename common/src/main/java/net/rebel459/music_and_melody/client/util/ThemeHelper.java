@@ -20,27 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Shared visual tokens for the custom Music and Melody screens.
- *
- * <p>The values intentionally remain plain ARGB integers so renderers can use
- * them directly.  A future album can replace these values without having to
- * find colours spread across individual screens.</p>
- */
 public final class ThemeHelper {
 
     private ThemeHelper() {
     }
 
-    // Surfaces and overlays
-    public static int SCREEN_BACKGROUND;
+    public static int BACKGROUND;
     public static int PANEL_BACKGROUND;
     public static int PANEL_OUTLINE;
     public static int POPUP_OUTLINE;
-    public static int MODAL_BACKGROUND;
-    public static int DIM_OVERLAY;
+    public static int POPUP_PANEL_BACKGROUND;
+    public static int POPUP_OVERLAY;
 
-    // Text roles
     public static int TEXT_SELECTED;
     public static int TEXT_TITLE;
     public static int TEXT_PRIMARY;
@@ -56,7 +47,6 @@ public final class ThemeHelper {
 
     private static Identifier appliedTheme;
 
-    // Interactive surfaces and progress controls
     public static int BUTTON_HIGHLIGHT;
     public static int BUTTON_PASSIVE;
     public static int BUTTON_DISABLED;
@@ -66,20 +56,19 @@ public final class ThemeHelper {
     public static int SCROLLBAR_THUMB;
     public static int DRAG_OUTLINE;
 
-    /** Applies a fully resolved theme to the tokens used by the custom UI. */
     public static void apply(Theme theme) {
         if (theme == null) return;
 
         if (!theme.valid) return;
         appliedTheme = theme.theme;
         BUTTON_SCALING.clear();
-        SCREEN_BACKGROUND = argb(theme.panels.background());
+        BACKGROUND = argb(theme.panels.background());
         PANEL_BACKGROUND = argb(theme.panels.panelBackground());
         PANEL_OUTLINE = argb(theme.panels.panelOutline());
         PANEL_HIGHLIGHT = argb(theme.panels.panelHighlight());
         POPUP_OUTLINE = argb(theme.panels.popupOutline());
-        MODAL_BACKGROUND = argb(theme.panels.popupPanelBackground());
-        DIM_OVERLAY = argb(theme.panels.popupOverlay());
+        POPUP_PANEL_BACKGROUND = argb(theme.panels.popupPanelBackground());
+        POPUP_OVERLAY = argb(theme.panels.popupOverlay());
 
         BUTTON_PASSIVE = argb(theme.elements.buttonBackground());
         BUTTON_HIGHLIGHT = argb(theme.elements.buttonHighlight());
@@ -114,46 +103,21 @@ public final class ThemeHelper {
         }
     }
 
-    /** Draws themed text using the active theme's shadow preference. */
     public static void text(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
         graphics.text(font, text, x, y, colour, TEXT_SHADOW);
     }
-
-    /** Draws themed text using the active theme's shadow preference. */
     public static void text(GuiGraphicsExtractor graphics, Font font, FormattedCharSequence text, int x, int y, int colour) {
         graphics.text(font, text, x, y, colour, TEXT_SHADOW);
     }
-
-    /** Draws themed text using the active theme's shadow preference. */
     public static void text(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour) {
         graphics.text(font, text, x, y, colour, TEXT_SHADOW);
     }
 
-    /** Allows callers migrated from a direct text draw to use the theme setting. */
-    public static void text(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour,
-                            boolean ignoredShadow) {
-        text(graphics, font, text, x, y, colour);
-    }
-
-    /** Draws centred themed text using the active theme's shadow preference. */
-    public static void centeredText(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int colour) {
-        text(graphics, font, text, x - font.width(text) / 2, y, colour);
-    }
-
-    /** Draws centred themed text using the active theme's shadow preference. */
     public static void centeredText(GuiGraphicsExtractor graphics, Font font, FormattedCharSequence text, int x, int y, int colour) {
         text(graphics, font, text, x - font.width(text) / 2, y, colour);
     }
-
-    /** Draws centred themed text using the active theme's shadow preference. */
     public static void centeredText(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour) {
         text(graphics, font, text, x - font.width(text) / 2, y, colour);
-    }
-
-    /** Draws wrapped themed text using the active theme's shadow preference. */
-    public static void textWithWordWrap(GuiGraphicsExtractor graphics, Font font, net.minecraft.network.chat.FormattedText text,
-                                        int x, int y, int width, int colour) {
-        graphics.textWithWordWrap(font, text, x, y, width, colour, TEXT_SHADOW);
     }
 
     public static final Identifier VANILLA_BUTTON = Identifier.withDefaultNamespace("widget/button");
@@ -212,9 +176,8 @@ public final class ThemeHelper {
         return icon;
     }
 
-    /** Renders a themed button texture without requiring the GUI atlas. */
-    public static boolean renderThemeButton(GuiGraphicsExtractor graphics, Identifier button,
-                                            int x, int y, int width, int height, float alpha) {
+    // Renders a themed button texture without requiring the GUI atlas
+    public static boolean renderThemeButton(GuiGraphicsExtractor graphics, Identifier button, int x, int y, int width, int height, float alpha) {
         Identifier texture = getThemeTexture(button);
         if (texture.equals(button)) return false;
 
@@ -288,7 +251,6 @@ public final class ThemeHelper {
         return path.substring(path.lastIndexOf('/') + 1);
     }
 
-    /** Converts an ARGB token to the RGB value expected by text styles. */
     public static int rgb(int argb) {
         return argb & 0x00FFFFFF;
     }

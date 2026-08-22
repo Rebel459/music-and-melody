@@ -43,7 +43,6 @@ public class IconButton extends Button {
         return button;
     }
 
-    /** Creates an icon button used inside a scrolling/list row. */
     public static IconButton createListIcon(Component message, Identifier icon, OnPress onPress) {
         IconButton button = new IconButton(message, icon, onPress);
         button.listIcon = true;
@@ -65,13 +64,6 @@ public class IconButton extends Button {
         }
     }
 
-    /**
-     * The compact workspace renders in its own logical coordinate space. The
-     * widgets still receive logical mouse coordinates for hit testing, while
-     * tooltip positions must be expressed in the actual screen coordinate
-     * space. Screens using that renderer set this for the duration of their
-     * extraction pass.
-     */
     public static void setTooltipScale(float scale) {
         tooltipScale = Math.max(0.01F, scale);
     }

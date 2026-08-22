@@ -27,10 +27,6 @@ public final class PlaylistHelper {
     public static boolean loop = false;
     private static boolean loaded = false;
 
-    /**
-     * The visible queue is deliberately never shuffled.  This list is the
-     * independent traversal order used while shuffle mode is enabled.
-     */
     private static final List<SafeIdentifier> SHUFFLE_ORDER = new ArrayList<>();
     private static boolean shuffle = false;
     private static int shuffleIndex = 0;
@@ -56,7 +52,6 @@ public final class PlaylistHelper {
     private static long pausedQueueElapsedMillis;
     private static boolean soundEngineReloading = false;
     private static ReloadPlayback reloadPlayback;
-    /** Offset requested for the next decoded stream, consumed by SoundBufferLibraryMixin. */
     private static long pendingSeekMillis = 0L;
 
     public static final Music EMPTY = new Music(MaMSounds.EMPTY, 0, 0, true);
@@ -97,7 +92,6 @@ public final class PlaylistHelper {
         save();
     }
 
-    /** Replaces the queue without turning the loaded album or playlist into a custom list. */
     public static boolean loadQueueType(Collection<SafeIdentifier> songs, MaMDataConfig.QueueType type, String id, String name) {
         ensureLoaded();
         if (songs == null) return false;
@@ -125,7 +119,6 @@ public final class PlaylistHelper {
         return !QUEUED_SONGS.isEmpty();
     }
 
-    /** Loads a snapshot of the Custom Playlist as the active playback queue. */
     public static boolean loadCustomQueue(Collection<SafeIdentifier> songs) {
         ensureLoaded();
         if (songs == null) return false;
@@ -152,11 +145,6 @@ public final class PlaylistHelper {
         MaMDataConfig.Playlist playlist = MaMDataConfig.get().playlist;
         if (playlist.queue_type == MaMDataConfig.QueueType.NONE || playlist.queue_name.isBlank()) return Optional.empty();
         return Optional.of(new QueueType(playlist.queue_type, playlist.queue_id, playlist.queue_name));
-    }
-
-    public static boolean isQueued(SafeIdentifier song) {
-        ensureLoaded();
-        return QUEUED_SONGS.contains(song);
     }
 
     public static List<SafeIdentifier> queuedSongs() {
@@ -469,16 +457,7 @@ public final class PlaylistHelper {
         return currentSong != null ? currentSong : pausedQueueSound;
     }
 
-    /**
-     * Reopens the current stream and discards decoded samples until {@code millis}.
-     * This is deliberately restart-at-offset seeking: it is dependable for both
-     * resource-pack and direct OGG files without a new audio dependency.
-     */
     public static boolean seekCurrentSong(long millis) {
-        // SoundEngine can report a streaming source as inactive for the few
-        // ticks between creating its channel and attaching the stream. The
-        // player still has a valid song at that point, so do not reject a UI
-        // seek solely because of that transient engine state.
         if (currentSong == null || currentSongId == null || currentSongStartedAtNanos == 0L) return false;
 
         SafeIdentifier id = currentSongId;
@@ -493,7 +472,6 @@ public final class PlaylistHelper {
         return playSound(id, looping, fromQueue, fromEvent, type);
     }
 
-    /** Called by the stream factory exactly once for the matching next sound. */
     public static long consumePendingSeekMillis(Identifier streamLocation) {
         if (pendingSeekMillis <= 0L || streamLocation == null || currentSong == null) return 0L;
         Sound sound = currentSong.getSound();
@@ -956,7 +934,6 @@ public final class PlaylistHelper {
         if (clearSeek) pendingSeekMillis = 0L;
     }
 
-    /** Returns elapsed playback time for the shared player progress display. */
     public static long currentSongElapsedMillis() {
         if (queuePaused && currentSongFromQueue) return pausedQueueElapsedMillis;
         if (currentSong == null) return pausedQueueElapsedMillis;
@@ -1025,7 +1002,7 @@ public final class PlaylistHelper {
         playlist.recent_favourites.addFirst(key);
     }
 
-    /** Returns {@code 0} for the most recently played source, or a large rank when unseen. */
+    // Returns {@code 0} for the most recently played source, or a large rank when unseen
     public static int recentSourceRank(MaMDataConfig.QueueType type, String id) {
         if (type == MaMDataConfig.QueueType.NONE || id == null) return Integer.MAX_VALUE;
         int index = MaMDataConfig.get().playlist.recent_favourites.indexOf(type.name() + "|" + id);
@@ -1050,7 +1027,6 @@ public final class PlaylistHelper {
         }
     }
 
-    /** Starts a new shuffle cycle while preserving the current song at the front when necessary. */
     private static void rebuildShuffleOrder(SafeIdentifier current) {
         SHUFFLE_ORDER.clear();
         List<SafeIdentifier> remaining = new ArrayList<>(QUEUED_SONGS);

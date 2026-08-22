@@ -53,7 +53,6 @@ public final class RemoteIconManager {
         return DYNAMIC_TEXTURES.contains(icon);
     }
 
-    /** Requests a remote Markdown image and returns it once it is ready to render. */
     public static synchronized Image image(String value) {
         if (!RemoteContentManager.onlineFunctionalityEnabled()) return null;
         Image loaded = IMAGES.get(value);

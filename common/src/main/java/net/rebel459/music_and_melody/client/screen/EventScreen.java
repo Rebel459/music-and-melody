@@ -2,13 +2,11 @@ package net.rebel459.music_and_melody.client.screen;
 
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
-import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
@@ -32,11 +30,8 @@ import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
@@ -60,7 +55,6 @@ public class EventScreen extends Screen {
     private static final int MIN_LEFT_WIDTH = 112;
     private static final int MIN_MIDDLE_WIDTH = 180;
     private static final int MIN_RIGHT_WIDTH = 124;
-    /** Matches the shared workspace footer baseline while fitting one single-line and one two-line field. */
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
 
 
@@ -104,7 +98,6 @@ public class EventScreen extends Screen {
         reloadEntries();
     }
 
-    /** Opens the existing editor directly on one event source. */
     public EventScreen(Screen parent, Identifier sourceId) {
         this(parent);
         this.activeSourceId = sourceId;
@@ -167,8 +160,6 @@ public class EventScreen extends Screen {
 
         int actionX = layout.rightX + 7;
         int actionWidth = layout.rightWidth - 14;
-        // Match the Event Browser's Filter by Tags section exactly: heading
-        // at +14 and its first control at +38.
         int actionY = PANEL_TOP + 132;
 
         this.addButton = this.addRenderableWidget(new WorkspaceButton(actionX, actionY, actionWidth, 20,
@@ -337,7 +328,7 @@ public class EventScreen extends Screen {
 
     private void renderEditorShell(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         EditorLayout layout = editorLayout();
-        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, SCREEN_BACKGROUND);
+        graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, BACKGROUND);
         drawPanel(graphics, layout.leftX, PANEL_TOP, layout.leftWidth, layout.panelBottom - PANEL_TOP);
         drawPanel(graphics, layout.middleX, PANEL_TOP, layout.middleWidth, layout.bottomPanelTop - PANEL_GAP - PANEL_TOP);
         drawPanel(graphics, layout.middleX, layout.bottomPanelTop, layout.middleWidth, layout.panelBottom - layout.bottomPanelTop);
@@ -420,11 +411,7 @@ public class EventScreen extends Screen {
         return Math.max(24, Math.min(42, available / 4));
     }
 
-    private record EditorLayout(int leftX, int leftWidth, int middleX, int middleWidth, int rightX, int rightWidth, int panelBottom, int bottomPanelTop) {
-        int bottomRight() {
-            return this.middleX + this.middleWidth;
-        }
-    }
+    private record EditorLayout(int leftX, int leftWidth, int middleX, int middleWidth, int rightX, int rightWidth, int panelBottom, int bottomPanelTop) { }
 
     @Override
     public void onClose() {
@@ -566,22 +553,6 @@ public class EventScreen extends Screen {
         }
     }
 
-    private void loadSource(Identifier sourceId) {
-        this.activeSourceId = sourceId;
-        this.deletePending = this.parent instanceof MusicPlayerScreen musicPlayer && musicPlayer.isEventDeletePending(sourceId);
-        this.selectedIndex = -1;
-        reloadEntries();
-        if (this.musicField == null || this.weightField == null || this.conditionsField == null) {
-            this.selectedIndex = this.entries.isEmpty() ? -1 : 0;
-            return;
-        }
-        if (this.entries.isEmpty()) clearEditor();
-        else select(0);
-        refreshList();
-        refreshDescription();
-        refreshEditorState();
-    }
-
     private Event.Record.Entry editorEntry() {
         if (this.musicField == null || this.weightField == null || this.conditionsField == null) return null;
         String music = this.musicField.getValue().trim();
@@ -612,10 +583,6 @@ public class EventScreen extends Screen {
 
     private void refreshList() {
         if (this.list != null) this.list.refresh();
-    }
-
-    private void refreshDescription() {
-        if (this.descriptionList != null) this.descriptionList.refresh();
     }
 
     private void refreshEditorState() {
@@ -660,10 +627,6 @@ public class EventScreen extends Screen {
         if (!Event.saveSourceEntries(source, entries)) return false;
         this.savedChanges = true;
         return true;
-    }
-
-    private void markSavedChanges() {
-        this.savedChanges = true;
     }
 
     private Component title() {
@@ -846,7 +809,6 @@ public class EventScreen extends Screen {
         };
     }
 
-    /** A compact, independently scrollable source description above the entries. */
     private static class EventDescriptionList extends ObjectSelectionList<DescriptionEntry> {
         private final EventScreen screen;
         private final int panelX;
@@ -978,14 +940,10 @@ public class EventScreen extends Screen {
         }
 
         @Override
-        protected void extractListBackground(GuiGraphicsExtractor graphics) {
-            // The editor shell already supplies a panel-local background.
-        }
+        protected void extractListBackground(GuiGraphicsExtractor graphics) {}
 
         @Override
-        protected void extractListSeparators(GuiGraphicsExtractor graphics) {
-            // Do not draw the stock full-width list separators inside a panel.
-        }
+        protected void extractListSeparators(GuiGraphicsExtractor graphics) {}
     }
 
     private static class EventEntry extends ObjectSelectionList.Entry<EventEntry> {

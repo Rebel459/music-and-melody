@@ -16,7 +16,6 @@ import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-/** Creates a config-backed theme without leaving the compact workspace. */
 final class CreateThemeScreen extends Screen {
 
     private static final Component TITLE = Component.translatable("screen.music_and_melody.create_theme");
@@ -101,9 +100,7 @@ final class CreateThemeScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
-        // The parent workspace supplies the visible background beneath this modal.
-    }
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
@@ -160,8 +157,8 @@ final class CreateThemeScreen extends Screen {
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        if ((DIM_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, DIM_OVERLAY);
-        graphics.fill(x, y, x + width, y + height, MODAL_BACKGROUND);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, POPUP_OVERLAY);
+        graphics.fill(x, y, x + width, y + height, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
