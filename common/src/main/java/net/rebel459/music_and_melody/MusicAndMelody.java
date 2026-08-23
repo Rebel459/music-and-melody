@@ -1,6 +1,8 @@
 package net.rebel459.music_and_melody;
 
 import net.minecraft.resources.Identifier;
+import net.rebel459.music_and_melody.network.CombatMusicHandler;
+import net.rebel459.music_and_melody.network.CombatMusicPacket;
 import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 import net.rebel459.music_and_melody.network.StructureMusicHandler;
 import net.rebel459.music_and_melody.sound.MaMSounds;
@@ -18,6 +20,7 @@ public class MusicAndMelody {
         MaMSounds.init();
         ServerPresenceHandler.init();
         StructureMusicHandler.init();
+        CombatMusicHandler.init();
 	}
 
     public static void init() {}

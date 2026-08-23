@@ -7,6 +7,7 @@ import net.rebel459.unified.api.core.UnifiedHelpers;
 public final class ServerPresenceHandler {
 
     public static boolean discUnlocking = false;
+    public static boolean combatDetection = false;
 
     private ServerPresenceHandler() {}
 
@@ -14,6 +15,6 @@ public final class ServerPresenceHandler {
         UnifiedHelpers.NETWORKING.registerPlayToClient(ServerPresencePacket.TYPE, ServerPresencePacket.CODEC, (packet, player) -> {
             discUnlocking = packet.discUnlocking();
         });
-        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking), player));
+        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking, MaMServerConfig.get().combat_detection), player));
     }
 }

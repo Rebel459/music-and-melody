@@ -26,7 +26,7 @@ public class StructureMusicHandler {
     public static void init() {
         if (!MaMServerConfig.get().sync_structures) return;
         UnifiedHelpers.NETWORKING.registerPlayToClient(StructureMusicPacket.TYPE, StructureMusicPacket.CODEC, (packet, player) -> {
-            CURRENT_STRUCTURES = new Info(packet.structures(), packet.tags());
+            clientStructures = new Info(packet.structures(), packet.tags());
         });
         UnifiedEvents.Server.onDatapackLoad(server -> {
             shouldUpdateStructures = true;
@@ -79,11 +79,7 @@ public class StructureMusicHandler {
     private static final Map<UUID, Info> LAST_STRUCTURES = new HashMap<>();
     private static final Map<UUID, BlockPos> LAST_POSITION = new HashMap<>();
 
-    private static Info CURRENT_STRUCTURES = new Info(Set.of(), Set.of());
-
-    public static Info getClientStructures() {
-        return CURRENT_STRUCTURES;
-    }
+    public static Info clientStructures = new Info(Set.of(), Set.of());
 
     public record Info(Set<Identifier> structures, Set<Identifier> tags) {}
 }

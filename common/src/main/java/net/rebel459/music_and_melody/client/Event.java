@@ -344,7 +344,7 @@ public class Event {
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<SpecialCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.BELOW_Y) {
+        if (type == ConditionType.BELOW_Y || type == ConditionType.COMBAT_SCORE) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
             intValue = Optional.of(integer);
         }
@@ -437,6 +437,9 @@ public class Event {
             case "bossbar" -> ConditionType.BOSSBAR;
             case "below_version" -> ConditionType.BELOW_VERSION;
             case "album_loaded" -> ConditionType.ALBUM_LOADED;
+            case "ridden_entity" -> ConditionType.RIDDEN_ENTITY;
+            case "ridden_entity_tag" -> ConditionType.RIDDEN_ENTITY_TAG;
+            case "combat_score" -> ConditionType.COMBAT_SCORE;
             default -> null;
         };
     }
@@ -557,7 +560,10 @@ public class Event {
         RANDOM_CHANCE,
         BOSSBAR,
         BELOW_VERSION,
-        ALBUM_LOADED
+        ALBUM_LOADED,
+        RIDDEN_ENTITY,
+        RIDDEN_ENTITY_TAG,
+        COMBAT_SCORE
     }
 
     private enum DefaultState {

@@ -12,9 +12,11 @@ import net.minecraft.client.sounds.Weighted;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.player.Player;
@@ -570,8 +572,8 @@ public class EventHelper {
                 case BIOME -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
                 case BIOME_TAG -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
                 case DIMENSION -> shouldBeActive = shouldBeActive && level != null && level.dimension().identifier().equals(condition.idValue().get());
-                case STRUCTURE -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());
-                case STRUCTURE_TAG -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get());
+                case STRUCTURE -> shouldBeActive = shouldBeActive && StructureMusicHandler.clientStructures.structures().contains(condition.idValue().get());
+                case STRUCTURE_TAG -> shouldBeActive = shouldBeActive && StructureMusicHandler.clientStructures.tags().contains(condition.idValue().get());
                 case TIME -> {
                     shouldBeActive = shouldBeActive && level != null;
                     if (level != null) {
@@ -620,6 +622,9 @@ public class EventHelper {
                 case MOD_LOADED -> shouldBeActive = shouldBeActive && UnifiedInstance.isModLoaded(condition.stringValue().get());
                 case ALBUM_LOADED -> shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
                 case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
+                case RIDDEN_ENTITY -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(ResourceKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
+                case RIDDEN_ENTITY_TAG -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(TagKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
+                case COMBAT_SCORE -> shouldBeActive = shouldBeActive && CombatStatus.inCombat(condition.intValue().get());
             }
         }
         return shouldBeActive;
