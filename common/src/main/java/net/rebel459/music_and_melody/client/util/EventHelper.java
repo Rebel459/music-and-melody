@@ -16,7 +16,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.player.Player;
@@ -624,9 +623,8 @@ public class EventHelper {
                 case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
                 case RIDDEN_ENTITY -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(ResourceKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
                 case RIDDEN_ENTITY_TAG -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(TagKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
-                case COMBAT_SCORE -> shouldBeActive = shouldBeActive && CombatStatus.inCombat(condition.intValue().get());
-                case COMBAT_SCORE_PVE -> shouldBeActive = shouldBeActive && CombatStatus.PvE.inCombat(condition.intValue().get());
-                case COMBAT_SCORE_PVP -> shouldBeActive = shouldBeActive && CombatStatus.PvP.inCombat(condition.intValue().get());
+                case PVE_SCORE -> shouldBeActive = shouldBeActive && CombatStatus.PvE.inCombat(condition.intValue().get());
+                case PVP_SCORE -> shouldBeActive = shouldBeActive && CombatStatus.PvP.inCombat(condition.intValue().get());
             }
         }
         return shouldBeActive;
