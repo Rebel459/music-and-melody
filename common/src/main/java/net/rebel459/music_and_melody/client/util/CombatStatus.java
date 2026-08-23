@@ -57,7 +57,7 @@ public class CombatStatus {
         }
 
         public static boolean inCombat(int combatScore) {
-            return CombatStatus.pveCombatScore >= combatScore;
+            return pveCombatScore >= combatScore;
         }
     }
 
@@ -84,7 +84,7 @@ public class CombatStatus {
         }
 
         public static boolean inCombat(int combatScore) {
-            return CombatStatus.pvpCombatScore >= combatScore;
+            return pvpCombatScore >= combatScore;
         }
     }
 
