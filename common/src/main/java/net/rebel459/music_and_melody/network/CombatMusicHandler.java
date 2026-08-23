@@ -15,7 +15,7 @@ public class CombatMusicHandler {
     private static final Map<UUID, Boolean> LAST_STATE = new HashMap<>();
 
     public static void init() {
-        if (!MaMServerConfig.get().combat_detection) return;
+        if (!MaMServerConfig.get().improved_pve_detection) return;
         UnifiedHelpers.NETWORKING.registerPlayToClient(CombatMusicPacket.TYPE, CombatMusicPacket.CODEC, (packet, player) -> {
             clientPlayerTrackedByMob = packet.playerTrackedByMob();
         });

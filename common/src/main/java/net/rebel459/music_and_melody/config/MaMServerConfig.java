@@ -6,12 +6,6 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 @Config(name = MusicAndMelody.MOD_ID + "/" + "server")
 public class MaMServerConfig implements ConfigData {
@@ -30,9 +24,9 @@ public class MaMServerConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean combat_detection = true;
+	public boolean sync_structures = true;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean sync_structures = true;
+	public boolean improved_pve_detection = true;
 }

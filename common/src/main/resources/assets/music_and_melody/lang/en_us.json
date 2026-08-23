@@ -326,5 +326,7 @@
   "text.autoconfig.music_and_melody/server.option.disc_unlocking": "Disc Unlocking",
   "text.autoconfig.music_and_melody/server.option.disc_unlocking.@Tooltip": "Whether music discs should have to be unlocked for survival players by using the disc in a Jukebox at least once",
   "text.autoconfig.music_and_melody/server.option.sync_structures": "Sync Structures",
-  "text.autoconfig.music_and_melody/server.option.sync_structures.@Tooltip": "Whether the server should send the client a list of structures for the player's position. Required by Event structure conditions"
+  "text.autoconfig.music_and_melody/server.option.sync_structures.@Tooltip": "Whether the server should send clients the list of structures at the player's position. Required by structure and structure_tag Event conditions",
+  "text.autoconfig.music_and_melody/server.option.improved_pve_detection": "Improved PvE Detection",
+  "text.autoconfig.music_and_melody/server.option.improved_pve_detection.@Tooltip": "Whether the server should send clients more accurate entity tracking data. Improves the accuracy of the pve_score Event condition"
 }

@@ -15,6 +15,6 @@ public final class ServerPresenceHandler {
         UnifiedHelpers.NETWORKING.registerPlayToClient(ServerPresencePacket.TYPE, ServerPresencePacket.CODEC, (packet, player) -> {
             discUnlocking = packet.discUnlocking();
         });
-        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking, MaMServerConfig.get().combat_detection), player));
+        UnifiedEvents.Players.onJoin(player -> UnifiedHelpers.NETWORKING.send(new ServerPresencePacket(MaMServerConfig.get().disc_unlocking, MaMServerConfig.get().improved_pve_detection), player));
     }
 }
