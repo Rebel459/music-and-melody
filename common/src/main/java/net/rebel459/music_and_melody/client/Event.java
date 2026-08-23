@@ -440,6 +440,8 @@ public class Event {
             case "ridden_entity" -> ConditionType.RIDDEN_ENTITY;
             case "ridden_entity_tag" -> ConditionType.RIDDEN_ENTITY_TAG;
             case "combat_score" -> ConditionType.COMBAT_SCORE;
+            case "combat_score_pve" -> ConditionType.COMBAT_SCORE_PVE;
+            case "combat_score_pvp" -> ConditionType.COMBAT_SCORE_PVP;
             default -> null;
         };
     }
@@ -563,7 +565,9 @@ public class Event {
         ALBUM_LOADED,
         RIDDEN_ENTITY,
         RIDDEN_ENTITY_TAG,
-        COMBAT_SCORE
+        COMBAT_SCORE,
+        COMBAT_SCORE_PVE,
+        COMBAT_SCORE_PVP
     }
 
     private enum DefaultState {

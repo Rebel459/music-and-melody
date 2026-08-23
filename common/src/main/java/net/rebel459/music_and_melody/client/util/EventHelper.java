@@ -353,7 +353,7 @@ public class EventHelper {
         }
     }
 
-    private static boolean isEnabled() {
+    static boolean isEnabled() {
         return eventSystemEnabled() && eventMusicEnabled();
     }
 
@@ -625,6 +625,8 @@ public class EventHelper {
                 case RIDDEN_ENTITY -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(ResourceKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
                 case RIDDEN_ENTITY_TAG -> shouldBeActive = shouldBeActive && player != null && player.getVehicle().is(TagKey.create(Registries.ENTITY_TYPE, condition.idValue().get()));
                 case COMBAT_SCORE -> shouldBeActive = shouldBeActive && CombatStatus.inCombat(condition.intValue().get());
+                case COMBAT_SCORE_PVE -> shouldBeActive = shouldBeActive && CombatStatus.PvE.inCombat(condition.intValue().get());
+                case COMBAT_SCORE_PVP -> shouldBeActive = shouldBeActive && CombatStatus.PvP.inCombat(condition.intValue().get());
             }
         }
         return shouldBeActive;
