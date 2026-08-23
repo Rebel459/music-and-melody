@@ -6,16 +6,14 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
-public record ServerPresencePacket(boolean discUnlocking, boolean combatDetection) implements CustomPacketPayload {
+public record CombatMusicPacket(boolean playerTrackedByMob) implements CustomPacketPayload {
 
-    public static final Type<ServerPresencePacket> TYPE = new Type<>(MusicAndMelody.id("server_presence"));
-    public static final StreamCodec<FriendlyByteBuf, ServerPresencePacket> CODEC =
+    public static final Type<CombatMusicPacket> TYPE = new Type<>(MusicAndMelody.id("combat_music"));
+    public static final StreamCodec<FriendlyByteBuf, CombatMusicPacket> CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.BOOL,
-                    ServerPresencePacket::discUnlocking,
-                    ByteBufCodecs.BOOL,
-                    ServerPresencePacket::combatDetection,
-                    ServerPresencePacket::new
+                    CombatMusicPacket::playerTrackedByMob,
+                    CombatMusicPacket::new
             );
 
     @Override

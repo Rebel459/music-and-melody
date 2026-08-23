@@ -30,5 +30,9 @@ public class MaMServerConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
+	public boolean combat_detection = true;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
 	public boolean sync_structures = true;
 }

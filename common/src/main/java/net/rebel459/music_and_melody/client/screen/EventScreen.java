@@ -57,13 +57,6 @@ public class EventScreen extends Screen {
     private static final int MIN_RIGHT_WIDTH = 124;
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
 
-
-
-
-
-
-
-
     private final Screen parent;
     private final List<Event.ScreenEntry> entries = new ArrayList<>();
     private EventList list;
@@ -743,7 +736,7 @@ public class EventScreen extends Screen {
 
         Event.Record.Condition.Value parsedValue;
 
-        if (type.equals("below_y")) {
+        if (type.equals("below_y") || type.equals("combat_score")) {
             try {
                 parsedValue = new Event.Record.Condition.Value.Integer(Integer.parseInt(conditionValue));
             } catch (NumberFormatException exception) {

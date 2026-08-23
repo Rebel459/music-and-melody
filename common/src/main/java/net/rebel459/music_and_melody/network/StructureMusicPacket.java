@@ -15,7 +15,7 @@ import java.util.Set;
 
 public record StructureMusicPacket(Set<Identifier> structures, Set<Identifier> tags) implements CustomPacketPayload {
 
-        public static final Type<StructureMusicPacket> TYPE = new Type<>(MusicAndMelody.id("structure_packet"));
+        public static final Type<StructureMusicPacket> TYPE = new Type<>(MusicAndMelody.id("structure_music"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, StructureMusicPacket> CODEC =
             StreamCodec.composite(
