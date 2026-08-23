@@ -344,7 +344,7 @@ public class Event {
         Optional<GameModeCondition> gameModeValue = Optional.empty();
         Optional<SpecialCondition> eventValue = Optional.empty();
 
-        if (type == ConditionType.BELOW_Y || type == ConditionType.COMBAT_SCORE) {
+        if (type == ConditionType.BELOW_Y || type == ConditionType.PVE_SCORE || type == ConditionType.PVP_SCORE) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
             intValue = Optional.of(integer);
         }
@@ -439,9 +439,8 @@ public class Event {
             case "album_loaded" -> ConditionType.ALBUM_LOADED;
             case "ridden_entity" -> ConditionType.RIDDEN_ENTITY;
             case "ridden_entity_tag" -> ConditionType.RIDDEN_ENTITY_TAG;
-            case "combat_score" -> ConditionType.COMBAT_SCORE;
-            case "combat_score_pve" -> ConditionType.COMBAT_SCORE_PVE;
-            case "combat_score_pvp" -> ConditionType.COMBAT_SCORE_PVP;
+            case "pve_score" -> ConditionType.PVE_SCORE;
+            case "pvp_score" -> ConditionType.PVP_SCORE;
             default -> null;
         };
     }
@@ -565,9 +564,8 @@ public class Event {
         ALBUM_LOADED,
         RIDDEN_ENTITY,
         RIDDEN_ENTITY_TAG,
-        COMBAT_SCORE,
-        COMBAT_SCORE_PVE,
-        COMBAT_SCORE_PVP
+        PVE_SCORE,
+        PVP_SCORE
     }
 
     private enum DefaultState {

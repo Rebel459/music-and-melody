@@ -24,14 +24,8 @@ public class CombatStatus {
     private static int ticks = 0;
     private static boolean reset = true;
 
-    private static final Set<Integer> CONDITIONS = new HashSet<>();
     private static final Set<Integer> PVE_CONDITIONS = new HashSet<>();
     private static final Set<Integer> PVP_CONDITIONS = new HashSet<>();
-
-    public static boolean inCombat(int combatScore) {
-        if (pveScore >= combatScore || pvpScore >= Math.max(combatScore, 25)) CONDITIONS.add(combatScore);
-        return CONDITIONS.contains(combatScore);
-    }
 
     public static class PvE {
         public static void increaseFromAttack() {
@@ -95,7 +89,6 @@ public class CombatStatus {
                 if (!reset) {
                     pveScore = 0;
                     pvpScore = 0;
-                    CONDITIONS.clear();
                     PVE_CONDITIONS.clear();
                     PVP_CONDITIONS.clear();
                     lastPlayerAttackTimestamp = 1200;
@@ -164,7 +157,6 @@ public class CombatStatus {
             PvP.increaseOverTime(atFullHealth);
         } else if (lastFightingPlayerTimestamp >= 100 || lastPlayerAttackTimestamp >= 600) PvP.decreaseOverTime(atFullHealth);
 
-        if (pveScore == 0 && pvpScore == 0) CONDITIONS.clear();
         if (pveScore == 0) PVE_CONDITIONS.clear();
         if (pvpScore == 0) PVP_CONDITIONS.clear();
     }

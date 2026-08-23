@@ -736,7 +736,7 @@ public class EventScreen extends Screen {
 
         Event.Record.Condition.Value parsedValue;
 
-        if (type.equals("below_y") || type.equals("combat_score") || type.equals("combat_score_pve") || type.equals("combat_score_pvp")) {
+        if (type.equals("below_y") || type.equals("pve_score") || type.equals("pvp_score")) {
             try {
                 parsedValue = new Event.Record.Condition.Value.Integer(Integer.parseInt(conditionValue));
             } catch (NumberFormatException exception) {
