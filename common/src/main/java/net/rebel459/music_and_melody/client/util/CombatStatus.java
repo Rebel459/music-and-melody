@@ -9,10 +9,12 @@ import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 import net.rebel459.unified.api.client.core.UnifiedClientEvents;
 import net.rebel459.unified.api.event.EventTiming;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class CombatStatus {
-    private static int combatScore = 0;
-    private static int pveCombatScore = 0;
-    private static int pvpCombatScore = 0;
+    private static int pveScore = 0;
+    private static int pvpScore = 0;
 
     private static int lastHurtByTimestamp;
     private static int lastHurtTimestamp;
@@ -22,19 +24,19 @@ public class CombatStatus {
     private static int ticks = 0;
     private static boolean reset = true;
 
-    private static void updateCombatScore() {
-        combatScore = Math.max(pveCombatScore, pvpCombatScore);
-    }
+    private static final Set<Integer> CONDITIONS = new HashSet<>();
+    private static final Set<Integer> PVE_CONDITIONS = new HashSet<>();
+    private static final Set<Integer> PVP_CONDITIONS = new HashSet<>();
 
     public static boolean inCombat(int combatScore) {
-        return CombatStatus.combatScore >= combatScore;
+        if (pveScore >= combatScore || pvpScore >= Math.max(combatScore, 25)) CONDITIONS.add(combatScore);
+        return CONDITIONS.contains(combatScore);
     }
 
     public static class PvE {
         public static void increaseFromAttack() {
             increase(2);
-            pveCombatScore = Math.max(10, pveCombatScore);
-            updateCombatScore();
+            pveScore = Math.max(10, pveScore);
         }
 
         public static void increaseOverTime(boolean fullHealth) {
@@ -42,8 +44,7 @@ public class CombatStatus {
         }
 
         public static void increase(int amount) {
-            pveCombatScore = Math.min(pveCombatScore + amount, 100);
-            updateCombatScore();
+            pveScore = Math.min(pveScore + amount, 100);
         }
 
         public static void decreaseOverTime(boolean fullHealth) {
@@ -51,13 +52,13 @@ public class CombatStatus {
         }
 
         public static void decrease(int amount) {
-            pveCombatScore -= amount;
-            pveCombatScore = Math.max(pveCombatScore, 0);
-            updateCombatScore();
+            pveScore -= amount;
+            pveScore = Math.max(pveScore, 0);
         }
 
         public static boolean inCombat(int combatScore) {
-            return pveCombatScore >= combatScore;
+            if (pveScore >= combatScore) PVE_CONDITIONS.add(combatScore);
+            return PVE_CONDITIONS.contains(combatScore);
         }
     }
 
@@ -70,21 +71,20 @@ public class CombatStatus {
             increase(fullHealth ? 1 : 2);
         }
         public static void increase(int amount) {
-            pvpCombatScore = Math.min(pvpCombatScore + amount, 100);
+            pvpScore = Math.min(pvpScore + amount, 100);
             lastFightingPlayerTimestamp = 0;
-            updateCombatScore();
         }
 
         public static void decreaseOverTime(boolean fullHealth) {
             decrease(fullHealth ? 4 : 2);
         }
         public static void decrease(int amount) {
-            pvpCombatScore = Math.max(pvpCombatScore - amount, 0);
-            updateCombatScore();
+            pvpScore = Math.max(pvpScore - amount, 0);
         }
 
         public static boolean inCombat(int combatScore) {
-            return pvpCombatScore >= combatScore;
+            if (pvpScore >= combatScore) PVP_CONDITIONS.add(combatScore);
+            return PVP_CONDITIONS.contains(combatScore);
         }
     }
 
@@ -93,9 +93,11 @@ public class CombatStatus {
             LocalPlayer player = client.player;
             if (player == null || !EventHelper.isEnabled()) {
                 if (!reset) {
-                    combatScore = 0;
-                    pveCombatScore = 0;
-                    pvpCombatScore = 0;
+                    pveScore = 0;
+                    pvpScore = 0;
+                    CONDITIONS.clear();
+                    PVE_CONDITIONS.clear();
+                    PVP_CONDITIONS.clear();
                     lastPlayerAttackTimestamp = 1200;
                     lastFightingPlayerTimestamp = 1200;
                     ticks = 0;
@@ -122,6 +124,7 @@ public class CombatStatus {
 
     private static void onTick(LocalPlayer player) {
         if (lastFightingPlayerTimestamp < 1200) lastFightingPlayerTimestamp++;
+        if (lastPlayerAttackTimestamp < 1200) lastPlayerAttackTimestamp++;
 
         int hurtByTimestamp = player.getLastHurtByMobTimestamp();
         if (hurtByTimestamp != lastHurtByTimestamp) {
@@ -153,12 +156,16 @@ public class CombatStatus {
         if (playerTrackedByMob) PvE.increaseOverTime(atFullHealth);
         else PvE.decreaseOverTime(atFullHealth);
 
-        if (pvpCombatScore >= 25 && !player.level().getEntitiesOfClass(
+        if (pvpScore >= 25 && !player.level().getEntitiesOfClass(
                 Player.class,
                 player.getBoundingBox().inflate(32),
                 otherPlayer -> otherPlayer != player && !otherPlayer.isSpectator() && otherPlayer.isAlive() && otherPlayer.hasLineOfSight(player) && otherPlayer.distanceToSqr(player) <= 32 * 32
         ).isEmpty()) {
             PvP.increaseOverTime(atFullHealth);
         } else if (lastFightingPlayerTimestamp >= 100 || lastPlayerAttackTimestamp >= 600) PvP.decreaseOverTime(atFullHealth);
+
+        if (pveScore == 0 && pvpScore == 0) CONDITIONS.clear();
+        if (pveScore == 0) PVE_CONDITIONS.clear();
+        if (pvpScore == 0) PVP_CONDITIONS.clear();
     }
 }
