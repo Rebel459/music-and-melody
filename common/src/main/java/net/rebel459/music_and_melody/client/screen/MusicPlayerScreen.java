@@ -3224,8 +3224,23 @@ public class MusicPlayerScreen extends Screen {
         void refresh() {
             this.clearEntries();
             List<MaMDataConfig.Entry> entries = PlaylistHelper.customPlaylistEntries();
-            for (int index = 0; index < entries.size(); index++) {
-                this.addEntry(new NowPlaying(this.screen, this, this.minecraft, index, entries.get(index), this.compact));
+            if (entries.stream().anyMatch(MaMDataConfig.Entry::isTrack)) {
+                this.addEntry(NowPlaying.header(this.screen, this, this.minecraft,
+                        Component.translatable("screen.music_and_melody.album_details.tracks"), this.compact));
+                for (int index = 0; index < entries.size(); index++) {
+                    if (entries.get(index).isTrack()) {
+                        this.addEntry(new NowPlaying(this.screen, this, this.minecraft, index, entries.get(index), this.compact));
+                    }
+                }
+            }
+            if (entries.stream().anyMatch(MaMDataConfig.Entry::isDisc)) {
+                this.addEntry(NowPlaying.header(this.screen, this, this.minecraft,
+                        Component.translatable("screen.music_and_melody.album_details.discs"), this.compact));
+                for (int index = 0; index < entries.size(); index++) {
+                    if (entries.get(index).isDisc()) {
+                        this.addEntry(new NowPlaying(this.screen, this, this.minecraft, index, entries.get(index), this.compact));
+                    }
+                }
             }
         }
 
@@ -3242,8 +3257,25 @@ public class MusicPlayerScreen extends Screen {
         private final int index;
         private final SafeIdentifier song;
         private final Component title;
+        private final boolean heading;
         private final boolean compact;
         private final IconButton removeButton;
+
+        static NowPlaying header(MusicPlayerScreen screen, QueueList queueList, Minecraft minecraft, Component title, boolean compact) {
+            return new NowPlaying(screen, queueList, minecraft, title, compact);
+        }
+
+        private NowPlaying(MusicPlayerScreen screen, QueueList queueList, Minecraft minecraft, Component title, boolean compact) {
+            this.screen = screen;
+            this.queueList = queueList;
+            this.minecraft = minecraft;
+            this.index = -1;
+            this.song = null;
+            this.title = title;
+            this.heading = true;
+            this.compact = compact;
+            this.removeButton = null;
+        }
 
         NowPlaying(MusicPlayerScreen screen, QueueList queueList, Minecraft minecraft, int index, MaMDataConfig.Entry entry, boolean compact) {
             this.screen = screen;
@@ -3254,6 +3286,7 @@ public class MusicPlayerScreen extends Screen {
             this.title = PlaylistHelper.entryDisc(entry)
                     .map(MusicDiscHelper::discName)
                     .orElseGet(() -> this.song == null ? Component.literal(entry.id) : MusicScreenHelper.trackName(this.song));
+            this.heading = false;
             this.compact = compact;
             this.removeButton = IconButton.createListIcon(Component.translatable("button.music_and_melody.remove"), IconButton.icon("remove"), ignored ->
                     this.screen.requestRemoveQueueTrack(this.index));
@@ -3266,6 +3299,11 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            if (this.heading) {
+                ThemeHelper.text(graphics, this.minecraft.font, this.title.copy().withStyle(ChatFormatting.BOLD), this.getContentX() + 4,
+                        this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_HEADER_SECONDARY);
+                return;
+            }
             boolean dragging = this.screen.isDraggingQueue(this.index);
             int rowColor = dragging || hovered ? BUTTON_HIGHLIGHTED : 0;
             if (rowColor != 0) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), rowColor);
@@ -3295,6 +3333,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            if (this.heading) return true;
             if (!this.compact && this.removeButton.mouseClicked(event, doubleClick)) return true;
             if (this.song == null) return true;
             if (!this.compact && event.x() < this.getContentX() + TRACK_TEXT_OFFSET) {

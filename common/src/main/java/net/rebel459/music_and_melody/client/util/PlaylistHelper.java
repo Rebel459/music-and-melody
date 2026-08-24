@@ -156,7 +156,13 @@ public final class PlaylistHelper {
     public static void addToCustomPlaylist(MaMDataConfig.Entry entry) {
         ensureLoaded();
         if (validPlaylistEntry(entry) && !isInCustomPlaylist(entry)) {
-            CUSTOM_PLAYLIST.add(copyEntry(entry));
+            if (entry.isTrack()) {
+                int firstDisc = 0;
+                while (firstDisc < CUSTOM_PLAYLIST.size() && CUSTOM_PLAYLIST.get(firstDisc).isTrack()) firstDisc++;
+                CUSTOM_PLAYLIST.add(firstDisc, copyEntry(entry));
+            } else {
+                CUSTOM_PLAYLIST.add(copyEntry(entry));
+            }
             syncCustomQueueAfterMutation();
             save();
         }
@@ -173,6 +179,7 @@ public final class PlaylistHelper {
             }
         }
         if (changed) {
+            normalizeCustomPlaylistOrder();
             syncCustomQueueAfterMutation();
             save();
         }
@@ -187,6 +194,7 @@ public final class PlaylistHelper {
                 CUSTOM_PLAYLIST.add(copyEntry(entry));
             }
         }
+        normalizeCustomPlaylistOrder();
         syncCustomQueueAfterMutation();
         save();
         return !CUSTOM_PLAYLIST.isEmpty();
@@ -199,6 +207,7 @@ public final class PlaylistHelper {
                 || fromIndex == toIndex) {
             return false;
         }
+        if (!Objects.equals(CUSTOM_PLAYLIST.get(fromIndex).type, CUSTOM_PLAYLIST.get(toIndex).type)) return false;
         MaMDataConfig.Entry moved = CUSTOM_PLAYLIST.remove(fromIndex);
         CUSTOM_PLAYLIST.add(toIndex, moved);
         syncCustomQueueAfterMutation();
@@ -940,6 +949,7 @@ public final class PlaylistHelper {
                 CUSTOM_PLAYLIST.add(copyEntry(entry));
             }
         }
+        normalizeCustomPlaylistOrder();
         restoreConfiguredQueue();
         if (shuffle) rebuildShuffleOrder(null);
     }
@@ -1137,6 +1147,14 @@ public final class PlaylistHelper {
 
     private static MaMDataConfig.Entry copyEntry(MaMDataConfig.Entry source) {
         return entry(source.id, source.type);
+    }
+
+    private static void normalizeCustomPlaylistOrder() {
+        List<MaMDataConfig.Entry> ordered = new ArrayList<>(CUSTOM_PLAYLIST.size());
+        CUSTOM_PLAYLIST.stream().filter(MaMDataConfig.Entry::isTrack).forEach(ordered::add);
+        CUSTOM_PLAYLIST.stream().filter(MaMDataConfig.Entry::isDisc).forEach(ordered::add);
+        CUSTOM_PLAYLIST.clear();
+        CUSTOM_PLAYLIST.addAll(ordered);
     }
 
     private static MaMDataConfig.Entry entry(String id, String type) {
