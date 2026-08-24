@@ -1,6 +1,6 @@
 {
   "name": "Snowy",
-  "description": "Snowy biome-specific music",
+  "description": "Unique music for snowy biomes",
   "entries": [
     {
       "category": "pool",
@@ -10,8 +10,7 @@
           "type": "biome_tag",
           "value": "music_and_melody:music/snowy"
         }
-      ],
-      "priority": "low"
+      ]
     }
   ]
 }

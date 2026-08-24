@@ -176,6 +176,7 @@
   "screen.music_and_melody.event_editor.type": "Type",
   "screen.music_and_melody.event_editor.music": "Music",
   "screen.music_and_melody.event_editor.priority": "Priority",
+  "screen.music_and_melody.event_editor.replace": "Replace",
   "screen.music_and_melody.event_editor.weight": "Weight",
   "screen.music_and_melody.event_editor.sustain": "Sustain",
   "screen.music_and_melody.event_editor.constant": "Constant",

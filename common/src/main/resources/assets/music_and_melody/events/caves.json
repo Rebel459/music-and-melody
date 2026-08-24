@@ -4,7 +4,7 @@
   "entries": [
     {
       "category": "pool",
-      "music": "music_and_melody:music.sky",
+      "music": "music_and_melody:music.caves",
       "conditions": [
         {
           "type": "below_y",
