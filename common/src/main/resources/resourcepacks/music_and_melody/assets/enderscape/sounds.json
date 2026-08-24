@@ -25,8 +25,7 @@
       },
       {
         "name": "music/game/end/the_end",
-        "stream": true,
-        "weight": 1
+        "stream": true
       }
     ]
   },
@@ -46,13 +45,16 @@
       {
         "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
-        "weight": 1,
         "volume": 0.8
       },
       {
         "name": "music_and_melody:music/end/vacuum_decay",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/end/untitled_end",
         "stream": true,
-        "weight": 1
+        "volume": 0.5
       },
       {
         "name": "music/game/end/the_end",
@@ -66,19 +68,21 @@
     "sounds": [
       {
         "name": "enderscape:music/biome/default_end/desolation",
-        "stream": true,
-        "weight": 1
+        "stream": true
       },
       {
         "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
-        "weight": 1,
         "volume": 0.8
       },
       {
         "name": "music_and_melody:music/end/vacuum_decay",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/end/untitled_end",
         "stream": true,
-        "weight": 1
+        "volume": 0.5
       },
       {
         "name": "music/game/end/the_end",
@@ -92,8 +96,7 @@
     "sounds": [
       {
         "name": "enderscape:music/biome/default_end/desolation",
-        "stream": true,
-        "weight": 1
+        "stream": true
       },
       {
         "name": "enderscape:music/biome/magnia_fields/flutters",
@@ -103,7 +106,6 @@
       {
         "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
-        "weight": 1,
         "volume": 0.8
       },
       {
@@ -113,8 +115,7 @@
       },
       {
         "name": "music/game/end/the_end",
-        "stream": true,
-        "weight": 1
+        "stream": true
       }
     ]
   },
@@ -123,8 +124,7 @@
     "sounds": [
       {
         "name": "enderscape:music/biome/default_end/desolation",
-        "stream": true,
-        "weight": 1
+        "stream": true
       },
       {
         "name": "enderscape:music/biome/veiled_woodlands/respite",
@@ -134,18 +134,21 @@
       {
         "name": "music_and_melody:music/end/only_the_beginning",
         "stream": true,
-        "weight": 1,
         "volume": 0.8
       },
       {
         "name": "music_and_melody:music/end/vacuum_decay",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/end/untitled_end",
         "stream": true,
-        "weight": 1
+        "volume": 0.5,
+        "weight": 2
       },
       {
         "name": "music/game/end/the_end",
-        "stream": true,
-        "weight": 1
+        "stream": true
       }
     ]
   },
