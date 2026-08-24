@@ -1,0 +1,49 @@
+{
+  "name": "Sky",
+  "description": "Unique music that plays when above the clouds",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.caves",
+      "conditions": [
+        {
+          "type": "any_of",
+          "value": [
+            {
+              "type": "not",
+              "value": [
+                {
+                  "type": "below_y",
+                  "value": 256
+                }
+              ]
+            },
+            {
+              "type": "all_of",
+              "value": [
+                {
+                  "type": "not",
+                  "value": [
+                    {
+                      "type": "biome_tag",
+                      "value": "c:is_mountain/peak"
+                    }
+                  ]
+                },
+                {
+                  "type": "not",
+                  "value": [
+                    {
+                      "type": "below_y",
+                      "value": 192
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
