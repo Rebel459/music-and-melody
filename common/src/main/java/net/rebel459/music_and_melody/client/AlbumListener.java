@@ -10,6 +10,7 @@ import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
 import net.rebel459.music_and_melody.client.util.CustomAlbums;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -75,6 +76,8 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         }
 
         this.loadedAlbums.addAll(CustomAlbums.createAlbums(registeredDiscs));
+        Album.refreshEnabledState();
+        PlaylistHelper.refreshConfiguredQueue();
     }
 
     private static Set<String> expandTracks(

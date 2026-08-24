@@ -38,7 +38,7 @@ public class IconButton extends Button {
 
     public static IconButton createMusicPlayer(int x, int y, OnPress onPress) {
         IconButton button = new IconButton(x, y, Component.translatable("button.music_and_melody.music_player"),
-                MusicAndMelody.id("textures/gui/playlist.png"), onPress);
+                MusicAndMelody.id("textures/gui/icon.png"), onPress);
         button.forceVanillaTextures = true;
         return button;
     }

@@ -7,7 +7,7 @@ import net.rebel459.unified.platform.UnifiedHelpers;
 public final class ServerPresenceHandler {
 
     public static boolean discUnlocking = false;
-    public static boolean combatDetection = false;
+    public static boolean improvedPveDetection = false;
 
     private ServerPresenceHandler() {}
 

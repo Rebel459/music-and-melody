@@ -13,6 +13,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.SampledFloat;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.sound.MaMSounds;
 
@@ -21,7 +23,8 @@ import java.util.*;
 public final class PlaylistHelper {
     public static final String LITERAL_TRANSLATION_PREFIX = "music_and_melody.literal:";
     public static final List<SafeIdentifier> QUEUED_SONGS = new ArrayList<>();
-    private static final List<SafeIdentifier> CUSTOM_PLAYLIST_SONGS = new ArrayList<>();
+    private static final Map<SafeIdentifier, Identifier> QUEUED_DISCS = new HashMap<>();
+    private static final List<MaMDataConfig.Entry> CUSTOM_PLAYLIST = new ArrayList<>();
     public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
@@ -62,6 +65,7 @@ public final class PlaylistHelper {
         if (!QUEUED_SONGS.contains(song)) {
             clearQueueType();
             QUEUED_SONGS.add(song);
+            QUEUED_DISCS.remove(song);
             rebuildShuffleOrderAfterQueueChange();
             save();
         }
@@ -81,69 +85,42 @@ public final class PlaylistHelper {
         if (changed) save();
     }
 
-    public static void setQueueType(MaMDataConfig.QueueType type, String id, String name) {
+    public static void setQueueType(MaMDataConfig.NowPlayingType type, String id, String name) {
         ensureLoaded();
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlist.queue_type = type;
-        config.playlist.queue_id = id;
-        config.playlist.queue_name = name;
+        config.player.now_playing_type = type;
+        config.player.now_playing_id = id;
+        config.player.now_playing_name = name;
         touchRecentSource(type, id);
         save();
     }
 
-    public static boolean loadQueueType(Collection<SafeIdentifier> songs, MaMDataConfig.QueueType type, String id, String name) {
+    public static boolean loadQueueType(Collection<MaMDataConfig.Entry> entries, MaMDataConfig.NowPlayingType type, String id, String name) {
         ensureLoaded();
-        if (songs == null) return false;
-
-        if (currentSongFromQueue) stop();
-        else clearPausedQueue();
-        QUEUED_SONGS.clear();
-        for (SafeIdentifier song : songs) {
-            if (song != null && !QUEUED_SONGS.contains(song)) {
-                QUEUED_SONGS.add(song);
-            }
-        }
-        queueIndex = 0;
-        currentQueueIndex = -1;
-        queuePaused = true;
-        currentShuffleIndex = -1;
-        rebuildShuffleOrder(null);
+        if (entries == null) return false;
+        replaceRuntimeQueue(entries);
 
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlist.queue_type = type;
-        config.playlist.queue_id = id;
-        config.playlist.queue_name = name;
+        config.player.now_playing_type = type;
+        config.player.now_playing_id = id;
+        config.player.now_playing_name = name;
         touchRecentSource(type, id);
         save();
         return !QUEUED_SONGS.isEmpty();
     }
 
-    public static boolean loadCustomQueue(Collection<SafeIdentifier> songs) {
+    public static boolean loadCustomQueue() {
         ensureLoaded();
-        if (songs == null) return false;
-
-        if (currentSongFromQueue) stop();
-        else clearPausedQueue();
-        QUEUED_SONGS.clear();
-        for (SafeIdentifier song : songs) {
-            if (song != null && !QUEUED_SONGS.contains(song)) {
-                QUEUED_SONGS.add(song);
-            }
-        }
-        queueIndex = 0;
-        currentQueueIndex = -1;
-        queuePaused = true;
-        currentShuffleIndex = -1;
+        replaceRuntimeQueue(CUSTOM_PLAYLIST);
         clearQueueType();
-        rebuildShuffleOrder(null);
         save();
         return !QUEUED_SONGS.isEmpty();
     }
 
     public static Optional<QueueType> queueSource() {
-        MaMDataConfig.Playlist playlist = MaMDataConfig.get().playlist;
-        if (playlist.queue_type == MaMDataConfig.QueueType.NONE || playlist.queue_name.isBlank()) return Optional.empty();
-        return Optional.of(new QueueType(playlist.queue_type, playlist.queue_id, playlist.queue_name));
+        MaMDataConfig.Player playlist = MaMDataConfig.get().player;
+        if (playlist.now_playing_type == MaMDataConfig.NowPlayingType.NONE || playlist.now_playing_name.isBlank()) return Optional.empty();
+        return Optional.of(new QueueType(playlist.now_playing_type, playlist.now_playing_id, playlist.now_playing_name));
     }
 
     public static List<SafeIdentifier> queuedSongs() {
@@ -151,80 +128,98 @@ public final class PlaylistHelper {
         return List.copyOf(QUEUED_SONGS);
     }
 
+    public static Optional<Identifier> queuedDisc(SafeIdentifier sound) {
+        ensureLoaded();
+        return Optional.ofNullable(sound == null ? null : QUEUED_DISCS.get(sound));
+    }
+
+    public static List<MaMDataConfig.Entry> customPlaylistEntries() {
+        ensureLoaded();
+        return CUSTOM_PLAYLIST.stream().map(PlaylistHelper::copyEntry).toList();
+    }
+
     public static List<SafeIdentifier> customPlaylistSongs() {
         ensureLoaded();
-        return List.copyOf(CUSTOM_PLAYLIST_SONGS);
+        return CUSTOM_PLAYLIST.stream().map(PlaylistHelper::resolveEntry).flatMap(Optional::stream).toList();
     }
 
     public static boolean hasCustomPlaylistSongs() {
         ensureLoaded();
-        return !CUSTOM_PLAYLIST_SONGS.isEmpty();
+        return !CUSTOM_PLAYLIST.isEmpty();
     }
 
-    public static boolean isInCustomPlaylist(SafeIdentifier song) {
+    public static boolean isInCustomPlaylist(MaMDataConfig.Entry entry) {
         ensureLoaded();
-        return CUSTOM_PLAYLIST_SONGS.contains(song);
+        return entry != null && CUSTOM_PLAYLIST.stream().anyMatch(existing -> sameEntry(existing, entry));
     }
 
-    public static void addToCustomPlaylist(SafeIdentifier song) {
+    public static void addToCustomPlaylist(MaMDataConfig.Entry entry) {
         ensureLoaded();
-        if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
-            CUSTOM_PLAYLIST_SONGS.add(song);
+        if (validPlaylistEntry(entry) && !isInCustomPlaylist(entry)) {
+            CUSTOM_PLAYLIST.add(copyEntry(entry));
+            syncCustomQueueAfterMutation();
             save();
         }
     }
 
-    public static void addAllToCustomPlaylist(Collection<SafeIdentifier> songs) {
+    public static void addAllToCustomPlaylist(Collection<MaMDataConfig.Entry> entries) {
         ensureLoaded();
-        if (songs == null) return;
+        if (entries == null) return;
         boolean changed = false;
-        for (SafeIdentifier song : songs) {
-            if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
-                CUSTOM_PLAYLIST_SONGS.add(song);
+        for (MaMDataConfig.Entry entry : entries) {
+            if (validPlaylistEntry(entry) && !isInCustomPlaylist(entry)) {
+                CUSTOM_PLAYLIST.add(copyEntry(entry));
                 changed = true;
             }
         }
-        if (changed) save();
+        if (changed) {
+            syncCustomQueueAfterMutation();
+            save();
+        }
     }
 
-    public static boolean replaceCustomPlaylist(Collection<SafeIdentifier> songs) {
+    public static boolean replaceCustomPlaylist(Collection<MaMDataConfig.Entry> entries) {
         ensureLoaded();
-        if (songs == null) return false;
-        CUSTOM_PLAYLIST_SONGS.clear();
-        for (SafeIdentifier song : songs) {
-            if (song != null && !CUSTOM_PLAYLIST_SONGS.contains(song)) {
-                CUSTOM_PLAYLIST_SONGS.add(song);
+        if (entries == null) return false;
+        CUSTOM_PLAYLIST.clear();
+        for (MaMDataConfig.Entry entry : entries) {
+            if (validPlaylistEntry(entry) && !isInCustomPlaylist(entry)) {
+                CUSTOM_PLAYLIST.add(copyEntry(entry));
             }
         }
+        syncCustomQueueAfterMutation();
         save();
-        return !CUSTOM_PLAYLIST_SONGS.isEmpty();
+        return !CUSTOM_PLAYLIST.isEmpty();
     }
 
     public static boolean moveCustomPlaylistSong(int fromIndex, int toIndex) {
         ensureLoaded();
-        if (fromIndex < 0 || fromIndex >= CUSTOM_PLAYLIST_SONGS.size()
-                || toIndex < 0 || toIndex >= CUSTOM_PLAYLIST_SONGS.size()
+        if (fromIndex < 0 || fromIndex >= CUSTOM_PLAYLIST.size()
+                || toIndex < 0 || toIndex >= CUSTOM_PLAYLIST.size()
                 || fromIndex == toIndex) {
             return false;
         }
-        SafeIdentifier moved = CUSTOM_PLAYLIST_SONGS.remove(fromIndex);
-        CUSTOM_PLAYLIST_SONGS.add(toIndex, moved);
+        MaMDataConfig.Entry moved = CUSTOM_PLAYLIST.remove(fromIndex);
+        CUSTOM_PLAYLIST.add(toIndex, moved);
+        syncCustomQueueAfterMutation();
         save();
         return true;
     }
 
     public static void removeCustomPlaylistSong(int index) {
         ensureLoaded();
-        if (index >= 0 && index < CUSTOM_PLAYLIST_SONGS.size()) {
-            CUSTOM_PLAYLIST_SONGS.remove(index);
+        if (index >= 0 && index < CUSTOM_PLAYLIST.size()) {
+            CUSTOM_PLAYLIST.remove(index);
+            syncCustomQueueAfterMutation();
             save();
         }
     }
 
     public static void clearCustomPlaylist() {
         ensureLoaded();
-        if (CUSTOM_PLAYLIST_SONGS.isEmpty()) return;
-        CUSTOM_PLAYLIST_SONGS.clear();
+        if (CUSTOM_PLAYLIST.isEmpty()) return;
+        CUSTOM_PLAYLIST.clear();
+        syncCustomQueueAfterMutation();
         save();
     }
 
@@ -256,6 +251,7 @@ public final class PlaylistHelper {
         if (index >= 0 && index < QUEUED_SONGS.size()) {
             SafeIdentifier removed = QUEUED_SONGS.get(index);
             QUEUED_SONGS.remove(index);
+            QUEUED_DISCS.remove(removed);
             if (index < queueIndex) queueIndex--;
             if (index < currentQueueIndex) currentQueueIndex--;
             if (index == pausedQueueIndex) clearPausedQueue();
@@ -273,6 +269,7 @@ public final class PlaylistHelper {
         if (QUEUED_SONGS.isEmpty()) return;
         if (currentSongFromQueue) stop();
         QUEUED_SONGS.clear();
+        QUEUED_DISCS.clear();
         queueIndex = 0;
         currentQueueIndex = -1;
         queuePaused = true;
@@ -375,7 +372,7 @@ public final class PlaylistHelper {
             }
             SafeIdentifier id = SHUFFLE_ORDER.get(previous);
             int visibleIndex = QUEUED_SONGS.indexOf(id);
-            if (visibleIndex < 0 || !MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id)) return false;
+            if (visibleIndex < 0) return false;
             shuffleIndex = previous + 1;
             currentShuffleIndex = previous;
             queueIndex = visibleIndex;
@@ -563,8 +560,8 @@ public final class PlaylistHelper {
         }
         String configName = CustomAlbums.displayName(displayId);
         if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
-        var disc = MusicDiscHelper.matchSound(Minecraft.getInstance(), displayId);
-        if (disc.isPresent()) return MusicDiscHelper.translationKey(disc.get().jukeboxSong());
+        Optional<Identifier> queuedDisc = currentSongFromQueue ? queuedDisc(currentSongId) : Optional.empty();
+        if (queuedDisc.isPresent()) return MusicDiscHelper.translationKey(queuedDisc.get());
         String pathKey = displayId.getPath().replace('/', '.');
         String key = displayId.getNamespace().equals("minecraft") ? pathKey : displayId.getNamespace() + "." + pathKey;
         return Language.getInstance().has(key) ? key : LITERAL_TRANSLATION_PREFIX + fallbackName(displayId.getPath());
@@ -616,8 +613,8 @@ public final class PlaylistHelper {
         if (QUEUED_SONGS.size() < 2) return false;
         if (shuffle) {
             ensureShuffleOrder();
-            if (loop) return SHUFFLE_ORDER.stream().anyMatch(id -> MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id));
-            return hasUnlockedShuffleSongFrom(shuffleIndex);
+            if (loop) return !SHUFFLE_ORDER.isEmpty();
+            return shuffleIndex < SHUFFLE_ORDER.size();
         }
         int index = currentSongFromQueue && currentQueueIndex >= 0 ? currentQueueIndex : queueIndex;
         return loop || index < QUEUED_SONGS.size() - 1;
@@ -652,7 +649,6 @@ public final class PlaylistHelper {
     public static boolean playNow(int index) {
         ensureLoaded();
         if (index < 0 || index >= QUEUED_SONGS.size()) return false;
-        if (!MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return false;
         queuePaused = false;
         queueIndex = index;
         if (shuffle) {
@@ -705,17 +701,7 @@ public final class PlaylistHelper {
     }
 
     private static int previousPlayableIndex(int start, boolean wrap) {
-        if (QUEUED_SONGS.isEmpty()) return -1;
-        int index = clampQueueIndex(start);
-        for (int checked = 0; checked < QUEUED_SONGS.size(); checked++) {
-            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return index;
-            index--;
-            if (index < 0) {
-                if (!wrap) return -1;
-                index = QUEUED_SONGS.size() - 1;
-            }
-        }
-        return -1;
+        return QUEUED_SONGS.isEmpty() ? -1 : clampQueueIndex(start);
     }
 
     public static boolean hasActiveMusic() {
@@ -746,17 +732,7 @@ public final class PlaylistHelper {
     }
 
     private static int nextPlayableIndex(int start, boolean wrap) {
-        if (QUEUED_SONGS.isEmpty()) return -1;
-        int index = clampQueueIndex(start);
-        for (int checked = 0; checked < QUEUED_SONGS.size(); checked++) {
-            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), QUEUED_SONGS.get(index))) return index;
-            index++;
-            if (index >= QUEUED_SONGS.size()) {
-                if (!wrap) return -1;
-                index = 0;
-            }
-        }
-        return -1;
+        return QUEUED_SONGS.isEmpty() ? -1 : clampQueueIndex(start);
     }
 
     private static boolean playSound(SafeIdentifier id, boolean loop, boolean fromQueue, boolean fromEvent) {
@@ -953,36 +929,34 @@ public final class PlaylistHelper {
         if (loaded) return;
         loaded = true;
         QUEUED_SONGS.clear();
-        CUSTOM_PLAYLIST_SONGS.clear();
+        QUEUED_DISCS.clear();
+        CUSTOM_PLAYLIST.clear();
         queuePaused = true;
         MaMDataConfig config = MaMDataConfig.get();
-        loop = config.playlist.loop;
-        shuffle = config.playlist.shuffle;
-        for (String song : config.playlist.queued_songs) {
-            SafeIdentifier id = SafeIdentifier.parse(song);
-            if (id != null && !QUEUED_SONGS.contains(id)) QUEUED_SONGS.add(id);
+        loop = config.player.loop;
+        shuffle = config.player.shuffle;
+        for (MaMDataConfig.Entry entry : config.player.custom_playlist) {
+            if (validPlaylistEntry(entry) && CUSTOM_PLAYLIST.stream().noneMatch(existing -> sameEntry(existing, entry))) {
+                CUSTOM_PLAYLIST.add(copyEntry(entry));
+            }
         }
-        for (String song : config.playlist.custom_playlist_songs) {
-            SafeIdentifier id = SafeIdentifier.parse(song);
-            if (id != null && !CUSTOM_PLAYLIST_SONGS.contains(id)) CUSTOM_PLAYLIST_SONGS.add(id);
-        }
+        restoreConfiguredQueue();
         if (shuffle) rebuildShuffleOrder(null);
     }
 
     private static void save() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlist.loop = loop;
-        config.playlist.shuffle = shuffle;
-        config.playlist.queued_songs = new ArrayList<>(QUEUED_SONGS.stream().map(SafeIdentifier::toString).toList());
-        config.playlist.custom_playlist_songs = new ArrayList<>(CUSTOM_PLAYLIST_SONGS.stream().map(SafeIdentifier::toString).toList());
+        config.player.loop = loop;
+        config.player.shuffle = shuffle;
+        config.player.custom_playlist = new ArrayList<>(CUSTOM_PLAYLIST.stream().map(PlaylistHelper::copyEntry).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
     private static void clearQueueType() {
         MaMDataConfig config = MaMDataConfig.get();
-        config.playlist.queue_type = MaMDataConfig.QueueType.NONE;
-        config.playlist.queue_id = "";
-        config.playlist.queue_name = "";
+        config.player.now_playing_type = MaMDataConfig.NowPlayingType.NONE;
+        config.player.now_playing_id = "";
+        config.player.now_playing_name = "";
     }
 
     private static int remapMovedIndex(int index, int fromIndex, int toIndex) {
@@ -993,19 +967,183 @@ public final class PlaylistHelper {
         return index;
     }
 
-    private static void touchRecentSource(MaMDataConfig.QueueType type, String id) {
-        if (type == MaMDataConfig.QueueType.NONE || id == null || id.isBlank()) return;
-        MaMDataConfig.Playlist playlist = MaMDataConfig.get().playlist;
-        String key = type.name() + "|" + id;
-        playlist.recent_favourites.remove(key);
-        playlist.recent_favourites.addFirst(key);
+    private static void touchRecentSource(MaMDataConfig.NowPlayingType type, String id) {
+        if (type == MaMDataConfig.NowPlayingType.NONE || id == null || id.isBlank()) return;
+        MaMDataConfig.Player playlist = MaMDataConfig.get().player;
+        String entryType = type == MaMDataConfig.NowPlayingType.ALBUM ? "album" : "playlist";
+        playlist.recent_favourites.removeIf(entry -> entry != null && id.equals(entry.id) && entryType.equals(entry.type));
+        playlist.recent_favourites.addFirst(entry(id, entryType));
     }
 
     // Returns {@code 0} for the most recently played source, or a large rank when unseen
-    public static int recentSourceRank(MaMDataConfig.QueueType type, String id) {
-        if (type == MaMDataConfig.QueueType.NONE || id == null) return Integer.MAX_VALUE;
-        int index = MaMDataConfig.get().playlist.recent_favourites.indexOf(type.name() + "|" + id);
-        return index < 0 ? Integer.MAX_VALUE : index;
+    public static int recentSourceRank(MaMDataConfig.NowPlayingType type, String id) {
+        if (type == MaMDataConfig.NowPlayingType.NONE || id == null) return Integer.MAX_VALUE;
+        String entryType = type == MaMDataConfig.NowPlayingType.ALBUM ? "album" : "playlist";
+        List<MaMDataConfig.Entry> recent = MaMDataConfig.get().player.recent_favourites;
+        for (int index = 0; index < recent.size(); index++) {
+            MaMDataConfig.Entry entry = recent.get(index);
+            if (entry != null && id.equals(entry.id) && entryType.equals(entry.type)) return index;
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    public static MaMDataConfig.Entry trackEntry(SafeIdentifier track) {
+        return entry(track.toString(), "track");
+    }
+
+    public static MaMDataConfig.Entry discEntry(Identifier disc) {
+        return entry(disc.toString(), "disc");
+    }
+
+    public static boolean isFavourite(Identifier id, MaMDataConfig.NowPlayingType type) {
+        if (id == null || type == MaMDataConfig.NowPlayingType.NONE) return false;
+        String entryType = type == MaMDataConfig.NowPlayingType.ALBUM ? "album" : "playlist";
+        return MaMDataConfig.get().player.favourites.stream()
+                .anyMatch(entry -> entry != null && id.toString().equals(entry.id) && entryType.equals(entry.type));
+    }
+
+    public static void setFavourite(Identifier id, MaMDataConfig.NowPlayingType type, boolean favourite) {
+        if (id == null || type == MaMDataConfig.NowPlayingType.NONE) return;
+        MaMDataConfig.Player playlist = MaMDataConfig.get().player;
+        String entryType = type == MaMDataConfig.NowPlayingType.ALBUM ? "album" : "playlist";
+        playlist.favourites.removeIf(entry -> entry != null && id.toString().equals(entry.id) && entryType.equals(entry.type));
+        if (favourite) playlist.favourites.add(entry(id.toString(), entryType));
+        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+    }
+
+    public static Optional<SafeIdentifier> resolveEntry(MaMDataConfig.Entry entry) {
+        if (!validPlaylistEntry(entry)) return Optional.empty();
+        if (entry.isTrack()) return Optional.of(SafeIdentifier.parse(entry.id));
+
+        Identifier discId = Identifier.tryParse(entry.id);
+        if (discId == null || !MusicDiscHelper.isDiscUnlocked(Minecraft.getInstance(), discId)) return Optional.empty();
+        for (Album album : Album.ALBUMS) {
+            for (Album.StoredDisc disc : album.discs) {
+                if (MusicDiscHelper.albumEntryId(album, disc).equals(discId)) {
+                    return MusicDiscHelper.discSoundId(Minecraft.getInstance(), album, disc).map(SafeIdentifier::convert);
+                }
+            }
+        }
+        return MusicDiscHelper.discSoundId(Minecraft.getInstance(), discId).map(SafeIdentifier::convert);
+    }
+
+    public static Optional<Identifier> entryDisc(MaMDataConfig.Entry entry) {
+        return entry != null && entry.isDisc() ? Optional.ofNullable(Identifier.tryParse(entry.id)) : Optional.empty();
+    }
+
+    public static void refreshConfiguredQueue() {
+        ensureLoaded();
+        if (!currentSongFromQueue) restoreConfiguredQueue();
+    }
+
+    private static void restoreConfiguredQueue() {
+        MaMDataConfig.Player playlist = MaMDataConfig.get().player;
+        Collection<MaMDataConfig.Entry> entries = switch (playlist.now_playing_type) {
+            case ALBUM -> configuredAlbumEntries(playlist.now_playing_id);
+            case PLAYLIST -> configuredPlaylistEntries(playlist.now_playing_id);
+            case NONE -> CUSTOM_PLAYLIST;
+        };
+        replaceRuntimeQueue(entries, false);
+    }
+
+    private static List<MaMDataConfig.Entry> configuredAlbumEntries(String id) {
+        Identifier albumId = Identifier.tryParse(id);
+        if (albumId == null) return List.of();
+        for (Album album : Album.ALBUMS) {
+            if (!album.album.equals(albumId)) continue;
+            List<MaMDataConfig.Entry> entries = new ArrayList<>();
+            album.tracks.stream().map(album::trackId).map(PlaylistHelper::trackEntry).forEach(entries::add);
+            album.discs.stream().map(disc -> MusicDiscHelper.albumEntryId(album, disc)).map(PlaylistHelper::discEntry).forEach(entries::add);
+            return entries;
+        }
+        return List.of();
+    }
+
+    private static List<MaMDataConfig.Entry> configuredPlaylistEntries(String id) {
+        Identifier playlistId = Identifier.tryParse(id);
+        if (playlistId == null) return List.of();
+        for (Playlist playlist : net.rebel459.music_and_melody.client.Playlist.PLAYLISTS) {
+            if (!playlist.playlist.equals(playlistId)) continue;
+            List<MaMDataConfig.Entry> entries = new ArrayList<>();
+            playlist.tracks.stream().map(PlaylistHelper::trackEntry).forEach(entries::add);
+            playlist.discs.stream().map(PlaylistHelper::discEntry).forEach(entries::add);
+            return entries;
+        }
+        return List.of();
+    }
+
+    private static void replaceRuntimeQueue(Collection<MaMDataConfig.Entry> entries) {
+        replaceRuntimeQueue(entries, true);
+    }
+
+    private static void replaceRuntimeQueue(Collection<MaMDataConfig.Entry> entries, boolean stopPlayback) {
+        if (stopPlayback && currentSongFromQueue) stop();
+        else clearPausedQueue();
+        materializeQueue(entries);
+        queueIndex = 0;
+        currentQueueIndex = -1;
+        queuePaused = true;
+        currentShuffleIndex = -1;
+        rebuildShuffleOrder(null);
+    }
+
+    private static void syncCustomQueueAfterMutation() {
+        if (MaMDataConfig.get().player.now_playing_type != MaMDataConfig.NowPlayingType.NONE) return;
+        SafeIdentifier playing = currentSongFromQueue ? currentSongId : null;
+        boolean wasPaused = queuePaused;
+        materializeQueue(CUSTOM_PLAYLIST);
+        if (playing == null) {
+            queueIndex = clampQueueIndex(queueIndex);
+            rebuildShuffleOrder(null);
+            return;
+        }
+
+        int current = findQueueIndex(playing);
+        if (current < 0) {
+            stop();
+            queuePaused = QUEUED_SONGS.isEmpty() || wasPaused;
+            queueIndex = 0;
+            rebuildShuffleOrder(null);
+            return;
+        }
+        currentQueueIndex = current;
+        queueIndex = current;
+        queuePaused = wasPaused;
+        if (pausedQueueSong != null) pausedQueueIndex = current;
+        rebuildShuffleOrder(shuffle ? QUEUED_SONGS.get(current) : null);
+    }
+
+    private static void materializeQueue(Collection<MaMDataConfig.Entry> entries) {
+        QUEUED_SONGS.clear();
+        QUEUED_DISCS.clear();
+        if (entries != null) {
+            for (MaMDataConfig.Entry entry : entries) {
+                Optional<SafeIdentifier> resolved = resolveEntry(entry);
+                if (resolved.isEmpty() || QUEUED_SONGS.contains(resolved.get())) continue;
+                QUEUED_SONGS.add(resolved.get());
+                entryDisc(entry).ifPresent(disc -> QUEUED_DISCS.put(resolved.get(), disc));
+            }
+        }
+    }
+
+    private static boolean validPlaylistEntry(MaMDataConfig.Entry entry) {
+        return entry != null && entry.id != null && !entry.id.isBlank()
+                && entry.type != null && (entry.isTrack() || entry.isDisc());
+    }
+
+    private static boolean sameEntry(MaMDataConfig.Entry first, MaMDataConfig.Entry second) {
+        return first != null && second != null && Objects.equals(first.id, second.id) && Objects.equals(first.type, second.type);
+    }
+
+    private static MaMDataConfig.Entry copyEntry(MaMDataConfig.Entry source) {
+        return entry(source.id, source.type);
+    }
+
+    private static MaMDataConfig.Entry entry(String id, String type) {
+        MaMDataConfig.Entry entry = new MaMDataConfig.Entry();
+        entry.id = id;
+        entry.type = type;
+        return entry;
     }
 
     private static void rebuildShuffleOrderAfterQueueChange() {
@@ -1054,31 +1192,15 @@ public final class PlaylistHelper {
     }
 
     private static int nextShuffledPlayableIndex() {
-        int checked = 0;
-        while (checked < Math.max(1, QUEUED_SONGS.size())) {
-            if (shuffleIndex >= SHUFFLE_ORDER.size()) {
-                if (!loop) {
-                    queuePaused = true;
-                    return -1;
-                }
-                rebuildShuffleOrder(null);
+        if (shuffleIndex >= SHUFFLE_ORDER.size()) {
+            if (!loop) {
+                queuePaused = true;
+                return -1;
             }
-            if (SHUFFLE_ORDER.isEmpty()) return -1;
-            int candidate = shuffleIndex++;
-            SafeIdentifier id = SHUFFLE_ORDER.get(candidate);
-            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), id)) return candidate;
-            checked++;
+            rebuildShuffleOrder(null);
         }
-        return -1;
+        return SHUFFLE_ORDER.isEmpty() ? -1 : shuffleIndex++;
     }
 
-    private static boolean hasUnlockedShuffleSongFrom(int start) {
-        ensureShuffleOrder();
-        for (int i = Math.max(0, start); i < SHUFFLE_ORDER.size(); i++) {
-            if (MusicDiscHelper.isSoundUnlocked(Minecraft.getInstance(), SHUFFLE_ORDER.get(i))) return true;
-        }
-        return false;
-    }
-
-    public record QueueType(MaMDataConfig.QueueType type, String id, String name) {}
+    public record QueueType(MaMDataConfig.NowPlayingType type, String id, String name) {}
 }

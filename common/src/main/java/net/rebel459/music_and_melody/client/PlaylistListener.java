@@ -6,6 +6,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.unified.platform.UnifiedHelpers;
 import net.rebel459.unified.platform.UnifiedPlatform;
 
@@ -40,5 +41,6 @@ public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.
         }
 
         Playlist.reloadConfigPlaylists();
+        PlaylistHelper.refreshConfiguredQueue();
     }
 }

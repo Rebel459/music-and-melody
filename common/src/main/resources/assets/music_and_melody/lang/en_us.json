@@ -210,7 +210,7 @@
   "screen.music_and_melody.remote_details.version": "Version",
   "screen.music_and_melody.remote_details.state": "State",
 
-  "key.music_and_melody.playlist": "Open Playlist",
+  "key.music_and_melody.music_player": "Open Music Player",
 
   "album.music_and_melody.music_and_melody": "Music & Melody",
   "album.music_and_melody.mod_discs": "Mod Discs",
