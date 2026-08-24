@@ -1,6 +1,7 @@
 {
   "name": "Stronghold",
   "description": "Stronghold structure-specific music",
+  "icon": "minecraft:textures/block/stone_bricks.png",
   "entries": [
     {
       "category": "pool",

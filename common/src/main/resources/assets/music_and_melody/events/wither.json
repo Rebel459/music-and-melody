@@ -1,6 +1,7 @@
 {
   "name": "Wither",
   "description": "Plays certain music when fighting the Wither",
+  "icon": "minecraft:textures/block/soul_sand.png",
   "entries": [
     {
       "category": "pool",

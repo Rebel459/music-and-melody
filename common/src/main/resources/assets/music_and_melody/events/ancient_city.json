@@ -1,6 +1,7 @@
 {
   "name": "Ancient City",
   "description": "Ancient City structure-specific music",
+  "icon": "minecraft:textures/block/reinforced_deepslate_side.png",
   "entries": [
     {
       "category": "pool",

@@ -1,6 +1,7 @@
 {
   "name": "Savanna",
   "description": "Savanna biome-specific music",
+  "icon": "minecraft:textures/block/acacia_log.png",
   "entries": [
     {
       "category": "pool",

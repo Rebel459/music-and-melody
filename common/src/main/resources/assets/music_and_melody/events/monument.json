@@ -1,6 +1,7 @@
 {
   "name": "Monument",
   "description": "Ocean Monument structure-specific music",
+  "icon": "minecraft:textures/block/prismarine_bricks.png",
   "entries": [
     {
       "category": "pool",
@@ -11,8 +12,7 @@
           "value": "monument"
         }
       ],
-      "priority": "medium",
-      "sustain": false
+      "priority": "medium"
     }
   ]
 }

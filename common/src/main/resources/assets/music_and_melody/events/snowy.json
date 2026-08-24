@@ -1,6 +1,7 @@
 {
   "name": "Snowy",
   "description": "Unique music for snowy biomes",
+  "icon": "minecraft:textures/block/snow.png",
   "entries": [
     {
       "category": "pool",

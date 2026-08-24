@@ -1,6 +1,7 @@
 {
   "name": "Sky",
   "description": "Unique music that plays when above the clouds",
+  "icon": "minecraft:textures/environment/clouds.png",
   "entries": [
     {
       "category": "pool",

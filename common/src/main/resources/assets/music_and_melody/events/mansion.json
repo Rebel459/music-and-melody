@@ -1,6 +1,7 @@
 {
   "name": "Mansion",
   "description": "Woodland Mansion structure-specific music",
+  "icon": "minecraft:textures/block/dark_oak_planks.png",
   "entries": [
     {
       "category": "pool",
@@ -11,8 +12,7 @@
           "value": "mansion"
         }
       ],
-      "priority": "medium",
-      "sustain": false
+      "priority": "medium"
     }
   ]
 }

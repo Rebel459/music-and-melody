@@ -1,6 +1,7 @@
 {
   "name": "Dark Forest",
   "description": "Dark Forest biome-specific music",
+  "icon": "minecraft:textures/block/dark_oak_log.png",
   "entries": [
     {
       "category": "pool",
