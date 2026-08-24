@@ -31,7 +31,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             ProfilerFiller profilerFiller
     ) {
         Album.ALBUMS.removeAll(this.loadedAlbums);
-        Album.DISABLED_ALBUMS.removeAll(this.loadedAlbums);
         this.loadedAlbums.stream()
                 .map(album -> album.album)
                 .forEach(Album.LOADED_ALBUMS::remove);
@@ -43,13 +42,11 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             Identifier albumId = entry.getKey();
             Album.Record record = entry.getValue();
 
-            TrackSet trackSet = expandTracks(albumId, record.tracks(), resourceManager);
-            Set<String> tracks = new HashSet<>();
-            for (String track : trackSet.tracks()) {
+            Set<String> tracks = new LinkedHashSet<>();
+            for (String track : expandTracks(albumId, record.tracks(), resourceManager)) {
                 SafeIdentifier trackId = SafeIdentifier.parse(track);
                 tracks.add(trackId.getNamespace().equals(albumId.getNamespace()) ? trackId.getPath() : trackId.toString());
             }
-            Set<String> forcedEnabledTracks = trackSet.forcedEnabledTracks();
 
             Set<Album.StoredDisc> discs = record.discs()
                     .stream()
@@ -71,7 +68,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     record.name(),
                     record.icon(),
                     tracks,
-                    forcedEnabledTracks,
                     discs
             );
 
@@ -81,13 +77,12 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         this.loadedAlbums.addAll(CustomAlbums.createAlbums(registeredDiscs));
     }
 
-    private static TrackSet expandTracks(
+    private static Set<String> expandTracks(
             Identifier albumId,
             List<Album.Track> entries,
             ResourceManager resourceManager
     ) {
         LinkedHashMap<String, String> tracksById = new LinkedHashMap<>();
-        Set<String> forcedEnabledTracks = new HashSet<>();
 
         for (Album.Track entry : entries) {
             List<String> expandedTracks = entry.folder()
@@ -97,19 +92,11 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             for (String song : expandedTracks) {
                 String id = trackId(albumId, song).toString();
 
-                if (entry.enabled()) {
-                    forcedEnabledTracks.add(id);
-                    tracksById.put(id, song);
-                } else {
-                    tracksById.putIfAbsent(id, song);
-                }
+                tracksById.putIfAbsent(id, song);
             }
         }
 
-        return new TrackSet(
-                new LinkedHashSet<>(tracksById.values()),
-                forcedEnabledTracks
-        );
+        return new LinkedHashSet<>(tracksById.values());
     }
 
     private static SafeIdentifier trackId(Identifier albumId, String song) {
@@ -117,8 +104,6 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                 ? SafeIdentifier.parse(song)
                 : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
     }
-
-    private record TrackSet(Set<String> tracks, Set<String> forcedEnabledTracks) {}
 
     private static List<String> folderTracks(
             Identifier albumId,
@@ -137,7 +122,11 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             tracks.addAll(SafeMusicHelper.downloadTracksInFolder(folderId));
         }
 
-        return new ArrayList<>(tracks);
+        return tracks.stream()
+                .sorted(Comparator
+                        .comparing((String song) -> trackId(albumId, song).getPath())
+                        .thenComparing(song -> trackId(albumId, song).toString()))
+                .toList();
     }
 
     private static List<String> resourceFolderTracks(
