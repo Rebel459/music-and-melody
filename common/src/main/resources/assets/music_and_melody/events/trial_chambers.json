@@ -10,7 +10,9 @@
           "type": "structure",
           "value": "trial_chambers"
         }
-      ]
+      ],
+      "priority": "medium",
+      "sustain": false
     }
   ]
 }
