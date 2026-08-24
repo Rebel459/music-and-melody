@@ -11,6 +11,7 @@
         }
       ],
       "priority": "very_high",
+      "replace": true,
       "sustain": false,
       "constant": true
     }

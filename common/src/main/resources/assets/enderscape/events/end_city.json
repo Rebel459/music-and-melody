@@ -12,6 +12,7 @@
         }
       ],
       "priority": "medium",
+      "replace": true,
       "sustain": false,
       "constant": true
     }
