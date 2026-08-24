@@ -17,7 +17,7 @@ final class PlatformContentManager {
     }
 
     static boolean openManualDownloadScreen(MusicPlayerScreen parent, RemotePack pack) {
-        Minecraft.getInstance().gui.setScreen(new PlatformDownloadScreen(parent, pack));
+        Minecraft.getInstance().setScreen(new PlatformDownloadScreen(parent, pack));
         return true;
     }
 
