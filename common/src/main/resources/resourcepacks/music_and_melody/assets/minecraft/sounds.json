@@ -1540,16 +1540,6 @@
       }
     ]
   },
-  "music.overworld.swamp": {
-    "replace": false,
-    "sounds": [
-      {
-        "name": "music/game/ebb",
-        "stream": true,
-        "volume": 0.4
-      }
-    ]
-  },
   "music.under_water": {
     "replace": false,
     "sounds": [
