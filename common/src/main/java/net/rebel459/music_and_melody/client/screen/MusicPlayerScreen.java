@@ -551,10 +551,10 @@ public class MusicPlayerScreen extends Screen {
         int y = PANEL_TOP + 64;
         this.addRenderableWidget(new WorkspaceButton(x, y, buttonWidth, 22,
                 Component.translatable("button.music_and_melody.client"), false,
-                button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())));
+                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMClientConfig.class, this).get())));
         this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP, buttonWidth, 22,
                 Component.translatable("button.music_and_melody.server"), false,
-                button -> this.minecraft.gui.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())));
+                button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())));
         this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + HOME_BUTTON_STEP * 2, buttonWidth, 20));
     }
 
@@ -1052,17 +1052,17 @@ public class MusicPlayerScreen extends Screen {
 
     private void openSavePlaylistScreen() {
         closeSearch();
-        this.minecraft.gui.setScreen(new SavePlaylistScreen(this));
+        this.minecraft.setScreen(new SavePlaylistScreen(this));
     }
 
     private void openReplacePlaylistScreen() {
         closeSearch();
-        this.minecraft.gui.setScreen(new ReplacePlaylistScreen(this));
+        this.minecraft.setScreen(new ReplacePlaylistScreen(this));
     }
 
     private void openConfigAlbumEditor(Album album) {
         closeSearch();
-        this.minecraft.gui.setScreen(album == null ? new AlbumEditorScreen(this) : new AlbumEditorScreen(this, album.album));
+        this.minecraft.setScreen(album == null ? new AlbumEditorScreen(this) : new AlbumEditorScreen(this, album.album));
     }
 
     void configAlbumsChanged() {
@@ -1076,12 +1076,12 @@ public class MusicPlayerScreen extends Screen {
     private void openCreateEventScreen() {
         if (!MaMClientConfig.get().allow_events) return;
         closeSearch();
-        this.minecraft.gui.setScreen(new CreateEventScreen(this));
+        this.minecraft.setScreen(new CreateEventScreen(this));
     }
 
     private void openCreateThemeScreen() {
         closeSearch();
-        this.minecraft.gui.setScreen(new CreateThemeScreen(this));
+        this.minecraft.setScreen(new CreateThemeScreen(this));
     }
 
     private void toggleSearch() {
@@ -1372,7 +1372,7 @@ public class MusicPlayerScreen extends Screen {
             action.run();
             return;
         }
-        this.minecraft.gui.setScreen(new PlaylistConfirmScreen(
+        this.minecraft.setScreen(new PlaylistConfirmScreen(
                 this,
                 Component.translatable("screen.music_and_melody.discard_custom_playlist"),
                 Component.translatable("screen.music_and_melody.discard_custom_playlist.warning"),
@@ -1453,7 +1453,7 @@ public class MusicPlayerScreen extends Screen {
     private void openThemeEditor(Theme theme) {
         if (theme == null) return;
         closeSearch();
-        this.minecraft.gui.setScreen(new ThemeEditorScreen(this, theme));
+        this.minecraft.setScreen(new ThemeEditorScreen(this, theme));
     }
 
     void themeChanged(Identifier id) {
@@ -1564,7 +1564,7 @@ public class MusicPlayerScreen extends Screen {
     void openEvent(Event.Source source) {
         if (!MaMClientConfig.get().allow_events) return;
         closeSearch();
-        this.minecraft.gui.setScreen(new EventScreen(this, source.id));
+        this.minecraft.setScreen(new EventScreen(this, source.id));
     }
 
     void chooseOnlineCatalog(String catalog) {
@@ -1693,7 +1693,7 @@ public class MusicPlayerScreen extends Screen {
         this.welcomeScroll = Math.max(0, Math.min(this.welcomeScroll, this.welcomeScrollMax));
         WorkspaceButton news = this.addRenderableWidget(new WorkspaceButton(buttonX, newsY, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.news"), false,
-                ignored -> this.minecraft.gui.setScreen(new NewsScreen(this))));
+                ignored -> this.minecraft.setScreen(new NewsScreen(this))));
         news.active = online;
         this.welcomeSocialY = this.welcomeViewportTop - (int) Math.round(this.welcomeScroll)
                 + messageLines * (this.font.lineHeight + 2) + 5;
@@ -1742,14 +1742,14 @@ public class MusicPlayerScreen extends Screen {
         RemoteContentManager.owner(contentId, tag).ifPresent(pack -> {
             this.viewedRemotePack = pack;
             this.remoteDetailsScroll = 0.0D;
-            this.minecraft.gui.setScreen(this);
+            this.minecraft.setScreen(this);
             this.rebuildWidgets();
         });
     }
 
     void openRepositoryEditor() {
         closeSearch();
-        this.minecraft.gui.setScreen(new RepositoryScreen(this));
+        this.minecraft.setScreen(new RepositoryScreen(this));
     }
 
     void repositoriesChanged() {
@@ -1939,7 +1939,7 @@ public class MusicPlayerScreen extends Screen {
                 else setPage(Page.HOME);
             }
             case LIBRARY, CONFIG -> setPage(Page.HOME);
-            case HOME -> this.minecraft.gui.setScreen(this.parent);
+            case HOME -> this.minecraft.setScreen(this.parent);
         }
     }
 
@@ -1947,7 +1947,7 @@ public class MusicPlayerScreen extends Screen {
     public void onClose() {
         if (this.page == Page.HOME) {
             applyAllPendingDeletes();
-            this.minecraft.gui.setScreen(this.parent);
+            this.minecraft.setScreen(this.parent);
             if (this.reloadPending) this.minecraft.reloadResourcePacks();
         } else goBack();
     }
@@ -1956,7 +1956,7 @@ public class MusicPlayerScreen extends Screen {
         if (this.page == Page.THEMES && this.previewingTheme) ThemeListener.restoreActive();
         this.previewingTheme = false;
         applyAllPendingDeletes();
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
         if (this.reloadPending) this.minecraft.reloadResourcePacks();
     }
 

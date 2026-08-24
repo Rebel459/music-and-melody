@@ -3,9 +3,9 @@ package net.rebel459.music_and_melody.network;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.api.core.UnifiedEvents;
-import net.rebel459.unified.api.core.UnifiedHelpers;
-import net.rebel459.unified.api.event.EventTiming;
+import net.rebel459.unified.platform.UnifiedEvents;
+import net.rebel459.unified.platform.UnifiedHelpers;
+import net.rebel459.unified.util.EventType;
 
 import java.util.*;
 
@@ -20,7 +20,7 @@ public class CombatMusicHandler {
             clientPlayerTrackedByMob = packet.playerTrackedByMob();
         });
         UnifiedEvents.Players.onLeave(player -> LAST_STATE.remove(player.getUUID()));
-        UnifiedEvents.Server.onTick(EventTiming.PRE, server -> {
+        UnifiedEvents.Server.onTick(EventType.PRE, server -> {
             if (++serverTicks < 20) return;
             serverTicks = 0;
             server.getPlayerList().getPlayers().forEach(player -> {

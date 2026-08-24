@@ -6,8 +6,8 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.rebel459.music_and_melody.network.CombatMusicHandler;
 import net.rebel459.music_and_melody.network.ServerPresenceHandler;
-import net.rebel459.unified.api.client.core.UnifiedClientEvents;
-import net.rebel459.unified.api.event.EventTiming;
+import net.rebel459.unified.platform.client.UnifiedClientEvents;
+import net.rebel459.unified.util.EventType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -83,7 +83,7 @@ public class CombatStatus {
     }
 
     public static void init() {
-        UnifiedClientEvents.Instance.onTick(EventTiming.PRE, client -> {
+        UnifiedClientEvents.Instance.onTick(EventType.PRE, client -> {
             LocalPlayer player = client.player;
             if (player == null || !EventHelper.isEnabled()) {
                 if (!reset) {

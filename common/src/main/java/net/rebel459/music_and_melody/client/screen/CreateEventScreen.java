@@ -38,7 +38,7 @@ final class CreateEventScreen extends Screen {
     @Override
     protected void init() {
         if (!MaMClientConfig.get().allow_events) {
-            this.minecraft.gui.setScreen(this.parent);
+            this.minecraft.setScreen(this.parent);
             return;
         }
         calculateLayoutSize();
@@ -162,13 +162,13 @@ final class CreateEventScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private void create() {
         Event.Source source = Event.createConfigSource(this.nameField.getValue(), this.descriptionField.getValue(),
                 this.iconField.getValue(), this.pathField.getValue());
-        if (source != null) this.minecraft.gui.setScreen(new EventScreen(this.parent, source.id));
+        if (source != null) this.minecraft.setScreen(new EventScreen(this.parent, source.id));
     }
 
     private void refreshCreateState() {

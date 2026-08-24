@@ -88,11 +88,11 @@ final class ReplacePlaylistScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private void choose(Playlist playlist) {
-        this.minecraft.gui.setScreen(new SavePlaylistScreen(this.parent, playlist));
+        this.minecraft.setScreen(new SavePlaylistScreen(this.parent, playlist));
     }
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {

@@ -125,7 +125,7 @@ final class ThemeExitConfirmScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private boolean inside(double x, double y) {

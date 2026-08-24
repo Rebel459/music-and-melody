@@ -88,11 +88,6 @@ public class IconButton extends Button {
     }
 
     @Override
-    protected void extractTooltipForNextRenderPass(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        super.extractTooltipForNextRenderPass(graphics, scaleTooltipCoordinate(mouseX), scaleTooltipCoordinate(mouseY));
-    }
-
-    @Override
     public void onPress(InputWithModifiers input) {
         this.onPress.onPress(this);
     }

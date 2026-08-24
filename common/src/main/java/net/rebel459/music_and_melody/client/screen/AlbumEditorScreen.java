@@ -117,7 +117,7 @@ final class AlbumEditorScreen extends Screen {
 
     private void finish() {
         this.parent.configAlbumsChanged();
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private void refreshTrackList() {
@@ -201,7 +201,7 @@ final class AlbumEditorScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {

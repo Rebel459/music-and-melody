@@ -13,8 +13,8 @@ import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.unified.api.util.VanillaVersion;
-import net.rebel459.unified.api.core.UnifiedInstance;
+import net.rebel459.unified.platform.UnifiedPlatform;
+import net.rebel459.unified.util.VanillaVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -234,7 +234,7 @@ public final class RemoteContentManager {
     }
 
     public static List<String> missingDependencies(RemotePack pack) {
-        return pack.dependencies().stream().filter(dependency -> !UnifiedInstance.isModLoaded(dependency)).toList();
+        return pack.dependencies().stream().filter(dependency -> !UnifiedPlatform.isModLoaded(dependency)).toList();
     }
 
     public static boolean isDownloadable(RemotePack pack) {

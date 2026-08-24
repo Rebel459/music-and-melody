@@ -701,7 +701,7 @@ final class ThemeEditorScreen extends Screen {
 
     private void done() {
         if (!readOnly && dirty) {
-            this.minecraft.gui.setScreen(new ThemeExitConfirmScreen(this));
+            this.minecraft.setScreen(new ThemeExitConfirmScreen(this));
             return;
         }
         finish(false);
@@ -712,7 +712,7 @@ final class ThemeEditorScreen extends Screen {
             pendingDelete = false;
             if (!saveChanges()) {
                 pendingDelete = parent.isThemeDeletePending(theme.theme);
-                this.minecraft.gui.setScreen(this);
+                this.minecraft.setScreen(this);
                 return;
             }
             pendingDelete = parent.isThemeDeletePending(theme.theme);
@@ -720,7 +720,7 @@ final class ThemeEditorScreen extends Screen {
         dirty = false;
         ThemeListener.restoreActive();
         parent.themeChanged(theme.theme);
-        this.minecraft.gui.setScreen(parent);
+        this.minecraft.setScreen(parent);
     }
 
     @Override

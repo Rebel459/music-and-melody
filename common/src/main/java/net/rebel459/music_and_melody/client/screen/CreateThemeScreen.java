@@ -81,7 +81,7 @@ final class CreateThemeScreen extends Screen {
             return;
         }
         this.parent.themeChanged(theme.theme);
-        this.minecraft.gui.setScreen(new ThemeEditorScreen(this.parent, theme));
+        this.minecraft.setScreen(new ThemeEditorScreen(this.parent, theme));
     }
 
     private void updatePathHint() {
@@ -188,6 +188,6 @@ final class CreateThemeScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 }

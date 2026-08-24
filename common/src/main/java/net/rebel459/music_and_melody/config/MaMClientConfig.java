@@ -6,12 +6,6 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
 
 @Config(name = MusicAndMelody.MOD_ID + "/" + "client")
 public class MaMClientConfig implements ConfigData {
@@ -51,7 +45,12 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
 	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-	public boolean menu_buttons = true;
+	public ButtonPosition pause_button = ButtonPosition.REPLACE;
+
+	@ConfigEntry.Category("config")
+	@ConfigEntry.Gui.Tooltip
+	@ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+	public ButtonPosition title_button = ButtonPosition.REPLACE;
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
@@ -65,4 +64,10 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Gui.Tooltip
 	@ConfigEntry.Gui.RequiresRestart
 	public boolean online_functionality = true;
+
+	public enum ButtonPosition {
+		REPLACE,
+		APPEND,
+		NONE
+	}
 }

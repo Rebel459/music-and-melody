@@ -47,7 +47,7 @@ final class PlaylistConfirmScreen extends Screen {
         int buttonX = x + (width - (buttonWidth * 2 + 4)) / 2;
         this.addRenderableWidget(new WorkspaceButton(buttonX, y, buttonWidth, 20, this.confirmLabel, false, button -> {
                     this.confirmedAction.run();
-                    this.minecraft.gui.setScreen(this.parent);
+                    this.minecraft.setScreen(this.parent);
                 }));
         this.addRenderableWidget(new WorkspaceButton(buttonX + buttonWidth + 4, y, buttonWidth, 20, CommonComponents.GUI_CANCEL, false,
                 button -> this.onClose()));
@@ -155,6 +155,6 @@ final class PlaylistConfirmScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 }

@@ -103,7 +103,7 @@ public class EventScreen extends Screen {
     @Override
     protected void init() {
         if (!MaMClientConfig.get().allow_events) {
-            this.minecraft.gui.setScreen(this.parent);
+            this.minecraft.setScreen(this.parent);
             return;
         }
         calculateLayoutSize();
@@ -419,7 +419,7 @@ public class EventScreen extends Screen {
             EventHelper.resetMusicBreak();
         }
         if (this.parent instanceof MusicPlayerScreen musicPlayer) musicPlayer.rebuildWidgets();
-        this.minecraft.gui.setScreen(this.parent);
+        this.minecraft.setScreen(this.parent);
     }
 
     private void toggleDelete() {
