@@ -378,21 +378,21 @@ public class EventHelper {
     }
 
     private static int vanillaMusicPriority(boolean activeMusic, Music situationalMusic) {
-        ResourceLocation gameMusic = SoundEvents.MUSIC_GAME.value().getLocation();
-        ResourceLocation creativeMusic = SoundEvents.MUSIC_CREATIVE.value().getLocation();
+        Identifier gameMusic = SoundEvents.MUSIC_GAME.value().location();
+        Identifier creativeMusic = SoundEvents.MUSIC_CREATIVE.value().location();
         if (activeMusic) {
             SoundManager manager = Minecraft.getInstance().getSoundManager();
             Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
             for (SoundInstance instance : instances) {
                 if (manager.isActive(instance)) {
-                    if (gameMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
-                    if (creativeMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.MEDIUM) - 1;
+                    if (gameMusic.equals(instance.getIdentifier())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
+                    if (creativeMusic.equals(instance.getIdentifier())) return getPriority(Event.PriorityType.MEDIUM) - 1;
                 }
             }
             return getPriority(Event.PriorityType.LOW) - 1;
         }
 
-        ResourceLocation situationalMusicId = situationalMusic.getEvent().value().getLocation();
+        Identifier situationalMusicId = situationalMusic.sound().value().location();
         if (gameMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.VERY_LOW) - 1;
         if (creativeMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.MEDIUM) - 1;
         return getPriority(Event.PriorityType.LOW) - 1;
@@ -589,7 +589,7 @@ public class EventHelper {
             case NOT -> evaluateConditions(condition.conditions(), rollRandomChance).negate();
             case BIOME -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(condition.idValue().get()));
             case BIOME_TAG -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get())));
-            case DIMENSION -> result(level != null, () -> level.dimension().location().equals(condition.idValue().get()));
+            case DIMENSION -> result(level != null, () -> level.dimension().identifier().equals(condition.idValue().get()));
             case STRUCTURE -> result(level != null, () -> StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get()));
             case STRUCTURE_TAG -> result(level != null, () -> StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get()));
             case TIME -> result(level != null, () -> {
