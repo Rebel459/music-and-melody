@@ -352,6 +352,11 @@
     "replace": true,
     "sounds": [
       {
+        "name": "music_and_melody:music/overworld/stasis",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
         "name": "music/game/ebb",
         "stream": true,
         "volume": 0.4
