@@ -105,7 +105,7 @@
   "screen.music_and_melody.theme_editor.metadata": "Metadata",
   "screen.music_and_melody.theme_editor.colours": "Colours",
   "screen.music_and_melody.theme_editor.value": "Value",
-  "screen.music_and_melody.theme_editor.parent": "Parent Theme",
+  "screen.music_and_melody.theme_editor.parent": "Parent",
   "screen.music_and_melody.theme_editor.hex": "#AARRGGBB",
   "screen.music_and_melody.theme_editor.button_textures": "Button Textures: %s",
   "screen.music_and_melody.theme_editor.text_shadow": "Text Shadow: %s",
