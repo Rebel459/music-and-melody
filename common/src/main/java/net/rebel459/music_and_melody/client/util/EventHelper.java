@@ -102,7 +102,7 @@ public class EventHelper {
 
             int currentPriority = lastCategory != null ? getPriority(lastPriority) : vanillaMusicPriority(activeMusic);
             boolean higherPriority = getPriority(event.priority) > currentPriority;
-            if (higherPriority) {
+            if (higherPriority && event.replace) {
                 cooldownEmptyMusic = false;
                 if (activeMusic) {
                     queueEventFade(event, true);

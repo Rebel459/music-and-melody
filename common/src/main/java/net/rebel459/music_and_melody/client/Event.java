@@ -47,16 +47,18 @@ public class Event {
     public SafeIdentifier music;
     public List<Condition> conditions;
     public PriorityType priority;
+    public boolean replace;
     public boolean sustain;
     public boolean constant;
     public int weight;
 
-    public Event(Identifier source, CategoryType category, SafeIdentifier music, List<Condition> conditions, PriorityType priority, boolean sustain, boolean constant, int weight) {
+    public Event(Identifier source, CategoryType category, SafeIdentifier music, List<Condition> conditions, PriorityType priority, boolean replace, boolean sustain, boolean constant, int weight) {
         this.source = source;
         this.category = category;
         this.music = music;
         this.conditions = conditions;
         this.priority = priority;
+        this.replace = replace;
         this.sustain = sustain;
         this.constant = constant;
         this.weight = weight;
@@ -207,7 +209,7 @@ public class Event {
             conditions.add(parsed.get());
         }
 
-        return Optional.of(new Event(source.id, category, music, conditions, priority, entry.sustain, entry.constant, Math.max(1, entry.weight())));
+        return Optional.of(new Event(source.id, category, music, conditions, priority, entry.replace, entry.sustain, entry.constant, Math.max(1, entry.weight())));
     }
 
     public static String categoryName(CategoryType category) {
@@ -695,12 +697,13 @@ public class Event {
             this(name, description, DEFAULT_ICON, entries, dependencies, defaultState, hasName);
         }
 
-        public record Entry(String category, String music, List<Condition> conditions, String priority, boolean sustain, boolean constant, int weight) {
+        public record Entry(String category, String music, List<Condition> conditions, String priority, boolean replace, boolean sustain, boolean constant, int weight) {
             private static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                     Codec.STRING.fieldOf("category").forGetter(Entry::category),
                     Codec.STRING.fieldOf("music").forGetter(Entry::music),
                     Condition.CODEC.listOf().fieldOf("conditions").forGetter(Entry::conditions),
                     Codec.STRING.optionalFieldOf("priority", "low").forGetter(Entry::priority),
+                    Codec.BOOL.optionalFieldOf("replace", false).forGetter(Entry::replace),
                     Codec.BOOL.optionalFieldOf("sustain", true).forGetter(Entry::sustain),
                     Codec.BOOL.optionalFieldOf("constant", false).forGetter(Entry::constant),
                     Codec.INT.optionalFieldOf("weight", 1).forGetter(Entry::weight)

@@ -10,7 +10,8 @@
           "type": "structure",
           "value": "ancient_city"
         }
-      ]
+      ],
+      "priority": "medium"
     }
   ]
 }

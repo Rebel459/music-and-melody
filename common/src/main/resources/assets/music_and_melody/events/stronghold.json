@@ -21,6 +21,7 @@
         }
       ],
       "priority": "medium",
+      "replace": true,
       "sustain": false
     },
     {
@@ -37,6 +38,7 @@
         }
       ],
       "priority": "medium",
+      "replace": true,
       "sustain": false,
       "constant": true
     }

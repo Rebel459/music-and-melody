@@ -66,6 +66,7 @@ public class EventScreen extends Screen {
     private MultiLineEditBox conditionsField;
     private Button categoryButton;
     private Button priorityButton;
+    private Button replaceButton;
     private Button sustainButton;
     private Button constantButton;
     private Button addButton;
@@ -76,6 +77,7 @@ public class EventScreen extends Screen {
     private int selectedIndex = -1;
     private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
     private int priorityIndex = Event.PriorityType.LOW.ordinal();
+    private boolean replace = false;
     private boolean sustain = true;
     private boolean constant = false;
     private boolean loadingEditor;
@@ -120,15 +122,19 @@ public class EventScreen extends Screen {
                 this.priorityIndex = (this.priorityIndex + 1) % PRIORITIES.length;
                 markDirty();
         }));
-        this.sustainButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY + controlStep * 2, settingsWidth, 20, sustainMessage(), false, button -> {
+        this.replaceButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY + controlStep * 2, settingsWidth, 20, replaceMessage(), false, button -> {
+                this.replace = !this.replace;
+                markDirty();
+        }));
+        this.sustainButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY + controlStep * 3, settingsWidth, 20, sustainMessage(), false, button -> {
                 this.sustain = !this.sustain;
                 markDirty();
         }));
-        this.constantButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY + controlStep * 3, settingsWidth, 20, constantMessage(), false, button -> {
+        this.constantButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY + controlStep * 4, settingsWidth, 20, constantMessage(), false, button -> {
                 this.constant = !this.constant;
                 markDirty();
         }));
-        this.weightField = this.addRenderableWidget(new EditBox(this.font, settingsX, controlY + controlStep * 4, settingsWidth, 20, Component.translatable("screen.music_and_melody.event_editor.weight")));
+        this.weightField = this.addRenderableWidget(new EditBox(this.font, settingsX, controlY + controlStep * 5, settingsWidth, 20, Component.translatable("screen.music_and_melody.event_editor.weight")));
         this.weightField.setMaxLength(8);
         this.weightField.setResponder(value -> markDirty());
 
@@ -358,9 +364,10 @@ public class EventScreen extends Screen {
         int settingsX = layout.leftX + 8;
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, TEXT_DESCRIPTION);
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.replace"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 5, TEXT_DESCRIPTION);
 
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.music"), layout.middleX + 8, PANEL_TOP + 27, TEXT_DESCRIPTION);
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), layout.middleX + 8, PANEL_TOP + 65, TEXT_DESCRIPTION);
@@ -401,7 +408,7 @@ public class EventScreen extends Screen {
 
     private static int settingsStep(EditorLayout layout) {
         int available = layout.bottomPanelTop - PANEL_GAP - (PANEL_TOP + 42) - 20;
-        return Math.max(24, Math.min(42, available / 4));
+        return Math.max(24, Math.min(42, available / 5));
     }
 
     private record EditorLayout(int leftX, int leftWidth, int middleX, int middleWidth, int rightX, int rightWidth, int panelBottom, int bottomPanelTop) { }
@@ -475,6 +482,7 @@ public class EventScreen extends Screen {
         this.loadingEditor = true;
         this.categoryIndex = categoryIndex(entry.category());
         this.priorityIndex = priorityIndex(entry.priority());
+        this.replace = entry.replace();
         this.sustain = entry.sustain();
         this.constant = entry.constant();
         if (this.musicField != null) this.musicField.setValue(entry.music());
@@ -489,6 +497,7 @@ public class EventScreen extends Screen {
         this.loadingEditor = true;
         this.categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
         this.priorityIndex = Event.PriorityType.LOW.ordinal();
+        this.replace = false;
         this.sustain = true;
         this.constant = false;
         if (this.musicField != null) this.musicField.setValue("");
@@ -563,6 +572,7 @@ public class EventScreen extends Screen {
                 music,
                 conditions,
                 Event.priorityName(PRIORITIES[this.priorityIndex]),
+                this.replace,
                 this.sustain,
                 this.constant,
                 weight
@@ -588,6 +598,7 @@ public class EventScreen extends Screen {
         boolean configSelected = selected != null && selected.source().isConfig();
         if (this.categoryButton != null) this.categoryButton.setMessage(categoryMessage());
         if (this.priorityButton != null) this.priorityButton.setMessage(priorityMessage());
+        if (this.replaceButton != null) this.replaceButton.setMessage(replaceMessage());
         if (this.sustainButton != null) this.sustainButton.setMessage(sustainMessage());
         if (this.constantButton != null) this.constantButton.setMessage(constantMessage());
         if (this.musicField != null) this.musicField.setHint(Component.literal("eg. " + musicExample()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
@@ -597,6 +608,7 @@ public class EventScreen extends Screen {
         boolean editable = source != null && source.isConfig();
         if (this.categoryButton != null) this.categoryButton.active = editable;
         if (this.priorityButton != null) this.priorityButton.active = editable;
+        if (this.replaceButton != null) this.replaceButton.active = editable;
         if (this.weightField != null) this.weightField.active = editable;
         if (this.sustainButton != null) this.sustainButton.active = editable;
         if (this.constantButton != null) this.constantButton.active = editable;
@@ -656,6 +668,12 @@ public class EventScreen extends Screen {
 
     private Component priorityMessage() {
         return Component.translatable("screen.music_and_melody.event_editor.priority." + Event.priorityName(PRIORITIES[this.priorityIndex]));
+    }
+
+    private Component replaceMessage() {
+        return Component.translatable("screen.music_and_melody.event_editor.replace")
+                .append(": ")
+                .append(CommonComponents.optionStatus(this.replace));
     }
 
     private Component sustainMessage() {
@@ -968,7 +986,7 @@ public class EventScreen extends Screen {
             int color = this.index == this.screen.selectedIndex ? TEXT_SELECTED : this.row.source().isEnabled() ? TEXT_PRIMARY : TEXT_DISABLED;
             Event.Record.Entry entry = this.row.entry();
             String first = entry.music() + " (" + entry.category() + ")";
-            String second = "priority=" + entry.priority() + " | sustain=" + entry.sustain() + " | constant=" + entry.constant() + " | weight=" + entry.weight();
+            String second = "priority=" + entry.priority() + " | replace=" + entry.replace() + " | sustain=" + entry.sustain() + " | constant=" + entry.constant() + " | weight=" + entry.weight();
             String third = conditionsText(entry.conditions());
             int maxWidth = this.getContentWidth() - 2;
             this.screen.drawMarquee(graphics, Component.literal(first), this.getContentX() + 1, this.getContentY() + 5, maxWidth, color);
