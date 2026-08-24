@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PauseScreenMixin {
 
     @Inject(method = "createPauseMenu", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/PauseScreen;getCustomAdditions()Ljava/util/Optional;"))
-    private void musicAndMelody$addMusicButton(CallbackInfo ci, @Local(name = "iconButtonRow") LinearLayout iconButtonRow) {
+    private void addMusicButton(CallbackInfo ci, @Local(name = "iconButtonRow") LinearLayout iconButtonRow) {
         if (!MaMClientConfig.get().menu_buttons) return;
         PauseScreen screen = PauseScreen.class.cast(this);
         iconButtonRow.addChild(IconButton.createMusicPlayer(0, 0, _ -> screen.minecraft.gui.setScreen(MusicPlayerScreen.openLast(screen))));
