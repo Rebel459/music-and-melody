@@ -11,19 +11,19 @@
     "background": "#FF303234",
     "panel_background": "#FF484A4B",
     "panel_outline": "#FF2E3031",
-    "panel_highlight": "#FF204618",
+    "panel_highlighted": "#FF204618",
     "popup_panel_background": "#FF484A4B",
     "popup_outline": "#FF2E3031"
   },
   "elements": {
     "button_background": "#FFD0D2D6",
-    "button_highlight": "#FF3C8526",
+    "button_highlighted": "#FF3C8526",
     "button_disabled": "#B4484A4B"
   },
   "text": {
     "selected": "#FFFFFFFF",
     "primary": "#FF303234",
-    "primary_highlight": "#FFFFFFFF",
+    "primary_highlighted": "#FFFFFFFF",
     "description": "#FF959799",
     "header": "#FFE0E1E1",
     "header_secondary": "#FFE0E1E1",

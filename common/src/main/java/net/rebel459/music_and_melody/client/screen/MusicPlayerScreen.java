@@ -810,7 +810,7 @@ public class MusicPlayerScreen extends Screen {
         float volume = this.minecraft.options.getSoundSourceVolume(SoundSource.MUSIC);
         graphics.fill(sliderX, sliderTop, sliderX + 4, sliderBottom, BAR_BACKGROUND);
         int filledTop = sliderBottom - Math.round((sliderBottom - sliderTop) * volume);
-        graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, PANEL_HIGHLIGHT);
+        graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, PANEL_HIGHLIGHTED);
         graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, TEXT_TITLE);
         if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
             graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)),
@@ -827,7 +827,7 @@ public class MusicPlayerScreen extends Screen {
             int y = Math.max(this.panelBottom - 22, onlineTagBottom() + 8);
             drawTrackMarquee(graphics, pack.name(), x, y - 12, Math.max(1, right - x), TEXT_DESCRIPTION);
             graphics.fill(x, y, right, y + 4, BAR_BACKGROUND);
-            graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHT);
+            graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHTED);
             return;
         }
     }
@@ -941,7 +941,7 @@ public class MusicPlayerScreen extends Screen {
         int right = this.rightX + this.rightWidth - 8;
         int y = this.panelBottom - 47;
         graphics.fill(x, y, right, y + 4, BAR_BACKGROUND);
-        graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHT);
+        graphics.fill(x, y, x + (int) Math.round((right - x) * progress.getAsDouble()), y + 4, PANEL_HIGHLIGHTED);
     }
 
     void renderPlaybackStrip(GuiGraphicsExtractor graphics, int middleX, int middleWidth, int bottomPanelTop) {
@@ -956,7 +956,7 @@ public class MusicPlayerScreen extends Screen {
         if (duration.isPresent() && duration.get() > 0L) {
             float progress = Math.min(1.0F, elapsed / (float) duration.get());
             int handleX = progressX + Math.round(progressWidth * progress);
-            graphics.fill(progressX, progressY, handleX, progressY + 3, PANEL_HIGHLIGHT);
+            graphics.fill(progressX, progressY, handleX, progressY + 3, PANEL_HIGHLIGHTED);
             graphics.fill(handleX - 1, progressY - 2, handleX + 2, progressY + 5, TEXT_TITLE);
             ThemeHelper.text(graphics, this.font, Component.literal(formatDuration(Math.max(0L, duration.get() - elapsed))), progressRight + 6, bottomPanelTop + 7, TEXT_DESCRIPTION);
         } else {
@@ -1719,7 +1719,7 @@ public class MusicPlayerScreen extends Screen {
         int y = welcomeScrollbarY();
         int thumb = welcomeScrollbarHeight();
         graphics.fill(this.rightX + this.rightWidth - 5, y, this.rightX + this.rightWidth - 2, y + thumb,
-                mouseX >= this.rightX + this.rightWidth - 7 ? PANEL_HIGHLIGHT : POPUP_OUTLINE);
+                mouseX >= this.rightX + this.rightWidth - 7 ? PANEL_HIGHLIGHTED : POPUP_OUTLINE);
     }
 
     private int welcomeScrollbarHeight() {
@@ -2608,10 +2608,10 @@ public class MusicPlayerScreen extends Screen {
             int width = this.getWidth();
             int height = this.getHeight();
             boolean highlighted = this.active && (this.isMouseOver(mouseX, mouseY) || this.isFocused());
-            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE;
+            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHTED : BUTTON_PASSIVE;
             graphics.fill(x, y, x + width, y + height, background);
             int filledWidth = Math.round((width - 4) * (float) this.value);
-            graphics.fill(x, y, x + filledWidth + 2, y + height, PANEL_HIGHLIGHT);
+            graphics.fill(x, y, x + filledWidth + 2, y + height, PANEL_HIGHLIGHTED);
             int handleX = x + Math.round((width - 4) * (float) this.value);
             graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
             int textColor = this.active ? TEXT_PRIMARY : TEXT_DISABLED;
@@ -2718,10 +2718,10 @@ public class MusicPlayerScreen extends Screen {
             boolean hovered = this.active && mouseX >= this.getX() && mouseY >= this.getY()
                     && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight();
             if (!this.active || hovered) {
-                int background = !this.active ? BUTTON_DISABLED : BUTTON_HIGHLIGHT;
+                int background = !this.active ? BUTTON_DISABLED : BUTTON_HIGHLIGHTED;
                 graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             }
-            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHT : PANEL_OUTLINE);
+            graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + 1, hovered ? PANEL_HIGHLIGHTED : PANEL_OUTLINE);
 
             SourceInfo source = this.screen.currentSource();
             int iconSize = Math.min(32, this.getHeight() - 8);
@@ -2927,7 +2927,7 @@ public class MusicPlayerScreen extends Screen {
                         this.getContentYMiddle() - this.minecraft.font.lineHeight / 2, TEXT_HEADER_SECONDARY);
                 return;
             }
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             boolean unlocked = MusicDiscHelper.isSoundUnlocked(this.minecraft, this.song);
             int numberX = this.getContentX() + TRACK_NUMBER_OFFSET;
             int textX = this.getContentX() + TRACK_TEXT_OFFSET;
@@ -3062,7 +3062,7 @@ public class MusicPlayerScreen extends Screen {
             graphics.fill(x, top, x + 4, bottom, BAR_BACKGROUND);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
-            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
+            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHTED : SCROLLBAR_THUMB;
             graphics.fill(x, thumbTop, x + 4, thumbBottom, color);
         }
     }
@@ -3205,7 +3205,7 @@ public class MusicPlayerScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             boolean dragging = this.screen.isDraggingQueue(this.index);
-            int rowColor = dragging || hovered ? BUTTON_HIGHLIGHT : 0;
+            int rowColor = dragging || hovered ? BUTTON_HIGHLIGHTED : 0;
             if (rowColor != 0) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), rowColor);
             if (dragging) {
                 int left = this.getContentX();
@@ -3280,7 +3280,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int iconSize = 22;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.item.icon()), this.getContentX() + 2, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             this.screen.drawTrackMarquee(graphics, this.item.name(), this.getContentX() + iconSize + 6,
@@ -3342,7 +3342,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int iconSize = 30;
             int iconY = this.getContentYMiddle() - iconSize / 2;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.item.icon()), this.getContentX() + 3, iconY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
@@ -3422,7 +3422,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             ThemeHelper.text(graphics, this.screen.font, Component.literal("\u25B8 ").append(eventFolderLabel(this.namespace)), this.getContentX() + 4, this.getContentYMiddle() - this.screen.font.lineHeight / 2, TEXT_TITLE);
             Component suffix = Component.translatable(this.count == 1 ? "screen.music_and_melody.event_count.single" : "screen.music_and_melody.event_count.multiple", this.count);
             int x = this.getContentRight() - this.screen.font.width(suffix) - 3;
@@ -3477,7 +3477,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int iconSize = 28;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, this.source.icon()), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 8;
@@ -3544,7 +3544,7 @@ public class MusicPlayerScreen extends Screen {
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             boolean selected = this.theme.theme.equals(this.screen.selectedThemeId);
             if (hovered || selected) {
-                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             }
             int iconSize = 32;
             int iconY = this.getContentYMiddle() - iconSize / 2;
@@ -3623,7 +3623,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int color = this.addRepository ? TEXT_HEADER_SECONDARY : TEXT_TITLE;
             Component text = this.addRepository ? this.label : Component.literal("\u25B8 ").append(this.label);
             int textY = this.getContentYMiddle() - this.screen.font.lineHeight / 2;
@@ -3690,7 +3690,7 @@ public class MusicPlayerScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int iconSize = 30;
             graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, RemoteIconManager.icon(this.pack)), this.getContentX() + 3, this.getContentYMiddle() - iconSize / 2, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             int textX = this.getContentX() + iconSize + 9;

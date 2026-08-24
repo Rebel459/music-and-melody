@@ -13,7 +13,6 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.Comparator;
-import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
@@ -165,7 +164,7 @@ final class ReplacePlaylistScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(getContentX(), getContentY(), getContentRight(), getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(getContentX(), getContentY(), getContentRight(), getContentBottom(), BUTTON_HIGHLIGHTED);
             text(graphics, font, this.playlist.name, getContentX() + 4, getContentYMiddle() - font.lineHeight / 2, TEXT_TITLE);
         }
 

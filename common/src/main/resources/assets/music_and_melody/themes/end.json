@@ -9,13 +9,13 @@
   "panels": {
     "panel_background": "#5AE3F5AF",
     "panel_outline": "#FF474F40",
-    "panel_highlight": "#FFBC9BD5",
+    "panel_highlighted": "#FFBC9BD5",
     "popup_panel_background": "#FF869C70",
     "popup_outline": "#CF717C5D"
   },
   "elements": {
     "button_background": "#500F2D0F",
-    "button_highlight": "#78143214",
+    "button_highlighted": "#78143214",
     "button_disabled": "#28143C14",
     "bar_background": "#64142814",
     "bar_thumb": "#FF233223"
@@ -24,7 +24,7 @@
     "selected": "#FFBC9BD5",
     "title": "#FFFAFFE6",
     "primary": "#FFDFD7B4",
-    "primary_highlight": "#FFDFD7B4",
+    "primary_highlighted": "#FFDFD7B4",
     "description": "#FFA09B78",
     "header_secondary": "#FF89B281",
     "disabled": "#FF828269"

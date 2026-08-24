@@ -113,7 +113,7 @@ public class IconButton extends Button {
             }
         } else if (highlighted) {
             graphics.fill(this.getX(), this.getY(), this.getX() + width, this.getY() + height,
-                    ARGB.multiplyAlpha(ThemeHelper.BUTTON_HIGHLIGHT, this.getAlpha()));
+                    ARGB.multiplyAlpha(ThemeHelper.BUTTON_HIGHLIGHTED, this.getAlpha()));
         }
         renderButtonIcon(graphics, this.icon, this.getX(), this.getY(), width, height, this.getAlpha());
         if (this.tooltipMessage != null

@@ -876,7 +876,7 @@ public class EventScreen extends Screen {
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
             graphics.fill(x, thumbTop, x + 3, thumbBottom,
-                    mouseX >= x - 2 && mouseX <= x + 5 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB);
+                    mouseX >= x - 2 && mouseX <= x + 5 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHTED : SCROLLBAR_THUMB);
         }
     }
 
@@ -941,7 +941,7 @@ public class EventScreen extends Screen {
             graphics.fill(x, top, x + 4, bottom, BAR_BACKGROUND);
             int thumbTop = Math.max(top, this.scrollBarY());
             int thumbBottom = Math.min(bottom, thumbTop + this.scrollerHeight());
-            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
+            int color = mouseX >= x - 2 && mouseX <= x + 6 && mouseY >= thumbTop && mouseY <= thumbBottom ? PANEL_HIGHLIGHTED : SCROLLBAR_THUMB;
             graphics.fill(x, thumbTop, x + 4, thumbBottom, color);
         }
 
@@ -979,9 +979,9 @@ public class EventScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (this.index == this.screen.selectedIndex) {
-                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             } else if (hovered) {
-                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+                graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             }
             int color = this.index == this.screen.selectedIndex ? TEXT_SELECTED : this.row.source().isEnabled() ? TEXT_PRIMARY : TEXT_DISABLED;
             Event.Record.Entry entry = this.row.entry();

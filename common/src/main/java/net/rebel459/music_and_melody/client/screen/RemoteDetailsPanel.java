@@ -88,7 +88,7 @@ final class RemoteDetailsPanel {
             int right = rightX + rightWidth - 8;
             int progressY = panelBottom - 47;
             graphics.fill(x, progressY, right, progressY + 4, BAR_BACKGROUND);
-            graphics.fill(x, progressY, x + (int) Math.round((right - x) * progress.getAsDouble()), progressY + 4, PANEL_HIGHLIGHT);
+            graphics.fill(x, progressY, x + (int) Math.round((right - x) * progress.getAsDouble()), progressY + 4, PANEL_HIGHLIGHTED);
         }
         return maxScroll;
     }

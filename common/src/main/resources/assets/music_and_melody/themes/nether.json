@@ -9,13 +9,13 @@
   "panels": {
     "panel_background": "#507D1E2D",
     "panel_outline": "#FF370F14",
-    "panel_highlight": "#FFFF824B",
+    "panel_highlighted": "#FFFF824B",
     "popup_panel_background": "#FF4B141E",
     "popup_outline": "#FF280C12"
   },
   "elements": {
     "button_background": "#4BC882C8",
-    "button_highlight": "#7DC864C8",
+    "button_highlighted": "#7DC864C8",
     "button_disabled": "#28C882C8",
     "bar_background": "#82825082",
     "bar_thumb": "#FFC878C8"

@@ -312,7 +312,7 @@ final class AlbumEditorScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             boolean removing = this.existing != null ? removedTracks.contains(this.existing) : removedAddedTracks.contains(this.added);
-            if (hovered || removing) graphics.fill(getContentX(), getContentY(), getContentRight(), getContentBottom(), removing ? BUTTON_DISABLED : BUTTON_HIGHLIGHT);
+            if (hovered || removing) graphics.fill(getContentX(), getContentY(), getContentRight(), getContentBottom(), removing ? BUTTON_DISABLED : BUTTON_HIGHLIGHTED);
             String prefix = removing ? "\u00D7 " : "\u2022 ";
             int colour = removing ? TEXT_DISABLED : TEXT_PRIMARY;
             text(graphics, font, Component.literal(prefix + label()), getContentX() + 3, getContentYMiddle() - font.lineHeight / 2, colour);

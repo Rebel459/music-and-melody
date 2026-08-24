@@ -10,14 +10,14 @@
     "background": "#C9070A10",
     "panel_background": "#E5151B28",
     "panel_outline": "#FF3B4963",
-    "panel_highlight": "#FF78A6FF",
+    "panel_highlighted": "#FF78A6FF",
     "popup_panel_background": "#FF151C2A",
     "popup_outline": "#FF3B4963",
     "popup_overlay": "#5C000000"
   },
   "elements": {
     "button_background": "#66303A4D",
-    "button_highlight": "#CC365985",
+    "button_highlighted": "#CC365985",
     "button_disabled": "#30303A4D",
     "outline": "#FF3B4963",
     "bar_background": "#FF334057",

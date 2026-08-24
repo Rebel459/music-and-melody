@@ -277,7 +277,7 @@ final class RepositoryScreen extends Screen {
 
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHT);
+            if (hovered) graphics.fill(this.getContentX(), this.getContentY(), this.getContentRight(), this.getContentBottom(), BUTTON_HIGHLIGHTED);
             int textWidth = Math.max(1, this.getContentWidth() - IconButton.SIZE - 10);
             String shown = tail(this.minecraft, this.repository, textWidth);
             ThemeHelper.text(graphics, this.minecraft.font, Component.literal(shown), this.getContentX() + 3,

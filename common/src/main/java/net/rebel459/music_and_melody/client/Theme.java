@@ -45,11 +45,11 @@ public class Theme {
         return this.theme != null && "config".equals(this.theme.getNamespace());
     }
 
-    public record Panels(String background, String panelBackground, String panelOutline, String panelHighlight, String popupPanelBackground, String popupOutline, String popupOverlay) {}
+    public record Panels(String background, String panelBackground, String panelOutline, String panelHighlighted, String popupPanelBackground, String popupOutline, String popupOverlay) {}
 
-    public record Elements(String buttonBackground, String buttonHighlight, String buttonDisabled, String outline, String barBackground, String barThumb, boolean buttonTextures) {}
+    public record Elements(String buttonBackground, String buttonHighlighted, String buttonDisabled, String outline, String barBackground, String barThumb, boolean buttonTextures) {}
 
-    public record Text(String selected, String title, String primary, String primaryHighlight, String description, String header, String headerSecondary, String favourite, String example, String disabled, String warning, boolean shadow) {}
+    public record Text(String selected, String title, String primary, String primaryHighlighted, String description, String header, String headerSecondary, String favourite, String example, String disabled, String warning, boolean shadow) {}
 
     public record Record(Identifier id, Optional<Component> name, Optional<Component> description, Optional<String> icon, Optional<String> parent, Optional<RawPanels> panels, Optional<RawElements> elements, Optional<RawText> text) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -69,22 +69,22 @@ public class Theme {
         }
     }
 
-    public record RawPanels(Optional<String> background, Optional<String> panelBackground, Optional<String> panelOutline, Optional<String> panelHighlight, Optional<String> popupPanelBackground, Optional<String> popupOutline, Optional<String> popupOverlay) {
+    public record RawPanels(Optional<String> background, Optional<String> panelBackground, Optional<String> panelOutline, Optional<String> panelHighlighted, Optional<String> popupPanelBackground, Optional<String> popupOutline, Optional<String> popupOverlay) {
         public static final Codec<RawPanels> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("background").forGetter(RawPanels::background),
                 Codec.STRING.optionalFieldOf("panel_background").forGetter(RawPanels::panelBackground),
                 Codec.STRING.optionalFieldOf("panel_outline").forGetter(RawPanels::panelOutline),
-                Codec.STRING.optionalFieldOf("panel_highlight").forGetter(RawPanels::panelHighlight),
+                Codec.STRING.optionalFieldOf("panel_highlighted").forGetter(RawPanels::panelHighlighted),
                 Codec.STRING.optionalFieldOf("popup_panel_background").forGetter(RawPanels::popupPanelBackground),
                 Codec.STRING.optionalFieldOf("popup_outline").forGetter(RawPanels::popupOutline),
                 Codec.STRING.optionalFieldOf("popup_overlay").forGetter(RawPanels::popupOverlay)
         ).apply(instance, RawPanels::new));
     }
 
-    public record RawElements(Optional<String> buttonBackground, Optional<String> buttonHighlight, Optional<String> buttonDisabled, Optional<String> outline, Optional<String> barBackground, Optional<String> barThumb, Optional<Boolean> buttonTextures) {
+    public record RawElements(Optional<String> buttonBackground, Optional<String> buttonHighlighted, Optional<String> buttonDisabled, Optional<String> outline, Optional<String> barBackground, Optional<String> barThumb, Optional<Boolean> buttonTextures) {
         public static final Codec<RawElements> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("button_background").forGetter(RawElements::buttonBackground),
-                Codec.STRING.optionalFieldOf("button_highlight").forGetter(RawElements::buttonHighlight),
+                Codec.STRING.optionalFieldOf("button_highlighted").forGetter(RawElements::buttonHighlighted),
                 Codec.STRING.optionalFieldOf("button_disabled").forGetter(RawElements::buttonDisabled),
                 Codec.STRING.optionalFieldOf("outline").forGetter(RawElements::outline),
                 Codec.STRING.optionalFieldOf("bar_background").forGetter(RawElements::barBackground),
@@ -93,12 +93,12 @@ public class Theme {
         ).apply(instance, RawElements::new));
     }
 
-    public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary, Optional<String> primaryHighlight, Optional<String> description, Optional<String> header, Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example, Optional<String> disabled, Optional<String> warning, Optional<Boolean> shadow) {
+    public record RawText(Optional<String> selected, Optional<String> title, Optional<String> primary, Optional<String> primaryHighlighted, Optional<String> description, Optional<String> header, Optional<String> headerSecondary, Optional<String> favourite, Optional<String> example, Optional<String> disabled, Optional<String> warning, Optional<Boolean> shadow) {
         public static final Codec<RawText> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("selected").forGetter(RawText::selected),
                 Codec.STRING.optionalFieldOf("title").forGetter(RawText::title),
                 Codec.STRING.optionalFieldOf("primary").forGetter(RawText::primary),
-                Codec.STRING.optionalFieldOf("primary_highlight").forGetter(RawText::primaryHighlight),
+                Codec.STRING.optionalFieldOf("primary_highlighted").forGetter(RawText::primaryHighlighted),
                 Codec.STRING.optionalFieldOf("description").forGetter(RawText::description),
                 Codec.STRING.optionalFieldOf("header").forGetter(RawText::header),
                 Codec.STRING.optionalFieldOf("header_secondary").forGetter(RawText::headerSecondary),

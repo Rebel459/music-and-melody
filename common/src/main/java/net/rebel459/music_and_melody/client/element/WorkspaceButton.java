@@ -40,10 +40,10 @@ public class WorkspaceButton extends Button {
             }
         } else {
             int background = !this.active ? ThemeHelper.BUTTON_DISABLED
-                    : highlighted ? ThemeHelper.BUTTON_HIGHLIGHT : ThemeHelper.BUTTON_PASSIVE;
+                    : highlighted ? ThemeHelper.BUTTON_HIGHLIGHTED : ThemeHelper.BUTTON_PASSIVE;
             graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), background);
             if (this.selected) {
-                graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ThemeHelper.PANEL_HIGHLIGHT);
+                graphics.fill(this.getX(), this.getY(), this.getX() + 2, this.getY() + this.getHeight(), ThemeHelper.PANEL_HIGHLIGHTED);
             }
         }
         int textColor = textColor(highlighted);
@@ -53,6 +53,6 @@ public class WorkspaceButton extends Button {
 
     protected int textColor(boolean highlighted) {
         if (!this.active) return ThemeHelper.TEXT_DISABLED;
-        return highlighted ? ThemeHelper.TEXT_PRIMARY_HIGHLIGHT : ThemeHelper.TEXT_PRIMARY;
+        return highlighted ? ThemeHelper.TEXT_PRIMARY_HIGHLIGHTED : ThemeHelper.TEXT_PRIMARY;
     }
 }
