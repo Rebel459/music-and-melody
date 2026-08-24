@@ -19,7 +19,7 @@ public class MaMSounds {
 	public static Holder<SoundEvent> EMPTY = SOUNDS.registerForHolder("music.empty");
 
 	public static void init() {
-		if (!UnifiedPlatform.isModLoaded("vanillabackport")) {
+		if (!UnifiedPlatform.isModLoaded("drops_backport")) {
 			UnifiedRegistries.SoundEvents.create("minecraft").registerForHolder("music_disc.bounce");
 		}
 	}
