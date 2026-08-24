@@ -55,7 +55,7 @@ public class EventHelper {
         return false;
     }
 
-    public static Music processEventMusic() {
+    public static Music processEventMusic(Music situationalMusic) {
         if (!isEnabled()) {
             stopDisabledEventActivity();
             return null;
@@ -96,8 +96,9 @@ public class EventHelper {
                 storedEventInactive = false;
             }
 
-            int currentPriority = lastCategory != null ? getPriority(lastPriority) : vanillaMusicPriority(activeMusic);
-            boolean higherPriority = getPriority(event.priority) > currentPriority;
+            int eventPriority = getPriority(event.priority);
+            int currentPriority = lastCategory != null ? getPriority(lastPriority) : vanillaMusicPriority(activeMusic, situationalMusic);
+            boolean higherPriority = eventPriority > currentPriority;
             if (higherPriority) {
                 cooldownEmptyMusic = false;
                 if (activeMusic) {
@@ -110,6 +111,14 @@ public class EventHelper {
 
             if (storedEventStillApplicable) {
                 cooldownEmptyMusic = false;
+                return storedEventMusicOrBlocker();
+            }
+
+            if (eventPriority < currentPriority) {
+                musicBreak = 0;
+                blockingForEventMusic = false;
+                cooldownEmptyMusic = false;
+                stopEmptyMusic();
                 return storedEventMusicOrBlocker();
             }
 
@@ -362,20 +371,24 @@ public class EventHelper {
         return priority.ordinal() * 2;
     }
 
-    private static int vanillaMusicPriority(boolean activeMusic) {
-        if (!activeMusic) return getPriority(Event.PriorityType.LOW);
-
+    private static int vanillaMusicPriority(boolean activeMusic, Music situationalMusic) {
         ResourceLocation gameMusic = SoundEvents.MUSIC_GAME.value().getLocation();
         ResourceLocation creativeMusic = SoundEvents.MUSIC_CREATIVE.value().getLocation();
-        SoundManager manager = Minecraft.getInstance().getSoundManager();
-        Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
-        for (SoundInstance instance : instances) {
-            if (manager.isActive(instance)) {
-                if (gameMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
-                if (creativeMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.MEDIUM) - 1;
+        if (activeMusic) {
+            SoundManager manager = Minecraft.getInstance().getSoundManager();
+            Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
+            for (SoundInstance instance : instances) {
+                if (manager.isActive(instance)) {
+                    if (gameMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
+                    if (creativeMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.MEDIUM) - 1;
+                }
             }
+            return getPriority(Event.PriorityType.LOW) - 1;
         }
 
+        ResourceLocation situationalMusicId = situationalMusic.getEvent().value().getLocation();
+        if (gameMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.VERY_LOW) - 1;
+        if (creativeMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.MEDIUM) - 1;
         return getPriority(Event.PriorityType.LOW) - 1;
     }
 
@@ -537,71 +550,101 @@ public class EventHelper {
     }
 
     private static boolean shouldBeActive(List<Event.Condition> conditions, boolean rollRandomChance) {
-        boolean shouldBeActive = true;
+        return evaluateConditions(conditions, rollRandomChance) == ConditionResult.MATCH;
+    }
+
+    private static ConditionResult evaluateConditions(List<Event.Condition> conditions, boolean rollRandomChance) {
+        ConditionResult result = ConditionResult.MATCH;
+        for (Event.Condition condition : conditions) {
+            ConditionResult conditionResult = evaluateCondition(condition, rollRandomChance);
+            if (conditionResult == ConditionResult.NO_MATCH) return ConditionResult.NO_MATCH;
+            if (conditionResult == ConditionResult.UNAVAILABLE) result = ConditionResult.UNAVAILABLE;
+        }
+        return result;
+    }
+
+    private static ConditionResult evaluateAny(List<Event.Condition> conditions, boolean rollRandomChance) {
+        ConditionResult result = ConditionResult.NO_MATCH;
+        for (Event.Condition condition : conditions) {
+            ConditionResult conditionResult = evaluateCondition(condition, rollRandomChance);
+            if (conditionResult == ConditionResult.MATCH) return ConditionResult.MATCH;
+            if (conditionResult == ConditionResult.UNAVAILABLE) result = ConditionResult.UNAVAILABLE;
+        }
+        return result;
+    }
+
+    private static ConditionResult evaluateCondition(Event.Condition condition, boolean rollRandomChance) {
         Minecraft client = Minecraft.getInstance();
         Player player = client.player;
         Level level = client.level;
-        for (Event.Condition condition : conditions) {
-            switch(condition.type()) {
-                case ALL_OF -> shouldBeActive = shouldBeActive && shouldBeActive(condition.conditions(), rollRandomChance);
-                case ANY_OF -> shouldBeActive = shouldBeActive && condition.conditions().stream().anyMatch(nested -> shouldBeActive(List.of(nested), rollRandomChance));
-                case NOT -> shouldBeActive = shouldBeActive && !shouldBeActive(condition.conditions(), rollRandomChance);
-                case BIOME -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(condition.idValue().get());
-                case BIOME_TAG -> shouldBeActive = shouldBeActive && player != null && level != null && level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get()));
-                case DIMENSION -> shouldBeActive = shouldBeActive && level != null && level.dimension().location().equals(condition.idValue().get());
-                case STRUCTURE -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get());
-                case STRUCTURE_TAG -> shouldBeActive = shouldBeActive && StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get());
-                case TIME -> {
-                    shouldBeActive = shouldBeActive && level != null;
-                    if (level != null) {
-                        long time = Math.floorMod(level.getDayTime(), 24000L);
-                        switch (condition.timeValue().get()) {
-                            case DAY -> shouldBeActive = shouldBeActive && time >= 0 && time < 12000;
-                            case SUNSET -> shouldBeActive = shouldBeActive && time >= 12000 && time < 13000;
-                            case NIGHT -> shouldBeActive = shouldBeActive && time >= 13000 && time < 23000;
-                            case SUNRISE -> shouldBeActive = shouldBeActive && time >= 23000 && time < 24000;
-                        }
-                    }
-                }
-                case WEATHER -> {
-                    shouldBeActive = shouldBeActive && level != null;
-                    if (level != null) {
-                        switch (condition.weatherValue().get()) {
-                            case CLEAR -> shouldBeActive = shouldBeActive && !level.isRaining();
-                            case RAIN -> shouldBeActive = shouldBeActive && level.isRaining();
-                            case THUNDER -> shouldBeActive = shouldBeActive && level.isThundering();
-                        }
-                    }
-                }
-                case GAME_MODE -> {
-                    shouldBeActive = shouldBeActive && client.gameMode != null;
-                    if (client.gameMode != null) {
-                        GameType gameType = client.gameMode.getPlayerMode();
-                        switch (condition.gameModeValue().get()) {
-                            case SURVIVAL -> shouldBeActive = shouldBeActive && gameType == GameType.SURVIVAL;
-                            case CREATIVE -> shouldBeActive = shouldBeActive && gameType == GameType.CREATIVE;
-                            case ADVENTURE -> shouldBeActive = shouldBeActive && gameType == GameType.ADVENTURE;
-                            case SPECTATOR -> shouldBeActive = shouldBeActive && gameType == GameType.SPECTATOR;
-                        };
-                    }
-                }
-                case SPECIAL -> {
-                    switch (condition.eventValue().get()) {
-                        case MENU -> shouldBeActive = shouldBeActive && client.level == null && !(client.screen instanceof WinScreen);
-                        case CREDITS -> shouldBeActive = shouldBeActive && client.screen instanceof WinScreen;
-                        case END_PORTAL -> shouldBeActive = shouldBeActive && EventHelper.isEndPortalFilled();
-                        case UNDER_WATER -> shouldBeActive = shouldBeActive && player != null && player.isUnderWater();
-                    }
-                }
-                case BELOW_Y -> shouldBeActive = shouldBeActive && player != null && player.blockPosition().getY() < condition.intValue().get();
-                case BELOW_VERSION -> shouldBeActive = shouldBeActive && VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0;
-                case BOSSBAR -> shouldBeActive = shouldBeActive && Minecraft.getInstance().gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString()));
-                case MOD_LOADED -> shouldBeActive = shouldBeActive && MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get());
-                case ALBUM_LOADED -> shouldBeActive = shouldBeActive && Album.LOADED_ALBUMS.contains(condition.idValue().get());
-                case RANDOM_CHANCE -> shouldBeActive = shouldBeActive && (!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
-            }
+        return switch(condition.type()) {
+            case ALL_OF -> evaluateConditions(condition.conditions(), rollRandomChance);
+            case ANY_OF -> evaluateAny(condition.conditions(), rollRandomChance);
+            case NOT -> evaluateConditions(condition.conditions(), rollRandomChance).negate();
+            case BIOME -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(condition.idValue().get()));
+            case BIOME_TAG -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get())));
+            case DIMENSION -> result(level != null, () -> level.dimension().location().equals(condition.idValue().get()));
+            case STRUCTURE -> result(level != null, () -> StructureMusicHandler.getClientStructures().structures().contains(condition.idValue().get()));
+            case STRUCTURE_TAG -> result(level != null, () -> StructureMusicHandler.getClientStructures().tags().contains(condition.idValue().get()));
+            case TIME -> result(level != null, () -> {
+                long time = Math.floorMod(level.getDayTime(), 24000L);
+                return switch (condition.timeValue().get()) {
+                    case DAY -> time >= 0 && time < 12000;
+                    case SUNSET -> time >= 12000 && time < 13000;
+                    case NIGHT -> time >= 13000 && time < 23000;
+                    case SUNRISE -> time >= 23000 && time < 24000;
+                };
+            });
+            case WEATHER -> result(level != null, () -> switch (condition.weatherValue().get()) {
+                case CLEAR -> !level.isRaining();
+                case RAIN -> level.isRaining();
+                case THUNDER -> level.isThundering();
+            });
+            case GAME_MODE -> result(client.gameMode != null, () -> {
+                GameType gameType = client.gameMode.getPlayerMode();
+                return switch (condition.gameModeValue().get()) {
+                    case SURVIVAL -> gameType == GameType.SURVIVAL;
+                    case CREATIVE -> gameType == GameType.CREATIVE;
+                    case ADVENTURE -> gameType == GameType.ADVENTURE;
+                    case SPECTATOR -> gameType == GameType.SPECTATOR;
+                };
+            });
+            case SPECIAL -> switch (condition.eventValue().get()) {
+                case MENU -> result(client.level == null && !(client.screen instanceof WinScreen));
+                case CREDITS -> result(client.screen instanceof WinScreen);
+                case END_PORTAL -> result(level != null, EventHelper::isEndPortalFilled);
+                case UNDER_WATER -> result(player != null, () -> player.isUnderWater());
+            };
+            case BELOW_Y -> result(player != null, () -> player.blockPosition().getY() < condition.intValue().get());
+            case BELOW_VERSION -> result(VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0);
+            case BOSSBAR -> result(level != null, () -> client.gui.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString())));
+            case MOD_LOADED -> result(MaMPlatform.PLATFORM.isModLoaded(condition.stringValue().get()));
+            case ALBUM_LOADED -> result(Album.LOADED_ALBUMS.contains(condition.idValue().get()));
+            case RANDOM_CHANCE -> result(!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
+        };
+    }
+
+    private static ConditionResult result(boolean matches) {
+        return matches ? ConditionResult.MATCH : ConditionResult.NO_MATCH;
+    }
+
+    private static ConditionResult result(boolean available, java.util.function.BooleanSupplier matches) {
+        if (!available) return ConditionResult.UNAVAILABLE;
+        return result(matches.getAsBoolean());
+    }
+
+    private enum ConditionResult {
+        MATCH,
+        NO_MATCH,
+        UNAVAILABLE;
+
+        private ConditionResult negate() {
+            return switch (this) {
+                case MATCH -> NO_MATCH;
+                case NO_MATCH -> MATCH;
+                case UNAVAILABLE -> UNAVAILABLE;
+            };
         }
-        return shouldBeActive;
     }
 
     private record QueuedEvent(Event event, boolean replaceCurrentMusic) {}
