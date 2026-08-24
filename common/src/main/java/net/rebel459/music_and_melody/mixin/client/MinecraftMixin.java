@@ -64,12 +64,12 @@ public abstract class MinecraftMixin {
         original.call(soundManager);
     }
 
-    @Inject(method = "getSituationalMusic", at = @At(value = "HEAD"), cancellable = true)
+    @Inject(method = "getSituationalMusic", at = @At(value = "RETURN"), cancellable = true)
     private void playlistAndEventMusic(CallbackInfoReturnable<Music> cir) {
         EventHelper.stopOldEventMusic();
 
         if (!PlaylistHelper.isPlaying() || PlaylistHelper.isEventPlaying()) {
-            Music music = EventHelper.processEventMusic();
+            Music music = EventHelper.processEventMusic(cir.getReturnValue());
             if (music != null) {
                 cir.setReturnValue(music);
                 return;
