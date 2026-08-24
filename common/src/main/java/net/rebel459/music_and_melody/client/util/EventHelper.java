@@ -273,7 +273,7 @@ public class EventHelper {
         boolean playEvent = false;
         if (event.category == Event.CategoryType.ALBUM) {
             Optional<Album> album = Album.ALBUMS.stream().filter(entry -> entry.album.equals(event.music.getId())).findFirst();
-            playEvent = album.filter(value -> playRandomEventSong(client, eventAlbumSongs(value, client))).isPresent();
+            playEvent = album.filter(value -> playRandomEventSong(eventAlbumSongs(value, client))).isPresent();
         }
         if (event.category == Event.CategoryType.PLAYLIST) {
             Optional<Playlist> playlist = Playlist.PLAYLISTS.stream().filter(entry -> entry.playlist.equals(event.music.getId())).findFirst();
@@ -282,10 +282,11 @@ public class EventHelper {
                         .filter(EventHelper::isEventTrackEnabled)
                         .toList());
                 playlist.get().discs.stream()
+                        .filter(disc -> MusicDiscHelper.isDiscUnlocked(client, disc))
                         .map(disc -> MusicDiscHelper.discSoundId(client, disc))
                         .flatMap(Optional::stream)
                         .forEach(id -> songs.add(SafeIdentifier.convert(id)));
-                playEvent = playRandomEventSong(client, songs);
+                playEvent = playRandomEventSong(songs);
             }
         }
         if (event.category == Event.CategoryType.POOL) {
@@ -517,12 +518,9 @@ public class EventHelper {
         return musicBreak;
     }
 
-    private static boolean playRandomEventSong(Minecraft client, List<SafeIdentifier> songs) {
-        List<SafeIdentifier> playableSongs = songs.stream()
-                .filter(song -> MusicDiscHelper.isSoundUnlocked(client, song))
-                .toList();
-        if (playableSongs.isEmpty()) return false;
-        SafeIdentifier song = playableSongs.get(SoundInstance.createUnseededRandom().nextInt(playableSongs.size()));
+    private static boolean playRandomEventSong(List<SafeIdentifier> songs) {
+        if (songs.isEmpty()) return false;
+        SafeIdentifier song = songs.get(SoundInstance.createUnseededRandom().nextInt(songs.size()));
         return PlaylistHelper.playEvent(song, false);
     }
 
@@ -533,6 +531,7 @@ public class EventHelper {
                 .map(album::trackId)
                 .forEach(songs::add);
         album.discs.stream()
+                .filter(disc -> MusicDiscHelper.isDiscUnlocked(client, MusicDiscHelper.albumEntryId(album, disc)))
                 .map(disc -> MusicDiscHelper.discSoundId(client, album, disc))
                 .flatMap(Optional::stream)
                 .forEach(id -> songs.add(SafeIdentifier.convert(id)));
@@ -540,16 +539,7 @@ public class EventHelper {
     }
 
     private static boolean isEventTrackEnabled(SafeIdentifier track) {
-        boolean matchedAlbumTrack = false;
-        boolean enabled = false;
-        for (Album album : Album.ALBUMS) {
-            for (String song : album.tracks) {
-                if (!album.trackId(song).equals(track)) continue;
-                matchedAlbumTrack = true;
-                enabled = enabled || album.isTrackEnabled(song);
-            }
-        }
-        return !matchedAlbumTrack || enabled;
+        return Album.isSoundEnabled(track);
     }
 
     private static void processEvents(WeightedList.Builder<Event> validEvents, Set<Event> events) {
@@ -567,16 +557,17 @@ public class EventHelper {
             case ALBUM -> Album.ALBUMS.stream()
                     .filter(album -> album.album.equals(event.music.getId()))
                     .flatMap(album -> eventAlbumSongs(album, client).stream())
-                    .anyMatch(song -> MusicDiscHelper.isSoundUnlocked(client, song));
+                    .findAny().isPresent();
             case PLAYLIST -> Playlist.PLAYLISTS.stream()
                     .filter(playlist -> playlist.playlist.equals(event.music.getId()))
                     .anyMatch(playlist -> playlist.tracks.stream()
                             .filter(EventHelper::isEventTrackEnabled)
-                            .anyMatch(song -> MusicDiscHelper.isSoundUnlocked(client, song))
+                            .findAny().isPresent()
                             || playlist.discs.stream()
+                            .filter(disc -> MusicDiscHelper.isDiscUnlocked(client, disc))
                             .map(disc -> MusicDiscHelper.discSoundId(client, disc))
                             .flatMap(Optional::stream)
-                            .anyMatch(sound -> MusicDiscHelper.isSoundUnlocked(client, SafeIdentifier.convert(sound))));
+                            .findAny().isPresent());
             case TRACK -> isEventTrackEnabled(event.music);
             case POOL -> {
                 WeighedSoundEvents pool = client.getSoundManager().getSoundEvent(event.music.getId());

@@ -775,8 +775,8 @@ public final class RemoteContentManager {
 
         config.remote.downloads.removeIf(pack -> pack == record);
         String idString = key.id().toString();
-        config.albums.disabled_albums.remove(idString);
-        config.albums.favourites.remove(idString);
+        config.albums.disabled.remove(idString);
+        config.player.favourites.removeIf(entry -> entry != null && idString.equals(entry.id));
 
         if (!otherInstalledInNamespace) {
             String namespacePrefix = key.id().getNamespace() + ":";

@@ -11,7 +11,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.item.Item;
 import net.rebel459.music_and_melody.client.Album;
-import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 
 import java.util.Optional;
@@ -26,33 +25,6 @@ public final class MusicDiscHelper {
 
     public static Identifier albumEntryId(Album album, Album.StoredDisc disc) {
         return albumEntryId(album, disc.path());
-    }
-
-    public static Optional<Match> matchSound(Minecraft minecraft, SafeIdentifier soundId) {
-        for (Album album : Album.ALBUMS) {
-            for (Album.StoredDisc disc : album.discs) {
-                Identifier jukeboxSong = albumEntryId(album, disc);
-                Optional<Identifier> sound = discSoundId(minecraft, album, disc);
-                if (sound.isPresent() && sound.get().equals(soundId.getId())) {
-                    return Optional.of(new Match(album, disc.path(), jukeboxSong));
-                }
-            }
-        }
-        for (Playlist playlist : Playlist.PLAYLISTS) {
-            for (Identifier disc : playlist.discs) {
-                Optional<Identifier> sound = discSoundId(minecraft, disc);
-                if (sound.isPresent() && sound.get().equals(soundId.getId())) {
-                    return Optional.of(new Match(null, disc.toString(), disc));
-                }
-            }
-        }
-        return Optional.empty();
-    }
-
-    public static boolean isSoundUnlocked(Minecraft minecraft, SafeIdentifier soundId) {
-        return matchSound(minecraft, soundId)
-                .map(match -> isDiscUnlocked(minecraft, match.jukeboxSong()))
-                .orElse(true);
     }
 
     public static Component discName(Identifier jukeboxSong) {
@@ -117,6 +89,4 @@ public final class MusicDiscHelper {
                 Identifier.fromNamespaceAndPath(jukeboxSongId.getNamespace(), "music_disc." + path)
         };
     }
-
-    public record Match(Album album, String disc, Identifier jukeboxSong) {}
 }

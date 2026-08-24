@@ -24,7 +24,7 @@ public final class MusicAndMelodyClient {
     public static UnifiedClientRegistries.KeyMappings KEY_MAPPINGS = UnifiedClientRegistries.KeyMappings.create(MusicAndMelody.MOD_ID);
 
     public static final Supplier<KeyMapping> PLAYLIST_KEY = KEY_MAPPINGS.registerKeybind(
-            "playlist",
+            "music_player",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
             KeyMapping.Category.MISC

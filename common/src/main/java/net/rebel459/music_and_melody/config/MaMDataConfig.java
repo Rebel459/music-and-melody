@@ -3,7 +3,6 @@ package net.rebel459.music_and_melody.config;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
-import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
@@ -20,40 +19,49 @@ public class MaMDataConfig implements ConfigData {
 		}
 		return AutoConfig.getConfigHolder(MaMDataConfig.class).getConfig();
 	}
-	public Albums albums = new Albums();
 
-	public static class Albums {
-		public List<String> disabled_albums = new ArrayList<>();
-		public List<String> disabled_tracks = new ArrayList<>();
-		public List<String> favourites = new ArrayList<>();
-	}
+	public Player player = new Player();
 
-	public static class DownloadedPack {
-		public String id = "";
-		public List<String> tags = new ArrayList<>();
-		public String version = "";
-		public String sha256 = "";
-		public String file = "";
-	}
-
-	public Playlist playlist = new Playlist();
-
-	public static class Playlist {
+	public static class Player {
 		public boolean loop = false;
 		public boolean shuffle = false;
-		public QueueType queue_type = QueueType.NONE;
-		public String queue_id = "";
-		public String queue_name = "";
-		public List<String> queued_songs = new ArrayList<>();
-		public List<String> custom_playlist_songs = new ArrayList<>();
-		public List<String> favourites = new ArrayList<>();
-		public List<String> recent_favourites = new ArrayList<>();
+		public NowPlayingType now_playing_type = NowPlayingType.NONE;
+		public String now_playing_id = "";
+		public String now_playing_name = "";
+		public List<Entry> custom_playlist = new ArrayList<>();
+		public List<Entry> favourites = new ArrayList<>();
+		public List<Entry> recent_favourites = new ArrayList<>();
 	}
 
-	public enum QueueType {
+	public enum NowPlayingType {
 		NONE,
 		ALBUM,
 		PLAYLIST
+	}
+
+	public static class Entry {
+		public String id = "";
+		public String type = "";
+
+		public boolean isAlbum() {
+			return "album".equals(type);
+		}
+		public boolean isPlaylist() {
+			return "playlist".equals(type);
+		}
+		public boolean isTrack() {
+			return "track".equals(type);
+		}
+		public boolean isDisc() {
+			return "disc".equals(type);
+		}
+	}
+
+	public Albums albums = new Albums();
+
+	public static class Albums {
+		public List<String> disabled = new ArrayList<>();
+		public List<String> disabled_tracks = new ArrayList<>();
 	}
 
 	public Events events = new Events();
@@ -70,6 +78,14 @@ public class MaMDataConfig implements ConfigData {
 		public boolean official_provider = true;
 		public boolean community_provider = true;
 		public List<DownloadedPack> downloads = new ArrayList<>();
+	}
+
+	public static class DownloadedPack {
+		public String id = "";
+		public List<String> tags = new ArrayList<>();
+		public String version = "";
+		public String sha256 = "";
+		public String file = "";
 	}
 
 	public Cache cache = new Cache();

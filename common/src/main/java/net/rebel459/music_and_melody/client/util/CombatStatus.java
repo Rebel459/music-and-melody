@@ -28,6 +28,7 @@ public class CombatStatus {
     private static final Set<Integer> PVP_CONDITIONS = new HashSet<>();
 
     public static class PvE {
+
         public static void increaseFromAttack() {
             increase(2);
             pveScore = Math.max(10, pveScore);
@@ -57,13 +58,16 @@ public class CombatStatus {
     }
 
     public static class PvP {
+
         public static void increaseFromAttack() {
             increase(10);
             lastPlayerAttackTimestamp = 0;
         }
+
         public static void increaseOverTime(boolean fullHealth) {
             increase(fullHealth ? 1 : 2);
         }
+
         public static void increase(int amount) {
             pvpScore = Math.min(pvpScore + amount, 100);
             lastFightingPlayerTimestamp = 0;
@@ -72,6 +76,7 @@ public class CombatStatus {
         public static void decreaseOverTime(boolean fullHealth) {
             decrease(fullHealth ? 4 : 2);
         }
+
         public static void decrease(int amount) {
             pvpScore = Math.max(pvpScore - amount, 0);
         }
@@ -138,7 +143,7 @@ public class CombatStatus {
 
     private static void onSecond(LocalPlayer player) {
         boolean playerTrackedByMob;
-        if (ServerPresenceHandler.combatDetection) playerTrackedByMob = CombatMusicHandler.clientPlayerTrackedByMob;
+        if (ServerPresenceHandler.improvedPveDetection) playerTrackedByMob = CombatMusicHandler.clientPlayerTrackedByMob;
         else playerTrackedByMob = !player.level().getEntitiesOfClass(
                 Mob.class,
                 player.getBoundingBox().inflate(16),

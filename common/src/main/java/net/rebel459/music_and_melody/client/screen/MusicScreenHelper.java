@@ -75,8 +75,6 @@ final class MusicScreenHelper {
     }
 
     static Component playlistName(Minecraft minecraft, SafeIdentifier soundId) {
-        return MusicDiscHelper.matchSound(minecraft, soundId)
-                .map(match -> MusicDiscHelper.discName(match.jukeboxSong()))
-                .orElseGet(() -> trackName(soundId));
+        return trackName(soundId);
     }
 }

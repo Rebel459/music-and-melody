@@ -39,5 +39,6 @@ public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.
         }
 
         Playlist.reloadConfigPlaylists();
+        PlaylistHelper.refreshConfiguredQueue();
     }
 }

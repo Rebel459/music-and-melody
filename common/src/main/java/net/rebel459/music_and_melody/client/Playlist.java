@@ -9,14 +9,12 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.MusicAndMelody;
-import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
@@ -33,7 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class Playlist {
@@ -64,22 +61,11 @@ public class Playlist {
     }
 
     public boolean isFavourite() {
-        return MaMDataConfig.get().playlist.favourites.contains(this.playlist.toString());
+        return PlaylistHelper.isFavourite(this.playlist, MaMDataConfig.NowPlayingType.PLAYLIST);
     }
 
     public void setFavourite(boolean favourite) {
-        String id = this.playlist.toString();
-        MaMDataConfig config = MaMDataConfig.get();
-
-        if (favourite) {
-            if (!config.playlist.favourites.contains(id)) {
-                config.playlist.favourites.add(id);
-            }
-        } else {
-            config.playlist.favourites.remove(id);
-        }
-
-        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        PlaylistHelper.setFavourite(this.playlist, MaMDataConfig.NowPlayingType.PLAYLIST, favourite);
     }
 
     public boolean isCustom() {
@@ -90,8 +76,7 @@ public class Playlist {
         if (this.source == null) return false;
         try {
             if (Files.deleteIfExists(this.source)) {
-                MaMDataConfig.get().playlist.favourites.remove(this.playlist.toString());
-                AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+                PlaylistHelper.setFavourite(this.playlist, MaMDataConfig.NowPlayingType.PLAYLIST, false);
                 reloadConfigPlaylists();
                 return true;
             }
@@ -161,7 +146,7 @@ public class Playlist {
     }
 
     public static synchronized boolean saveCustomPlaylist(Minecraft minecraft, String playlistName, String iconPath, String pathOverride) {
-        List<SafeIdentifier> queuedSongs = PlaylistHelper.customPlaylistSongs();
+        List<MaMDataConfig.Entry> queuedSongs = PlaylistHelper.customPlaylistEntries();
         String trimmedName = playlistName.trim();
         if (queuedSongs.isEmpty() || trimmedName.isEmpty()) return false;
 
@@ -183,7 +168,7 @@ public class Playlist {
         nameObject.addProperty("text", trimmedName);
         root.add("name", nameObject);
         root.addProperty("icon", icon.toString());
-        root.add("entries", entries(groupTracks(minecraft, queuedSongs, false), groupTracks(minecraft, queuedSongs, true)));
+        root.add("entries", entries(groupEntries(queuedSongs, false), groupEntries(queuedSongs, true)));
 
         try {
             Files.createDirectories(path.getParent());
@@ -220,33 +205,14 @@ public class Playlist {
         }
     }
 
-    private static Map<String, List<String>> groupTracks(Minecraft minecraft, List<SafeIdentifier> queuedSongs, boolean discs) {
+    private static Map<String, List<String>> groupEntries(List<MaMDataConfig.Entry> queuedSongs, boolean discs) {
         Map<String, List<String>> grouped = new LinkedHashMap<>();
-        for (SafeIdentifier queuedSong : queuedSongs) {
-            Identifier id;
-            if (discs) {
-                id = jukeboxSongForSound(minecraft, queuedSong);
-                if (id == null) continue;
-            } else {
-                if (jukeboxSongForSound(minecraft, queuedSong) != null) continue;
-                grouped.computeIfAbsent(queuedSong.getNamespace(), namespace -> new ArrayList<>()).add(queuedSong.getPath());
-                continue;
-            }
-            grouped.computeIfAbsent(id.getNamespace(), namespace -> new ArrayList<>()).add(id.getPath());
+        for (MaMDataConfig.Entry entry : queuedSongs) {
+            if (entry == null || entry.isDisc() != discs || (!entry.isTrack() && !entry.isDisc())) continue;
+            SafeIdentifier queuedSong = SafeIdentifier.parse(entry.id);
+            grouped.computeIfAbsent(queuedSong.getNamespace(), namespace -> new ArrayList<>()).add(queuedSong.getPath());
         }
         return grouped;
-    }
-
-    private static Identifier jukeboxSongForSound(Minecraft minecraft, SafeIdentifier sound) {
-        var albumMatch = MusicDiscHelper.matchSound(minecraft, sound);
-        if (albumMatch.isPresent()) return albumMatch.get().jukeboxSong();
-        for (Playlist playlist : PLAYLISTS) {
-            for (Identifier disc : playlist.discs) {
-                Optional<Identifier> discSound = MusicDiscHelper.discSoundId(minecraft, disc);
-                if (discSound.isPresent() && discSound.get().equals(sound.getId())) return disc;
-            }
-        }
-        return null;
     }
 
     private static JsonArray entries(Map<String, List<String>> tracks, Map<String, List<String>> discs) {

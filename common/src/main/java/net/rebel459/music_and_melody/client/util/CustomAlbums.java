@@ -55,6 +55,7 @@ public final class CustomAlbums {
     private static final Map<Identifier, Metadata> METADATA = new LinkedHashMap<>();
     private static final Map<Identifier, List<String>> TRACK_FILES = new HashMap<>();
     private static final Map<Identifier, Identifier> DYNAMIC_ICONS = new HashMap<>();
+    private static boolean cacheLoaded;
 
     private CustomAlbums() {}
 
@@ -90,17 +91,17 @@ public final class CustomAlbums {
     }
 
     public static synchronized String displayName(SafeIdentifier id) {
-        reload();
+        ensureLoaded();
         return NAMES.get(id);
     }
 
     public static synchronized Optional<Path> file(SafeIdentifier id) {
-        reload();
+        ensureLoaded();
         return Optional.ofNullable(FILES.get(id));
     }
 
     public static synchronized List<String> tracksInFolder(SafeIdentifier folder) {
-        reload();
+        ensureLoaded();
         return tracksInFolderLoaded(folder);
     }
 
@@ -126,12 +127,12 @@ public final class CustomAlbums {
     }
 
     public static synchronized Optional<Metadata> metadata(Identifier id) {
-        reload();
+        ensureLoaded();
         return Optional.ofNullable(METADATA.get(id));
     }
 
     public static synchronized List<String> trackFiles(Identifier id) {
-        reload();
+        ensureLoaded();
         return List.copyOf(TRACK_FILES.getOrDefault(id, List.of()));
     }
 
@@ -183,9 +184,10 @@ public final class CustomAlbums {
             return false;
         }
         METADATA.remove(id);
+        cacheLoaded = false;
         MaMDataConfig data = MaMDataConfig.get();
-        data.albums.favourites.remove(id.toString());
-        data.albums.disabled_albums.remove(id.toString());
+        data.player.favourites.removeIf(entry -> entry != null && id.toString().equals(entry.id) && entry.isAlbum());
+        data.albums.disabled.remove(id.toString());
         data.albums.disabled_tracks.removeIf(track -> track.startsWith(id + "/"));
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         return true;
@@ -280,7 +282,12 @@ public final class CustomAlbums {
         }
     }
 
+    private static void ensureLoaded() {
+        if (!cacheLoaded) reload();
+    }
+
     private static void reload() {
+        cacheLoaded = true;
         FILES.clear();
         NAMES.clear();
         METADATA.clear();

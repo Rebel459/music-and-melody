@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.CustomAlbums;
+import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.*;
@@ -18,6 +19,7 @@ public class Album {
 
     public static Set<Album> ALBUMS = new HashSet<>();
     public static Set<Identifier> LOADED_ALBUMS = new HashSet<>();
+    private static Set<String> DISABLED_TRACK_IDS = Set.of();
 
     public Identifier album;
     public Component name;
@@ -37,7 +39,7 @@ public class Album {
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
         this.discs = discs;
         ALBUMS.add(this);
-        refreshLoadedAlbums();
+        refreshEnabledState();
     }
 
     public boolean isEnabled() {
@@ -46,22 +48,11 @@ public class Album {
     }
 
     public boolean isFavourite() {
-        return MaMDataConfig.get().albums.favourites.contains(this.album.toString());
+        return PlaylistHelper.isFavourite(this.album, MaMDataConfig.NowPlayingType.ALBUM);
     }
 
     public void setFavourite(boolean favourite) {
-        String id = this.album.toString();
-        MaMDataConfig config = MaMDataConfig.get();
-
-        if (favourite) {
-            if (!config.albums.favourites.contains(id)) {
-                config.albums.favourites.add(id);
-            }
-        } else {
-            config.albums.favourites.remove(id);
-        }
-
-        AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+        PlaylistHelper.setFavourite(this.album, MaMDataConfig.NowPlayingType.ALBUM, favourite);
     }
 
     public void setEnabled(boolean enabled) {
@@ -71,13 +62,13 @@ public class Album {
         if (enabled) {
             enableTrackIds(trackIds(), config);
         } else if (!this.tracks.isEmpty()) {
-            if (!config.albums.disabled_albums.contains(this.album.toString())) {
-                config.albums.disabled_albums.add(this.album.toString());
+            if (!config.albums.disabled.contains(this.album.toString())) {
+                config.albums.disabled.add(this.album.toString());
             }
             removeTrackEntriesCoveredByDisabledAlbums(config);
         }
 
-        refreshLoadedAlbums();
+        refreshEnabledState();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
@@ -86,8 +77,11 @@ public class Album {
     }
 
     public boolean isTrackEnabled(String song) {
-        String id = trackId(song).toString();
-        return !isTrackDisabled(id, MaMDataConfig.get());
+        return isSoundEnabled(trackId(song));
+    }
+
+    public static boolean isSoundEnabled(SafeIdentifier sound) {
+        return !DISABLED_TRACK_IDS.contains(sound.toString());
     }
 
     public void setTrackEnabled(String song, boolean enabled) {
@@ -102,7 +96,7 @@ public class Album {
             compactFullyDisabledAlbums(config);
         }
 
-        refreshLoadedAlbums();
+        refreshEnabledState();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
@@ -114,7 +108,7 @@ public class Album {
         if (config.albums.disabled_tracks.contains(id)) return true;
 
         for (Album album : ALBUMS) {
-            if (config.albums.disabled_albums.contains(album.album.toString()) && album.trackIds().contains(id)) {
+            if (config.albums.disabled.contains(album.album.toString()) && album.trackIds().contains(id)) {
                 return true;
             }
         }
@@ -125,12 +119,12 @@ public class Album {
     private static void enableTrackIds(Set<String> enabledIds, MaMDataConfig config) {
         for (Album album : ALBUMS) {
             String albumId = album.album.toString();
-            if (!config.albums.disabled_albums.contains(albumId)) continue;
+            if (!config.albums.disabled.contains(albumId)) continue;
 
             Set<String> albumTracks = album.trackIds();
             if (Collections.disjoint(albumTracks, enabledIds)) continue;
 
-            config.albums.disabled_albums.remove(albumId);
+            config.albums.disabled.remove(albumId);
             for (String id : albumTracks) {
                 if (!enabledIds.contains(id) && !config.albums.disabled_tracks.contains(id)) {
                     config.albums.disabled_tracks.add(id);
@@ -149,10 +143,10 @@ public class Album {
             for (Album album : ALBUMS) {
                 if (CustomAlbums.isConfigAlbum(album) || album.tracks.isEmpty()) continue;
                 String albumId = album.album.toString();
-                if (config.albums.disabled_albums.contains(albumId)) continue;
+                if (config.albums.disabled.contains(albumId)) continue;
                 if (!album.trackIds().stream().allMatch(id -> isTrackDisabled(id, config))) continue;
 
-                config.albums.disabled_albums.add(albumId);
+                config.albums.disabled.add(albumId);
                 changed = true;
             }
         } while (changed);
@@ -162,13 +156,21 @@ public class Album {
 
     private static void removeTrackEntriesCoveredByDisabledAlbums(MaMDataConfig config) {
         Set<String> coveredTracks = ALBUMS.stream()
-                .filter(album -> config.albums.disabled_albums.contains(album.album.toString()))
+                .filter(album -> config.albums.disabled.contains(album.album.toString()))
                 .flatMap(album -> album.trackIds().stream())
                 .collect(java.util.stream.Collectors.toSet());
         config.albums.disabled_tracks.removeIf(coveredTracks::contains);
     }
 
-    private static void refreshLoadedAlbums() {
+    public static void refreshEnabledState() {
+        MaMDataConfig config = MaMDataConfig.get();
+        Set<String> disabledTracks = new HashSet<>(config.albums.disabled_tracks);
+        ALBUMS.stream()
+                .filter(album -> config.albums.disabled.contains(album.album.toString()))
+                .flatMap(album -> album.trackIds().stream())
+                .forEach(disabledTracks::add);
+        DISABLED_TRACK_IDS = Set.copyOf(disabledTracks);
+
         LOADED_ALBUMS.clear();
         ALBUMS.stream()
                 .filter(Album::isEnabled)
