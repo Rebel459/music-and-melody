@@ -1,14 +1,14 @@
 {
-  "name": "Trial Chambers",
-  "description": "Trial Chambers structure-specific music",
+  "name": "Mansion",
+  "description": "Woodland Mansion structure-specific music",
   "entries": [
     {
       "category": "pool",
-      "music": "music_and_melody:music.structure.trial_chambers",
+      "music": "music_and_melody:music.structure.mansion",
       "conditions": [
         {
           "type": "structure",
-          "value": "trial_chambers"
+          "value": "mansion"
         }
       ],
       "priority": "medium",

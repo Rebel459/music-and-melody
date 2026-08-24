@@ -1,0 +1,25 @@
+{
+  "name": "Caves",
+  "description": "Unique music that plays whilst underground",
+  "entries": [
+    {
+      "category": "pool",
+      "music": "music_and_melody:music.sky",
+      "conditions": [
+        {
+          "type": "below_y",
+          "value": 48
+        },
+        {
+          "type": "not",
+          "value": [
+            {
+              "type": "biome_tag",
+              "value": "c:is_cave"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
