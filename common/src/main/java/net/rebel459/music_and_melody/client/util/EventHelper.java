@@ -31,6 +31,7 @@ import net.rebel459.unified.api.core.UnifiedInstance;
 import net.rebel459.unified.api.util.VanillaVersion;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 public class EventHelper {
 
@@ -528,15 +529,13 @@ public class EventHelper {
     private static List<SafeIdentifier> eventAlbumSongs(Album album, Minecraft client) {
         List<SafeIdentifier> songs = new ArrayList<>();
         album.tracks.stream()
-                .filter(song -> isEventAlbumTrackEnabled(album, song))
+                .filter(album::isTrackEnabled)
                 .map(album::trackId)
                 .forEach(songs::add);
-        if (album.isEnabled()) {
-            album.discs.stream()
-                    .map(disc -> MusicDiscHelper.discSoundId(client, album, disc))
-                    .flatMap(Optional::stream)
-                    .forEach(id -> songs.add(SafeIdentifier.convert(id)));
-        }
+        album.discs.stream()
+                .map(disc -> MusicDiscHelper.discSoundId(client, album, disc))
+                .flatMap(Optional::stream)
+                .forEach(id -> songs.add(SafeIdentifier.convert(id)));
         return songs;
     }
 
@@ -547,21 +546,62 @@ public class EventHelper {
             for (String song : album.tracks) {
                 if (!album.trackId(song).equals(track)) continue;
                 matchedAlbumTrack = true;
-                enabled = enabled || isEventAlbumTrackEnabled(album, song);
+                enabled = enabled || album.isTrackEnabled(song);
             }
         }
         return !matchedAlbumTrack || enabled;
     }
 
-    private static boolean isEventAlbumTrackEnabled(Album album, String song) {
-        return album.isTrackForcedEnabled(song) || album.isEnabled() && album.isTrackEnabled(song);
-    }
-
     private static void processEvents(WeightedList.Builder<Event> validEvents, Set<Event> events) {
         for (Event event : events) {
+            if (!hasPlayableMusic(event)) continue;
             boolean shouldBeActive = EventHelper.shouldBeActive(event.conditions);
             if (shouldBeActive) validEvents.add(event, event.weight);
         }
+    }
+
+    private static boolean hasPlayableMusic(Event event) {
+        Minecraft client = Minecraft.getInstance();
+
+        return switch (event.category) {
+            case ALBUM -> Album.ALBUMS.stream()
+                    .filter(album -> album.album.equals(event.music.getId()))
+                    .flatMap(album -> eventAlbumSongs(album, client).stream())
+                    .anyMatch(song -> MusicDiscHelper.isSoundUnlocked(client, song));
+            case PLAYLIST -> Playlist.PLAYLISTS.stream()
+                    .filter(playlist -> playlist.playlist.equals(event.music.getId()))
+                    .anyMatch(playlist -> playlist.tracks.stream()
+                            .filter(EventHelper::isEventTrackEnabled)
+                            .anyMatch(song -> MusicDiscHelper.isSoundUnlocked(client, song))
+                            || playlist.discs.stream()
+                            .map(disc -> MusicDiscHelper.discSoundId(client, disc))
+                            .flatMap(Optional::stream)
+                            .anyMatch(sound -> MusicDiscHelper.isSoundUnlocked(client, SafeIdentifier.convert(sound))));
+            case TRACK -> isEventTrackEnabled(event.music);
+            case POOL -> {
+                WeighedSoundEvents pool = client.getSoundManager().getSoundEvent(event.music.getId());
+                yield pool != null && hasEnabledSound(pool, Collections.newSetFromMap(new IdentityHashMap<>()));
+            }
+            case DISC -> MusicDiscHelper.isDiscUnlocked(client, event.music.getId())
+                    && MusicDiscHelper.discSoundId(client, event.music.getId()).isPresent();
+        };
+    }
+
+    private static boolean hasEnabledSound(Weighted<Sound> weighted, Set<WeighedSoundEvents> visited) {
+        if (weighted instanceof Sound sound) {
+            if (sound.getType() == Sound.Type.FILE) {
+                return isEventTrackEnabled(SafeIdentifier.convert(sound.getLocation()));
+            }
+
+            WeighedSoundEvents referenced = Minecraft.getInstance().getSoundManager().getSoundEvent(sound.getLocation());
+            return referenced != null && hasEnabledSound(referenced, visited);
+        }
+
+        if (weighted instanceof WeighedSoundEvents event) {
+            return visited.add(event) && event.list.stream().anyMatch(entry -> hasEnabledSound(entry, visited));
+        }
+
+        return false;
     }
 
     private static boolean shouldBeActive(List<Event.Condition> conditions) {
@@ -651,7 +691,7 @@ public class EventHelper {
         return matches ? ConditionResult.MATCH : ConditionResult.NO_MATCH;
     }
 
-    private static ConditionResult result(boolean available, java.util.function.BooleanSupplier matches) {
+    private static ConditionResult result(boolean available, BooleanSupplier matches) {
         if (!available) return ConditionResult.UNAVAILABLE;
         return result(matches.getAsBoolean());
     }

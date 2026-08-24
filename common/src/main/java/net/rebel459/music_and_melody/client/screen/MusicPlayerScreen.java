@@ -1406,10 +1406,11 @@ public class MusicPlayerScreen extends Screen {
     }
 
     void toggleContentTrack(Album album, String track) {
-        if (album == null || track == null || album.isTrackForcedEnabled(track)) return;
+        if (album == null || track == null) return;
         album.setTrackEnabled(track, !album.isTrackEnabled(track));
         this.reloadPending = true;
         if (this.contentTrackList != null) this.contentTrackList.refresh();
+        if (this.libraryList != null) this.libraryList.refresh();
     }
 
     void toggleAlbumEnabled(Album album) {
@@ -1417,6 +1418,7 @@ public class MusicPlayerScreen extends Screen {
         album.setEnabled(!album.isEnabled());
         this.reloadPending = true;
         if (this.libraryList != null) this.libraryList.refresh();
+        if (this.contentTrackList != null) this.contentTrackList.refresh();
     }
 
     private void refreshPageList() {
@@ -2995,10 +2997,6 @@ public class MusicPlayerScreen extends Screen {
 
     private record TrackStatus(Album album, String track, Identifier icon, Component message, boolean toggleable, boolean enabled) {
         static TrackStatus forAlbumTrack(Album album, String track) {
-            if (album.isTrackForcedEnabled(track)) {
-                return new TrackStatus(album, track, IconButton.icon("always_enabled"),
-                        Component.translatable("screen.music_and_melody.album_details.enabled"), false, true);
-            }
             boolean enabled = album.isTrackEnabled(track);
             return new TrackStatus(album, track, IconButton.icon(enabled ? "enabled" : "disabled"),
                     Component.translatable(enabled ? "screen.music_and_melody.album_details.enabled" : "screen.music_and_melody.album_details.disabled"), true, enabled);

@@ -12,16 +12,11 @@ import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class Album {
 
     public static Set<Album> ALBUMS = new HashSet<>();
-    public static Set<Album> DISABLED_ALBUMS = new HashSet<>();
-
     public static Set<Identifier> LOADED_ALBUMS = new HashSet<>();
 
     public Identifier album;
@@ -29,27 +24,25 @@ public class Album {
     public Identifier icon;
     public Set<String> tracks;
     public Set<StoredDisc> discs;
-    public Set<String> forcedEnabledTracks;
+    private final Set<String> resolvedTrackIds;
 
     public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<StoredDisc> discs) {
-        this(album, name, icon, tracks, Set.of(), discs);
-    }
-
-    public Album(Identifier album, Component name, Identifier icon, Set<String> tracks, Set<String> forcedEnabledTracks, Set<StoredDisc> discs) {
         this.album = album;
         this.name = name;
         this.icon = icon;
-        this.tracks = tracks;
+        this.tracks = Collections.unmodifiableSet(new LinkedHashSet<>(tracks));
+        this.resolvedTrackIds = this.tracks.stream()
+                .map(this::trackId)
+                .map(SafeIdentifier::toString)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
         this.discs = discs;
-        this.forcedEnabledTracks = Set.copyOf(forcedEnabledTracks);
         ALBUMS.add(this);
-        if (!isEnabled()) DISABLED_ALBUMS.add(this);
-        else LOADED_ALBUMS.add(album);
+        refreshLoadedAlbums();
     }
 
     public boolean isEnabled() {
         if (CustomAlbums.isConfigAlbum(this)) return true;
-        return !MaMDataConfig.get().albums.disabled_albums.contains(this.album.toString());
+        return this.tracks.isEmpty() || this.tracks.stream().anyMatch(this::isTrackEnabled);
     }
 
     public boolean isFavourite() {
@@ -73,21 +66,18 @@ public class Album {
 
     public void setEnabled(boolean enabled) {
         if (CustomAlbums.isConfigAlbum(this)) return;
-        String id = this.album.toString();
         MaMDataConfig config = MaMDataConfig.get();
 
         if (enabled) {
-            config.albums.disabled_albums.remove(id);
-            DISABLED_ALBUMS.remove(this);
-            LOADED_ALBUMS.add(this.album);
-        } else {
-            if (!config.albums.disabled_albums.contains(id)) {
-                config.albums.disabled_albums.add(id);
+            enableTrackIds(trackIds(), config);
+        } else if (!this.tracks.isEmpty()) {
+            if (!config.albums.disabled_albums.contains(this.album.toString())) {
+                config.albums.disabled_albums.add(this.album.toString());
             }
-            DISABLED_ALBUMS.add(this);
-            LOADED_ALBUMS.remove(this.album);
+            removeTrackEntriesCoveredByDisabledAlbums(config);
         }
 
+        refreshLoadedAlbums();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 
@@ -96,28 +86,94 @@ public class Album {
     }
 
     public boolean isTrackEnabled(String song) {
-        if (CustomAlbums.isConfigAlbum(this)) return true;
         String id = trackId(song).toString();
-        return this.forcedEnabledTracks.contains(id) || !MaMDataConfig.get().albums.disabled_tracks.contains(id);
-    }
-
-    public boolean isTrackForcedEnabled(String song) {
-        return this.forcedEnabledTracks.contains(trackId(song).toString());
+        return !isTrackDisabled(id, MaMDataConfig.get());
     }
 
     public void setTrackEnabled(String song, boolean enabled) {
         if (CustomAlbums.isConfigAlbum(this)) return;
-        if (isTrackForcedEnabled(song)) return;
         String id = trackId(song).toString();
         MaMDataConfig config = MaMDataConfig.get();
 
         if (enabled) {
-            config.albums.disabled_tracks.remove(id);
+            enableTrackIds(Set.of(id), config);
         } else if (!config.albums.disabled_tracks.contains(id)) {
             config.albums.disabled_tracks.add(id);
+            compactFullyDisabledAlbums(config);
         }
 
+        refreshLoadedAlbums();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+    }
+
+    private Set<String> trackIds() {
+        return this.resolvedTrackIds;
+    }
+
+    private static boolean isTrackDisabled(String id, MaMDataConfig config) {
+        if (config.albums.disabled_tracks.contains(id)) return true;
+
+        for (Album album : ALBUMS) {
+            if (config.albums.disabled_albums.contains(album.album.toString()) && album.trackIds().contains(id)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void enableTrackIds(Set<String> enabledIds, MaMDataConfig config) {
+        for (Album album : ALBUMS) {
+            String albumId = album.album.toString();
+            if (!config.albums.disabled_albums.contains(albumId)) continue;
+
+            Set<String> albumTracks = album.trackIds();
+            if (Collections.disjoint(albumTracks, enabledIds)) continue;
+
+            config.albums.disabled_albums.remove(albumId);
+            for (String id : albumTracks) {
+                if (!enabledIds.contains(id) && !config.albums.disabled_tracks.contains(id)) {
+                    config.albums.disabled_tracks.add(id);
+                }
+            }
+        }
+
+        config.albums.disabled_tracks.removeIf(enabledIds::contains);
+        removeTrackEntriesCoveredByDisabledAlbums(config);
+    }
+
+    private static void compactFullyDisabledAlbums(MaMDataConfig config) {
+        boolean changed;
+        do {
+            changed = false;
+            for (Album album : ALBUMS) {
+                if (CustomAlbums.isConfigAlbum(album) || album.tracks.isEmpty()) continue;
+                String albumId = album.album.toString();
+                if (config.albums.disabled_albums.contains(albumId)) continue;
+                if (!album.trackIds().stream().allMatch(id -> isTrackDisabled(id, config))) continue;
+
+                config.albums.disabled_albums.add(albumId);
+                changed = true;
+            }
+        } while (changed);
+
+        removeTrackEntriesCoveredByDisabledAlbums(config);
+    }
+
+    private static void removeTrackEntriesCoveredByDisabledAlbums(MaMDataConfig config) {
+        Set<String> coveredTracks = ALBUMS.stream()
+                .filter(album -> config.albums.disabled_albums.contains(album.album.toString()))
+                .flatMap(album -> album.trackIds().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        config.albums.disabled_tracks.removeIf(coveredTracks::contains);
+    }
+
+    private static void refreshLoadedAlbums() {
+        LOADED_ALBUMS.clear();
+        ALBUMS.stream()
+                .filter(Album::isEnabled)
+                .map(album -> album.album)
+                .forEach(LOADED_ALBUMS::add);
     }
 
     public record StoredDisc(String path, Optional<String> soundEvent, Optional<Component> description) {}
@@ -131,16 +187,15 @@ public class Album {
         ).apply(instance, Record::new));
     }
 
-    public record Track(String path, boolean enabled, boolean folder) {
+    public record Track(String path, boolean folder) {
         private static final Codec<Track> OBJECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.NON_EMPTY_STRING.fieldOf("path").forGetter(Track::path),
-                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Track::enabled),
                 Codec.BOOL.optionalFieldOf("folder", false).forGetter(Track::folder)
         ).apply(instance, Track::new));
 
         public static final Codec<Track> CODEC = Codec.either(ExtraCodecs.NON_EMPTY_STRING, OBJECT_CODEC).xmap(
-                either -> either.map(track -> new Track(track, false, false), track -> track),
-                track -> track.enabled() || track.folder() ? Either.right(track) : Either.left(track.path())
+                either -> either.map(track -> new Track(track, false), track -> track),
+                track -> track.folder() ? Either.right(track) : Either.left(track.path())
         );
     }
 

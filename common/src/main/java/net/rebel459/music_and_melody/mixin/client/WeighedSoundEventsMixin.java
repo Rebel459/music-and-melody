@@ -30,16 +30,12 @@ public abstract class WeighedSoundEventsMixin {
     private static boolean isDisabled(Sound sound) {
         Identifier soundLocation = sound.getLocation();
         if (sound.getType() == Sound.Type.FILE) {
-            boolean disabled = false;
             for (Album album : Album.ALBUMS) {
-                if (!album.isEnabled()) {
-                    disabled = disabled || (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackForcedEnabled(soundLocation.getPath()));
-                }
-                if (soundLocation.getNamespace().equals(album.album.getNamespace()) && album.tracks.contains(soundLocation.getPath()) && !album.isTrackEnabled(soundLocation.getPath())) {
-                    disabled = true;
+                for (String track : album.tracks) {
+                    if (album.trackId(track).getId().equals(soundLocation) && !album.isTrackEnabled(track)) return true;
                 }
             }
-            return disabled;
+            return false;
         }
         return false;
     }

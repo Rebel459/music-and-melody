@@ -125,7 +125,6 @@ public final class ThemeHelper {
     public static final Identifier VANILLA_BUTTON_DISABLED = Identifier.withDefaultNamespace("widget/button_disabled");
 
     public static final List<Identifier> THEME_OVERRIDES = List.of(
-            IconButton.icon("always_enabled"),
             IconButton.icon("back"),
             IconButton.icon("built_in"),
             IconButton.icon("clear"),

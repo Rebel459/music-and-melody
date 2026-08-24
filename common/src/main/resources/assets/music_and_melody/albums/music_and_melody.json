@@ -7,46 +7,6 @@
     {
       "path": "music",
       "folder": true
-    },
-    {
-      "path": "music/misc/threshold",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/ancient_city/abandoned_halls",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/ancient_city/echoes",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/stronghold/if_we_could_reverse_time",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/stronghold/voide",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/stronghold/worn_away",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/stronghold/farlands",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/trial_chambers/bat",
-      "enabled": true
-    },
-    {
-      "path": "music/structure/trial_chambers/lochan",
-      "enabled": true
-    },
-    {
-      "path": "music/misc/wither_storm_theme",
-      "enabled": true
     }
   ]
 }

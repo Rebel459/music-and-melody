@@ -255,7 +255,7 @@ public final class CustomAlbums {
             Identifier iconId = icon.trim().isEmpty() ? DEFAULT_ICON : Identifier.tryParse(icon.trim());
             if (iconId == null) return false;
             Album.Record record = new Album.Record(Component.literal(name.trim()), iconId,
-                    List.of(new Album.Track(idPath, false, true)), List.of());
+                    List.of(new Album.Track(idPath, true)), List.of());
             try (Writer writer = Files.newBufferedWriter(directory.resolve(ALBUM_FILE))) {
                 Album.Record.CODEC.encodeStart(JsonOps.INSTANCE, record).result()
                         .ifPresent(json -> GSON.toJson(JsonParser.parseString(json.toString()), writer));
