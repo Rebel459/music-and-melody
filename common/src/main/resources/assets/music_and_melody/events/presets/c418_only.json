@@ -1,6 +1,7 @@
 {
   "name": "C418 Only",
   "description": "Replicates 1.13-era C418-only music",
+  "icon": "minecraft:textures/block/dirt.png",
   "entries": [
     {
       "category": "playlist",

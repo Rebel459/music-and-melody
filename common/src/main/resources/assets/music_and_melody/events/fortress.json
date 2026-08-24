@@ -1,18 +1,18 @@
 {
-  "name": "Mansion",
-  "description": "Woodland Mansion structure-specific music",
+  "name": "Fortress",
+  "description": "Nether Fortress structure-specific music",
+  "icon": "minecraft:textures/block/nether_bricks.png",
   "entries": [
     {
       "category": "pool",
-      "music": "music_and_melody:music.structure.mansion",
+      "music": "music_and_melody:music.structure.fortress",
       "conditions": [
         {
           "type": "structure",
-          "value": "mansion"
+          "value": "fortress"
         }
       ],
-      "priority": "medium",
-      "sustain": false
+      "priority": "medium"
     }
   ]
 }

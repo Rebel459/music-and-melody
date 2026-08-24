@@ -1,6 +1,7 @@
 {
   "name": "Trial Chambers",
   "description": "Trial Chambers structure-specific music",
+  "icon": "minecraft:textures/block/copper_block.png",
   "entries": [
     {
       "category": "pool",

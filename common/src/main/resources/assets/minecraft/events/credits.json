@@ -1,5 +1,7 @@
 {
   "name": "Credits",
+  "description": "Game credits music",
+  "icon": "minecraft:textures/block/grass_block_side.png",
   "entries": [
     {
       "category": "pool",

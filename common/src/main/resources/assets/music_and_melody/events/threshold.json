@@ -1,6 +1,7 @@
 {
   "name": "Threshold",
   "description": "Plays certain music when an End Portal is lit",
+  "icon": "minecraft:textures/entity/end_portal/end_portal.png",
   "entries": [
     {
       "category": "pool",

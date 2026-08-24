@@ -1,6 +1,7 @@
 {
   "name": "Main End Island",
   "description": "Enforces that only `The End` by C418 plays on the main End island",
+  "icon": "minecraft:textures/block/end_stone.png",
   "entries": [
     {
       "category": "pool",

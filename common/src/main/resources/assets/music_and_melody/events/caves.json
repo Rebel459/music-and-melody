@@ -1,6 +1,7 @@
 {
   "name": "Caves",
   "description": "Unique music that plays whilst underground",
+  "icon": "minecraft:textures/block/stone.png",
   "entries": [
     {
       "category": "pool",
