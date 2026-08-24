@@ -269,7 +269,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
                 color(panels == null ? Optional.empty() : panels.background(), inherited == null ? null : inherited.panels.background(), "panels.background", errors),
                 color(panels == null ? Optional.empty() : panels.panelBackground(), inherited == null ? null : inherited.panels.panelBackground(), "panels.panel_background", errors),
                 color(panels == null ? Optional.empty() : panels.panelOutline(), inherited == null ? null : inherited.panels.panelOutline(), "panels.panel_outline", errors),
-                color(panels == null ? Optional.empty() : panels.panelHighlight(), inherited == null ? null : inherited.panels.panelHighlight(), "panels.panel_highlight", errors),
+                color(panels == null ? Optional.empty() : panels.panelHighlighted(), inherited == null ? null : inherited.panels.panelHighlighted(), "panels.panel_highlighted", errors),
                 color(panels == null ? Optional.empty() : panels.popupPanelBackground(), inherited == null ? null : inherited.panels.popupPanelBackground(), "panels.popup_panel_background", errors),
                 color(panels == null ? Optional.empty() : panels.popupOutline(), inherited == null ? null : inherited.panels.popupOutline(), "panels.popup_outline", errors),
                 color(panels == null ? Optional.empty() : panels.popupOverlay(), inherited == null ? null : inherited.panels.popupOverlay(), "panels.popup_overlay", errors)
@@ -277,7 +277,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
 
         Theme.Elements resolvedElements = new Theme.Elements(
                 color(elements == null ? Optional.empty() : elements.buttonBackground(), inherited == null ? null : inherited.elements.buttonBackground(), "elements.button_background", errors),
-                color(elements == null ? Optional.empty() : elements.buttonHighlight(), inherited == null ? null : inherited.elements.buttonHighlight(), "elements.button_highlight", errors),
+                color(elements == null ? Optional.empty() : elements.buttonHighlighted(), inherited == null ? null : inherited.elements.buttonHighlighted(), "elements.button_highlighted", errors),
                 color(elements == null ? Optional.empty() : elements.buttonDisabled(), inherited == null ? null : inherited.elements.buttonDisabled(), "elements.button_disabled", errors),
                 color(elements == null ? Optional.empty() : elements.outline(), inherited == null ? null : inherited.elements.outline(), "elements.outline", errors),
                 color(elements == null ? Optional.empty() : elements.barBackground(), inherited == null ? null : inherited.elements.barBackground(), "elements.bar_background", errors),
@@ -291,7 +291,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
                 color(text == null ? Optional.empty() : text.selected(), inherited == null ? null : inherited.text.selected(), "text.selected", errors),
                 color(text == null ? Optional.empty() : text.title(), inherited == null ? null : inherited.text.title(), "text.title", errors),
                 color(text == null ? Optional.empty() : text.primary(), inherited == null ? null : inherited.text.primary(), "text.primary", errors),
-                color(text == null ? Optional.empty() : text.primaryHighlight(), inherited == null ? null : inherited.text.primaryHighlight(), "text.primary_highlight", errors),
+                color(text == null ? Optional.empty() : text.primaryHighlighted(), inherited == null ? null : inherited.text.primaryHighlighted(), "text.primary_highlighted", errors),
                 color(text == null ? Optional.empty() : text.description(), inherited == null ? null : inherited.text.description(), "text.description", errors),
                 color(text == null ? Optional.empty() : text.header(), inherited == null ? null : inherited.text.header(), "text.header", errors),
                 color(text == null ? Optional.empty() : text.headerSecondary(), inherited == null ? null : inherited.text.headerSecondary(), "text.header_secondary", errors),

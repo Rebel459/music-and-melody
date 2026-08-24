@@ -9,7 +9,7 @@
   "panels": {
     "background": "#007A0A10",
     "panel_outline": "#00000000",
-    "panel_highlight": "#FFC6C6C6",
+    "panel_highlighted": "#FFC6C6C6",
     "popup_outline": "#AC828282"
   },
   "elements": {
@@ -17,7 +17,7 @@
   },
   "text": {
     "primary": "#FFFFFFFF",
-    "primary_highlight": "#FFFFFFFF",
+    "primary_highlighted": "#FFFFFFFF",
     "header_secondary": "#FFC6C6C6",
     "disabled": "#FFAAAAAA"
   }

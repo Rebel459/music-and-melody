@@ -28,6 +28,7 @@ public final class ThemeHelper {
     public static int BACKGROUND;
     public static int PANEL_BACKGROUND;
     public static int PANEL_OUTLINE;
+    public static int PANEL_HIGHLIGHTED;
     public static int POPUP_OUTLINE;
     public static int POPUP_PANEL_BACKGROUND;
     public static int POPUP_OVERLAY;
@@ -35,7 +36,7 @@ public final class ThemeHelper {
     public static int TEXT_SELECTED;
     public static int TEXT_TITLE;
     public static int TEXT_PRIMARY;
-    public static int TEXT_PRIMARY_HIGHLIGHT;
+    public static int TEXT_PRIMARY_HIGHLIGHTED;
     public static int TEXT_DESCRIPTION;
     public static int TEXT_HEADER;
     public static int TEXT_HEADER_SECONDARY;
@@ -47,11 +48,10 @@ public final class ThemeHelper {
 
     private static Identifier appliedTheme;
 
-    public static int BUTTON_HIGHLIGHT;
+    public static int BUTTON_HIGHLIGHTED;
     public static int BUTTON_PASSIVE;
     public static int BUTTON_DISABLED;
     public static boolean BUTTON_TEXTURES;
-    public static int PANEL_HIGHLIGHT;
     public static int BAR_BACKGROUND;
     public static int SCROLLBAR_THUMB;
     public static int DRAG_OUTLINE;
@@ -65,13 +65,13 @@ public final class ThemeHelper {
         BACKGROUND = argb(theme.panels.background());
         PANEL_BACKGROUND = argb(theme.panels.panelBackground());
         PANEL_OUTLINE = argb(theme.panels.panelOutline());
-        PANEL_HIGHLIGHT = argb(theme.panels.panelHighlight());
+        PANEL_HIGHLIGHTED = argb(theme.panels.panelHighlighted());
         POPUP_OUTLINE = argb(theme.panels.popupOutline());
         POPUP_PANEL_BACKGROUND = argb(theme.panels.popupPanelBackground());
         POPUP_OVERLAY = argb(theme.panels.popupOverlay());
 
         BUTTON_PASSIVE = argb(theme.elements.buttonBackground());
-        BUTTON_HIGHLIGHT = argb(theme.elements.buttonHighlight());
+        BUTTON_HIGHLIGHTED = argb(theme.elements.buttonHighlighted());
         BUTTON_DISABLED = argb(theme.elements.buttonDisabled());
         BUTTON_TEXTURES = theme.elements.buttonTextures();
         DRAG_OUTLINE = argb(theme.elements.outline());
@@ -81,7 +81,7 @@ public final class ThemeHelper {
         TEXT_SELECTED = argb(theme.text.selected());
         TEXT_TITLE = argb(theme.text.title());
         TEXT_PRIMARY = argb(theme.text.primary());
-        TEXT_PRIMARY_HIGHLIGHT = argb(theme.text.primaryHighlight());
+        TEXT_PRIMARY_HIGHLIGHTED = argb(theme.text.primaryHighlighted());
         TEXT_DESCRIPTION = argb(theme.text.description());
         TEXT_HEADER = argb(theme.text.header());
         TEXT_HEADER_SECONDARY = argb(theme.text.headerSecondary());

@@ -9,7 +9,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -24,9 +23,7 @@ import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.EnumMap;
-import net.minecraft.util.FormattedCharSequence;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -256,8 +253,7 @@ final class ThemeEditorScreen extends Screen {
     }
 
     private static Component playPauseMessage() {
-        return Component.translatable(PlaylistHelper.isQueuePlaying()
-                ? "button.music_and_melody.pause" : "button.music_and_melody.play");
+        return Component.translatable(PlaylistHelper.isQueuePlaying() ? "button.music_and_melody.pause" : "button.music_and_melody.play");
     }
 
     private static Identifier playPauseIcon() {
@@ -842,8 +838,7 @@ final class ThemeEditorScreen extends Screen {
         if (this.managedRemotePack != null && this.remoteDetailsScrollMax > 0.0D
                 && x >= this.rightX && x < this.rightX + this.rightWidth
                 && y >= PANEL_TOP && y < this.panelBottom - 62) {
-            this.remoteDetailsScroll = Math.max(0.0D, Math.min(this.remoteDetailsScrollMax,
-                    this.remoteDetailsScroll - scrollY * 24.0D));
+            this.remoteDetailsScroll = Math.max(0.0D, Math.min(this.remoteDetailsScrollMax, this.remoteDetailsScroll - scrollY * 24.0D));
             return true;
         }
         if (this.middleScrollMax > 0.0D && inMiddleViewport(x, y)) {
@@ -915,7 +910,7 @@ final class ThemeEditorScreen extends Screen {
         graphics.fill(x, this.middleViewportTop, x + 2, this.middleViewportBottom, BAR_BACKGROUND);
         int y = middleScrollbarY();
         int colour = mouseX >= x - 4 && mouseX <= x + 5 && mouseY >= y && mouseY < y + middleScrollbarHeight()
-                ? PANEL_HIGHLIGHT : SCROLLBAR_THUMB;
+                ? PANEL_HIGHLIGHTED : SCROLLBAR_THUMB;
         graphics.fill(x - 1, y, x + 3, y + middleScrollbarHeight(), colour);
     }
 
@@ -967,12 +962,12 @@ final class ThemeEditorScreen extends Screen {
         BACKGROUND(Category.PANELS, "screen.music_and_melody.theme.background"),
         PANEL_BACKGROUND(Category.PANELS, "screen.music_and_melody.theme.panel_background"),
         PANEL_OUTLINE(Category.PANELS, "screen.music_and_melody.theme.panel_outline"),
-        PANEL_HIGHLIGHT(Category.PANELS, "screen.music_and_melody.theme.panel_highlight"),
+        PANEL_HIGHLIGHT(Category.PANELS, "screen.music_and_melody.theme.panel_highlighted"),
         POPUP_PANEL_BACKGROUND(Category.PANELS, "screen.music_and_melody.theme.popup_panel_background"),
         POPUP_OUTLINE(Category.PANELS, "screen.music_and_melody.theme.popup_outline"),
         POPUP_OVERLAY(Category.PANELS, "screen.music_and_melody.theme.popup_overlay"),
         BUTTON_BACKGROUND(Category.ELEMENTS, "screen.music_and_melody.theme.button_background"),
-        BUTTON_HIGHLIGHT(Category.ELEMENTS, "screen.music_and_melody.theme.button_highlight"),
+        BUTTON_HIGHLIGHT(Category.ELEMENTS, "screen.music_and_melody.theme.button_highlighted"),
         BUTTON_DISABLED(Category.ELEMENTS, "screen.music_and_melody.theme.button_disabled"),
         OUTLINE(Category.ELEMENTS, "screen.music_and_melody.theme.outline"),
         BAR_BACKGROUND(Category.ELEMENTS, "screen.music_and_melody.theme.bar_background"),
@@ -980,7 +975,7 @@ final class ThemeEditorScreen extends Screen {
         SELECTED(Category.TEXT, "screen.music_and_melody.theme.selected"),
         TITLE(Category.TEXT, "screen.music_and_melody.theme.title"),
         PRIMARY(Category.TEXT, "screen.music_and_melody.theme.primary"),
-        PRIMARY_HIGHLIGHT(Category.TEXT, "screen.music_and_melody.theme.primary_highlight"),
+        PRIMARY_HIGHLIGHT(Category.TEXT, "screen.music_and_melody.theme.primary_highlighted"),
         DESCRIPTION(Category.TEXT, "screen.music_and_melody.theme.description_text"),
         HEADER(Category.TEXT, "screen.music_and_melody.theme.header"),
         HEADER_SECONDARY(Category.TEXT, "screen.music_and_melody.theme.header_secondary"),
@@ -1006,12 +1001,12 @@ final class ThemeEditorScreen extends Screen {
                 case BACKGROUND -> theme.panels.background();
                 case PANEL_BACKGROUND -> theme.panels.panelBackground();
                 case PANEL_OUTLINE -> theme.panels.panelOutline();
-                case PANEL_HIGHLIGHT -> theme.panels.panelHighlight();
+                case PANEL_HIGHLIGHT -> theme.panels.panelHighlighted();
                 case POPUP_PANEL_BACKGROUND -> theme.panels.popupPanelBackground();
                 case POPUP_OUTLINE -> theme.panels.popupOutline();
                 case POPUP_OVERLAY -> theme.panels.popupOverlay();
                 case BUTTON_BACKGROUND -> theme.elements.buttonBackground();
-                case BUTTON_HIGHLIGHT -> theme.elements.buttonHighlight();
+                case BUTTON_HIGHLIGHT -> theme.elements.buttonHighlighted();
                 case BUTTON_DISABLED -> theme.elements.buttonDisabled();
                 case OUTLINE -> theme.elements.outline();
                 case BAR_BACKGROUND -> theme.elements.barBackground();
@@ -1019,7 +1014,7 @@ final class ThemeEditorScreen extends Screen {
                 case SELECTED -> theme.text.selected();
                 case TITLE -> theme.text.title();
                 case PRIMARY -> theme.text.primary();
-                case PRIMARY_HIGHLIGHT -> theme.text.primaryHighlight();
+                case PRIMARY_HIGHLIGHT -> theme.text.primaryHighlighted();
                 case DESCRIPTION -> theme.text.description();
                 case HEADER -> theme.text.header();
                 case HEADER_SECONDARY -> theme.text.headerSecondary();
@@ -1036,12 +1031,12 @@ final class ThemeEditorScreen extends Screen {
                 case BACKGROUND -> record.panels().flatMap(Theme.RawPanels::background);
                 case PANEL_BACKGROUND -> record.panels().flatMap(Theme.RawPanels::panelBackground);
                 case PANEL_OUTLINE -> record.panels().flatMap(Theme.RawPanels::panelOutline);
-                case PANEL_HIGHLIGHT -> record.panels().flatMap(Theme.RawPanels::panelHighlight);
+                case PANEL_HIGHLIGHT -> record.panels().flatMap(Theme.RawPanels::panelHighlighted);
                 case POPUP_PANEL_BACKGROUND -> record.panels().flatMap(Theme.RawPanels::popupPanelBackground);
                 case POPUP_OUTLINE -> record.panels().flatMap(Theme.RawPanels::popupOutline);
                 case POPUP_OVERLAY -> record.panels().flatMap(Theme.RawPanels::popupOverlay);
                 case BUTTON_BACKGROUND -> record.elements().flatMap(Theme.RawElements::buttonBackground);
-                case BUTTON_HIGHLIGHT -> record.elements().flatMap(Theme.RawElements::buttonHighlight);
+                case BUTTON_HIGHLIGHT -> record.elements().flatMap(Theme.RawElements::buttonHighlighted);
                 case BUTTON_DISABLED -> record.elements().flatMap(Theme.RawElements::buttonDisabled);
                 case OUTLINE -> record.elements().flatMap(Theme.RawElements::outline);
                 case BAR_BACKGROUND -> record.elements().flatMap(Theme.RawElements::barBackground);
@@ -1049,7 +1044,7 @@ final class ThemeEditorScreen extends Screen {
                 case SELECTED -> record.text().flatMap(Theme.RawText::selected);
                 case TITLE -> record.text().flatMap(Theme.RawText::title);
                 case PRIMARY -> record.text().flatMap(Theme.RawText::primary);
-                case PRIMARY_HIGHLIGHT -> record.text().flatMap(Theme.RawText::primaryHighlight);
+                case PRIMARY_HIGHLIGHT -> record.text().flatMap(Theme.RawText::primaryHighlighted);
                 case DESCRIPTION -> record.text().flatMap(Theme.RawText::description);
                 case HEADER -> record.text().flatMap(Theme.RawText::header);
                 case HEADER_SECONDARY -> record.text().flatMap(Theme.RawText::headerSecondary);
@@ -1119,10 +1114,10 @@ final class ThemeEditorScreen extends Screen {
             int width = this.getWidth();
             int height = this.getHeight();
             boolean highlighted = this.active && (this.isMouseOver(mouseX, mouseY) || this.isFocused());
-            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHT : BUTTON_PASSIVE;
+            int background = !this.active ? BUTTON_DISABLED : highlighted ? BUTTON_HIGHLIGHTED : BUTTON_PASSIVE;
             graphics.fill(x, y, x + width, y + height, background);
             int filled = Math.round((width - 4) * (float) this.value);
-            graphics.fill(x, y, x + filled + 2, y + height, PANEL_HIGHLIGHT);
+            graphics.fill(x, y, x + filled + 2, y + height, PANEL_HIGHLIGHTED);
             int handleX = x + filled;
             graphics.fill(handleX, y - 1, handleX + 4, y + height + 1, TEXT_TITLE);
             var font = Minecraft.getInstance().font;
@@ -1148,7 +1143,7 @@ final class ThemeEditorScreen extends Screen {
         @Override
         protected int textColor(boolean highlighted) {
             if (!overriddenRoles.contains(this.role)) return TEXT_DISABLED;
-            return highlighted ? TEXT_PRIMARY_HIGHLIGHT : TEXT_PRIMARY;
+            return highlighted ? TEXT_PRIMARY_HIGHLIGHTED : TEXT_PRIMARY;
         }
     }
 }

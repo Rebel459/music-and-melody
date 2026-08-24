@@ -183,7 +183,7 @@ final class NewsScreen extends Screen {
             RemoteIconManager.Image loaded = RemoteIconManager.image(image.url());
             int imageHeight = height(image, width) - 8;
             if (loaded == null) {
-                graphics.fill(x, y, x + width, y + imageHeight, PANEL_HIGHLIGHT);
+                graphics.fill(x, y, x + width, y + imageHeight, PANEL_HIGHLIGHTED);
                 ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
             } else if (y >= top && y + imageHeight <= bottom) {
                 graphics.blit(GUI_TEXTURED, loaded.texture(), x, y, 0.0F, 0.0F, width, imageHeight, loaded.width(), loaded.height());
@@ -249,7 +249,7 @@ final class NewsScreen extends Screen {
         int viewport = bottom - top;
         int thumb = Math.max(16, (int) Math.round(viewport * viewport / (viewport + this.scrollMax)));
         int thumbY = top + (int) Math.round((viewport - thumb) * this.scroll / this.scrollMax);
-        graphics.fill(x, thumbY, x + 3, thumbY + thumb, mouseX >= x - 2 && mouseX <= x + 5 ? PANEL_HIGHLIGHT : POPUP_OUTLINE);
+        graphics.fill(x, thumbY, x + 3, thumbY + thumb, mouseX >= x - 2 && mouseX <= x + 5 ? PANEL_HIGHLIGHTED : POPUP_OUTLINE);
     }
 
     @Override
