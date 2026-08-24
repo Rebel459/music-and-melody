@@ -90,6 +90,11 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/end/untitled_end",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
         "name": "music/game/end/the_end",
         "stream": true,
         "weight": 3
@@ -121,6 +126,10 @@
       },
       {
         "name": "music_and_melody:music/overworld/squid",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
         "stream": true
       },
       {
@@ -240,6 +249,16 @@
         "name": "music_and_melody:music/menu/halland",
         "stream": true,
         "volume": 0.5
+      },
+      {
+        "name": "music_and_melody:music/menu/faith",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/menu/untitled_menu",
+        "stream": true,
+        "volume": 0.7
       },
       {
         "name": "music_and_melody:music/creative/stolen_grid",
@@ -635,6 +654,11 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/caves/wisdom",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
         "name": "music/game/an_ordinary_day",
         "stream": true
       },
@@ -727,6 +751,10 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
+        "stream": true
+      },
+      {
         "name": "music_and_melody:music.classic",
         "type": "event"
       },
@@ -793,6 +821,10 @@
       },
       {
         "name": "music_and_melody:music/overworld/squid",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
         "stream": true
       },
       {
@@ -870,6 +902,16 @@
         "weight": 2
       },
       {
+        "name": "music_and_melody:music/overworld/legacy",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/overworld/stasis",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
         "name": "music/game/one_more_day",
         "stream": true,
         "volume": 0.4
@@ -942,6 +984,11 @@
       {
         "name": "music_and_melody:music/overworld/decay",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/stasis",
+        "stream": true,
+        "volume": 0.5
       },
       {
         "name": "music/game/clark",
@@ -1026,6 +1073,16 @@
         "name": "music_and_melody:music/overworld/kall",
         "stream": true,
         "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/overworld/legacy",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/overworld/stasis",
+        "stream": true,
+        "volume": 0.5
       },
       {
         "name": "music/game/dry_hands",
@@ -1247,6 +1304,10 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
+        "stream": true
+      },
+      {
         "name": "music/game/danny",
         "stream": true
       },
@@ -1289,6 +1350,10 @@
       },
       {
         "name": "music_and_melody:music/overworld/shrub",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
         "stream": true
       },
       {
@@ -1347,6 +1412,11 @@
       {
         "name": "music_and_melody:music/overworld/fall",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/overworld/stasis",
+        "stream": true,
+        "volume": 0.5
       },
       {
         "name": "music/game/an_ordinary_day",
@@ -1408,6 +1478,11 @@
         "name": "music_and_melody:music/overworld/kall",
         "stream": true,
         "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/overworld/legacy",
+        "stream": true,
+        "volume": 0.7
       },
       {
         "name": "music/game/danny",

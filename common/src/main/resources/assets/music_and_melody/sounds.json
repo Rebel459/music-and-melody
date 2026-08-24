@@ -54,6 +54,70 @@
       }
     ]
   },
+  "music.caves": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/caves/cavern_beyond",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/caves/caves",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/caves/empty_rooms",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/caves/honor",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/caves/pale_bliss",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/caves/stalactite",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/caves/wisdom",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.sky": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/sky/chain_of_planets",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/sky/reach",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/sky/return",
+        "stream": true,
+        "volume": 0.5
+      },
+      {
+        "name": "music_and_melody:music/overworld/legacy",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/structure/trial_chambers/waxed_copper",
+        "stream": true
+      }
+    ]
+  },
   "music.wither": {
     "sounds": [
       {
@@ -88,7 +152,7 @@
         "name": "music_and_melody:music/creative/stolen_grid",
         "stream": true,
         "volume": 0.7,
-        "weight": 3
+        "weight": 2
       },
       {
         "name": "music_and_melody:music/overworld/814",
@@ -275,6 +339,10 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/overworld/untitled_overworld",
+        "stream": true
+      },
+      {
         "name": "music_and_melody:music.classic",
         "type": "event"
       },
@@ -356,17 +424,14 @@
         "stream": true
       },
       {
-        "name": "music_and_melody:music/structure/stronghold/farlands",
-        "stream": true
+        "name": "music_and_melody:music/structure/stronghold/last_stronghold",
+        "stream": true,
+        "volume": 0.5
       }
     ]
   },
   "music.structure.ancient_city": {
     "sounds": [
-      {
-        "name": "music/game/ancestry",
-        "stream": true
-      },
       {
         "name": "music_and_melody:music/structure/ancient_city/abandoned_halls",
         "stream": true
@@ -374,16 +439,15 @@
       {
         "name": "music_and_melody:music/structure/ancient_city/echoes",
         "stream": true
+      },
+      {
+        "name": "music/game/ancestry",
+        "stream": true
       }
     ]
   },
   "music.structure.trial_chambers": {
     "sounds": [
-      {
-        "name": "music/game/pokopoko",
-        "stream": true,
-        "volume": 0.8
-      },
       {
         "name": "music_and_melody:music/structure/trial_chambers/bat",
         "stream": true
@@ -391,6 +455,65 @@
       {
         "name": "music_and_melody:music/structure/trial_chambers/lochan",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/structure/trial_chambers/waxed_copper",
+        "stream": true
+      }
+    ]
+  },
+  "music.structure.fortress": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/structure/fortress/basalt",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/nether/concrete_halls",
+        "stream": true
+      },
+      {
+        "name": "music/game/nether/ballad_of_the_cats",
+        "stream": true
+      }
+    ]
+  },
+  "music.structure.mansion": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/structure/mansion/uncover_unknown",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/structure/mansion/farlands",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/creative/stolen_grid",
+        "stream": true,
+        "volume": 0.7
+      }
+    ]
+  },
+  "music.structure.monument": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/structure/monument/anima",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/structure/monument/aqua",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music_and_melody:music/structure/monument/king_lionfish",
+        "stream": true,
+        "volume": 0.8
       }
     ]
   }
