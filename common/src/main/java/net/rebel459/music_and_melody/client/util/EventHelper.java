@@ -379,12 +379,15 @@ public class EventHelper {
             Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
             for (SoundInstance instance : instances) {
                 if (manager.isActive(instance)) {
+                    if (PlaylistHelper.isEmptyMusic(instance)) return -1;
                     if (gameMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
                     if (creativeMusic.equals(instance.getLocation())) return getPriority(Event.PriorityType.MEDIUM) - 1;
                 }
             }
             return getPriority(Event.PriorityType.LOW) - 1;
         }
+
+        if (situationalMusic == null || situationalMusic == PlaylistHelper.EMPTY) return -1;
 
         ResourceLocation situationalMusicId = situationalMusic.getEvent().value().getLocation();
         if (gameMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.VERY_LOW) - 1;
