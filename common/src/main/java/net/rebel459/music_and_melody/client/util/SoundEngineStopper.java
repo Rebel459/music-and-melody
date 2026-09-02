@@ -4,6 +4,4 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 
 public interface SoundEngineStopper {
     boolean stopEverythingExceptPlaylist(SoundInstance preserved);
-    boolean pausePlaylist(SoundInstance sound);
-    boolean resumePlaylist(SoundInstance sound);
 }

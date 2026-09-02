@@ -9,7 +9,7 @@
       "conditions": [
         {
           "type": "special",
-          "value": "end_portal"
+          "value": "end_portal_lit"
         }
       ],
       "priority": "high"

@@ -874,22 +874,16 @@ public final class PlaylistHelper {
     public static void pauseQueue() {
         ensureLoaded();
         if (!currentSongFromQueue || currentSongId == null || !isPlaying()) return;
-        long elapsed = currentSongElapsedMillis();
-        SoundEngineStopper engine = (SoundEngineStopper) Minecraft.getInstance().getSoundManager().soundEngine;
-        if (!engine.pausePlaylist(currentSong)) return;
-        pausedQueueElapsedMillis = elapsed;
+        pausedQueueSong = currentSongId;
+        pausedQueueSound = currentSong;
+        pausedQueueIndex = currentQueueIndex >= 0 ? currentQueueIndex : findCurrentQueueIndex();
+        pausedShuffleIndex = currentShuffleIndex;
+        pausedQueueElapsedMillis = currentSongElapsedMillis();
         queuePaused = true;
+        thisStopCurrentSongOnly();
     }
 
     private static boolean resumeQueue() {
-        if (queuePaused && currentSongFromQueue && currentSong != null) {
-            SoundEngineStopper engine = (SoundEngineStopper) Minecraft.getInstance().getSoundManager().soundEngine;
-            if (!engine.resumePlaylist(currentSong)) return false;
-            currentSongStartedAtNanos = System.nanoTime() - pausedQueueElapsedMillis * 1_000_000L;
-            pausedQueueElapsedMillis = 0L;
-            queuePaused = false;
-            return true;
-        }
         if (pausedQueueSong == null || pausedQueueIndex < 0 || pausedQueueIndex >= QUEUED_SONGS.size()
                 || !DirectSoundFiles.samePlayable(QUEUED_SONGS.get(pausedQueueIndex), pausedQueueSong)) {
             clearPausedQueue();
@@ -899,8 +893,10 @@ public final class PlaylistHelper {
         queueIndex = pausedQueueIndex;
         currentShuffleIndex = pausedShuffleIndex;
         if (shuffle && pausedShuffleIndex >= 0) shuffleIndex = pausedShuffleIndex + 1;
-        pendingSeekMillis = pausedQueueElapsedMillis;
-        clearPausedQueue(false);
+        long elapsed = pausedQueueElapsedMillis;
+        clearPausedQueue();
+        stop();
+        pendingSeekMillis = elapsed;
         queuePaused = false;
         return playSound(song, false, true, false);
     }
@@ -944,12 +940,18 @@ public final class PlaylistHelper {
         MaMDataConfig config = MaMDataConfig.get();
         loop = config.player.loop;
         shuffle = config.player.shuffle;
-        for (MaMDataConfig.Entry entry : config.player.custom_playlist) {
+        for (String track : config.player.custom_playlist_tracks) {
+            MaMDataConfig.Entry entry = entry(track, "track");
             if (validPlaylistEntry(entry) && CUSTOM_PLAYLIST.stream().noneMatch(existing -> sameEntry(existing, entry))) {
-                CUSTOM_PLAYLIST.add(copyEntry(entry));
+                CUSTOM_PLAYLIST.add(entry);
             }
         }
-        normalizeCustomPlaylistOrder();
+        for (String disc : config.player.custom_playlist_discs) {
+            MaMDataConfig.Entry entry = entry(disc, "disc");
+            if (validPlaylistEntry(entry) && CUSTOM_PLAYLIST.stream().noneMatch(existing -> sameEntry(existing, entry))) {
+                CUSTOM_PLAYLIST.add(entry);
+            }
+        }
         restoreConfiguredQueue();
         if (shuffle) rebuildShuffleOrder(null);
     }
@@ -958,7 +960,10 @@ public final class PlaylistHelper {
         MaMDataConfig config = MaMDataConfig.get();
         config.player.loop = loop;
         config.player.shuffle = shuffle;
-        config.player.custom_playlist = new ArrayList<>(CUSTOM_PLAYLIST.stream().map(PlaylistHelper::copyEntry).toList());
+        config.player.custom_playlist_tracks = new ArrayList<>(CUSTOM_PLAYLIST.stream()
+                .filter(MaMDataConfig.Entry::isTrack).map(entry -> entry.id).toList());
+        config.player.custom_playlist_discs = new ArrayList<>(CUSTOM_PLAYLIST.stream()
+                .filter(MaMDataConfig.Entry::isDisc).map(entry -> entry.id).toList());
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
     }
 

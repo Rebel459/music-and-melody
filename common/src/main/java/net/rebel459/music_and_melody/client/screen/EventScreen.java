@@ -779,7 +779,7 @@ public class EventScreen extends Screen {
     }
 
     private static boolean isStringCondition(String type) {
-        return type.equals("time") || type.equals("weather") || type.equals("game_mode") || type.equals("special") || type.equals("mod_loaded") || type.equals("bossbar") || type.equals("below_version");
+        return type.equals("time") || type.equals("weather") || type.equals("game_mode") || type.equals("special") || type.equals("mod_loaded") || type.equals("bossbar") || type.equals("below_version") || type.equals("player");
     }
 
     private static List<String> splitConditionParts(String value) {

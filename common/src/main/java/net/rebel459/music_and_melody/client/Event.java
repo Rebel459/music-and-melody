@@ -333,7 +333,7 @@ public class Event {
                 if (parsed.isEmpty()) return Optional.empty();
                 conditions.add(parsed.get());
             }
-            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
+            return Optional.of(new Condition(type, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), conditions));
         }
 
         Record.Condition.Value value = condition.value();
@@ -344,7 +344,8 @@ public class Event {
         Optional<TimeCondition> timeValue = Optional.empty();
         Optional<WeatherCondition> weatherValue = Optional.empty();
         Optional<GameModeCondition> gameModeValue = Optional.empty();
-        Optional<SpecialCondition> eventValue = Optional.empty();
+        Optional<PlayerCondition> playerValue = Optional.empty();
+        Optional<SpecialCondition> specialValue = Optional.empty();
 
         if (type == ConditionType.BELOW_Y || type == ConditionType.PVE_SCORE || type == ConditionType.PVP_SCORE) {
             if (!(value instanceof Record.Condition.Value.Integer(int integer))) return Optional.empty();
@@ -375,10 +376,14 @@ public class Event {
                 GameModeCondition gameMode = gameMode(string);
                 if (gameMode == null) return Optional.empty();
                 gameModeValue = Optional.of(gameMode);
+            } else if (type == ConditionType.PLAYER) {
+                PlayerCondition player = player(string);
+                if (player == null) return Optional.empty();
+                playerValue = Optional.of(player);
             } else if (type == ConditionType.SPECIAL) {
-                SpecialCondition event = event(string);
+                SpecialCondition event = special(string);
                 if (event == null) return Optional.empty();
-                eventValue = Optional.of(event);
+                specialValue = Optional.of(event);
             } else {
                 Identifier id = Identifier.tryParse(string);
                 if (id == null) return Optional.empty();
@@ -386,7 +391,7 @@ public class Event {
             }
         }
 
-        return Optional.of(new Condition(type, stringValue, idValue, intValue, floatValue, timeValue, weatherValue, gameModeValue, eventValue, List.of()));
+        return Optional.of(new Condition(type, stringValue, idValue, intValue, floatValue, timeValue, weatherValue, gameModeValue, playerValue, specialValue, List.of()));
     }
 
     private static CategoryType category(String category) {
@@ -447,8 +452,8 @@ public class Event {
         };
     }
 
-    private static TimeCondition time(String time) {
-        return switch (time.toLowerCase(Locale.ROOT)) {
+    private static TimeCondition time(String condition) {
+        return switch (condition.toLowerCase(Locale.ROOT)) {
             case "day" -> TimeCondition.DAY;
             case "night" -> TimeCondition.NIGHT;
             case "sunrise" -> TimeCondition.SUNRISE;
@@ -457,8 +462,8 @@ public class Event {
         };
     }
 
-    private static WeatherCondition weather(String weather) {
-        return switch (weather.toLowerCase(Locale.ROOT)) {
+    private static WeatherCondition weather(String condition) {
+        return switch (condition.toLowerCase(Locale.ROOT)) {
             case "clear" -> WeatherCondition.CLEAR;
             case "rain" -> WeatherCondition.RAIN;
             case "thunder" -> WeatherCondition.THUNDER;
@@ -466,8 +471,8 @@ public class Event {
         };
     }
 
-    private static GameModeCondition gameMode(String gameMode) {
-        return switch (gameMode.toLowerCase(Locale.ROOT)) {
+    private static GameModeCondition gameMode(String condition) {
+        return switch (condition.toLowerCase(Locale.ROOT)) {
             case "survival" -> GameModeCondition.SURVIVAL;
             case "creative" -> GameModeCondition.CREATIVE;
             case "adventure" -> GameModeCondition.ADVENTURE;
@@ -476,12 +481,22 @@ public class Event {
         };
     }
 
-    private static SpecialCondition event(String event) {
-        return switch (event.toLowerCase(Locale.ROOT)) {
+    private static PlayerCondition player(String condition) {
+        return switch (condition.toLowerCase(Locale.ROOT)) {
+            case "under_water" -> PlayerCondition.UNDER_WATER;
+            case "under_ground" -> PlayerCondition.UNDER_GROUND;
+            case "in_rain" -> PlayerCondition.IN_RAIN;
+            case "gliding" -> PlayerCondition.GLIDING;
+            case "on_rails" -> PlayerCondition.ON_RAILS;
+            default -> null;
+        };
+    }
+
+    private static SpecialCondition special(String condition) {
+        return switch (condition.toLowerCase(Locale.ROOT)) {
             case "menu" -> SpecialCondition.MENU;
             case "credits" -> SpecialCondition.CREDITS;
-            case "end_portal" -> SpecialCondition.END_PORTAL;
-            case "under_water" -> SpecialCondition.UNDER_WATER;
+            case "end_portal_lit" -> SpecialCondition.END_PORTAL_LIT;
             default -> null;
         };
     }
@@ -567,12 +582,8 @@ public class Event {
         RIDDEN_ENTITY,
         RIDDEN_ENTITY_TAG,
         PVE_SCORE,
-        PVP_SCORE
-    }
-
-    private enum DefaultState {
-        ENABLED,
-        DISABLED
+        PVP_SCORE,
+        PLAYER
     }
 
     public enum TimeCondition {
@@ -595,11 +606,23 @@ public class Event {
         SPECTATOR
     }
 
+    public enum PlayerCondition {
+        UNDER_WATER,
+        UNDER_GROUND,
+        IN_RAIN,
+        GLIDING,
+        ON_RAILS
+    }
+
     public enum SpecialCondition {
         MENU,
         CREDITS,
-        END_PORTAL,
-        UNDER_WATER
+        END_PORTAL_LIT
+    }
+
+    private enum DefaultState {
+        ENABLED,
+        DISABLED
     }
 
     public static class Source {
@@ -767,7 +790,8 @@ public class Event {
             Optional<TimeCondition> timeValue,
             Optional<WeatherCondition> weatherValue,
             Optional<GameModeCondition> gameModeValue,
-            Optional<SpecialCondition> eventValue,
+            Optional<PlayerCondition> playerValue,
+            Optional<SpecialCondition> specialValue,
             List<Condition> conditions
     ) {}
 }
