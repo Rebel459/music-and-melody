@@ -9,7 +9,11 @@
       "conditions": [
         {
           "type": "below_y",
-          "value": 48
+          "value": 32
+        },
+        {
+          "type": "player",
+          "value": "under_ground"
         },
         {
           "type": "not",

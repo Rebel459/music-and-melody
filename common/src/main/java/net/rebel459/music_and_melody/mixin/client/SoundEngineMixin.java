@@ -97,20 +97,4 @@ public abstract class SoundEngineMixin implements SoundEngineStopper {
         this.queuedTickableSounds.clear();
         return true;
     }
-
-    @Override
-    public boolean pausePlaylist(SoundInstance sound) {
-        ChannelAccess.ChannelHandle handle = this.instanceToChannel.get(sound);
-        if (handle == null || handle.isStopped()) return false;
-        handle.execute(channel -> channel.pause());
-        return true;
-    }
-
-    @Override
-    public boolean resumePlaylist(SoundInstance sound) {
-        ChannelAccess.ChannelHandle handle = this.instanceToChannel.get(sound);
-        if (handle == null || handle.isStopped()) return false;
-        handle.execute(channel -> channel.unpause());
-        return true;
-    }
 }

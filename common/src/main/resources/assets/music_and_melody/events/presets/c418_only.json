@@ -21,7 +21,7 @@
                   "type": "all_of",
                   "value": [
                     {
-                      "type": "special",
+                      "type": "player",
                       "value": "under_water"
                     },
                     {
@@ -93,7 +93,7 @@
           "value": "overworld"
         },
         {
-          "type": "special",
+          "type": "player",
           "value": "under_water"
         },
         {

@@ -12,6 +12,10 @@
         "stream": true
       },
       {
+        "name": "music_and_melody:music/overworld/rose_field",
+        "stream": true
+      },
+      {
         "name": "bloom:music/overworld/lock_and_key",
         "stream": true,
         "volume": 0.4,
@@ -37,6 +41,11 @@
       },
       {
         "name": "music_and_melody:music/overworld/legacy",
+        "stream": true,
+        "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/overworld/untitled_overworld_2",
         "stream": true,
         "volume": 0.7
       }

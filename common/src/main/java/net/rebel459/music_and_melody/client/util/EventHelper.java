@@ -400,12 +400,15 @@ public class EventHelper {
             Collection<SoundInstance> instances = manager.soundEngine.instanceBySource.get(SoundSource.MUSIC);
             for (SoundInstance instance : instances) {
                 if (manager.isActive(instance)) {
+                    if (PlaylistHelper.isEmptyMusic(instance)) return -1;
                     if (gameMusic.equals(instance.getIdentifier())) return getPriority(Event.PriorityType.VERY_LOW) - 1;
                     if (creativeMusic.equals(instance.getIdentifier())) return getPriority(Event.PriorityType.MEDIUM) - 1;
                 }
             }
             return getPriority(Event.PriorityType.LOW) - 1;
         }
+
+        if (situationalMusic == null || situationalMusic == PlaylistHelper.EMPTY) return -1;
 
         Identifier situationalMusicId = situationalMusic.sound().value().location();
         if (gameMusic.equals(situationalMusicId)) return getPriority(Event.PriorityType.VERY_LOW) - 1;
@@ -659,11 +662,17 @@ public class EventHelper {
                     case SPECTATOR -> gameType == GameType.SPECTATOR;
                 };
             });
-            case SPECIAL -> switch (condition.eventValue().get()) {
+            case PLAYER -> result(player != null, () -> switch (condition.playerValue().get()) {
+                case UNDER_WATER -> player.isUnderWater();
+                case UNDER_GROUND -> !player.level().canSeeSky(player.blockPosition().above());
+                case IN_RAIN -> player.isInRain();
+                case GLIDING -> player.isFallFlying();
+                case ON_RAILS -> player.getVehicle() != null && player.getVehicle().isOnRails();
+            });
+            case SPECIAL -> switch (condition.specialValue().get()) {
                 case MENU -> result(client.level == null && !(client.gui.screen() instanceof WinScreen));
                 case CREDITS -> result(client.gui.screen() instanceof WinScreen);
-                case END_PORTAL -> result(level != null, EventHelper::isEndPortalFilled);
-                case UNDER_WATER -> result(player != null, () -> player.isUnderWater());
+                case END_PORTAL_LIT -> result(level != null, EventHelper::isEndPortalFilled);
             };
             case BELOW_Y -> result(player != null, () -> player.blockPosition().getY() < condition.intValue().get());
             case BELOW_VERSION -> result(VanillaVersion.parse(condition.stringValue().get()).compareTo(VanillaVersion.getVanillaVersion()) > 0);
