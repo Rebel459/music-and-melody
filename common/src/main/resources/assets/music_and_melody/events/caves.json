@@ -8,6 +8,10 @@
       "music": "music_and_melody:music.caves",
       "conditions": [
         {
+          "type": "dimension",
+          "value": "overworld"
+        },
+        {
           "type": "below_y",
           "value": 32
         },

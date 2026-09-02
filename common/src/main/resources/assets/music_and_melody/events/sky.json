@@ -8,6 +8,10 @@
       "music": "music_and_melody:music.sky",
       "conditions": [
         {
+          "type": "dimension",
+          "value": "overworld"
+        },
+        {
           "type": "any_of",
           "value": [
             {
