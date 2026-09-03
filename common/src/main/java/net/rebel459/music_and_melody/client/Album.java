@@ -73,7 +73,7 @@ public class Album {
     }
 
     public SafeIdentifier trackId(String song) {
-        return song.contains(":") ? SafeIdentifier.parse(song) : SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
+        return SafeIdentifier.fromNamespaceAndPath(this.album.getNamespace(), song);
     }
 
     public boolean isTrackEnabled(String song) {

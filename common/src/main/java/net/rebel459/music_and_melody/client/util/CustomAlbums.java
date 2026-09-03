@@ -420,9 +420,7 @@ public final class CustomAlbums {
     private static Set<String> tracks(Identifier albumId, Album.Record record) {
         Set<String> tracks = new java.util.LinkedHashSet<>();
         for (Album.Track entry : record.tracks()) {
-            SafeIdentifier track = entry.path().contains(":")
-                    ? SafeIdentifier.parse(entry.path())
-                    : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), entry.path());
+            SafeIdentifier track = SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), entry.path());
             if (entry.folder()) {
                 tracksInFolderLoaded(track).stream().map(SafeIdentifier::parse).map(SafeIdentifier::getPath).forEach(tracks::add);
             } else {
