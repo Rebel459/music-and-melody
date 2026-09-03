@@ -120,9 +120,9 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         }
 
         return tracks.stream()
-                .sorted(Comparator
-                        .comparing((String song) -> trackId(albumId, song).getPath())
-                        .thenComparing(song -> trackId(albumId, song).toString()))
+                .map(SafeIdentifier::parse)
+                .map(SafeIdentifier::getPath)
+                .sorted(Comparator.naturalOrder())
                 .toList();
     }
 
