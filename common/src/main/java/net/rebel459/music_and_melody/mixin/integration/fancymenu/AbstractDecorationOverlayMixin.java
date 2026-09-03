@@ -5,6 +5,7 @@ import de.keksuccino.fancymenu.customization.element.AbstractElement;
 import de.keksuccino.fancymenu.customization.screen.identifier.ScreenIdentifierHandler;
 import de.keksuccino.fancymenu.util.rendering.overlay.CollisionAreaBounds;
 import net.minecraft.client.gui.screens.Screen;
+import net.rebel459.music_and_melody.MusicAndMelody;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +19,6 @@ public abstract class AbstractDecorationOverlayMixin {
 
     @Inject(method = "collectCollisionBoxes", at = @At("HEAD"), cancellable = true)
     private static void disableOverlayInteraction(@NotNull Screen screen, @NotNull List<AbstractElement> elements, CallbackInfoReturnable<List<CollisionAreaBounds>> cir) {
-        if (ScreenIdentifierHandler.getIdentifierOfScreen(screen).contains("music_and_melody")) cir.setReturnValue(List.of());
+        if (ScreenIdentifierHandler.getIdentifierOfScreen(screen).contains(MusicAndMelody.MOD_ID)) cir.setReturnValue(List.of());
     }
 }
