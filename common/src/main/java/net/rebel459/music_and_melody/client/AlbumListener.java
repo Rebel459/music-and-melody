@@ -45,7 +45,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
 
             Set<String> tracks = new LinkedHashSet<>();
             for (String track : expandTracks(albumId, record.tracks(), resourceManager)) {
-                SafeIdentifier trackId = SafeIdentifier.parse(track);
+                SafeIdentifier trackId = trackId(albumId, track);
                 tracks.add(trackId.getNamespace().equals(albumId.getNamespace()) ? trackId.getPath() : trackId.toString());
             }
 
@@ -55,9 +55,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
                     .collect(Collectors.toSet());
 
             for (Album.StoredDisc disc : discs) {
-                Identifier discId = disc.path().contains(":")
-                        ? Identifier.tryParse(disc.path())
-                        : Identifier.fromNamespaceAndPath(albumId.getNamespace(), disc.path());
+                Identifier discId = Identifier.tryParse(albumId.getNamespace() + ":" + disc.path());
 
                 if (discId != null) {
                     registeredDiscs.add(discId);
@@ -103,9 +101,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
     }
 
     private static SafeIdentifier trackId(Identifier albumId, String song) {
-        return song.contains(":")
-                ? SafeIdentifier.parse(song)
-                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
+        return SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), song);
     }
 
     private static List<String> folderTracks(
@@ -113,9 +109,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
             String folder,
             ResourceManager resourceManager
     ) {
-        SafeIdentifier folderId = folder.contains(":")
-                ? SafeIdentifier.parse(folder)
-                : SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), folder);
+        SafeIdentifier folderId = SafeIdentifier.fromNamespaceAndPath(albumId.getNamespace(), folder);
 
         LinkedHashSet<String> tracks = new LinkedHashSet<>();
 

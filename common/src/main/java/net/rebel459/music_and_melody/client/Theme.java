@@ -51,9 +51,9 @@ public class Theme {
 
     public record Text(String selected, String title, String primary, String primaryHighlighted, String description, String header, String headerSecondary, String favourite, String example, String disabled, String warning, boolean shadow) {}
 
-    public record Record(Identifier id, Optional<Component> name, Optional<Component> description, Optional<String> icon, Optional<String> parent, Optional<RawPanels> panels, Optional<RawElements> elements, Optional<RawText> text) {
+    public record Record(Identifier id, Component name, Optional<Component> description, Optional<String> icon, Optional<String> parent, Optional<RawPanels> panels, Optional<RawElements> elements, Optional<RawText> text) {
         public static final Codec<Record> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(Record::name),
+                ComponentSerialization.CODEC.fieldOf("name").forGetter(Record::name),
                 ComponentSerialization.CODEC.optionalFieldOf("description").forGetter(Record::description),
                 Codec.STRING.optionalFieldOf("icon").forGetter(Record::icon),
                 Codec.STRING.optionalFieldOf("parent").forGetter(Record::parent),

@@ -20,7 +20,7 @@ public final class MusicDiscHelper {
     private MusicDiscHelper() {}
 
     public static Identifier albumEntryId(Album album, String path) {
-        return path.contains(":") ? Identifier.parse(path) : Identifier.fromNamespaceAndPath(album.album.getNamespace(), path);
+        return Identifier.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
     public static Identifier albumEntryId(Album album, Album.StoredDisc disc) {

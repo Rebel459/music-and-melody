@@ -4,6 +4,7 @@ import de.keksuccino.fancymenu.customization.element.elements.audio.AudioElement
 import de.keksuccino.fancymenu.util.resource.resources.audio.IAudio;
 import net.minecraft.sounds.SoundSource;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -25,7 +26,7 @@ public abstract class AudioElementMixin {
 
     @Inject(method = "renderTick", at = @At("HEAD"), cancellable = true)
     private void pauseAudioElementDuringPlaylist(CallbackInfo ci) {
-        if (PlaylistHelper.isPlaylistOrAlbumPlaying() && this.getSoundSource() == SoundSource.MUSIC) {
+        if (!MaMDataConfig.get().vanilla_music || PlaylistHelper.isPlaylistOrAlbumPlaying() && this.getSoundSource() == SoundSource.MUSIC) {
             if (this.currentAudio != null && this.currentAudio.isReady() && this.currentAudio.isPlaying()) {
                 this.currentAudio.pause();
                 this.pausedAudio = this.currentAudio;

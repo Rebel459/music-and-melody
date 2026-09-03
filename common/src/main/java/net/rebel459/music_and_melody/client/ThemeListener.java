@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.JsonOps;
 import me.shedaniel.autoconfig.AutoConfig;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -58,8 +59,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
     }
 
     @Override
-    protected synchronized void apply(Map<Identifier, Theme.Record> records, ResourceManager resourceManager,
-                                      ProfilerFiller profilerFiller) {
+    protected synchronized void apply(Map<Identifier, Theme.Record> records, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
         RESOURCE_RECORDS.clear();
         Theme.Record fallback = bundledDefault();
         if (fallback != null) RESOURCE_RECORDS.put(Theme.DEFAULT_ID, fallback);
@@ -163,10 +163,8 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
 
         String iconValue = icon == null || icon.isBlank() ? Theme.DEFAULT_ICON.toString() : icon.trim();
         Theme.Record record = new Theme.Record(null,
-                Optional.of(net.minecraft.network.chat.Component.literal(trimmedName)),
-                Optional.of(description == null || description.isBlank()
-                        ? net.minecraft.network.chat.CommonComponents.EMPTY
-                        : net.minecraft.network.chat.Component.literal(description.trim())),
+                Component.literal(trimmedName),
+                Optional.of(description == null || description.isBlank() ? net.minecraft.network.chat.CommonComponents.EMPTY : Component.literal(description.trim())),
                 Optional.of(iconValue),
                 Optional.empty(),
                 Optional.empty(), Optional.empty(), Optional.empty());
@@ -259,8 +257,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
         var elements = record.elements().orElse(null);
         var text = record.text().orElse(null);
 
-        net.minecraft.network.chat.Component name = record.name()
-                .orElse(net.minecraft.network.chat.CommonComponents.EMPTY);
+        net.minecraft.network.chat.Component name = record.name();
         net.minecraft.network.chat.Component description = record.description()
                 .orElse(net.minecraft.network.chat.CommonComponents.EMPTY);
         Identifier icon = identifier(record.icon(), null, "icon", errors);

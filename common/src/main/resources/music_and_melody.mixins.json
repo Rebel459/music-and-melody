@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_25",
   "plugin": "net.rebel459.music_and_melody.mixin.MaMMixinPlugin",
   "mixins": [
+    "integration.fancymenu.AbstractDecorationOverlayMixin",
     "server.JukeboxPlayableMixin"
   ],
   "injectors": {

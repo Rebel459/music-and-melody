@@ -286,7 +286,7 @@ final class ThemeEditorScreen extends Screen {
                 if (!sameColour(value, parentValues.get(role))) overriddenRoles.add(role);
             });
         }
-        if (record.name().isPresent()) overriddenMain.add(MainOption.NAME);
+        overriddenMain.add(MainOption.NAME);
         if (record.description().isPresent()) overriddenMain.add(MainOption.DESCRIPTION);
         if (record.icon().isPresent()) overriddenMain.add(MainOption.ICON);
         record.elements().flatMap(Theme.RawElements::buttonTextures).ifPresent(value -> {
@@ -623,7 +623,7 @@ final class ThemeEditorScreen extends Screen {
                 roleValue(Role.SELECTED), roleValue(Role.TITLE), roleValue(Role.PRIMARY), roleValue(Role.PRIMARY_HIGHLIGHT),
                 roleValue(Role.DESCRIPTION), roleValue(Role.HEADER), roleValue(Role.HEADER_SECONDARY), roleValue(Role.FAVOURITE),
                 roleValue(Role.EXAMPLE), roleValue(Role.DISABLED), roleValue(Role.WARNING), textShadowValue());
-        return new Theme.Record(theme.theme, componentValue(MainOption.NAME, nameField),
+        return new Theme.Record(theme.theme, Component.literal(nameField.getValue().trim()),
                 componentValue(MainOption.DESCRIPTION, descriptionField), stringValue(MainOption.ICON, iconField), parent,
                 Optional.of(panels), Optional.of(elements), Optional.of(text));
     }
