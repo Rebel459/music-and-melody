@@ -12,19 +12,31 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
 final class ThemeExitConfirmScreen extends Screen {
 
     private static final int DIALOG_HEIGHT = 118;
-    private final ThemeEditorScreen parent;
+    private final Screen parent;
+    private final Consumer<Boolean> finishAction;
+    private final Component warning;
     private int layoutWidth;
     private int layoutHeight;
 
     ThemeExitConfirmScreen(ThemeEditorScreen parent) {
-        super(Component.translatable("screen.music_and_melody.theme.unsaved"));
+        this(parent,
+                Component.translatable("screen.music_and_melody.theme.unsaved"),
+                Component.translatable("screen.music_and_melody.theme.unsaved_warning"),
+                parent::finish);
+    }
+
+    ThemeExitConfirmScreen(Screen parent, Component title, Component warning, Consumer<Boolean> finishAction) {
+        super(title);
         this.parent = parent;
+        this.warning = warning;
+        this.finishAction = finishAction;
     }
 
     @Override
@@ -38,11 +50,11 @@ final class ThemeExitConfirmScreen extends Screen {
         int buttonX = x + (width - buttonWidth * 3 - 8) / 2;
         this.addRenderableWidget(new WorkspaceButton(buttonX, y, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.save"), false, ignored -> {
-                    this.parent.finish(true);
+                    this.finishAction.accept(true);
                 }));
         this.addRenderableWidget(new WorkspaceButton(buttonX + buttonWidth + 4, y, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.dont_save"), false, ignored -> {
-                    this.parent.finish(false);
+                    this.finishAction.accept(false);
                 }));
         this.addRenderableWidget(new WorkspaceButton(buttonX + (buttonWidth + 4) * 2, y, buttonWidth, 20,
                 CommonComponents.GUI_CANCEL, false, ignored -> this.onClose()));
@@ -89,7 +101,7 @@ final class ThemeExitConfirmScreen extends Screen {
         graphics.fill(x + width - 1, y, x + width, y + DIALOG_HEIGHT, POPUP_OUTLINE);
         ThemeHelper.centeredText(graphics, this.font, this.title, x + width / 2, y + 12, TEXT_TITLE);
         List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(
-                Component.translatable("screen.music_and_melody.theme.unsaved_warning"), width - 24);
+                this.warning, width - 24);
         for (int i = 0; i < Math.min(3, lines.size()); i++) {
             ThemeHelper.text(graphics, this.font, lines.get(i), x + 12, y + 32 + i * this.font.lineHeight, TEXT_DESCRIPTION);
         }

@@ -448,6 +448,7 @@ public class Event {
             case "ridden_entity_tag" -> ConditionType.RIDDEN_ENTITY_TAG;
             case "pve_score" -> ConditionType.PVE_SCORE;
             case "pvp_score" -> ConditionType.PVP_SCORE;
+            case "player" -> ConditionType.PLAYER;
             default -> null;
         };
     }

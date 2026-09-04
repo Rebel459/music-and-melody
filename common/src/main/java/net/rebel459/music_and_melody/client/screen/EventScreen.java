@@ -56,6 +56,7 @@ public class EventScreen extends Screen {
     private static final int MIN_MIDDLE_WIDTH = 180;
     private static final int MIN_RIGHT_WIDTH = 124;
     private static final int EDITOR_BOTTOM_HEIGHT = 56;
+    private static final int SETTINGS_STEP = 42;
 
     private final Screen parent;
     private final List<Event.ScreenEntry> entries = new ArrayList<>();
@@ -75,7 +76,7 @@ public class EventScreen extends Screen {
     private IconButton deleteButton;
     private IconButton playPauseButton;
     private int selectedIndex = -1;
-    private int categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
+    private int categoryIndex = Event.CategoryType.POOL.ordinal();
     private int priorityIndex = Event.PriorityType.LOW.ordinal();
     private boolean replace = false;
     private boolean sustain = true;
@@ -83,9 +84,12 @@ public class EventScreen extends Screen {
     private boolean loadingEditor;
     private boolean savedChanges;
     private boolean deletePending;
+    private EditorSnapshot soundPoolsSnapshot;
     private Identifier activeSourceId;
     private int layoutWidth;
     private int layoutHeight;
+    private double settingsScroll;
+    private double settingsScrollMax;
 
     public EventScreen(Screen parent) {
         super(TITLE);
@@ -108,12 +112,16 @@ public class EventScreen extends Screen {
         }
         calculateLayoutSize();
         EditorLayout layout = editorLayout();
+        updateSettingsScroll(layout);
         this.addRenderableOnly(this::renderEditorShell);
 
         int settingsX = layout.leftX + 8;
         int settingsWidth = layout.leftWidth - 16;
-        int controlY = PANEL_TOP + 42;
-        int controlStep = settingsStep(layout);
+        int controlY = settingsControlY();
+        int controlStep = SETTINGS_STEP;
+        this.addRenderableOnly((graphics, mouseX, mouseY, tickDelta) ->
+                graphics.enableScissor(layout.leftX + 1, settingsViewportTop(),
+                        layout.leftX + layout.leftWidth - 1, settingsViewportBottom(layout)));
         this.categoryButton = this.addRenderableWidget(new WorkspaceButton(settingsX, controlY, settingsWidth, 20, categoryMessage(), false, button -> {
                 this.categoryIndex = (this.categoryIndex + 1) % CATEGORIES.length;
                 markDirty();
@@ -137,6 +145,7 @@ public class EventScreen extends Screen {
         this.weightField = this.addRenderableWidget(new EditBox(this.font, settingsX, controlY + controlStep * 5, settingsWidth, 20, Component.translatable("screen.music_and_melody.event_editor.weight")));
         this.weightField.setMaxLength(8);
         this.weightField.setResponder(value -> markDirty());
+        this.addRenderableOnly((graphics, mouseX, mouseY, tickDelta) -> graphics.disableScissor());
 
         int fieldX = layout.middleX + 8;
         int fieldWidth = Math.max(48, layout.middleWidth - 16);
@@ -172,14 +181,52 @@ public class EventScreen extends Screen {
         this.deleteButton.setY(layout.panelBottom - 52);
         this.addRenderableWidget(new WorkspaceButton(actionX, layout.panelBottom - 28, actionWidth, 20,
                 CommonComponents.GUI_DONE, false, button -> this.onClose()));
+        this.addRenderableWidget(new WorkspaceButton(settingsX, layout.panelBottom - 28, settingsWidth, 20,
+                Component.translatable("screen.music_and_melody.sound_pools"), false,
+                button -> openSoundPools()));
         buildPlaybackControls(layout);
+        positionSettingsWidgets(layout);
 
-        if (this.selectedIndex >= 0 && this.selectedIndex < this.entries.size()) {
+        if (this.soundPoolsSnapshot != null) {
+            restoreEditor(this.soundPoolsSnapshot);
+            this.soundPoolsSnapshot = null;
+        } else if (this.selectedIndex >= 0 && this.selectedIndex < this.entries.size()) {
             select(this.selectedIndex);
         } else {
             clearEditor();
         }
         refreshEditorState();
+    }
+
+    private void openSoundPools() {
+        if (this.musicField == null || this.weightField == null || this.conditionsField == null) {
+            return;
+        }
+        this.soundPoolsSnapshot = new EditorSnapshot(
+                this.selectedIndex,
+                this.categoryIndex,
+                this.priorityIndex,
+                this.replace,
+                this.sustain,
+                this.constant,
+                this.musicField.getValue(),
+                this.weightField.getValue(),
+                this.conditionsField.getValue());
+        this.minecraft.setScreen(new SoundPoolsScreen(this));
+    }
+
+    private void restoreEditor(EditorSnapshot snapshot) {
+        this.loadingEditor = true;
+        this.selectedIndex = snapshot.selectedIndex;
+        this.categoryIndex = snapshot.categoryIndex;
+        this.priorityIndex = snapshot.priorityIndex;
+        this.replace = snapshot.replace;
+        this.sustain = snapshot.sustain;
+        this.constant = snapshot.constant;
+        this.musicField.setValue(snapshot.music);
+        this.weightField.setValue(snapshot.weight);
+        this.conditionsField.setValue(snapshot.conditions);
+        this.loadingEditor = false;
     }
 
     @Override
@@ -248,7 +295,18 @@ public class EventScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return super.mouseScrolled(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier, scrollX, scrollY);
+        int x = toLayoutMouse(mouseX);
+        int y = toLayoutMouse(mouseY);
+        EditorLayout layout = editorLayout();
+        if (x >= layout.leftX && x < layout.leftX + layout.leftWidth
+                && y >= settingsViewportTop() && y < settingsViewportBottom(layout)
+                && this.settingsScrollMax > 0) {
+            this.settingsScroll = Math.max(0,
+                    Math.min(this.settingsScrollMax, this.settingsScroll - scrollY * SETTINGS_STEP));
+            positionSettingsWidgets(layout);
+            return true;
+        }
+        return super.mouseScrolled(x, y, scrollX, scrollY);
     }
 
     private EditorLayout editorLayout() {
@@ -340,7 +398,7 @@ public class EventScreen extends Screen {
         int titleX = layout.rightX + 8;
         if (source != null) {
             int iconSize = 18;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, source.icon()), titleX, PANEL_TOP + 14,
+            graphics.blit(RenderPipelines.GUI_TEXTURED, MusicScreenHelper.albumIcon(this.minecraft, source.icon()), titleX, PANEL_TOP + 16,
                     0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
             titleX += iconSize + 6;
         }
@@ -359,15 +417,18 @@ public class EventScreen extends Screen {
             }
         }
 
-        int controlLabelY = PANEL_TOP + 30;
-        int controlStep = settingsStep(layout);
+        int controlLabelY = PANEL_TOP + 30 - (int) Math.round(this.settingsScroll);
         int settingsX = layout.leftX + 8;
+        graphics.enableScissor(layout.leftX + 1, settingsViewportTop(),
+                layout.leftX + layout.leftWidth - 1, settingsViewportBottom(layout));
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.type"), settingsX, controlLabelY, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + controlStep, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.replace"), settingsX, controlLabelY + controlStep * 2, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + controlStep * 3, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + controlStep * 4, TEXT_DESCRIPTION);
-        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + controlStep * 5, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.priority"), settingsX, controlLabelY + SETTINGS_STEP, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.replace"), settingsX, controlLabelY + SETTINGS_STEP * 2, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.sustain"), settingsX, controlLabelY + SETTINGS_STEP * 3, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.constant"), settingsX, controlLabelY + SETTINGS_STEP * 4, TEXT_DESCRIPTION);
+        ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.weight"), settingsX, controlLabelY + SETTINGS_STEP * 5, TEXT_DESCRIPTION);
+        graphics.disableScissor();
+        renderSettingsScrollbar(graphics, layout, mouseX, mouseY);
 
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.music"), layout.middleX + 8, PANEL_TOP + 27, TEXT_DESCRIPTION);
         ThemeHelper.text(graphics, this.font, Component.translatable("screen.music_and_melody.event_editor.conditions"), layout.middleX + 8, PANEL_TOP + 65, TEXT_DESCRIPTION);
@@ -401,17 +462,83 @@ public class EventScreen extends Screen {
         else if (elapsed < pause + move + pause) fraction = 1.0F;
         else fraction = 1.0F - (elapsed - pause - move - pause) / (float) move;
         int offset = Math.round(travel * Math.max(0.0F, Math.min(1.0F, fraction)));
-        graphics.enableScissor(x, y, x + width, y + this.font.lineHeight);
+        graphics.enableScissor(x, y - 1, x + width, y + this.font.lineHeight + 2);
         ThemeHelper.text(graphics, this.font, text, x - offset, y, color);
         graphics.disableScissor();
     }
 
-    private static int settingsStep(EditorLayout layout) {
-        int available = layout.bottomPanelTop - PANEL_GAP - (PANEL_TOP + 42) - 20;
-        return Math.max(24, Math.min(42, available / 5));
+    private int settingsControlY() {
+        return PANEL_TOP + 42 - (int) Math.round(this.settingsScroll);
+    }
+
+    private int settingsViewportTop() {
+        return PANEL_TOP + 27;
+    }
+
+    private int settingsViewportBottom(EditorLayout layout) {
+        return layout.panelBottom - 35;
+    }
+
+    private void updateSettingsScroll(EditorLayout layout) {
+        int contentBottom = PANEL_TOP + 42 + SETTINGS_STEP * 5 + 20;
+        this.settingsScrollMax = Math.max(0, contentBottom - settingsViewportBottom(layout));
+        this.settingsScroll = Math.max(0, Math.min(this.settingsScroll, this.settingsScrollMax));
+    }
+
+    private void positionSettingsWidgets(EditorLayout layout) {
+        AbstractWidget[] widgets = {
+                this.categoryButton,
+                this.priorityButton,
+                this.replaceButton,
+                this.sustainButton,
+                this.constantButton,
+                this.weightField
+        };
+        int y = settingsControlY();
+        int top = settingsViewportTop();
+        int bottom = settingsViewportBottom(layout);
+        for (int index = 0; index < widgets.length; index++) {
+            AbstractWidget widget = widgets[index];
+            widget.setY(y + SETTINGS_STEP * index);
+            widget.visible = widget.getY() >= top && widget.getY() + widget.getHeight() <= bottom;
+        }
+    }
+
+    private void renderSettingsScrollbar(GuiGraphicsExtractor graphics, EditorLayout layout,
+                                          int mouseX, int mouseY) {
+        if (this.settingsScrollMax <= 0) {
+            return;
+        }
+        int top = settingsViewportTop();
+        int bottom = settingsViewportBottom(layout);
+        int viewport = bottom - top;
+        int thumbHeight = Math.max(16,
+                (int) Math.round(viewport * viewport / (viewport + this.settingsScrollMax)));
+        int thumbY = top + (int) Math.round(
+                (viewport - thumbHeight) * this.settingsScroll / this.settingsScrollMax);
+        int x = layout.leftX + layout.leftWidth - 5;
+        graphics.fill(x, top, x + 2, bottom, BAR_BACKGROUND);
+        int color = mouseX >= x - 2 && mouseX <= x + 4
+                && mouseY >= thumbY && mouseY <= thumbY + thumbHeight
+                ? PANEL_HIGHLIGHTED
+                : SCROLLBAR_THUMB;
+        graphics.fill(x - 1, thumbY, x + 3, thumbY + thumbHeight, color);
     }
 
     private record EditorLayout(int leftX, int leftWidth, int middleX, int middleWidth, int rightX, int rightWidth, int panelBottom, int bottomPanelTop) { }
+
+    private record EditorSnapshot(
+            int selectedIndex,
+            int categoryIndex,
+            int priorityIndex,
+            boolean replace,
+            boolean sustain,
+            boolean constant,
+            String music,
+            String weight,
+            String conditions
+    ) {
+    }
 
     @Override
     public void onClose() {
@@ -495,7 +622,7 @@ public class EventScreen extends Screen {
     private void clearEditor() {
         this.selectedIndex = -1;
         this.loadingEditor = true;
-        this.categoryIndex = Event.CategoryType.PLAYLIST.ordinal();
+        this.categoryIndex = Event.CategoryType.POOL.ordinal();
         this.priorityIndex = Event.PriorityType.LOW.ordinal();
         this.replace = false;
         this.sustain = true;
@@ -601,7 +728,12 @@ public class EventScreen extends Screen {
         if (this.replaceButton != null) this.replaceButton.setMessage(replaceMessage());
         if (this.sustainButton != null) this.sustainButton.setMessage(sustainMessage());
         if (this.constantButton != null) this.constantButton.setMessage(constantMessage());
-        if (this.musicField != null) this.musicField.setHint(Component.literal("eg. " + musicExample()).withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
+        if (this.musicField != null) {
+            String example = this.font.plainSubstrByWidth("eg. " + musicExample(),
+                    Math.max(0, this.musicField.getWidth() - 8));
+            this.musicField.setHint(Component.literal(example)
+                    .withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
+        }
 
         Event.Record.Entry draft = editorEntry();
         Event.Source source = selectedSource();
@@ -702,7 +834,7 @@ public class EventScreen extends Screen {
         for (int i = 0; i < CATEGORIES.length; i++) {
             if (Event.categoryName(CATEGORIES[i]).equals(category.toLowerCase(Locale.ROOT))) return i;
         }
-        return Event.CategoryType.PLAYLIST.ordinal();
+        return Event.CategoryType.POOL.ordinal();
     }
 
     private static int priorityIndex(String priority) {
