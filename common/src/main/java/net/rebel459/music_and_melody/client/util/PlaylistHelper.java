@@ -725,7 +725,7 @@ public final class PlaylistHelper {
     }
 
     public static boolean isEmptyMusic(SoundInstance instance) {
-        return instance != null && instance.getIdentifier().toString().equals(MusicAndMelody.MOD_ID + ":music.empty");
+        return instance != null && instance.getIdentifier().toString().equals(MusicAndMelody.MOD_ID + ":empty");
     }
 
     private static int clampQueueIndex(int index) {
