@@ -212,7 +212,7 @@ public class EventScreen extends Screen {
                 this.musicField.getValue(),
                 this.weightField.getValue(),
                 this.conditionsField.getValue());
-        this.minecraft.setScreen(new SoundPoolsScreen(this));
+        this.minecraft.gui.setScreen(new SoundPoolsScreen(this));
     }
 
     private void restoreEditor(EditorSnapshot snapshot) {
