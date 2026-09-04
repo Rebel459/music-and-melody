@@ -86,9 +86,7 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         LinkedHashMap<String, String> tracksById = new LinkedHashMap<>();
 
         for (Album.Track entry : entries) {
-            List<String> expandedTracks = entry.folder()
-                    ? folderTracks(albumId, entry.path(), resourceManager)
-                    : List.of(entry.path());
+            List<String> expandedTracks = entry.folder() ? folderTracks(albumId, entry.path(), resourceManager) : List.of(entry.path());
 
             for (String song : expandedTracks) {
                 String id = trackId(albumId, song).toString();
@@ -145,19 +143,22 @@ public class AlbumListener extends SimpleJsonResourceReloadListener<Album.Record
         String directory = "sounds/" + normalized;
         String prefix = directory + "/";
 
-        return resourceManager.listResources(directory, id ->
-                        id.getNamespace().equals(validFolderId.getNamespace())
-                                && id.getPath().startsWith(prefix)
-                                && id.getPath().endsWith(".ogg")
-                )
+        return resourceManager.listResources(directory, id -> id.getNamespace().equals(validFolderId.getNamespace()) && id.getPath().startsWith(prefix) && isSupportedAudio(id.getPath()))
                 .keySet()
                 .stream()
-                .map(id -> id.getNamespace() + ":" + id.getPath().substring(
-                        "sounds/".length(),
-                        id.getPath().length() - ".ogg".length()
-                ))
+                .map(id -> id.getNamespace() + ":" + resourceTrackPath(id.getPath()))
                 .sorted(Comparator.naturalOrder())
                 .toList();
+    }
+
+    private static String resourceTrackPath(String path) {
+        String track = path.substring("sounds/".length());
+        return track.toLowerCase(Locale.ROOT).endsWith(".ogg") ? track.substring(0, track.length() - ".ogg".length()) : track;
+    }
+
+    private static boolean isSupportedAudio(String path) {
+        String lower = path.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".ogg") || lower.endsWith(".mp3") || lower.endsWith(".flac") || lower.endsWith(".wav");
     }
 
     private static String normalize(String value) {

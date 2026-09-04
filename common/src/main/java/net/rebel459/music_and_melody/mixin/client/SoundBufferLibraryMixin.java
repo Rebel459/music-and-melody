@@ -46,6 +46,19 @@ public abstract class SoundBufferLibraryMixin {
 
 			cir.setReturnValue(future);
 		});
+		DirectSoundFiles.getResource(location).ifPresent(source -> {
+			CompletableFuture<SoundBuffer> future = this.cache.computeIfAbsent(location, ignored ->
+					CompletableFuture.supplyAsync(() -> {
+						try (AudioStream audioStream = openResourceStream(source, false)) {
+							ByteBuffer data = AudioStreams.readAll(audioStream);
+							return new SoundBuffer(data, audioStream.getFormat());
+						} catch (IOException exception) {
+							throw new CompletionException(exception);
+						}
+					}, Util.nonCriticalIoPool())
+			);
+			cir.setReturnValue(future);
+		});
 	}
 
 	@Inject(method = "getStream", at = @At("HEAD"), cancellable = true)
@@ -61,6 +74,18 @@ public abstract class SoundBufferLibraryMixin {
 				}
 			}, Util.nonCriticalIoPool());
 
+			cir.setReturnValue(future);
+		});
+		DirectSoundFiles.getResource(location).ifPresent(source -> {
+			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
+				try {
+					AudioStream stream = openResourceStream(source, looping);
+					skipToRequestedOffset(stream, PlaylistHelper.consumePendingSeekMillis(location));
+					return stream;
+				} catch (IOException exception) {
+					throw new CompletionException(exception);
+				}
+			}, Util.nonCriticalIoPool());
 			cir.setReturnValue(future);
 		});
 	}
@@ -103,6 +128,18 @@ public abstract class SoundBufferLibraryMixin {
 			return looping ? AudioStreams.openLooping(path) : AudioStreams.open(path);
 		}
 		InputStream inputStream = Files.newInputStream(path);
+		return looping
+				? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
+				: new JOrbisAudioStream(inputStream);
+	}
+
+	private static AudioStream openResourceStream(DirectSoundFiles.ResourceSource source, boolean looping) throws IOException {
+		if (!source.extension().equals("ogg")) {
+			return looping
+					? AudioStreams.openLooping(source.stream(), source.extension())
+					: AudioStreams.open(source.stream().get(), source.extension());
+		}
+		InputStream inputStream = source.stream().get();
 		return looping
 				? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
 				: new JOrbisAudioStream(inputStream);

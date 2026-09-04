@@ -6,6 +6,7 @@ import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
 import net.minecraft.client.sounds.AudioStream;
 import net.minecraft.client.sounds.FloatSampleSource;
+import net.minecraft.server.packs.resources.IoSupplier;
 import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import org.jflac.FLACDecoder;
 import org.jflac.frame.Frame;
@@ -37,16 +38,24 @@ public final class AudioStreams {
     }
 
     public static AudioStream open(Path path) throws IOException {
-        return switch (extension(path)) {
-            case "mp3" -> new Mp3(Files.newInputStream(path));
-            case "flac" -> new Flac(Files.newInputStream(path));
-            case "wav" -> new Wav(Files.newInputStream(path));
-            default -> throw new IOException("No external decoder for '" + path + "'.");
+        return open(Files.newInputStream(path), extension(path));
+    }
+
+    public static AudioStream open(InputStream input, String extension) throws IOException {
+        return switch (extension.toLowerCase(Locale.ROOT)) {
+            case "mp3" -> new Mp3(input);
+            case "flac" -> new Flac(input);
+            case "wav" -> new Wav(input);
+            default -> throw new IOException("No external decoder for '" + extension + "'.");
         };
     }
 
     public static AudioStream openLooping(Path path) throws IOException {
         return new Looping(path, open(path));
+    }
+
+    public static AudioStream openLooping(IoSupplier<InputStream> stream, String extension) throws IOException {
+        return new ResourceLooping(stream, extension, open(stream.get(), extension));
     }
 
     public static ByteBuffer readAll(AudioStream stream) throws IOException {
@@ -276,6 +285,48 @@ public final class AudioStreams {
                 if (!block.hasRemaining()) {
                     stream.close();
                     stream = open(path);
+                    if (!stream.getFormat().matches(format)) throw new IOException("Looping stream format changed.");
+                    continue;
+                }
+                byte[] bytes = new byte[block.remaining()];
+                block.get(bytes);
+                output.write(bytes);
+            }
+            return directBuffer(output.toByteArray());
+        }
+
+        @Override
+        public void close() throws IOException {
+            stream.close();
+        }
+    }
+
+    private static final class ResourceLooping implements AudioStream {
+        private final IoSupplier<InputStream> source;
+        private final String extension;
+        private AudioStream stream;
+        private final AudioFormat format;
+
+        private ResourceLooping(IoSupplier<InputStream> source, String extension, AudioStream stream) {
+            this.source = source;
+            this.extension = extension;
+            this.stream = stream;
+            this.format = stream.getFormat();
+        }
+
+        @Override
+        public AudioFormat getFormat() {
+            return format;
+        }
+
+        @Override
+        public ByteBuffer read(int requested) throws IOException {
+            ByteArrayOutputStream output = new ByteArrayOutputStream(requested);
+            while (output.size() < requested) {
+                ByteBuffer block = stream.read(requested - output.size());
+                if (!block.hasRemaining()) {
+                    stream.close();
+                    stream = open(source.get(), extension);
                     if (!stream.getFormat().matches(format)) throw new IOException("Looping stream format changed.");
                     continue;
                 }
