@@ -466,7 +466,7 @@ final class SoundPoolsScreen extends Screen {
 
     private void done() {
         if (this.dirty) {
-            this.minecraft.setScreen(new ThemeExitConfirmScreen(this,
+            this.minecraft.gui.setScreen(new ThemeExitConfirmScreen(this,
                     Component.translatable("screen.music_and_melody.sound_pools.unsaved"),
                     Component.translatable("screen.music_and_melody.sound_pools.unsaved_warning"), this::finish));
         } else {
@@ -476,9 +476,9 @@ final class SoundPoolsScreen extends Screen {
 
     void finish(boolean save) {
         if (!save || save()) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
         } else {
-            this.minecraft.setScreen(this);
+            this.minecraft.gui.setScreen(this);
         }
     }
 
