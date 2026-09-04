@@ -13,7 +13,6 @@ public abstract class SimpleMusicDelayMixin {
 
     @Inject(method = "getMusicFrequency", at = @At(value = "HEAD"), cancellable = true)
     private static void useSimpleMusicControlFrequency(CallbackInfoReturnable<Pair<Integer, Integer>> cir) {
-        if (!SMC.CONFIG.modifyMusicDelays.get()) return;
         cir.setReturnValue(Pair.of(SMC.CONFIG.musicMinDelay.get(), SMC.CONFIG.musicMaxDelay.get()));
     }
 }

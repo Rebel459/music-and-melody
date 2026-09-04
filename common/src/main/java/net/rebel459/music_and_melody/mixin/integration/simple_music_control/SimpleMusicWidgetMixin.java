@@ -18,9 +18,7 @@ public abstract class SimpleMusicWidgetMixin {
 
     @Inject(method = "displayWidget", at = @At("HEAD"), cancellable = true)
     private static void hideEmptyMusic(SoundInstance sound, CallbackInfo ci) {
-        if (PlaylistHelper.isEmptyMusic(sound)) {
-            ci.cancel();
-        }
+        if (PlaylistHelper.isEmptyMusic(sound)) ci.cancel();
     }
 
     @Inject(method = "displayWidget", at = @At("TAIL"))
