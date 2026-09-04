@@ -27,10 +27,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class Playlist {
@@ -168,7 +167,7 @@ public class Playlist {
         nameObject.addProperty("text", trimmedName);
         root.add("name", nameObject);
         root.addProperty("icon", icon.toString());
-        root.add("entries", entries(groupEntries(queuedSongs, false), groupEntries(queuedSongs, true)));
+        root.add("entries", identifierEntries(queuedSongs));
 
         try {
             Files.createDirectories(path.getParent());
@@ -190,8 +189,12 @@ public class Playlist {
         List<SafeIdentifier> tracks = new ArrayList<>();
         List<Identifier> discs = new ArrayList<>();
         record.entries().forEach(entry -> {
-            entry.tracks().forEach(track -> tracks.add(SafeIdentifier.fromNamespaceAndPath(entry.namespace(), track)));
-            entry.discs().forEach(disc -> discs.add(Identifier.fromNamespaceAndPath(entry.namespace(), disc)));
+            entry.tracks().forEach(track -> tracks.add(entry.namespace()
+                    .map(namespace -> SafeIdentifier.fromNamespaceAndPath(namespace, track))
+                    .orElseGet(() -> SafeIdentifier.parse(track))));
+            entry.discs().forEach(disc -> discs.add(entry.namespace()
+                    .map(namespace -> Identifier.fromNamespaceAndPath(namespace, disc))
+                    .orElseGet(() -> Identifier.parse(disc))));
         });
         return new Playlist(id, record.name(), record.icon(), tracks, discs, record.hidden, source);
     }
@@ -205,36 +208,23 @@ public class Playlist {
         }
     }
 
-    private static Map<String, List<String>> groupEntries(List<MaMDataConfig.Entry> queuedSongs, boolean discs) {
-        Map<String, List<String>> grouped = new LinkedHashMap<>();
-        for (MaMDataConfig.Entry entry : queuedSongs) {
-            if (entry == null || entry.isDisc() != discs || (!entry.isTrack() && !entry.isDisc())) continue;
-            SafeIdentifier queuedSong = SafeIdentifier.parse(entry.id);
-            grouped.computeIfAbsent(queuedSong.getNamespace(), namespace -> new ArrayList<>()).add(queuedSong.getPath());
+    private static JsonArray identifierEntries(List<MaMDataConfig.Entry> queuedSongs) {
+        JsonObject identifierEntry = new JsonObject();
+        JsonArray tracks = new JsonArray();
+        JsonArray discs = new JsonArray();
+        for (MaMDataConfig.Entry queuedSong : queuedSongs) {
+            if (queuedSong == null || (!queuedSong.isTrack() && !queuedSong.isDisc())) continue;
+            (queuedSong.isDisc() ? discs : tracks).add(queuedSong.id);
         }
-        return grouped;
-    }
-
-    private static JsonArray entries(Map<String, List<String>> tracks, Map<String, List<String>> discs) {
         JsonArray entries = new JsonArray();
-        Set<String> namespaces = new HashSet<>();
-        namespaces.addAll(tracks.keySet());
-        namespaces.addAll(discs.keySet());
-        namespaces.stream().sorted(String.CASE_INSENSITIVE_ORDER).forEach(namespace -> {
-            JsonObject entry = new JsonObject();
-            entry.addProperty("namespace", namespace);
-            addPaths(entry, "tracks", tracks.getOrDefault(namespace, List.of()));
-            addPaths(entry, "discs", discs.getOrDefault(namespace, List.of()));
-            entries.add(entry);
-        });
+        addIdentifiers(identifierEntry, "tracks", tracks);
+        addIdentifiers(identifierEntry, "discs", discs);
+        entries.add(identifierEntry);
         return entries;
     }
 
-    private static void addPaths(JsonObject entry, String key, List<String> paths) {
-        if (paths.isEmpty()) return;
-        JsonArray values = new JsonArray();
-        paths.forEach(values::add);
-        entry.add(key, values);
+    private static void addIdentifiers(JsonObject entry, String key, JsonArray identifiers) {
+        if (!identifiers.isEmpty()) entry.add(key, identifiers);
     }
 
     private static boolean isJson(Path path) {
@@ -288,9 +278,9 @@ public class Playlist {
         ).apply(instance, Record::new));
     }
 
-    public record Entry(String namespace, List<String> tracks, List<String> discs) {
+    public record Entry(Optional<String> namespace, List<String> tracks, List<String> discs) {
         private static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ExtraCodecs.NON_EMPTY_STRING.fieldOf("namespace").forGetter(Entry::namespace),
+                ExtraCodecs.NON_EMPTY_STRING.optionalFieldOf("namespace").forGetter(Entry::namespace),
                 Codec.STRING.listOf().optionalFieldOf("tracks", List.of()).forGetter(Entry::tracks),
                 Codec.STRING.listOf().optionalFieldOf("discs", List.of()).forGetter(Entry::discs)
         ).apply(instance, Entry::new));

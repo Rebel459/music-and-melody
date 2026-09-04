@@ -261,8 +261,7 @@ public class EventHelper {
     }
 
     public static Pair<Integer, Integer> getMusicFrequency() {
-        MusicManager.MusicFrequency frequency = Minecraft.getInstance().getMusicManager().gameMusicFrequency;
-        return switch (frequency) {
+        return switch (Minecraft.getInstance().getMusicManager().gameMusicFrequency) {
             case DEFAULT -> Pair.of(600, 1200);
             case FREQUENT -> Pair.of(300, 600);
             case CONSTANT -> Pair.of(0, 0);
