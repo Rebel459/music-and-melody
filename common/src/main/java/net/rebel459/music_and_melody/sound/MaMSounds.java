@@ -16,7 +16,7 @@ public class MaMSounds {
 
 	private static final UnifiedRegistries.SoundEvents SOUNDS = UnifiedRegistries.SoundEvents.create(MusicAndMelody.MOD_ID);
 
-	public static Holder<SoundEvent> EMPTY = SOUNDS.registerForHolder("music.empty");
+	public static Holder<SoundEvent> EMPTY = SOUNDS.registerForHolder("empty");
 
 	public static void init() {
 		if (!UnifiedPlatform.isModLoaded("drops_backport")) {

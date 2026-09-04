@@ -463,7 +463,7 @@
       },
       {
         "name": "music_and_melody:empty",
-        "stream": true
+        "type": "event"
       }
     ]
   },
