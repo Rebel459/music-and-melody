@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.client.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
 import java.io.InputStream;
@@ -28,6 +29,10 @@ public final class SafeMusicHelper {
 	}
 
 	public static Optional<ResourceTrack> resolveResource(SafeIdentifier id) {
+		return resolveResource(id, Minecraft.getInstance().getResourceManager());
+	}
+
+	public static Optional<ResourceTrack> resolveResource(SafeIdentifier id, ResourceManager resourceManager) {
 		String path = normalize(id.getPath());
 		String suffix = extension(path);
 		if (!isSupportedAudioExtension(suffix)) {
@@ -44,7 +49,7 @@ public final class SafeMusicHelper {
 			return Optional.empty();
 		}
 
-		List<PackResources> packs = Minecraft.getInstance().getResourceManager().listPacks().toList();
+		List<PackResources> packs = resourceManager.listPacks().toList();
 		for (int index = packs.size() - 1; index >= 0; index--) {
 			IoSupplier<InputStream> stream;
 			try {
