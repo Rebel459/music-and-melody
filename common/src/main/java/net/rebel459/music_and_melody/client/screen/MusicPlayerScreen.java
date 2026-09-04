@@ -560,7 +560,10 @@ public class MusicPlayerScreen extends Screen {
         this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP, buttonWidth, 22,
                 Component.translatable("button.music_and_melody.server"), false,
                 button -> this.minecraft.setScreen(AutoConfigClient.getConfigScreen(MaMServerConfig.class, this).get())));
-        this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + HOME_BUTTON_STEP * 2, buttonWidth, 20));
+        this.addRenderableWidget(new WorkspaceButton(x, y + HOME_BUTTON_STEP * 2, buttonWidth, 22,
+                Component.translatable("screen.music_and_melody.sound_pools"), false,
+                button -> this.minecraft.setScreen(new SoundPoolsScreen(this))));
+        this.addRenderableWidget(new GuiMultiplierSlider(this, x, y + HOME_BUTTON_STEP * 3, buttonWidth, 20));
     }
 
     private int mainMenuButtonWidth() {
@@ -3843,4 +3846,5 @@ public class MusicPlayerScreen extends Screen {
             return true;
         }
     }
+
 }

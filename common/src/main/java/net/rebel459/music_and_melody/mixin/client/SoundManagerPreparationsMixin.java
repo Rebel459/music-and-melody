@@ -5,16 +5,11 @@ import net.minecraft.client.resources.sounds.SoundEventRegistration;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.IoSupplier;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
-import net.rebel459.music_and_melody.client.util.CustomAlbums;
-import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeMusicHelper;
-import net.rebel459.music_and_melody.client.util.VanillaSoundSupport;
-import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
-import net.rebel459.music_and_melody.client.util.CustomSounds;
+import net.minecraft.util.valueproviders.ConstantFloat;
+import net.rebel459.music_and_melody.client.util.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,7 +17,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Optional;
 
 @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
 public class SoundManagerPreparationsMixin {
@@ -44,6 +42,7 @@ public class SoundManagerPreparationsMixin {
     @Inject(method = "listResources", at = @At("RETURN"))
     private void addConfigAlbumSounds(ResourceManager resourceManager, CallbackInfo ci) {
         this.resourceManager = resourceManager;
+        PlaylistHelper.STORED_VOLUME.clear();
         CustomAlbums.addSoundResources(this.soundCache);
     }
 
@@ -69,9 +68,10 @@ public class SoundManagerPreparationsMixin {
         while (iterator.hasNext()) {
             Sound sound = iterator.next();
             Identifier id = sound.getLocation();
-            SafeIdentifier source = VanillaSoundSupport.source(id).orElseGet(() -> SafeIdentifier.convert(id));
-            PlaylistHelper.STORED_VOLUME.put(source, sound.getVolume());
-            if (sound.getType() == Sound.Type.FILE && this.resourceManager != null) {
+            Optional<SafeIdentifier> mappedSource = VanillaSoundSupport.source(id);
+            SafeIdentifier source = mappedSource.orElseGet(() -> SafeIdentifier.convert(id));
+            if (!(sound.getVolume() instanceof ConstantFloat(float volume)) || Float.compare(volume, 1.0F) != 0) PlaylistHelper.STORED_VOLUME.put(source, sound.getVolume());
+            if (mappedSource.isPresent() && sound.getType() == Sound.Type.FILE && this.resourceManager != null) {
                 Identifier fileId = sound.getPath();
                 CustomAlbums.file(source).or(() -> SafeMusicHelper.resolve(source)).ifPresentOrElse(path -> {
                     DirectSoundFiles.register(fileId, id, source, source, path);
