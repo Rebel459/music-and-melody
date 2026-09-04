@@ -5,6 +5,7 @@ import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
 import net.rebel459.music_and_melody.client.util.EventHelper;
+import net.rebel459.music_and_melody.client.util.SoundVolumeController;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,48 +35,53 @@ public class SoundManagerMixin {
         if (this.currentVolume == -1F) this.currentVolume = targetVolume;
         if (activeJukebox && clientConfig.jukebox_fading) {
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+            musicAndMelody$updateMusicVolume(this.currentVolume);
         } else if (!activeJukebox && EventHelper.isFadingOutCurrentEvent()) {
             if (!EventHelper.shouldContinueCurrentEventFadeOut()) {
                 EventHelper.clearCurrentEventFadeOut();
                 if (this.currentVolume < targetVolume) {
                     this.currentVolume = targetVolume;
-                    manager.updateSourceVolume(SoundSource.MUSIC, targetVolume);
+                    musicAndMelody$updateMusicVolume(targetVolume);
                 }
                 return;
             }
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+            musicAndMelody$updateMusicVolume(this.currentVolume);
             if (this.currentVolume <= 0.001F) {
                 EventHelper.finishCurrentEventFadeOut();
                 this.currentVolume = 0F;
-                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+                musicAndMelody$updateMusicVolume(this.currentVolume);
             }
         } else if (!activeJukebox && EventHelper.isFading()) {
             if (!EventHelper.shouldContinueEventFade()) {
                 EventHelper.clearFadeEvent();
                 if (this.currentVolume < targetVolume) {
                     this.currentVolume = targetVolume;
-                    manager.updateSourceVolume(SoundSource.MUSIC, targetVolume);
+                    musicAndMelody$updateMusicVolume(targetVolume);
                 }
                 return;
             }
             this.currentVolume = Math.max(this.currentVolume - fade, 0F);
-            manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+            musicAndMelody$updateMusicVolume(this.currentVolume);
             if (this.currentVolume <= 0.001F) {
                 Minecraft.getInstance().getMusicManager().stopPlaying();
                 EventHelper.finishFade();
                 this.currentVolume = 0F;
-                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+                musicAndMelody$updateMusicVolume(this.currentVolume);
             }
         } else {
             if (this.currentVolume > targetVolume) {
                 this.currentVolume = targetVolume;
-                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+                musicAndMelody$updateMusicVolume(this.currentVolume);
             } else if (this.currentVolume < targetVolume) {
                 this.currentVolume = Math.min(this.currentVolume + fade, targetVolume);
-                manager.updateSourceVolume(SoundSource.MUSIC, this.currentVolume);
+                musicAndMelody$updateMusicVolume(this.currentVolume);
             }
         }
+    }
+
+    @Unique
+    private void musicAndMelody$updateMusicVolume(float volume) {
+        ((SoundVolumeController) this.soundEngine).setMusicVolume(volume);
     }
 }

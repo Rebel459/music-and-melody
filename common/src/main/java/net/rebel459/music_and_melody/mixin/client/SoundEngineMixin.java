@@ -6,8 +6,10 @@ import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SoundEngineStopper;
+import net.rebel459.music_and_melody.client.util.SoundVolumeController;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Mixin(SoundEngine.class)
-public abstract class SoundEngineMixin implements SoundEngineStopper {
+public abstract class SoundEngineMixin implements SoundEngineStopper, SoundVolumeController {
 
     @Shadow
     @Final
@@ -87,5 +89,16 @@ public abstract class SoundEngineMixin implements SoundEngineStopper {
         this.queuedSounds.clear();
         this.queuedTickableSounds.clear();
         return true;
+    }
+
+    @Override
+    public void setMusicVolume(float volume) {
+        for (SoundInstance instance : new ArrayList<>(this.instanceBySource.get(SoundSource.MUSIC))) {
+            ChannelAccess.ChannelHandle channel = this.instanceToChannel.get(instance);
+            if (channel == null) continue;
+
+            float instanceVolume = Mth.clamp(instance.getVolume() * volume, 0F, 1F);
+            channel.execute(source -> source.setVolume(instanceVolume));
+        }
     }
 }
