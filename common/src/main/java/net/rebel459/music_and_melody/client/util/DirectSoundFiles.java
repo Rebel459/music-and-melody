@@ -1,7 +1,9 @@
 package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.IoSupplier;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -10,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class DirectSoundFiles {
 
 	private static final Map<Identifier, Path> FILES = new ConcurrentHashMap<>();
+	private static final Map<Identifier, ResourceSource> RESOURCES = new ConcurrentHashMap<>();
 
 	// playable id / sound resource id -> display safe id
 	private static final Map<Identifier, SafeIdentifier> DISPLAY_KEYS = new ConcurrentHashMap<>();
@@ -44,6 +47,29 @@ public final class DirectSoundFiles {
 		registerAlias(SafeIdentifier.convert(soundResourceId), playableId);
 	}
 
+	public static void registerResource(
+			Identifier soundResourceId,
+			Identifier playableId,
+			SafeIdentifier originalLocation,
+			SafeIdentifier displayName,
+			IoSupplier<InputStream> stream,
+			String extension
+	) {
+		ResourceSource source = new ResourceSource(stream, extension);
+		RESOURCES.put(soundResourceId, source);
+		RESOURCES.put(playableId, source);
+
+		DISPLAY_KEYS.put(playableId, displayName);
+		DISPLAY_KEYS.put(soundResourceId, displayName);
+		IDENTIFIER_PLAYABLE_IDS.put(playableId, playableId);
+		IDENTIFIER_PLAYABLE_IDS.put(soundResourceId, playableId);
+
+		registerAlias(originalLocation, playableId);
+		registerAlias(displayName, playableId);
+		registerAlias(SafeIdentifier.convert(playableId), playableId);
+		registerAlias(SafeIdentifier.convert(soundResourceId), playableId);
+	}
+
 	private static void registerAlias(SafeIdentifier alias, Identifier playableId) {
 		if (alias != null) {
 			PLAYABLE_IDS.put(alias, playableId);
@@ -52,6 +78,14 @@ public final class DirectSoundFiles {
 
 	public static Optional<Path> get(Identifier soundResourceId) {
 		return Optional.ofNullable(FILES.get(soundResourceId));
+	}
+
+	public static Optional<ResourceSource> getResource(Identifier soundResourceId) {
+		return Optional.ofNullable(RESOURCES.get(soundResourceId));
+	}
+
+	public static void clearResources() {
+		RESOURCES.clear();
 	}
 
 	public static Optional<String> getName(Identifier id) {
@@ -109,6 +143,8 @@ public final class DirectSoundFiles {
 	}
 
 	public static boolean contains(Identifier soundResourceId) {
-		return FILES.containsKey(soundResourceId);
+		return FILES.containsKey(soundResourceId) || RESOURCES.containsKey(soundResourceId);
 	}
+
+	public record ResourceSource(IoSupplier<InputStream> stream, String extension) {}
 }

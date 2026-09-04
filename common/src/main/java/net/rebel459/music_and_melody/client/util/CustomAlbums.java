@@ -85,7 +85,7 @@ public final class CustomAlbums {
     public static synchronized Identifier idToFile(SafeIdentifier id) {
         Path file = FILES.get(id);
         String suffix = file == null ? ".ogg" : extension(file);
-        String path = id.getPath();
+        String path = sanitize(playablePath(id.getPath()));
         if (!path.toLowerCase(Locale.ROOT).endsWith(suffix)) path += suffix;
         return Identifier.fromNamespaceAndPath(id.getNamespace(), "sounds/" + path);
     }
@@ -322,15 +322,10 @@ public final class CustomAlbums {
         } catch (IOException ignored) {
             return;
         }
-        Set<String> used = new HashSet<>();
         List<String> trackFiles = new ArrayList<>();
         for (Path file : files) {
             String relative = directory.relativize(file).toString().replace('\\', '/');
-            // The source filename is not necessarily a valid resource path (for
-            // example, "01. Earth.mp3"). Keep it only for display/file access;
-            // the runtime config identifier must always use safe characters.
-            String path = uniquePath(sanitize(playablePath(relative)), used);
-            SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", idPath + "/" + path);
+            SafeIdentifier id = SafeIdentifier.fromNamespaceAndPath("config", idPath + "/" + relative);
             FILES.put(id, file);
             NAMES.put(id, stem(file.getFileName().toString()));
             trackFiles.add(relative);
@@ -396,14 +391,6 @@ public final class CustomAlbums {
                 .map(part -> part.replaceAll("[^a-z0-9._-]", ""))
                 .filter(part -> !part.isBlank())
                 .collect(Collectors.joining("/"));
-    }
-
-    private static String uniquePath(String path, Set<String> usedPaths) {
-        if (usedPaths.add(path)) return path;
-        for (int i = 2; ; i++) {
-            String suffix = path + "_" + i;
-            if (usedPaths.add(suffix)) return suffix;
-        }
     }
 
     private static String uniqueFileName(String name, Set<String> used) {

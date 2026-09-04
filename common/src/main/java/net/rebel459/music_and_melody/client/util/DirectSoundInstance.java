@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.Optional;
 
 public class DirectSoundInstance extends AbstractSoundInstance {
 
@@ -32,9 +33,15 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	private static DirectSoundInstance create(SafeIdentifier id, float volume, boolean loop, Type type) {
-		Identifier actualId = Identifier.tryParse(id.toString());
-		if (actualId == null) throw new IllegalArgumentException("Could not resolve sound '" + id + "'.");
-		return new DirectSoundInstance(new ResolvedSound(actualId), SoundSource.MUSIC, volume, 1.0F, SoundInstance.createUnseededRandom(), loop, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true, type);
+		ResolvedSound resolved;
+		if (type == Type.TRACKS) {
+			resolved = resolveSound(id);
+		} else {
+			Identifier actualId = Identifier.tryParse(id.toString());
+			if (actualId == null) throw new IllegalArgumentException("Could not resolve sound '" + id + "'.");
+			resolved = new ResolvedSound(actualId);
+		}
+		return new DirectSoundInstance(resolved, SoundSource.MUSIC, volume, 1.0F, SoundInstance.createUnseededRandom(), loop, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true, type);
 	}
 
 	public DirectSoundInstance(
@@ -134,9 +141,11 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	private static ResolvedSound resolveSound(SafeIdentifier location) {
-		return CustomAlbums.file(location)
-				.or(() -> SafeMusicHelper.resolve(location))
-				.map(path -> createDirectFileSound(location, path))
+		Optional<Path> file = CustomAlbums.file(location).or(() -> SafeMusicHelper.resolve(location));
+		if (file.isPresent()) return createDirectFileSound(location, file.get());
+
+		return SafeMusicHelper.resolveResource(location)
+				.map(resource -> createDirectResourceSound(location, resource))
 				.orElseGet(() -> {
 					Identifier id = Identifier.tryParse(location.toString());
 
@@ -146,6 +155,19 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
 					throw new IllegalStateException("Could not resolve sound '" + location + "'.");
 				});
+	}
+
+	private static ResolvedSound createDirectResourceSound(SafeIdentifier originalLocation, SafeMusicHelper.ResourceTrack resource) {
+		String safePath = stripAudioExtension(SafeMusicHelper.sanitize(originalLocation.getPath()));
+		if (safePath.isBlank()) safePath = "sound";
+
+		String playablePath = "type/" + shortHash(originalLocation.toString()) + "/" + safePath;
+		Identifier playableId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, playablePath);
+		Identifier soundResourceId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "sounds/" + playablePath + ".ogg");
+		SafeIdentifier trackName = SafeIdentifier.fromNamespaceAndPath(originalLocation.getNamespace(), fileNameOnly(originalLocation.getPath()));
+		DirectSoundFiles.registerResource(soundResourceId, playableId, originalLocation, trackName,
+				resource.stream(), resource.extension());
+		return new ResolvedSound(playableId);
 	}
 
 	private static ResolvedSound createDirectFileSound(SafeIdentifier originalLocation, Path source) {
@@ -159,14 +181,8 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
 		Identifier playableId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, playablePath);
 
-		Identifier soundResourceId = Identifier.fromNamespaceAndPath(
-				MusicAndMelody.MOD_ID,
-				// Minecraft's Sound#getPath always requests FILE sounds through
-				// a synthetic .ogg resource. Keep that logical alias regardless of
-				// the physical file type; DirectSoundFiles routes it to the real file
-				// and SoundBufferLibraryMixin chooses the appropriate decoder.
-				"sounds/" + playablePath + ".ogg"
-		);
+		// .ogg always to be Minecraft-friendly, DirectSoundFiles ensures the real one actually gets used
+		Identifier soundResourceId = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "sounds/" + playablePath + ".ogg");
 
 		String configName = CustomAlbums.displayName(originalLocation);
 		SafeIdentifier trackName = SafeIdentifier.fromNamespaceAndPath(

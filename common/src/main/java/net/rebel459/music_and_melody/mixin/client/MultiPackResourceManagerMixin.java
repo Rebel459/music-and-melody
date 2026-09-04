@@ -4,6 +4,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.client.remote.DownloadedResources;
+import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,6 +25,7 @@ public class MultiPackResourceManagerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void invalidateDownloadedResources(CallbackInfo ci) {
         DownloadedResources.invalidate();
+        DirectSoundFiles.clearResources();
     }
 
     @Inject(method = "getNamespaces", at = @At("RETURN"), cancellable = true)

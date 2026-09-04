@@ -1,8 +1,11 @@
 package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.resources.IoSupplier;
 import net.rebel459.music_and_melody.MusicAndMelody;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +25,37 @@ public final class SafeMusicHelper {
 		return findFlatAlbumFile(wantedFile, wantedStem)
 				.or(() -> findDirectDownloadFile(wantedPath))
 				.or(() -> findRecursiveDownloadFile(wantedPath, wantedStem));
+	}
+
+	public static Optional<ResourceTrack> resolveResource(SafeIdentifier id) {
+		String path = normalize(id.getPath());
+		String suffix = extension(path);
+		if (!isSupportedAudioExtension(suffix)) {
+			path += ".ogg";
+			suffix = ".ogg";
+		}
+
+		List<String> parts = new ArrayList<>();
+		parts.add("assets");
+		parts.add(id.getNamespace());
+		parts.add("sounds");
+		parts.addAll(Arrays.asList(path.split("/")));
+		if (parts.stream().anyMatch(part -> part.isBlank() || part.equals(".") || part.equals(".."))) {
+			return Optional.empty();
+		}
+
+		List<PackResources> packs = Minecraft.getInstance().getResourceManager().listPacks().toList();
+		for (int index = packs.size() - 1; index >= 0; index--) {
+			IoSupplier<InputStream> stream;
+			try {
+				stream = packs.get(index).getRootResource(parts.toArray(String[]::new));
+			} catch (IllegalArgumentException exception) {
+				return Optional.empty();
+			}
+			if (stream != null) return Optional.of(new ResourceTrack(stream, suffix.substring(1)));
+		}
+
+		return Optional.empty();
 	}
 
 	public static List<String> tracksInFolder(SafeIdentifier folder) {
@@ -187,10 +221,12 @@ public final class SafeMusicHelper {
 	}
 
 	private static boolean isSupportedAudio(Path path) {
-		return switch (extension(path.getFileName().toString())) {
-			case ".ogg", ".mp3", ".flac", ".wav" -> true;
-			default -> false;
-		};
+		return isSupportedAudioExtension(extension(path.getFileName().toString()));
+	}
+
+	private static boolean isSupportedAudioExtension(String extension) {
+		return extension.equals(".ogg") || extension.equals(".mp3")
+				|| extension.equals(".flac") || extension.equals(".wav");
 	}
 
 	public static String sanitize(String value) {
@@ -296,4 +332,6 @@ public final class SafeMusicHelper {
 
 		return value;
 	}
+
+	public record ResourceTrack(IoSupplier<InputStream> stream, String extension) {}
 }
