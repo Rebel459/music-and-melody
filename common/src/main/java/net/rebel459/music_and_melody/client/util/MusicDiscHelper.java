@@ -2,6 +2,7 @@ package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
+import net.minecraft.locale.Language;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.stats.Stats;
-import net.minecraft.world.item.Item;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 
@@ -20,6 +20,7 @@ public final class MusicDiscHelper {
     private MusicDiscHelper() {}
 
     public static Identifier albumEntryId(Album album, String path) {
+        if (album.album.equals(CustomAlbums.MOD_DISCS)) return Identifier.parse(path);
         return Identifier.fromNamespaceAndPath(album.album.getNamespace(), path);
     }
 
@@ -36,7 +37,11 @@ public final class MusicDiscHelper {
     }
 
     public static String translationKey(Identifier jukeboxSong) {
-        return "jukebox_song." + jukeboxSong.getNamespace() + "." + jukeboxSong.getPath().replace('/', '.');
+        String path = jukeboxSong.getPath().replace('/', '.');
+        String jukeboxKey = "jukebox_song." + jukeboxSong.getNamespace() + "." + path;
+        if (Language.getInstance().has(jukeboxKey)) return jukeboxKey;
+        String itemKey = "item." + jukeboxSong.getNamespace() + ".music_disc_" + path + ".desc";
+        return Language.getInstance().has(itemKey) ? itemKey : jukeboxKey;
     }
 
     public static Identifier discItemId(Identifier jukeboxSong) {

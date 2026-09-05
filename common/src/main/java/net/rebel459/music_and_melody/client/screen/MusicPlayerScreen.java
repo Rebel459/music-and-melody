@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
-import net.rebel459.music_and_melody.client.util.ThemeHelper;
+import net.rebel459.music_and_melody.client.element.RemoteDetailsPanel;
+import net.rebel459.music_and_melody.client.util.*;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.AutoConfigClient;
@@ -34,12 +35,7 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
-import net.rebel459.music_and_melody.client.util.MusicDiscHelper;
-import net.rebel459.music_and_melody.client.util.EventHelper;
-import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.config.MaMServerConfig;
 
@@ -960,7 +956,7 @@ public class MusicPlayerScreen extends Screen {
         graphics.fill(progressX, progressY, progressRight, progressY + 3, BAR_BACKGROUND);
 
         long elapsed = this.draggingProgress ? this.seekPreviewMillis : PlaylistHelper.currentSongElapsedMillis();
-        Optional<Long> duration = MusicDurationHelper.currentDurationMillis(this.minecraft, PlaylistHelper.getCurrentSong());
+        Optional<Long> duration = currentTrackDuration();
         if (duration.isPresent() && duration.get() > 0L) {
             float progress = Math.min(1.0F, elapsed / (float) duration.get());
             int handleX = progressX + Math.round(progressWidth * progress);
@@ -1297,8 +1293,9 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private Optional<Long> currentTrackDuration() {
-        return MusicDurationHelper.currentDurationMillis(this.minecraft, PlaylistHelper.getCurrentSong())
-                .filter(value -> value > 0L);
+        SafeIdentifier song = PlaylistHelper.getCurrentSongId();
+        Optional<Identifier> disc = PlaylistHelper.queuedDisc(song);
+        return MusicDurationHelper.currentDurationMillis(this.minecraft, PlaylistHelper.getCurrentSong(), disc).filter(value -> value > 0L);
     }
 
     private void setSeekPreviewFromX(double mouseX, int stripX, int stripWidth) {
@@ -2071,7 +2068,7 @@ public class MusicPlayerScreen extends Screen {
             if (matchesLibrary(item)) items.add(item);
         }
         items.sort(Comparator.comparing(item -> item.name().getString(), String.CASE_INSENSITIVE_ORDER));
-        items.sort(Comparator.comparingInt(item -> item.album() != null && item.album().album.equals(CustomAlbums.MOD_DISCS_ID) ? 1 : 0));
+        items.sort(Comparator.comparingInt(item -> item.album() != null && item.album().album.equals(CustomAlbums.MOD_DISCS) ? 1 : 0));
         return items;
     }
 
@@ -2223,7 +2220,7 @@ public class MusicPlayerScreen extends Screen {
                 && state != RemoteContentManager.State.INSTALLED && state != RemoteContentManager.State.DOWNLOADING;
     }
 
-    static String remoteStateTranslationKey(RemoteContentManager.State state) {
+    public static String remoteStateTranslationKey(RemoteContentManager.State state) {
         return switch (state) {
             case INSTALLED -> "screen.music_and_melody.content_origin.downloaded";
             case REMOTE -> "screen.music_and_melody.tag.remote";

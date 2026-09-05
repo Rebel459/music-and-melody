@@ -43,7 +43,7 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 public final class CustomAlbums {
 
-    public static final Identifier MOD_DISCS_ID = Identifier.fromNamespaceAndPath("config", "mod_discs");
+    public static final Identifier MOD_DISCS = Identifier.fromNamespaceAndPath("config", "mod_discs");
     private static final Identifier DEFAULT_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
     private static final Path CONFIG_DIRECTORY = Path.of("config", MusicAndMelody.MOD_ID);
     private static final Path DIRECTORY = CONFIG_DIRECTORY.resolve("albums");
@@ -71,7 +71,7 @@ public final class CustomAlbums {
             Set<Album.StoredDisc> discs = unregisteredDiscs(registeredDiscs).stream()
                     .map(path -> new Album.StoredDisc(path, Optional.empty(), Optional.empty()))
                     .collect(Collectors.toSet());
-            if (!discs.isEmpty()) albums.add(new Album(MOD_DISCS_ID, Component.translatable("album.music_and_melody.mod_discs"), DEFAULT_ICON, Set.of(), discs));
+            if (!discs.isEmpty()) albums.add(new Album(MOD_DISCS, Component.translatable("album.music_and_melody.mod_discs"), DEFAULT_ICON, Set.of(), discs));
         }
         return albums;
     }

@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.client.screen;
+package net.rebel459.music_and_melody.client.element;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -11,6 +11,8 @@ import net.minecraft.util.FormattedCharSequence;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
+import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
 import java.util.HashSet;
@@ -20,15 +22,15 @@ import java.util.Set;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
-final class RemoteDetailsPanel {
+public final class RemoteDetailsPanel {
     private RemoteDetailsPanel() {}
 
     @FunctionalInterface
-    interface MarqueeRenderer {
+    public interface MarqueeRenderer {
         void render(GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color);
     }
 
-    static double render(GuiGraphicsExtractor graphics, Minecraft minecraft, Font font, RemotePack pack, int rightX, int rightWidth, int panelTop, int panelBottom, boolean deletePending, double scroll, MarqueeRenderer marquee) {
+    public static double render(GuiGraphicsExtractor graphics, Minecraft minecraft, Font font, RemotePack pack, int rightX, int rightWidth, int panelTop, int panelBottom, boolean deletePending, double scroll, MarqueeRenderer marquee) {
         int x = rightX + 8;
         int width = rightWidth - 16;
         ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.details").withStyle(ChatFormatting.BOLD), x, panelTop + 14, TEXT_HEADER);

@@ -1,4 +1,4 @@
-package net.rebel459.music_and_melody.client.screen;
+package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
@@ -7,8 +7,6 @@ import net.minecraft.client.sounds.JOrbisAudioStream;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
-import net.rebel459.music_and_melody.client.util.AudioStreams;
-import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sound.sampled.AudioFormat;
 
-final class MusicDurationHelper {
+public final class MusicDurationHelper {
 
     // Successful reads only: resources may not be registered on the first frame
     private static final Map<Identifier, Long> DURATIONS = new ConcurrentHashMap<>();
@@ -34,19 +32,33 @@ final class MusicDurationHelper {
 
     private MusicDurationHelper() {}
 
-    static Optional<Long> currentDurationMillis(Minecraft minecraft, SoundInstance instance) {
+    public static Optional<Long> currentDurationMillis(Minecraft minecraft, SoundInstance instance) {
+        return currentDurationMillis(minecraft, instance, Optional.empty());
+    }
+
+    public static Optional<Long> currentDurationMillis(Minecraft minecraft, SoundInstance instance, Optional<Identifier> discId) {
         if (minecraft == null || instance == null) return Optional.empty();
         Sound sound = instance.getSound();
         Identifier instanceId = instance.getIdentifier();
+        List<Identifier> locations;
         if (sound == null || sound == SoundManager.EMPTY_SOUND || sound == SoundManager.INTENTIONALLY_EMPTY_SOUND) {
-            return durationForCandidates(minecraft, candidateLocations(instanceId, null));
+            locations = candidateLocations(instanceId, null);
+        } else {
+            // The sound engine uses both a logical event id and a stream path. A
+            // file sound normally resolves to assets/<ns>/sounds/<path>.ogg, while
+            // direct files retain both generated aliases. Probe those forms so the
+            // timeline also works for vanilla/resource-pack sounds.
+            locations = candidateLocations(sound.getPath(), sound.getLocation());
+            addCandidateForms(locations, instanceId);
         }
-        // The sound engine uses both a logical event id and a stream path. A
-        // file sound normally resolves to assets/<ns>/sounds/<path>.ogg, while
-        // direct files retain both generated aliases. Probe those forms so the
-        // timeline also works for vanilla/resource-pack sounds.
-        List<Identifier> locations = candidateLocations(sound.getPath(), sound.getLocation());
-        addCandidateForms(locations, instanceId);
+
+        // The automatic Mod Discs album stores the complete jukebox-song ID in
+        // StoredDisc.path. Keep that ID intact here instead of deriving the
+        // duration solely from the sound instance's album-relative identity.
+        if (discId.isPresent()) {
+            Optional<Identifier> discSound = MusicDiscHelper.discSoundId(minecraft, discId.get());
+            discSound.ifPresent(identifier -> addCandidateForms(locations, identifier));
+        }
         return durationForCandidates(minecraft, locations);
     }
 
