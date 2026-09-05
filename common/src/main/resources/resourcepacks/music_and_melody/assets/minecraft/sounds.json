@@ -463,7 +463,8 @@
       },
       {
         "name": "music_and_melody:empty",
-        "type": "event"
+        "type": "event",
+        "weight": 1
       }
     ]
   },
