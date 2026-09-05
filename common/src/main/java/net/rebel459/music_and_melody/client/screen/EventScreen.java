@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
 import net.minecraft.ChatFormatting;
