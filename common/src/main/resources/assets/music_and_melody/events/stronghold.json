@@ -10,15 +10,6 @@
         {
           "type": "structure",
           "value": "stronghold"
-        },
-        {
-          "type": "not",
-          "value": [
-            {
-              "type": "mod_loaded",
-              "value": "enderscape"
-            }
-          ]
         }
       ],
       "priority": "medium",
@@ -31,11 +22,7 @@
       "conditions": [
         {
           "type": "structure",
-          "value": "stronghold"
-        },
-        {
-          "type": "mod_loaded",
-          "value": "enderscape"
+          "value": "enderscape:stronghold"
         }
       ],
       "priority": "medium",

@@ -165,6 +165,8 @@ public final class MusicDurationHelper {
     private static InputStream open(Minecraft minecraft, Identifier location) throws IOException {
         Optional<java.nio.file.Path> direct = DirectSoundFiles.get(location);
         if (direct.isPresent()) return Files.newInputStream(direct.get());
+        Optional<DirectSoundFiles.ResourceSource> directResource = DirectSoundFiles.getResource(location);
+        if (directResource.isPresent()) return directResource.get().stream().get();
         Optional<net.minecraft.server.packs.resources.Resource> resource = minecraft.getResourceManager().getResource(location);
         return resource.isPresent() ? resource.get().open() : null;
     }
