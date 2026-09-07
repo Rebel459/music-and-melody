@@ -966,7 +966,7 @@ public class MusicPlayerScreen extends Screen {
         } else {
             ThemeHelper.text(graphics, this.font, Component.literal("--:--"), progressRight + 6, bottomPanelTop + 7, TEXT_DESCRIPTION);
         }
-        if (!this.searching && PlaylistHelper.getCurrentSongId() != null) {
+        if (!this.searching && !PlaylistHelper.isCurrentSongFromEvent() && PlaylistHelper.getCurrentSongId() != null) {
             SafeIdentifier currentSong = PlaylistHelper.getCurrentSongId();
             Component track = PlaylistHelper.queuedDisc(currentSong)
                     .map(MusicDiscHelper::discName)
@@ -1281,7 +1281,9 @@ public class MusicPlayerScreen extends Screen {
     boolean handlePlaybackRelease() {
         if (!this.draggingProgress) return false;
         this.draggingProgress = false;
-        PlaylistHelper.seekCurrentSong(this.seekPreviewMillis);
+        if (!PlaylistHelper.isCurrentSongFromEvent()) {
+            PlaylistHelper.seekCurrentSong(this.seekPreviewMillis);
+        }
         return true;
     }
 
@@ -1293,6 +1295,7 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private Optional<Long> currentTrackDuration() {
+        if (PlaylistHelper.isCurrentSongFromEvent()) return Optional.empty();
         SafeIdentifier song = PlaylistHelper.getCurrentSongId();
         Optional<Identifier> disc = PlaylistHelper.queuedDisc(song);
         return MusicDurationHelper.currentDurationMillis(this.minecraft, PlaylistHelper.getCurrentSong(), disc).filter(value -> value > 0L);

@@ -454,6 +454,10 @@ public final class PlaylistHelper {
         return currentSongFromEvent && isPlaying();
     }
 
+    public static boolean isCurrentSongFromEvent() {
+        return currentSongFromEvent;
+    }
+
     public static boolean isPlaylistOrAlbumPlaying() {
         return currentSong != null && !currentSongFromEvent && isPlaying();
     }
@@ -563,9 +567,9 @@ public final class PlaylistHelper {
         SafeIdentifier displayId = currentSongId;
         Sound currentSound = currentSong.getSound();
         if (currentSound != null && currentSound != SoundManager.EMPTY_SOUND && currentSound != SoundManager.INTENTIONALLY_EMPTY_SOUND) {
-            Optional<String> directName = DirectSoundFiles.getName(currentSound.getLocation());
-            if (directName.isPresent()) return directName.get();
-            displayId = SafeIdentifier.convert(currentSound.getLocation());
+            if (DirectSoundFiles.getName(currentSound.getLocation()).isEmpty()) {
+                displayId = SafeIdentifier.convert(currentSound.getLocation());
+            }
         }
         String configName = CustomAlbums.displayName(displayId);
         if (configName != null) return LITERAL_TRANSLATION_PREFIX + configName;
