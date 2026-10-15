@@ -817,8 +817,7 @@ public class MusicPlayerScreen extends Screen {
         graphics.fill(sliderX, filledTop, sliderX + 4, sliderBottom, PANEL_HIGHLIGHTED);
         graphics.fill(sliderX - 4, filledTop - 2, sliderX + 8, filledTop + 3, TEXT_TITLE);
         if (mouseX >= sliderX - 10 && mouseX <= sliderX + 14 && mouseY >= sliderTop && mouseY <= sliderBottom) {
-            graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)),
-                    IconButton.scaleTooltipCoordinate(mouseX), IconButton.scaleTooltipCoordinate(mouseY));
+            graphics.setTooltipForNextFrame(Component.translatable("screen.music_and_melody.music_volume", Math.round(volume * 100F)), IconButton.scaleTooltipCoordinate(mouseX), IconButton.scaleTooltipCoordinate(mouseY));
         }
     }
 

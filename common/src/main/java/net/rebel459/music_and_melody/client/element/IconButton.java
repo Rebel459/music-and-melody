@@ -1,8 +1,14 @@
 package net.rebel459.music_and_melody.client.element;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.inventory.tooltip.BelowOrAboveWidgetTooltipPositioner;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+import net.minecraft.client.gui.screens.inventory.tooltip.MenuTooltipPositioner;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
@@ -21,7 +27,7 @@ public class IconButton extends Button {
     private static final Identifier VANILLA_BUTTON_DISABLED = Identifier.withDefaultNamespace("widget/button_disabled");
 
     private Identifier icon;
-    private Component tooltipMessage;
+    private Tooltip tooltip;
     private boolean selected;
     private boolean listIcon;
     private boolean forceVanillaTextures;
@@ -60,8 +66,13 @@ public class IconButton extends Button {
     public static void renderIconWithTooltip(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, Component tooltip, int mouseX, int mouseY) {
         renderIcon(graphics, icon, x, y);
         if (mouseX >= x && mouseY >= y && mouseX < x + SIZE && mouseY < y + SIZE) {
-            graphics.setTooltipForNextFrame(tooltip, scaleTooltipCoordinate(mouseX), scaleTooltipCoordinate(mouseY));
+            renderTooltipForArea(graphics, tooltip, x, y, SIZE, SIZE, mouseX, mouseY);
         }
+    }
+
+    public static void renderTooltipForArea(GuiGraphicsExtractor graphics, Component tooltip,
+                                            int x, int y, int width, int height, int mouseX, int mouseY) {
+        scheduleTooltip(graphics, Tooltip.create(tooltip), x, y, width, height, mouseX, mouseY, false, false);
     }
 
     public static void setTooltipScale(float scale) {
@@ -78,9 +89,8 @@ public class IconButton extends Button {
 
     public void setIconAndTooltip(Identifier icon, Component message) {
         this.icon = icon;
-        this.tooltipMessage = message;
+        this.tooltip = Tooltip.create(message);
         this.setMessage(message);
-        this.setTooltip(Tooltip.create(message));
     }
 
     public void setSelected(boolean selected) {
@@ -90,6 +100,12 @@ public class IconButton extends Button {
     @Override
     public void onPress(InputWithModifiers input) {
         this.onPress.onPress(this);
+    }
+
+    @Override
+    public void updateWidgetNarration(NarrationElementOutput output) {
+        super.updateWidgetNarration(output);
+        if (this.tooltip != null) this.tooltip.updateNarration(output);
     }
 
     @Override
@@ -111,13 +127,29 @@ public class IconButton extends Button {
                     ARGB.multiplyAlpha(ThemeHelper.BUTTON_HIGHLIGHTED, this.getAlpha()));
         }
         renderButtonIcon(graphics, this.icon, this.getX(), this.getY(), width, height, this.getAlpha());
-        if (this.tooltipMessage != null
-                && mouseX >= this.getX() && mouseY >= this.getY()
+        boolean hovered = mouseX >= this.getX() && mouseY >= this.getY()
                 && mouseX < this.getX() + this.getWidth()
-                && mouseY < this.getY() + this.getHeight()) {
-            graphics.setTooltipForNextFrame(this.tooltipMessage,
-                    scaleTooltipCoordinate(mouseX), scaleTooltipCoordinate(mouseY));
+                && mouseY < this.getY() + this.getHeight();
+        boolean keyboardFocused = this.isFocused() && Minecraft.getInstance().getLastInputType().isKeyboard();
+        if (this.tooltip != null && (hovered || keyboardFocused)) {
+            scheduleTooltip(graphics, this.tooltip, this.getX(), this.getY(), this.getWidth(), this.getHeight(),
+                    mouseX, mouseY, this.isFocused(), keyboardFocused && !hovered);
         }
+    }
+
+    private static void scheduleTooltip(GuiGraphicsExtractor graphics, Tooltip tooltip, int x, int y, int width, int height, int mouseX, int mouseY, boolean replaceExisting, boolean keyboardFocused) {
+        int left = scaleTooltipCoordinate(x);
+        int top = scaleTooltipCoordinate(y);
+        int right = scaleTooltipCoordinate(x + width);
+        int bottom = scaleTooltipCoordinate(y + height);
+        ScreenRectangle bounds = new ScreenRectangle(left, top, Math.max(1, right - left), Math.max(1, bottom - top));
+        ClientTooltipPositioner positioner = keyboardFocused
+                ? new BelowOrAboveWidgetTooltipPositioner(bounds)
+                : new MenuTooltipPositioner(bounds);
+        Minecraft minecraft = Minecraft.getInstance();
+        graphics.setTooltipForNextFrame(minecraft.font, tooltip.toCharSequence(minecraft), tooltip.component(),
+                positioner, scaleTooltipCoordinate(mouseX), scaleTooltipCoordinate(mouseY),
+                replaceExisting, tooltip.style());
     }
 
     private static void renderButtonIcon(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, int width, int height, float alpha) {

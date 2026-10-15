@@ -88,6 +88,10 @@
         "name": "music_and_melody:music/caves/wisdom",
         "stream": true,
         "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/caves/whispering_shards",
+        "stream": true
       }
     ]
   },
@@ -114,6 +118,38 @@
       },
       {
         "name": "music_and_melody:music/structure/trial_chambers/waxed_copper",
+        "stream": true
+      }
+    ]
+  },
+  "music.nether": {
+    "sounds": [
+      {
+        "name": "music_and_melody:music/nether/bubbles",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/nether/jellyfish",
+        "stream": true
+      },
+      {
+        "name": "music_and_melody:music/nether/pahoehoe",
+        "stream": true
+      },
+      {
+        "name": "music/game/nether/concrete_halls",
+        "stream": true
+      },
+      {
+        "name": "music/game/nether/dead_voxel",
+        "stream": true
+      },
+      {
+        "name": "music/game/nether/warmth",
+        "stream": true
+      },
+      {
+        "name": "music/game/nether/ballad_of_the_cats",
         "stream": true
       }
     ]
@@ -257,6 +293,11 @@
         "name": "music_and_melody:music/overworld/untitled_overworld_2",
         "stream": true,
         "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/overworld/byte_array",
+        "stream": true,
+        "weight" : 2
       },
       {
         "name": "music_and_melody:music.classic",

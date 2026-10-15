@@ -51,15 +51,32 @@ public class EventHelper {
     public static boolean isEndPortalFilled() {
         SoundManager manager = Minecraft.getInstance().getSoundManager();
         Collection<SoundInstance> blockSounds = manager.soundEngine.instanceBySource.get(SoundSource.BLOCKS);
-        for (SoundInstance instance : new ArrayList<>(blockSounds)) {
-            if (SoundEvents.END_PORTAL_SPAWN.location().equals(instance.getIdentifier()) && manager.isActive(instance)) {
-                return true;
-            }
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                for (SoundInstance instance : new ArrayList<>(blockSounds)) {
+                    if (SoundEvents.END_PORTAL_SPAWN.location().equals(instance.getIdentifier()) && manager.isActive(instance)) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (ConcurrentModificationException ignored) {}
         }
         return false;
     }
 
+    private static boolean processingEventMusic;
+
     public static Music processEventMusic(Music situationalMusic) {
+        if (processingEventMusic) return PlaylistHelper.EMPTY;
+        processingEventMusic = true;
+        try {
+            return processEventMusicInternal(situationalMusic);
+        } finally {
+            processingEventMusic = false;
+        }
+    }
+
+    private static Music processEventMusicInternal(Music situationalMusic) {
         if (!eventSystemEnabled() || !eventMusicEnabled()) {
             stopDisabledEventActivity();
             return null;
@@ -116,7 +133,7 @@ public class EventHelper {
                 return storedEventMusicOrBlocker();
             }
 
-            if (eventPriority < currentPriority) {
+            if (eventPriority < currentPriority && activeMusic) {
                 musicBreak = 0;
                 blockingForEventMusic = false;
                 cooldownEmptyMusic = false;
