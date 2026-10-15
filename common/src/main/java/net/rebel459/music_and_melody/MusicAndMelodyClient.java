@@ -39,7 +39,7 @@ public final class MusicAndMelodyClient {
         CombatStatus.init();
         UnifiedClientEvents.Instance.onTick(EventTiming.POST, client -> {
             while (PLAYLIST_KEY.consumeClick()) {
-                client.gui.setScreen(new MusicPlayerScreen(client.screen));
+                client.gui.setScreen(new MusicPlayerScreen(client.gui.screen()));
             }
         });
     }
