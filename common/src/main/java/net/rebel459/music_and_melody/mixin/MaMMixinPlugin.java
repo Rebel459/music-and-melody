@@ -1,6 +1,6 @@
 package net.rebel459.music_and_melody.mixin;
 
-import net.rebel459.unified.api.core.UnifiedInstance;
+import net.rebel459.unified.api.core.UnifiedPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;

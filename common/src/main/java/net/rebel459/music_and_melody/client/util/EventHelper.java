@@ -5,7 +5,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.WinScreen;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.client.sounds.Weighted;
@@ -26,8 +25,8 @@ import net.rebel459.music_and_melody.client.Event;
 import net.rebel459.music_and_melody.client.Playlist;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import net.rebel459.music_and_melody.network.StructureMusicHandler;
-import net.rebel459.unified.api.core.UnifiedInstance;
+import net.rebel459.unified.api.client.helper.ClientStructureReceiver;
+import net.rebel459.unified.api.core.UnifiedPlatform;
 import net.rebel459.unified.api.util.VanillaVersion;
 
 import java.util.*;
@@ -636,8 +635,8 @@ public class EventHelper {
             case BIOME -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(condition.idValue().get()));
             case BIOME_TAG -> result(player != null && level != null, () -> level.getBiome(player.blockPosition()).is(TagKey.create(Registries.BIOME, condition.idValue().get())));
             case DIMENSION -> result(level != null, () -> level.dimension().identifier().equals(condition.idValue().get()));
-            case STRUCTURE -> result(level != null, () -> StructureMusicHandler.clientStructures.structures().contains(condition.idValue().get()));
-            case STRUCTURE_TAG -> result(level != null, () -> StructureMusicHandler.clientStructures.tags().contains(condition.idValue().get()));
+            case STRUCTURE -> result(level != null, () -> ClientStructureReceiver.getPieceStructures().contains(ResourceKey.create(Registries.STRUCTURE, condition.idValue().get())));
+            case STRUCTURE_TAG -> result(level != null, () -> ClientStructureReceiver.getPieceStructureTags().contains(TagKey.create(Registries.STRUCTURE, condition.idValue().get())));
             case TIME -> result(level != null, () -> {
                 long time = Math.floorMod(level.getDefaultClockTime(), 24000L);
                 return switch (condition.timeValue().get()) {

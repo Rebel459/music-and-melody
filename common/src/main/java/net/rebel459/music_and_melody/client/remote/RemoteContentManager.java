@@ -13,8 +13,8 @@ import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.rebel459.unified.api.core.UnifiedPlatform;
 import net.rebel459.unified.api.util.VanillaVersion;
-import net.rebel459.unified.api.core.UnifiedInstance;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,15 +1,16 @@
-   package net.rebel459.music_and_melody;
+package net.rebel459.music_and_melody;
 
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.rebel459.unified.neoforge.core.NeoForgeUnifiedRegistries;
+import net.rebel459.unified.neoforge.NeoForgeUnifiedBus;
 
 @Mod(MusicAndMelody.MOD_ID)
 public class MusicAndMelodyNeoForge {
 
     public MusicAndMelodyNeoForge(IEventBus modEventBus) {
-        NeoForgeUnifiedRegistries.registerBus(MusicAndMelody.MOD_ID, modEventBus);
+        NeoForgeUnifiedBus.register(MusicAndMelody.MOD_ID, modEventBus);
         MusicAndMelody.initRegistries();
         modEventBus.addListener(MusicAndMelodyNeoForge::commonSetup);
     }

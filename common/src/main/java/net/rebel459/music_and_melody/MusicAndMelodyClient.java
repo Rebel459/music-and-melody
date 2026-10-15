@@ -12,25 +12,20 @@ import net.rebel459.music_and_melody.client.util.CombatStatus;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.api.client.core.UnifiedClientEvents;
 import net.rebel459.unified.api.client.core.UnifiedClientHelpers;
-import net.rebel459.unified.api.client.core.UnifiedClientRegistries;
-import net.rebel459.unified.api.core.UnifiedHelpers;
 import net.rebel459.unified.api.event.EventTiming;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.function.Supplier;
-
 public final class MusicAndMelodyClient {
 
-    public static UnifiedClientRegistries.KeyMappings KEY_MAPPINGS = UnifiedClientRegistries.KeyMappings.create(MusicAndMelody.MOD_ID);
-
-    public static final Supplier<KeyMapping> PLAYLIST_KEY = KEY_MAPPINGS.registerKeybind(
-            "music_player",
+    public static final KeyMapping PLAYLIST_KEY = new KeyMapping(
+            "key." + MusicAndMelody.MOD_ID + ".music_player",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
             KeyMapping.Category.MISC
     );
 
     public static void initRegistries() {
+        UnifiedClientHelpers.KEY_MAPPINGS.register(PLAYLIST_KEY);
         if (MaMClientConfig.get().music_rebalance) {
             UnifiedClientHelpers.RESOURCE_PACKS.addRequired(MusicAndMelody.id("music_and_melody"));
         }
@@ -43,8 +38,8 @@ public final class MusicAndMelodyClient {
     public static void init() {
         CombatStatus.init();
         UnifiedClientEvents.Instance.onTick(EventTiming.POST, client -> {
-            while (PLAYLIST_KEY.get().consumeClick()) {
-                client.gui.setScreen(new MusicPlayerScreen(client.gui.screen()));
+            while (PLAYLIST_KEY.consumeClick()) {
+                client.gui.setScreen(new MusicPlayerScreen(client.screen));
             }
         });
     }

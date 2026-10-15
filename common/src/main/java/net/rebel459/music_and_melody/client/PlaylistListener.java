@@ -7,7 +7,7 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
-import net.rebel459.unified.api.core.UnifiedInstance;
+import net.rebel459.unified.api.core.UnifiedPlatform;
 
 import java.util.*;
 

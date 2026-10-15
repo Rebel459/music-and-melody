@@ -9,7 +9,7 @@ public class MaMSounds {
 
 	private static final UnifiedRegistries.SoundEvents SOUNDS = UnifiedRegistries.SoundEvents.create(MusicAndMelody.MOD_ID);
 
-	public static Holder<SoundEvent> EMPTY = SOUNDS.registerForHolder("empty");
+	public static Holder<SoundEvent> EMPTY = SOUNDS.register("empty").holder();
 
 	public static void init() {}
 }
