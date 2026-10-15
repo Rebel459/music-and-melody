@@ -24,9 +24,5 @@ public class MaMServerConfig implements ConfigData {
 
 	@ConfigEntry.Category("config")
 	@ConfigEntry.Gui.Tooltip
-	public boolean sync_structures = true;
-
-	@ConfigEntry.Category("config")
-	@ConfigEntry.Gui.Tooltip
 	public boolean improved_pve_detection = true;
 }

@@ -9,30 +9,24 @@ import net.rebel459.music_and_melody.client.ThemeListener;
 import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
 import net.rebel459.music_and_melody.client.util.CombatStatus;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.unified.platform.UnifiedHelpers;
-import net.rebel459.unified.platform.client.UnifiedClientEvents;
-import net.rebel459.unified.platform.client.UnifiedClientHelpers;
-import net.rebel459.unified.platform.client.UnifiedClientRegistries;
-import net.rebel459.unified.util.EventType;
-import net.rebel459.unified.util.PackType;
+import net.rebel459.unified.api.client.core.UnifiedClientEvents;
+import net.rebel459.unified.api.client.core.UnifiedClientHelpers;
+import net.rebel459.unified.api.event.EventTiming;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.function.Supplier;
 
 public final class MusicAndMelodyClient {
 
-    public static UnifiedClientRegistries.KeyMappings KEY_MAPPINGS = UnifiedClientRegistries.KeyMappings.create(MusicAndMelody.MOD_ID);
-
-    public static final Supplier<KeyMapping> PLAYLIST_KEY = KEY_MAPPINGS.registerKeybind(
-            "music_player",
+    public static final KeyMapping PLAYLIST_KEY = new KeyMapping(
+            "key." + MusicAndMelody.MOD_ID + ".music_player",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
             KeyMapping.Category.MISC
     );
 
     public static void initRegistries() {
+        UnifiedClientHelpers.KEY_MAPPINGS.register(PLAYLIST_KEY);
         if (MaMClientConfig.get().music_rebalance) {
-            UnifiedHelpers.PACKS.add(MusicAndMelody.id("music_and_melody"), PackType.REQUIRED_RESOURCES);
+            UnifiedClientHelpers.RESOURCE_PACKS.addRequired(MusicAndMelody.id("music_and_melody"));
         }
         UnifiedClientHelpers.RELOAD_LISTENERS.addListener(AlbumListener.ID, new AlbumListener());
         UnifiedClientHelpers.RELOAD_LISTENERS.addListener(PlaylistListener.ID, new PlaylistListener());
@@ -42,8 +36,8 @@ public final class MusicAndMelodyClient {
 
     public static void init() {
         CombatStatus.init();
-        UnifiedClientEvents.Instance.onTick(EventType.POST, client -> {
-            while (PLAYLIST_KEY.get().consumeClick()) {
+        UnifiedClientEvents.Instance.onTick(EventTiming.POST, client -> {
+            while (PLAYLIST_KEY.consumeClick()) {
                 client.setScreen(new MusicPlayerScreen(client.screen));
             }
         });

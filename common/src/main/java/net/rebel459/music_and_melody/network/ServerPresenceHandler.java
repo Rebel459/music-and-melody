@@ -1,8 +1,8 @@
 package net.rebel459.music_and_melody.network;
 
 import net.rebel459.music_and_melody.config.MaMServerConfig;
-import net.rebel459.unified.platform.UnifiedEvents;
-import net.rebel459.unified.platform.UnifiedHelpers;
+import net.rebel459.unified.api.core.UnifiedEvents;
+import net.rebel459.unified.api.core.UnifiedHelpers;
 
 public final class ServerPresenceHandler {
 
