@@ -23,9 +23,9 @@ public final class MaMMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, @NotNull String mixinClassName) {
-        if (mixinClassName.contains("integration.simple_music_control.")) return UnifiedInstance.isModLoaded("simple_music_control");
-        if (mixinClassName.contains("integration.enderscape.")) return UnifiedInstance.isModLoaded("enderscape");
-        if (mixinClassName.contains("integration.fancymenu.")) return UnifiedInstance.isModLoaded("fancymenu");
+        if (mixinClassName.contains("integration.simple_music_control.")) return UnifiedPlatform.isModLoaded("simple_music_control");
+        if (mixinClassName.contains("integration.enderscape.")) return UnifiedPlatform.isModLoaded("enderscape");
+        if (mixinClassName.contains("integration.fancymenu.")) return UnifiedPlatform.isModLoaded("fancymenu");
         return true;
     }
     @Override

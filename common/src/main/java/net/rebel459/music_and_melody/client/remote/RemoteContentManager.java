@@ -234,7 +234,7 @@ public final class RemoteContentManager {
     }
 
     public static List<String> missingDependencies(RemotePack pack) {
-        return pack.dependencies().stream().filter(dependency -> !UnifiedInstance.isModLoaded(dependency)).toList();
+        return pack.dependencies().stream().filter(dependency -> !UnifiedPlatform.isModLoaded(dependency)).toList();
     }
 
     public static boolean isDownloadable(RemotePack pack) {

@@ -80,7 +80,7 @@ public class Event {
                 .forEach(record -> {
                     boolean shouldLoad = true;
                     for (String mod : record.record.dependencies()) {
-                        if (!UnifiedInstance.isModLoaded(mod)) {
+                        if (!UnifiedPlatform.isModLoaded(mod)) {
                             shouldLoad = false;
                             break;
                         }
@@ -108,7 +108,7 @@ public class Event {
             if (record == null) continue;
             boolean shouldLoad = true;
             for (String mod : record.dependencies()) {
-                if (!UnifiedInstance.isModLoaded(mod)) {
+                if (!UnifiedPlatform.isModLoaded(mod)) {
                     shouldLoad = false;
                     break;
                 }

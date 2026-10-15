@@ -29,7 +29,7 @@ public class PlaylistListener extends SimpleJsonResourceReloadListener<Playlist.
         for (Map.Entry<Identifier, Playlist.Record> entry : identifierRecordMap.entrySet()) {
             boolean shouldLoad = true;
             for (String mod : entry.getValue().dependencies()) {
-                if (!UnifiedInstance.isModLoaded(mod)) {
+                if (!UnifiedPlatform.isModLoaded(mod)) {
                     shouldLoad = false;
                     break;
                 }
