@@ -302,28 +302,8 @@
     "replace": true,
     "sounds": [
       {
-        "name": "music_and_melody:music/nether/bubbles",
-        "stream": true
-      },
-      {
-        "name": "music_and_melody:music/nether/jellyfish",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/concrete_halls",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/dead_voxel",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/warmth",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/ballad_of_the_cats",
-        "stream": true
+        "name": "music_and_melody:music.nether",
+        "type": "event"
       },
       {
         "name": "music/game/nether/soulsand_valley/so_below",
@@ -337,34 +317,14 @@
     "replace": true,
     "sounds": [
       {
-        "name": "music_and_melody:music/nether/bubbles",
-        "stream": true
-      },
-      {
-        "name": "music_and_melody:music/nether/jellyfish",
-        "stream": true
+        "name": "music_and_melody:music.nether",
+        "type": "event"
       },
       {
         "name": "music/game/nether/crimson_forest/chrysopoeia",
         "stream": true,
         "volume": 0.5,
         "weight": 5
-      },
-      {
-        "name": "music/game/nether/concrete_halls",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/dead_voxel",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/warmth",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/ballad_of_the_cats",
-        "stream": true
       }
     ]
   },
@@ -372,34 +332,14 @@
     "replace": true,
     "sounds": [
       {
-        "name": "music_and_melody:music/nether/bubbles",
-        "stream": true
-      },
-      {
-        "name": "music_and_melody:music/nether/jellyfish",
-        "stream": true
-      },
-      {
         "name": "music_and_melody:music/nether/beneath",
         "stream": true,
         "volume": 0.8,
         "weight": 2
       },
       {
-        "name": "music/game/nether/concrete_halls",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/dead_voxel",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/warmth",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/ballad_of_the_cats",
-        "stream": true
+        "name": "music_and_melody:music.nether",
+        "type": "event"
       },
       {
         "name": "music/game/nether/nether_wastes/rubedo",
@@ -413,33 +353,13 @@
     "replace": true,
     "sounds": [
       {
-        "name": "music_and_melody:music/nether/bubbles",
-        "stream": true
-      },
-      {
-        "name": "music_and_melody:music/nether/jellyfish",
-        "stream": true
-      },
-      {
         "name": "music_and_melody:music/nether/wasteland",
         "stream": true,
         "weight": 2
       },
       {
-        "name": "music/game/nether/concrete_halls",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/dead_voxel",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/warmth",
-        "stream": true
-      },
-      {
-        "name": "music/game/nether/ballad_of_the_cats",
-        "stream": true
+        "name": "music_and_melody:music.nether",
+        "type": "event"
       },
       {
         "name": "music/game/nether/soulsand_valley/so_below",
@@ -1012,6 +932,10 @@
         "name": "music_and_melody:music/overworld/untitled_overworld_2",
         "stream": true,
         "volume": 0.7
+      },
+      {
+        "name": "music_and_melody:music/overworld/byte_array",
+        "stream": true
       },
       {
         "name": "music/game/clark",
