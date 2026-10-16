@@ -13,14 +13,13 @@ import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.unified.api.client.core.UnifiedClientEvents;
 import net.rebel459.unified.api.client.core.UnifiedClientHelpers;
 import net.rebel459.unified.api.event.EventTiming;
-import org.lwjgl.glfw.GLFW;
 
 public final class MusicAndMelodyClient {
 
     public static final KeyMapping PLAYLIST_KEY = new KeyMapping(
             "key." + MusicAndMelody.MOD_ID + ".music_player",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_H,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_H,
             KeyMapping.Category.MISC
     );
 

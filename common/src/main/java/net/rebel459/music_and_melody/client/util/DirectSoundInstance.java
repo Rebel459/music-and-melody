@@ -123,7 +123,7 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 	}
 
 	@Override
-	public WeighedSoundEvents resolve(@NonNull SoundManager soundManager) {
+	public WeighedSoundEvents getOrResolve(@NonNull SoundManager soundManager) {
 		if (this.type == Type.TRACKS) return this.soundEvent;
 
 		WeighedSoundEvents registered = soundManager.getSoundEvent(this.identifier);

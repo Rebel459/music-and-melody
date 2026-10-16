@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.client.remote;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
@@ -54,12 +55,12 @@ public final class DownloadedResources {
         return Optional.ofNullable(OWNERS.getOrDefault(tag, Map.of()).get(contentId));
     }
 
-    public static synchronized Map<Identifier, Resource> listResources(String directory, Predicate<Identifier> filter) {
+    public static synchronized Map<Identifier, Resource> listResources(String directory, ResourceManager.Selector selector) {
         reload();
         String prefix = directory + "/";
         Map<Identifier, Resource> resources = new HashMap<>();
         RESOURCES.forEach((id, paths) -> {
-            if (id.getPath().startsWith(prefix) && filter.test(id)) {
+            if (id.getPath().startsWith(prefix) && selector.isIncluded(id)) {
                 resources.put(id, resource(paths.getLast()));
             }
         });

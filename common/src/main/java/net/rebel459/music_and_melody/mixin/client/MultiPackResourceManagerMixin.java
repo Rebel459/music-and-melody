@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.mixin.client;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.rebel459.music_and_melody.client.remote.DownloadedResources;
 import net.rebel459.music_and_melody.client.util.DirectSoundFiles;
 import net.rebel459.music_and_melody.client.util.VanillaSoundSupport;
@@ -54,8 +55,8 @@ public class MultiPackResourceManagerMixin {
     }
 
     @Inject(method = "listResources", at = @At("RETURN"), cancellable = true)
-    private void listDownloadedResources(String directory, Predicate<Identifier> filter, CallbackInfoReturnable<Map<Identifier, Resource>> cir) {
-        Map<Identifier, Resource> resources = DownloadedResources.listResources(directory, filter);
+    private void listDownloadedResources(String directory, ResourceManager.Selector selector, CallbackInfoReturnable<Map<Identifier, Resource>> cir) {
+        Map<Identifier, Resource> resources = DownloadedResources.listResources(directory, selector);
         if (resources.isEmpty()) return;
         resources.putAll(cir.getReturnValue());
         cir.setReturnValue(resources);

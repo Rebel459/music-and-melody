@@ -4,6 +4,8 @@ plugins {
 }
 
 dependencies {
+    implementation("org.lwjgl:lwjgl-tinyfd:3.4.3")
+    jarJar("org.lwjgl:lwjgl-tinyfd:3.4.3")
     api("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
     api("maven.modrinth:unified-api:$unified_version-neoforge")
     implementation("javazoom:jlayer:1.0.1")

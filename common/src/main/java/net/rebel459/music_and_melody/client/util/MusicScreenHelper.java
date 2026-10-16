@@ -1,10 +1,10 @@
 package net.rebel459.music_and_melody.client.util;
 
+import com.mojang.blaze3d.Blaze3D;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.remote.RemoteIconManager;
@@ -32,18 +32,18 @@ public final class MusicScreenHelper {
     public static void addCenteredSocialButtons(Screen screen, int centerX, int y) {
         int width = IconButton.SIZE + 4 + IconButton.SIZE;
         int x = centerX - width / 2;
-        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), button -> Util.getPlatform().openUri(DISCORD)));
+        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Discord"), IconButton.icon("discord"), _ -> Blaze3D.openUri(DISCORD)));
         x += IconButton.SIZE + 4;
-        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), button -> Util.getPlatform().openUri(KOFI)));
+        screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), _ -> Blaze3D.openUri(KOFI)));
     }
 
     public static void openKofi() {
-        Util.getPlatform().openUri(KOFI);
+        Blaze3D.openUri(KOFI);
     }
 
     public static void openUri(String value) {
         try {
-            Util.getPlatform().openUri(URI.create(value));
+            Blaze3D.openUri(URI.create(value));
         } catch (IllegalArgumentException ignored) {
         }
     }

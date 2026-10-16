@@ -3,11 +3,11 @@ package net.rebel459.music_and_melody.client.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.JsonOps;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -15,6 +15,11 @@ import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
+import net.rebel459.music_and_melody.config.MaMClientConfig;
+import net.rebel459.music_and_melody.config.MaMDataConfig;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -22,24 +27,9 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import net.rebel459.music_and_melody.config.MaMClientConfig;
-import net.rebel459.music_and_melody.config.MaMDataConfig;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 public final class CustomAlbums {
 

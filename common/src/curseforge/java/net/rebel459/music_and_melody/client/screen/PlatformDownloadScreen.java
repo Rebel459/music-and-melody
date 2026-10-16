@@ -1,11 +1,11 @@
 package net.rebel459.music_and_melody.client.screen;
 
+import com.mojang.blaze3d.Blaze3D;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
 import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
@@ -43,10 +43,10 @@ public final class PlatformDownloadScreen extends Screen {
 
         this.addRenderableWidget(new WorkspaceButton(x + buttonWidth + 5, y + 130, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.modrinth"), false,
-                ignored -> Util.getPlatform().openUri(URI.create("https://modrinth.com/mod/music-and-melody"))));
+                ignored -> Blaze3D.openUri(URI.create("https://modrinth.com/mod/music-and-melody"))));
         this.addRenderableWidget(new WorkspaceButton(x, y + panelHeight() - 29, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.download"), false,
-                ignored -> Util.getPlatform().openUri(URI.create(RemoteContentManager.externalDownloadUrl(this.pack)))));
+                ignored -> Blaze3D.openUri(URI.create(RemoteContentManager.externalDownloadUrl(this.pack)))));
         this.importButton = this.addRenderableWidget(new WorkspaceButton(x + buttonWidth + 5, y + panelHeight() - 29, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.import"), false, ignored -> importLocal()));
         this.addRenderableWidget(new WorkspaceButton(x + (buttonWidth + 5) * 2, y + panelHeight() - 29, buttonWidth, 20,
