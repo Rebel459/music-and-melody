@@ -6,6 +6,10 @@ plugins {
 dependencies {
     implementation("org.lwjgl:lwjgl-tinyfd:3.4.3")
     jarJar("org.lwjgl:lwjgl-tinyfd:3.4.3")
+    ["natives-windows", "natives-windows-arm64", "natives-linux", "natives-linux-arm64", "natives-macos", "natives-macos-arm64"].each { nativeClassifier ->
+        implementation("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
+        jarJar("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
+    }
     api("me.shedaniel.cloth:cloth-config-neoforge:$cloth_version")
     api("maven.modrinth:unified-api:$unified_version-neoforge")
     implementation("javazoom:jlayer:1.0.1")

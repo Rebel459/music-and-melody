@@ -231,8 +231,7 @@ public final class CustomAlbums {
                         }
                     }
                 }
-            } catch (RuntimeException ignored) {
-            }
+            } catch (RuntimeException ignored) {}
             Minecraft.getInstance().execute(() -> callback.accept(selected));
         }, "Music & Melody file picker");
         chooser.setDaemon(true);

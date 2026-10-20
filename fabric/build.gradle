@@ -9,6 +9,10 @@ dependencies {
     api("net.fabricmc.fabric-api:fabric-api:${fabric_api}")
     implementation("org.lwjgl:lwjgl-tinyfd:3.4.3")
     include("org.lwjgl:lwjgl-tinyfd:3.4.3")
+    ["natives-windows", "natives-windows-arm64", "natives-linux", "natives-linux-arm64", "natives-macos", "natives-macos-arm64"].each { nativeClassifier ->
+        implementation("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
+        include("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
+    }
 
     api("com.terraformersmc:modmenu:$modmenu_version")
 
