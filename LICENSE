@@ -5,6 +5,10 @@ Music And Melody - Legacy License
 
 Source code: https://github.com/Rebel459/music-and-melody
 
+Bundled Projects
+- tinyfd - zlib & BSD-3-Clause (https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md)
+- jlayer - LGPL-2.1 (https://github.com/umjammer/jlayer/blob/master/LICENSE.txt)
+
 
 
 ARR License
