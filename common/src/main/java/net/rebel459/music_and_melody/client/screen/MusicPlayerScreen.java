@@ -3099,6 +3099,11 @@ public class MusicPlayerScreen extends Screen {
         protected void extractListSeparators(GuiGraphicsExtractor graphics) {}
 
         @Override
+        protected void enableScissor(GuiGraphicsExtractor graphics) {
+            graphics.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
+        }
+
+        @Override
         public int getRowLeft() {
             return this.panelX + 5;
         }
