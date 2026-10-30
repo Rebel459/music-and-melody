@@ -7,12 +7,6 @@ dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     api "net.fabricmc:fabric-loader:${fabric_loader}"
     api("net.fabricmc.fabric-api:fabric-api:${fabric_api}")
-    implementation("org.lwjgl:lwjgl-tinyfd:3.4.3")
-    include("org.lwjgl:lwjgl-tinyfd:3.4.3")
-    ["natives-windows", "natives-windows-arm64", "natives-linux", "natives-linux-arm64", "natives-macos", "natives-macos-arm64"].each { nativeClassifier ->
-        implementation("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
-        include("org.lwjgl:lwjgl-tinyfd:3.4.3:${nativeClassifier}")
-    }
 
     api("com.terraformersmc:modmenu:$modmenu_version")
 
@@ -29,7 +23,9 @@ dependencies {
     include("javazoom:jlayer:1.0.1")
     include("org.jflac:jflac-codec:1.5.2")
 
-    localRuntime("net.litetex.mcm:dev-auth-neo:$devauth_fabric")
+    localRuntime("net.litetex.mcm:dev-auth-neo:$devauth_fabric") {
+        exclude(group: "me.friwi")
+    }
 
     compileOnly("maven.modrinth:enderscape:$enderscape_fabric")
     compileOnly("maven.modrinth:fancymenu:$fancymenu_version-fabric")

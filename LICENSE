@@ -2,12 +2,9 @@ Music And Melody - Legacy License
 
 - Assets ARR / specific to the relevant rights holder. Assets include anything in the assets/ directory. Do not distribute any assets from this project without explicit permission from the rights holder of the given asset. It is safe to have music from this project in videos and streams in which this project is used.
 - All code and code contributions licensed under LGPL-3.0 Only. This includes all code in the java/ and data/ directories
+- jlayer is bundled with this project and licensed under LGPL-2.1 (https://github.com/umjammer/jlayer/blob/master/LICENSE.txt)
 
 Source code: https://github.com/Rebel459/music-and-melody
-
-Bundled Projects
-- tinyfd - zlib & BSD-3-Clause (https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md)
-- jlayer - LGPL-2.1 (https://github.com/umjammer/jlayer/blob/master/LICENSE.txt)
 
 
 

@@ -11,10 +11,10 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import net.rebel459.music_and_melody.client.util.FileDialogs;
 
 import java.net.URI;
-import java.nio.file.Path;
+import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
 
@@ -55,12 +55,11 @@ public final class PlatformDownloadScreen extends Screen {
     }
 
     private void importLocal() {
-        String path = TinyFileDialogs.tinyfd_openFileDialog(
-                Component.translatable("screen.music_and_melody.remote_redirect.import").getString(),
-                this.pack.fileName(), null, "ZIP files", false);
-        if (path == null || path.isBlank()) return;
-        RemoteContentManager.importLocal(this.pack, Path.of(path));
-        updateImportButton();
+        FileDialogs.openFiles(this.pack.fileName(), "ZIP files", List.of("zip"), false, files -> {
+            if (files.isEmpty()) return;
+            RemoteContentManager.importLocal(this.pack, files.getFirst());
+            updateImportButton();
+        });
     }
 
     private void updateImportButton() {

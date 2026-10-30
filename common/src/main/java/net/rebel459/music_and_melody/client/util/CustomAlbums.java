@@ -17,9 +17,6 @@ import net.rebel459.music_and_melody.MusicAndMelody;
 import net.rebel459.music_and_melody.client.Album;
 import net.rebel459.music_and_melody.config.MaMClientConfig;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -211,31 +208,10 @@ public final class CustomAlbums {
     }
 
     public static void chooseAudioFiles(Consumer<List<Path>> callback) {
-        chooseFiles("Select music files", true, callback);
-    }
-
-    private static void chooseFiles(String title, boolean multiple, Consumer<List<Path>> callback) {
-        Thread chooser = new Thread(() -> {
-            List<Path> selected = new ArrayList<>();
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                String[] extensions = new String[] {"*.ogg", "*.mp3", "*.flac", "*.wav"};
-                PointerBuffer filters = stack.mallocPointer(extensions.length);
-                for (String extension : extensions) filters.put(stack.UTF8(extension));
-                filters.flip();
-                String result = TinyFileDialogs.tinyfd_openFileDialog(title, "", filters, ".ogg, .mp3, .flac or .wav", multiple);
-                if (result != null && !result.isBlank()) {
-                    for (String file : result.split("\\|")) {
-                        Path path = Path.of(file);
-                        if (Files.isRegularFile(path) && isSupportedAudio(path)) {
-                            selected.add(path);
-                        }
-                    }
-                }
-            } catch (RuntimeException ignored) {}
-            Minecraft.getInstance().execute(() -> callback.accept(selected));
-        }, "Music & Melody file picker");
-        chooser.setDaemon(true);
-        chooser.start();
+        FileDialogs.openFiles(null, ".ogg, .mp3, .flac or .wav", List.of("ogg", "mp3", "flac", "wav"), true,
+                files -> callback.accept(files.stream()
+                        .filter(path -> Files.isRegularFile(path) && isSupportedAudio(path))
+                        .toList()));
     }
 
     private static boolean write(String idPath, String name, String icon, List<Path> tracks) {
