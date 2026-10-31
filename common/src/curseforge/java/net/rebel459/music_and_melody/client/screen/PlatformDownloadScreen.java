@@ -13,13 +13,9 @@ import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 import net.rebel459.music_and_melody.client.util.FileDialogs;
-import net.minecraft.client.Minecraft;
 import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.List;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
@@ -62,36 +58,14 @@ public final class PlatformDownloadScreen extends Screen {
     }
 
     private void importLocal() {
-        // new dialog code
-        FileDialogs.openFiles(this.pack.fileName(), "ZIP files", List.of("zip"), false, files -> {
-            if (files.isEmpty()) return;
-            RemoteContentManager.importLocal(this.pack, files.getFirst());
-            updateImportButton();
-        });
-        // new up-ported code
         if (this.choosing) return;
         this.choosing = true;
         updateImportButton();
-        String title = Component.translatable("screen.music_and_melody.remote_redirect.import").getString();
-        String defaultName = this.pack.importFileName();
-        Thread chooser = new Thread(() -> {
-            String path = null;
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                PointerBuffer filters = stack.mallocPointer(1);
-                filters.put(stack.UTF8("*.zip"));
-                filters.flip();
-                path = TinyFileDialogs.tinyfd_openFileDialog(title, defaultName, filters, "ZIP files", false);
-            } catch (RuntimeException ignored) {
-            }
-            String chosen = path;
-            Minecraft.getInstance().execute(() -> {
-                this.choosing = false;
-                if (chosen != null && !chosen.isBlank()) RemoteContentManager.importLocal(this.pack, Path.of(chosen));
-                updateImportButton();
-            });
-        }, "Music & Melody file picker");
-        chooser.setDaemon(true);
-        chooser.start();
+        FileDialogs.openFiles(this.pack.importFileName(), "ZIP files", List.of("zip"), false, files -> {
+            this.choosing = false;
+            if (!files.isEmpty()) RemoteContentManager.importLocal(this.pack, files.getFirst());
+            updateImportButton();
+        });
     }
 
     private void updateImportButton() {
