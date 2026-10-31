@@ -207,7 +207,7 @@ public class EventScreen extends Screen {
             return;
         }
         this.soundPoolsSnapshot = snapshotEditor();
-        this.minecraft.setScreen(new SoundPoolsScreen(this));
+        this.minecraft.gui.setScreen(new SoundPoolsScreen(this));
     }
 
     private EditorSnapshot snapshotEditor() {
@@ -554,12 +554,12 @@ public class EventScreen extends Screen {
             closeNow();
             return;
         }
-        this.minecraft.setScreen(new ThemeExitConfirmScreen(this,
+        this.minecraft.gui.setScreen(new ThemeExitConfirmScreen(this,
                 Component.translatable("screen.music_and_melody.event_editor.unsaved"),
                 Component.translatable("screen.music_and_melody.event_editor.unsaved_warning"),
                 save -> {
                     if (save && !saveForPrompt()) {
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                         return;
                     }
                     closeNow();
@@ -595,16 +595,16 @@ public class EventScreen extends Screen {
             action.run();
             return;
         }
-        this.minecraft.setScreen(new ThemeExitConfirmScreen(this,
+        this.minecraft.gui.setScreen(new ThemeExitConfirmScreen(this,
                 Component.translatable("screen.music_and_melody.event_editor.unsaved"),
                 Component.translatable("screen.music_and_melody.event_editor.unsaved_warning"),
                 save -> {
                     if (save && !saveForPrompt()) {
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                         return;
                     }
                     action.run();
-                    if (this.minecraft.screen != this) this.minecraft.setScreen(this);
+                    if (this.minecraft.gui.screen() != this) this.minecraft.gui.setScreen(this);
                 }));
     }
 
