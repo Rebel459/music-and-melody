@@ -48,7 +48,7 @@ public final class MusicScreenHelper {
 
     public static void saveFailed(Minecraft minecraft) {
         if (minecraft == null) return;
-        SystemToast.addOrUpdate(minecraft.gui.toastManager(), 
+        SystemToast.addOrUpdate(minecraft.gui.toastManager(),
                 SystemToast.SystemToastId.PACK_COPY_FAILURE,
                 Component.translatable("screen.music_and_melody.save_failed"),
                 Component.translatable("screen.music_and_melody.save_failed.details"));
