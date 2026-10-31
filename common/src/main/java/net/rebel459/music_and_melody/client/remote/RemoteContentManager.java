@@ -353,8 +353,8 @@ public final class RemoteContentManager {
         });
     }
 
-    public static String externalDownloadUrl(RemotePack pack) {
-        return pack.url();
+    public static URI externalDownloadUrl(RemotePack pack) {
+        return URI.create(pack.url());
     }
 
     public static void markReloaded() {
