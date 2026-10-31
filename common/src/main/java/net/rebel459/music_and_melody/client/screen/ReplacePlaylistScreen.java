@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.rebel459.music_and_melody.client.Playlist;
@@ -59,7 +60,9 @@ final class ReplacePlaylistScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -165,7 +168,8 @@ final class ReplacePlaylistScreen extends Screen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (hovered) graphics.fill(getContentX(), getContentY(), getContentRight(), getContentBottom(), BUTTON_HIGHLIGHTED);
-            text(graphics, font, this.playlist.name, getContentX() + 4, getContentYMiddle() - font.lineHeight / 2, TEXT_TITLE);
+            text(graphics, font, Language.getInstance().getVisualOrder(font.substrByWidth(this.playlist.name, Math.max(1, getContentWidth() - 12))),
+                    getContentX() + 4, getContentYMiddle() - font.lineHeight / 2, TEXT_TITLE);
         }
 
         @Override

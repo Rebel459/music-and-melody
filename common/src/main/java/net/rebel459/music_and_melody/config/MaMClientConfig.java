@@ -65,6 +65,14 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Gui.RequiresRestart
 	public boolean online_functionality = true;
 
+	@Override
+	public void validatePostLoad() {
+		if (!Float.isFinite(fade_speed) || fade_speed <= 0.0F) fade_speed = 0.01F;
+		fade_speed = Math.min(fade_speed, 1.0F);
+		if (pause_button == null) pause_button = ButtonPosition.REPLACE;
+		if (title_button == null) title_button = ButtonPosition.REPLACE;
+	}
+
 	public enum ButtonPosition {
 		REPLACE,
 		APPEND,

@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client.util;
 
+import java.io.BufferedInputStream;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.Decoder;
 import javazoom.jl.decoder.Header;
@@ -42,12 +43,21 @@ public final class AudioStreams {
     }
 
     public static AudioStream open(InputStream input, String extension) throws IOException {
-        return switch (extension.toLowerCase(Locale.ROOT)) {
-            case "mp3" -> new Mp3(input);
-            case "flac" -> new Flac(input);
-            case "wav" -> new Wav(input);
-            default -> throw new IOException("No external decoder for '" + extension + "'.");
-        };
+        try {
+            return switch (extension.toLowerCase(Locale.ROOT)) {
+                case "mp3" -> new Mp3(input);
+                case "flac" -> new Flac(input);
+                case "wav" -> new Wav(input);
+                default -> throw new IOException("No external decoder for '" + extension + "'.");
+            };
+        } catch (IOException | RuntimeException exception) {
+            try {
+                input.close();
+            } catch (IOException suppressed) {
+                exception.addSuppressed(suppressed);
+            }
+            throw exception;
+        }
     }
 
     public static AudioStream openLooping(Path path) throws IOException {
@@ -231,7 +241,8 @@ public final class AudioStreams {
 
         private Wav(InputStream input) throws IOException {
             try {
-                this.input = AudioSystem.getAudioInputStream(input);
+                // AudioSystem needs mark/reset to sniff the format, which a plain file stream doesn't provide
+                this.input = AudioSystem.getAudioInputStream(new BufferedInputStream(input));
             } catch (UnsupportedAudioFileException exception) {
                 throw new IOException("Unsupported WAV audio.", exception);
             }
@@ -280,14 +291,18 @@ public final class AudioStreams {
         @Override
         public ByteBuffer read(int requested) throws IOException {
             ByteArrayOutputStream output = new ByteArrayOutputStream(requested);
+            boolean reopened = false;
             while (output.size() < requested) {
                 ByteBuffer block = stream.read(requested - output.size());
                 if (!block.hasRemaining()) {
+                    if (reopened) break;
                     stream.close();
                     stream = open(path);
                     if (!stream.getFormat().matches(format)) throw new IOException("Looping stream format changed.");
+                    reopened = true;
                     continue;
                 }
+                reopened = false;
                 byte[] bytes = new byte[block.remaining()];
                 block.get(bytes);
                 output.write(bytes);
@@ -322,14 +337,18 @@ public final class AudioStreams {
         @Override
         public ByteBuffer read(int requested) throws IOException {
             ByteArrayOutputStream output = new ByteArrayOutputStream(requested);
+            boolean reopened = false;
             while (output.size() < requested) {
                 ByteBuffer block = stream.read(requested - output.size());
                 if (!block.hasRemaining()) {
+                    if (reopened) break;
                     stream.close();
                     stream = open(source.get(), extension);
                     if (!stream.getFormat().matches(format)) throw new IOException("Looping stream format changed.");
+                    reopened = true;
                     continue;
                 }
+                reopened = false;
                 byte[] bytes = new byte[block.remaining()];
                 block.get(bytes);
                 output.write(bytes);

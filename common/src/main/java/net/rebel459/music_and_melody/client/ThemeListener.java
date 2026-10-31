@@ -1,5 +1,7 @@
 package net.rebel459.music_and_melody.client;
 
+import com.mojang.serialization.DataResult;
+import net.rebel459.music_and_melody.client.util.AtomicFiles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -389,7 +391,9 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
     private static Theme.Record readRecord(Path path, Identifier id) {
         try (Reader reader = Files.newBufferedReader(path)) {
             JsonElement json = JsonParser.parseReader(reader);
-            return Theme.Record.CODEC.parse(JsonOps.INSTANCE, json).result().map(record -> record.withId(id)).orElse(null);
+            DataResult<Theme.Record> parsed = Theme.Record.CODEC.parse(JsonOps.INSTANCE, json);
+            parsed.error().ifPresent(error -> LogUtils.getLogger().warn("Invalid theme JSON {}: {}", path, error.message()));
+            return parsed.result().map(record -> record.withId(id)).orElse(null);
         } catch (Exception exception) {
             LogUtils.getLogger().warn("Skipping invalid theme JSON: " + path, exception);
             return null;
@@ -401,9 +405,7 @@ public class ThemeListener extends SimpleJsonResourceReloadListener<Theme.Record
             Files.createDirectories(path.getParent());
             JsonElement json = Theme.Record.CODEC.encodeStart(JsonOps.INSTANCE, record).result().orElse(null);
             if (json == null) return false;
-            try (Writer writer = Files.newBufferedWriter(path)) {
-                GSON.toJson(json, writer);
-            }
+            AtomicFiles.write(path, writer -> GSON.toJson(json, writer));
             return true;
         } catch (IOException exception) {
             LogUtils.getLogger().warn("Failed to write theme config: " + path, exception);

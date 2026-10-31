@@ -31,11 +31,11 @@ public final class RemoteIconManager {
     public static synchronized Identifier icon(RemotePack pack) {
         if (!RemoteContentManager.onlineFunctionalityEnabled()) return FALLBACK;
         String value = pack.icon();
-        Identifier identifier = Identifier.tryParse(value);
-        if (identifier != null) return identifier;
-
         URI uri = imageUri(value);
-        if (uri == null) return FALLBACK;
+        if (uri == null) {
+            Identifier identifier = Identifier.tryParse(value);
+            return identifier != null ? identifier : FALLBACK;
+        }
 
         Identifier loaded = LOADED.get(value);
         if (loaded != null) return loaded;

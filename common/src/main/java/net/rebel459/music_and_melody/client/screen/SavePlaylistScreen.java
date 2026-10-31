@@ -42,6 +42,8 @@ class SavePlaylistScreen extends Screen {
 
     @Override
     protected void init() {
+        String[] draft = this.nameField == null ? null : new String[] {
+                this.nameField.getValue(), this.iconField.getValue(), this.pathField.getValue()};
         calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
@@ -81,6 +83,11 @@ class SavePlaylistScreen extends Screen {
                 ignored -> save()));
         this.addRenderableWidget(new WorkspaceButton(fieldX + buttonWidth + 5, buttonY, buttonWidth, 20, CommonComponents.GUI_CANCEL, false,
                 ignored -> this.onClose()));
+        if (draft != null) {
+            this.nameField.setValue(draft[0]);
+            this.iconField.setValue(draft[1]);
+            if (this.replacing == null) this.pathField.setValue(draft[2]);
+        }
         this.setInitialFocus(this.nameField);
         refreshSaveState();
     }
@@ -119,7 +126,9 @@ class SavePlaylistScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int x = panelX();

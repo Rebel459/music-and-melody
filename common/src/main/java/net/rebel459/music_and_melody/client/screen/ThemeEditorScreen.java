@@ -1,6 +1,7 @@
 package net.rebel459.music_and_melody.client.screen;
 
 import net.rebel459.music_and_melody.client.element.RemoteDetailsPanel;
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
 import net.minecraft.client.Minecraft;
@@ -135,6 +136,11 @@ final class ThemeEditorScreen extends Screen {
 
         int middleFieldX = middleX + 8;
         int middleFieldWidth = Math.max(40, middleWidth - 16);
+        boolean keepDraft = dirty && this.nameField != null;
+        String draftName = keepDraft ? this.nameField.getValue() : null;
+        String draftDescription = keepDraft ? this.descriptionField.getValue() : null;
+        String draftIcon = keepDraft ? this.iconField.getValue() : null;
+        String draftParent = keepDraft ? this.parentField.getValue() : null;
         this.nameField = field(Component.translatable("screen.music_and_melody.name"), middleFieldX, PANEL_TOP + 50, middleFieldWidth);
         this.descriptionField = field(Component.translatable("screen.music_and_melody.theme.description"), middleFieldX, PANEL_TOP + 88, middleFieldWidth);
         this.iconField = field(Component.translatable("screen.music_and_melody.icon"), middleFieldX, PANEL_TOP + 126, middleFieldWidth);
@@ -146,10 +152,10 @@ final class ThemeEditorScreen extends Screen {
                 middleFieldWidth, 20, textShadowMessage(), this.textShadow,
                 ignored -> toggleTextShadow()));
         this.loading = true;
-        this.nameField.setValue(theme.name.getString());
-        this.descriptionField.setValue(theme.description.getString());
-        this.iconField.setValue(theme.icon.toString());
-        this.parentField.setValue(rawParent(theme));
+        this.nameField.setValue(keepDraft ? draftName : theme.name.getString());
+        this.descriptionField.setValue(keepDraft ? draftDescription : theme.description.getString());
+        this.iconField.setValue(keepDraft ? draftIcon : theme.icon.toString());
+        this.parentField.setValue(keepDraft ? draftParent : rawParent(theme));
         this.parentField.setHint(Component.literal("music_and_melody:default").withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.loading = false;
         this.nameField.setResponder(value -> textChanged(MainOption.NAME, value));
@@ -494,8 +500,7 @@ final class ThemeEditorScreen extends Screen {
         dirty = true;
         Integer parsed = ThemeListener.parseColor(value);
         if (parsed == null) {
-            overriddenRoles.add(selectedRole);
-            updateWidgets();
+            if (this.saveButton != null) this.saveButton.active = !readOnly && dirty && isValidDraft() && !pendingDelete;
             return;
         }
         values.put(selectedRole, ThemeListener.formatColor(parsed));
@@ -604,6 +609,7 @@ final class ThemeEditorScreen extends Screen {
         if (Identifier.tryParse(iconField.getValue().trim()) == null) return false;
         String parent = parentField.getValue().trim();
         if (!parent.isEmpty() && Identifier.tryParse(parent) == null) return false;
+        if (theme != null && !parent.isEmpty() && theme.theme.equals(Identifier.tryParse(parent))) return false;
         for (Role role : overriddenRoles) if (ThemeListener.parseColor(values.get(role)) == null) return false;
         return true;
     }
@@ -661,7 +667,10 @@ final class ThemeEditorScreen extends Screen {
 
     private boolean saveChanges() {
         if (readOnly || pendingDelete || !isValidDraft()) return false;
-        if (!ThemeListener.saveConfigTheme(draftRecord())) return false;
+        if (!ThemeListener.saveConfigTheme(draftRecord())) {
+            MusicScreenHelper.saveFailed(this.minecraft);
+            return false;
+        }
         Theme updated = ThemeListener.theme(theme.theme);
         if (updated != null) theme = updated;
         dirty = false;

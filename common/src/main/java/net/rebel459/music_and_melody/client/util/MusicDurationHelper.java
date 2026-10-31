@@ -28,7 +28,9 @@ public final class MusicDurationHelper {
     // Duration probes run off the render thread; a long OGG must not stall the player UI
     private static final Map<Identifier, CompletableFuture<Optional<Long>>> PENDING = new ConcurrentHashMap<>();
     private static final Map<Identifier, Long> RETRY_AFTER = new ConcurrentHashMap<>();
+    private static final Map<Identifier, Integer> FAILED_PROBES = new ConcurrentHashMap<>();
     private static final long FAILED_PROBE_RETRY_DELAY = 1_000L;
+    private static final long MAX_FAILED_PROBE_RETRY_DELAY = 30_000L;
 
     private MusicDurationHelper() {}
 
@@ -77,11 +79,14 @@ public final class MusicDurationHelper {
                 DURATIONS.put(location, duration.get());
                 PENDING.remove(location, pending);
                 RETRY_AFTER.remove(location);
+                FAILED_PROBES.remove(location);
                 return duration;
             }
             if (pending.isDone()) {
                 PENDING.remove(location, pending);
-                RETRY_AFTER.put(location, now + FAILED_PROBE_RETRY_DELAY);
+                int failures = FAILED_PROBES.merge(location, 1, Integer::sum);
+                long delay = Math.min(MAX_FAILED_PROBE_RETRY_DELAY, FAILED_PROBE_RETRY_DELAY << Math.min(failures - 1, 5));
+                RETRY_AFTER.put(location, now + delay);
             }
         }
         return Optional.empty();
@@ -158,6 +163,10 @@ public final class MusicDurationHelper {
         if (direct.isPresent() && !direct.get().getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
             input.close();
             return AudioStreams.open(direct.get());
+        }
+        Optional<DirectSoundFiles.ResourceSource> resource = DirectSoundFiles.getResource(location);
+        if (resource.isPresent() && !resource.get().extension().equalsIgnoreCase("ogg")) {
+            return AudioStreams.open(input, resource.get().extension());
         }
         return new JOrbisAudioStream(input);
     }

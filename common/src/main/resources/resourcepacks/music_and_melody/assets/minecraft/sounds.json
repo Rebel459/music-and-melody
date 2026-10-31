@@ -577,14 +577,19 @@
       {
         "name": "music_and_melody:music/caves/shelter",
         "stream": true,
-        "weight": 3
+        "weight": 2
+      },
+      {
+        "name": "music_and_melody:music/caves/extract_one",
+        "stream": true,
+        "volume": 0.8
       },
       {
         "name": "music_and_melody:music/overworld/hunger",
         "stream": true
       },
       {
-        "name": "music_and_melody:music/caves/wisdom",
+        "name": "music_and_melody:music/caves/infinite_development",
         "stream": true,
         "volume": 0.7
       },
@@ -768,8 +773,7 @@
       {
         "name": "music/game/broken_clocks",
         "stream": true,
-        "volume": 0.4,
-        "weight": 2
+        "volume": 0.4
       },
       {
         "name": "music/game/bromeliad",
@@ -1151,7 +1155,11 @@
         "name": "music_and_melody:music/caves/extract_one",
         "stream": true,
         "volume": 0.8,
-        "weight": 3
+        "weight": 2
+      },
+      {
+        "name": "music_and_melody:music/caves/shelter",
+        "stream": true
       },
       {
         "name": "music_and_melody:music/creative/lugn",
@@ -1161,6 +1169,11 @@
       {
         "name": "music_and_melody:music/overworld/hunger",
         "stream": true
+      },
+      {
+        "name": "music_and_melody:music/caves/infinite_development",
+        "stream": true,
+        "volume": 0.7
       },
       {
         "name": "music/game/an_ordinary_day",
@@ -1502,6 +1515,80 @@
       {
         "name": "music/game/wet_hands",
         "stream": true
+      }
+    ]
+  },
+  "music.overworld.sulfur_caves": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "music_and_melody:music/overworld/hunger",
+        "stream": true
+      },
+      {
+        "name": "music/game/an_ordinary_day",
+        "stream": true
+      },
+      {
+        "name": "music/game/danny",
+        "stream": true
+      },
+      {
+        "name": "music/game/deeper",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/ebb",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/eld_unknown",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/endless",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/infinite_amethyst",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
+        "name": "music/game/key",
+        "stream": true
+      },
+      {
+        "name": "music/game/nightly",
+        "stream": true
+      },
+      {
+        "name": "music/game/oxygene",
+        "stream": true
+      },
+      {
+        "name": "music/game/pokopoko",
+        "stream": true,
+        "volume": 0.8
+      },
+      {
+        "name": "music/game/shores",
+        "stream": true,
+        "volume": 0.4,
+        "weight": 2
+      },
+      {
+        "name": "music/game/subwoofer_lullaby",
+        "stream": true
+      },
+      {
+        "name": "music/game/wending",
+        "stream": true,
+        "volume": 0.4
       }
     ]
   },

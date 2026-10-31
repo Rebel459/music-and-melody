@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -24,10 +26,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -59,19 +58,24 @@ public final class RemoteContentManager {
     private static final Path PACK_DIRECTORY = DIRECTORY.resolve(".packs");
     private static final Path MANIFEST_DIRECTORY = DIRECTORY.resolve(".manifests");
     private static final int MAX_ICON_BYTES = 5 * 1024 * 1024;
+    private static final int MAX_TEXT_BYTES = 4 * 1024 * 1024;
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
     private static final Map<RemotePack.Key, State> OVERRIDE_STATES = new ConcurrentHashMap<>();
     private static final Set<RemotePack.Key> DOWNLOADING = ConcurrentHashMap.newKeySet();
+    private static final Map<RemotePack.Key, Long> MEASURED_SIZES = new ConcurrentHashMap<>();
+    private static final Set<RemotePack.Key> MEASURING = ConcurrentHashMap.newKeySet();
     private static final Map<RemotePack.Key, Double> DOWNLOAD_PROGRESS = new ConcurrentHashMap<>();
     private static final List<RemotePack> PACKS = new ArrayList<>();
     private static volatile List<String> supporters = List.of();
     private static volatile List<String> composers = List.of();
     private static volatile List<String> splashes = List.of();
     private static CompletableFuture<Void> refreshTask;
-    private static CompletableFuture<Void> creditsTask;
+    private static int refreshGeneration;
+    private static boolean creditsRequested;
+    private static boolean creditsRunning;
     private static boolean loaded;
 
     private RemoteContentManager() {}
@@ -118,7 +122,7 @@ public final class RemoteContentManager {
     }
 
     public static synchronized void refresh() {
-        loaded = true;
+        int generation = ++refreshGeneration;
         MaMDataConfig.Remote remote = MaMDataConfig.get().remote;
         List<String> repositories = remote == null || remote.catalogs == null
                 ? List.of()
@@ -131,15 +135,19 @@ public final class RemoteContentManager {
             providers.add(new ProviderSource(COMMUNITY_PROVIDER, RemotePack.Provenance.VERIFIED));
         }
         if (!onlineFunctionalityEnabled() || providers.isEmpty() && repositories.isEmpty()) {
+            if (onlineFunctionalityEnabled()) loaded = true;
             PACKS.clear();
             refreshTask = null;
             return;
         }
+        loaded = true;
         SupporterIdentity identity = supporterIdentity();
         boolean officialEnabled = remote != null && remote.official_provider;
         refreshTask = CompletableFuture.supplyAsync(() -> loadCatalogs(providers, repositories, officialEnabled, identity))
+                .orTimeout(3, TimeUnit.MINUTES)
                 .thenAccept(packs -> {
                     synchronized (RemoteContentManager.class) {
+                        if (generation != refreshGeneration) return;
                         PACKS.clear();
                         PACKS.addAll(packs);
                         refreshTask = null;
@@ -147,7 +155,10 @@ public final class RemoteContentManager {
                 })
                 .exceptionally(throwable -> {
                     synchronized (RemoteContentManager.class) {
-                        refreshTask = null;
+                        if (generation == refreshGeneration) {
+                            refreshTask = null;
+                            loaded = false;
+                        }
                     }
                     return null;
                 });
@@ -170,10 +181,41 @@ public final class RemoteContentManager {
         if (override != null) return override;
         MaMDataConfig.DownloadedPack installed = installed(pack);
         if (installed == null) return State.REMOTE;
-        if (!installed.version.equals(pack.version()) || !installed.sha256.equalsIgnoreCase(pack.sha256())) {
+        if (!installed.version.equals(pack.version())) {
             return State.UPDATE_AVAILABLE;
         }
         return State.INSTALLED;
+    }
+
+    public static OptionalLong installedSize(RemotePack pack) {
+        MaMDataConfig.DownloadedPack record = installed(pack);
+        if (record == null) return OptionalLong.empty();
+        if (record.size > 0L) return OptionalLong.of(record.size);
+        RemotePack.Key key = pack.key();
+        Long measured = MEASURED_SIZES.get(key);
+        if (measured != null) return measured > 0L ? OptionalLong.of(measured) : OptionalLong.empty();
+        if (MEASURING.add(key)) {
+            CompletableFuture.runAsync(() -> {
+                MEASURED_SIZES.put(key, directorySize(packDirectory(key)));
+                MEASURING.remove(key);
+            });
+        }
+        return OptionalLong.empty();
+    }
+
+    private static long directorySize(Path directory) {
+        if (!Files.isDirectory(directory)) return 0L;
+        try (var files = Files.walk(directory)) {
+            return files.filter(Files::isRegularFile).mapToLong(file -> {
+                try {
+                    return Files.size(file);
+                } catch (IOException exception) {
+                    return 0L;
+                }
+            }).sum();
+        } catch (IOException exception) {
+            return 0L;
+        }
     }
 
     public static OptionalDouble downloadProgress(RemotePack pack) {
@@ -195,21 +237,24 @@ public final class RemoteContentManager {
             composers = List.of();
             return;
         }
-        if (creditsTask != null) return;
-        creditsTask = CompletableFuture.runAsync(() -> {
+        if (creditsRequested) return;
+        creditsRequested = true;
+        creditsRunning = true;
+        CompletableFuture.runAsync(() -> {
             supporters = loadStringArray(SUPPORTERS);
             composers = loadStringArray(COMPOSERS);
             splashes = loadLines(SPLASHES);
             cacheNextWelcomeValues();
         }).whenComplete((ignored, throwable) -> {
             synchronized (RemoteContentManager.class) {
-                creditsTask = null;
+                creditsRunning = false;
+                if (throwable != null) creditsRequested = false;
             }
         });
     }
 
-    public static boolean creditsLoading() {
-        return creditsTask != null;
+    public static synchronized boolean creditsLoading() {
+        return creditsRunning;
     }
 
     public static List<String> supporters() {
@@ -250,15 +295,16 @@ public final class RemoteContentManager {
         OVERRIDE_STATES.put(key, State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
             Path zip = null;
+            Path staging = null;
             try {
                 zip = PlatformContentManager.download(pack, downloaded -> {
-                    if (pack.size() > 0L) DOWNLOAD_PROGRESS.put(key, Math.min(1.0D, downloaded / (double) pack.size()));
+                    if (pack.downloadSize() > 0L) DOWNLOAD_PROGRESS.put(key, Math.min(1.0D, downloaded / (double) pack.downloadSize()));
                 });
-                importAndExtract(pack, zip);
-                recordInstalled(pack);
-                OVERRIDE_STATES.put(key, State.NEEDS_RELOAD);
+                staging = stage(pack, zip, false);
+                commitOnMainThread(pack, staging);
             } catch (Exception exception) {
-                OVERRIDE_STATES.put(key, State.FAILED);
+                if (staging != null) deleteDirectory(staging);
+                failInstall(key);
             } finally {
                 if (zip != null) {
                     try {
@@ -266,8 +312,6 @@ public final class RemoteContentManager {
                     } catch (IOException ignored) {
                     }
                 }
-                DOWNLOADING.remove(key);
-                DOWNLOAD_PROGRESS.remove(key);
             }
         });
     }
@@ -277,14 +321,34 @@ public final class RemoteContentManager {
         if (!DOWNLOADING.add(key)) return;
         OVERRIDE_STATES.put(key, State.DOWNLOADING);
         CompletableFuture.runAsync(() -> {
+            Path staging = null;
             try {
-                importAndExtract(pack, zip);
-                recordInstalled(pack);
-                OVERRIDE_STATES.put(key, State.NEEDS_RELOAD);
+                staging = stage(pack, zip, true);
+                commitOnMainThread(pack, staging);
             } catch (Exception exception) {
-                OVERRIDE_STATES.put(key, State.FAILED);
-            } finally {
+                if (staging != null) deleteDirectory(staging);
+                failInstall(key);
+            }
+        });
+    }
+
+    private static void failInstall(RemotePack.Key key) {
+        OVERRIDE_STATES.put(key, State.FAILED);
+        DOWNLOADING.remove(key);
+        DOWNLOAD_PROGRESS.remove(key);
+    }
+
+    private static void commitOnMainThread(RemotePack pack, Path staging) {
+        RemotePack.Key key = pack.key();
+        Minecraft.getInstance().execute(() -> {
+            try {
+                commit(pack, staging);
+                OVERRIDE_STATES.put(key, State.NEEDS_RELOAD);
                 DOWNLOADING.remove(key);
+                DOWNLOAD_PROGRESS.remove(key);
+            } catch (Exception exception) {
+                deleteDirectory(staging);
+                failInstall(key);
             }
         });
     }
@@ -297,8 +361,7 @@ public final class RemoteContentManager {
         OVERRIDE_STATES.entrySet().removeIf(entry -> entry.getValue() == State.NEEDS_RELOAD);
     }
 
-    private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories,
-                                                  boolean officialEnabled, SupporterIdentity identity) {
+    private static List<RemotePack> loadCatalogs(List<ProviderSource> providers, List<String> repositories, boolean officialEnabled, SupporterIdentity identity) {
         List<ProviderSource> sources = new ArrayList<>(providers);
         boolean supporter = (officialEnabled || !repositories.isEmpty()) && isSupporter(identity);
         if (officialEnabled && supporter) sources.add(new ProviderSource(SUPPORTER_PROVIDER, RemotePack.Provenance.OFFICIAL));
@@ -332,6 +395,26 @@ public final class RemoteContentManager {
 
     private record ProviderSource(String url, RemotePack.Provenance provenance) {}
 
+    private static String fetchText(HttpRequest request) throws IOException, InterruptedException {
+        try {
+            return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+                    .thenApply(response -> {
+                        try (InputStream input = response.body()) {
+                            if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
+                            byte[] bytes = input.readNBytes(MAX_TEXT_BYTES + 1);
+                            if (bytes.length > MAX_TEXT_BYTES) throw new IOException("Response exceeds " + MAX_TEXT_BYTES + " bytes");
+                            return new String(bytes, StandardCharsets.UTF_8);
+                        } catch (IOException exception) {
+                            throw new CompletionException(exception);
+                        }
+                    })
+                    .orTimeout(30, TimeUnit.SECONDS)
+                    .get();
+        } catch (ExecutionException exception) {
+            throw new IOException(exception.getCause());
+        }
+    }
+
     private static List<String> loadProvider(String providerUrl) {
         URI providerUri = catalogUri(providerUrl);
         return loadStringArray(providerUrl).stream().map(value -> providerUri.resolve(value).toString()).toList();
@@ -344,10 +427,10 @@ public final class RemoteContentManager {
                     .timeout(Duration.ofSeconds(20))
                     .GET()
                     .build();
-            HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
+            String body = fetchText(request);
+            if (body == null) return List.of();
 
-            JsonElement root = JsonParser.parseString(response.body());
+            JsonElement root = JsonParser.parseString(body);
             if (!root.isJsonArray()) return List.of();
             List<String> catalogs = new ArrayList<>();
             for (JsonElement element : root.getAsJsonArray()) {
@@ -367,9 +450,9 @@ public final class RemoteContentManager {
                     .timeout(Duration.ofSeconds(20))
                     .GET()
                     .build();
-            HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
-            return response.body().lines().map(String::trim).filter(line -> !line.isEmpty()).toList();
+            String body = fetchText(request);
+            if (body == null) return List.of();
+            return body.lines().map(String::trim).filter(line -> !line.isEmpty()).toList();
         } catch (Exception ignored) {
             return List.of();
         }
@@ -442,9 +525,9 @@ public final class RemoteContentManager {
                 .timeout(Duration.ofSeconds(20))
                 .GET()
                 .build();
-        HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
-        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+        String body = fetchText(request);
+        if (body == null) return List.of();
+        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
         if (!isSupportedCatalogSchema(root)) return List.of();
         String repositoryName = repositoryName(root, repositoryUrl);
         JsonArray array = root.getAsJsonArray("packs");
@@ -560,9 +643,14 @@ public final class RemoteContentManager {
 
     private static RemotePack parsePack(JsonObject object, String repositoryName, URI catalogUri, RemotePack.Provenance provenance) {
         Identifier id = object.has("id") ? Identifier.tryParse(object.get("id").getAsString()) : null;
-        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("sha256") || !object.has("size") || !object.has("tags")) {
+        if (id != null && id.getNamespace().startsWith(".")) return null;
+        if (id == null || !object.has("name") || !object.has("version") || !object.has("url") || !object.has("tags")
+                || !object.has("download_size") && !object.has("size")) {
             return null;
         }
+        long downloadSize = object.has("download_size") ? megabytes(object.get("download_size")) : object.get("size").getAsLong();
+        long installSize = object.has("install_size") ? megabytes(object.get("install_size")) : 0L;
+        if (downloadSize < 0L) return null;
         List<RemotePack.Tag> tags = stringArray(object, "tags").stream().map(RemotePack.Tag::fromSerialized).toList();
         if (tags.isEmpty() || tags.contains(null)) return null;
         List<String> dependencies = stringArray(object, "dependencies");
@@ -578,8 +666,8 @@ public final class RemoteContentManager {
                 repositoryName,
                 object.get("version").getAsString(),
                 rawGithubBlobUri(catalogUri.resolve(object.get("url").getAsString())).toString(),
-                object.get("sha256").getAsString().toLowerCase(Locale.ROOT),
-                object.get("size").getAsLong(),
+                downloadSize,
+                installSize,
                 icon,
                 showFromVersion,
                 showBelowVersion,
@@ -587,6 +675,12 @@ public final class RemoteContentManager {
                 dependencies,
                 provenance
         );
+    }
+
+    private static long megabytes(JsonElement element) {
+        double value = element.getAsDouble();
+        if (!Double.isFinite(value) || value < 0.0D) throw new IllegalArgumentException("Invalid size: " + value);
+        return Math.round(value * 1024.0D * 1024.0D);
     }
 
     private static String resolveIcon(URI catalogUri, String icon) {
@@ -606,37 +700,68 @@ public final class RemoteContentManager {
         return List.copyOf(values);
     }
 
-    private static void importAndExtract(RemotePack pack, Path zip) throws IOException {
+    private static Path stage(RemotePack pack, Path zip, boolean imported) throws IOException {
         if (!Files.isRegularFile(zip)) throw new IOException("Import file missing: " + zip);
-        if (Files.size(zip) != pack.size()) throw new IOException("Imported size mismatch");
-        String hash = sha256(zip);
-        if (!hash.equalsIgnoreCase(pack.sha256())) throw new IOException("Imported hash mismatch");
+        String expectedName = pack.expectedFileName();
+        if (imported && !expectedName.isEmpty() && !zip.getFileName().toString().equalsIgnoreCase(expectedName)) {
+            throw new IOException("Imported file name mismatch");
+        }
+        long fileSize = Files.size(zip);
+        if (fileSize > pack.downloadLimit() || fileSize < pack.downloadMinimum()) {
+            throw new IOException("File size doesn't match the download size listed in the catalog");
+        }
+
+        Path target = packDirectory(pack.key());
+        Path staging = target.resolveSibling(target.getFileName() + ".new");
+        deleteDirectory(staging);
+        try {
+            extractZip(zip, staging, pack.installMinimum(), pack.installLimit());
+        } catch (IOException | RuntimeException exception) {
+            deleteDirectory(staging);
+            throw exception;
+        }
+        return staging;
+    }
+
+    private static synchronized void commit(RemotePack pack, Path staging) throws IOException {
+        Path target = packDirectory(pack.key());
         if (installed(pack) != null) {
             deleteInstalledFiles(pack.key());
         } else {
-            deleteDirectory(packDirectory(pack.key()));
+            deleteDirectory(target);
             if (!hasOtherInstalledPackInNamespace(pack.id(), pack.key())) {
-                deleteDirectory(DIRECTORY.resolve(pack.id().getNamespace()));
+                deleteNamespaceDirectory(pack.id());
             }
         }
-        List<Path> extracted = extractZip(zip, packDirectory(pack.key()));
-        writeManifest(pack.key(), extracted);
+        if (Files.exists(target)) throw new IOException("Could not replace existing pack files (in use?)");
+        Files.createDirectories(target.getParent());
+        Files.move(staging, target);
+        List<Path> installedFiles;
+        try (var files = Files.walk(target)) {
+            installedFiles = files.filter(Files::isRegularFile).toList();
+        }
+        writeManifest(pack.key(), installedFiles);
+        long installedBytes = 0L;
+        for (Path file : installedFiles) installedBytes += Files.size(file);
+        recordInstalled(pack, installedBytes);
     }
 
     private static void deleteInstalledFiles(RemotePack.Key key) {
         deleteFromManifest(key);
         deleteDirectory(packDirectory(key));
         if (!hasOtherInstalledPackInNamespace(key.id(), key)) {
-            deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
+            deleteNamespaceDirectory(key.id());
         }
 
         DownloadedResources.invalidate();
     }
 
-    private static List<Path> extractZip(Path zip, Path directory) throws IOException {
+    private static List<Path> extractZip(Path zip, Path directory, long minBytes, long maxBytes) throws IOException {
         Files.createDirectories(directory);
         Path root = directory.toAbsolutePath().normalize();
         List<Path> extracted = new ArrayList<>();
+        long total = 0L;
+        byte[] buffer = new byte[64 * 1024];
 
         try (InputStream input = Files.newInputStream(zip); ZipInputStream stream = new ZipInputStream(input)) {
             ZipEntry entry;
@@ -647,32 +772,20 @@ public final class RemoteContentManager {
                 if (!target.startsWith(root)) throw new IOException("Unsafe zip entry: " + entry.getName());
 
                 Files.createDirectories(target.getParent());
-                Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
+                try (var output = Files.newOutputStream(target)) {
+                    int read;
+                    while ((read = stream.read(buffer)) >= 0) {
+                        total += read;
+                        if (total > maxBytes) throw new IOException("Pack is larger than the install size listed in the catalog");
+                        output.write(buffer, 0, read);
+                    }
+                }
                 extracted.add(target);
             }
         }
+        if (total < minBytes) throw new IOException("Pack is smaller than the install size listed in the catalog");
 
         return extracted;
-    }
-
-    private static String sha256(Path path) throws IOException {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (InputStream input = Files.newInputStream(path)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = input.read(buffer)) >= 0) {
-                    digest.update(buffer, 0, read);
-                }
-            }
-            StringBuilder builder = new StringBuilder();
-            for (byte value : digest.digest()) {
-                builder.append(String.format("%02x", value));
-            }
-            return builder.toString();
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IOException(exception);
-        }
     }
 
     private static MaMDataConfig.DownloadedPack installed(RemotePack pack) {
@@ -694,7 +807,7 @@ public final class RemoteContentManager {
         return null;
     }
 
-    private static void recordInstalled(RemotePack pack) {
+    private static void recordInstalled(RemotePack pack, long installedBytes) {
         MaMDataConfig config = MaMDataConfig.get();
         MaMDataConfig.DownloadedPack record = installed(pack);
         if (record == null) {
@@ -704,7 +817,7 @@ public final class RemoteContentManager {
         record.id = pack.id().toString();
         record.tags = pack.tags().stream().map(tag -> tag.name().toLowerCase(Locale.ROOT)).toList();
         record.version = pack.version();
-        record.sha256 = pack.sha256();
+        record.size = installedBytes;
         record.file = pack.fileName();
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         DownloadedResources.invalidate();
@@ -714,8 +827,7 @@ public final class RemoteContentManager {
             Component name,
             Identifier id,
             RemotePack.Tag tag,
-            String version,
-            String sha256
+            String version
     ) {}
 
     public static synchronized List<InstalledPack> installedPacks() {
@@ -730,8 +842,7 @@ public final class RemoteContentManager {
                     installedName(id, tag),
                     id,
                     tag,
-                    record.version,
-                    record.sha256
+                    record.version
             ));
         }
 
@@ -767,10 +878,12 @@ public final class RemoteContentManager {
         if (record == null) return false;
 
         deleteFromManifest(key);
-        deleteDirectory(packDirectory(key));
+        boolean directoryGone = deleteDirectory(packDirectory(key));
         boolean otherInstalledInNamespace = hasOtherInstalledPackInNamespace(key.id(), key);
-        if (!otherInstalledInNamespace) {
-            deleteDirectory(DIRECTORY.resolve(key.id().getNamespace()));
+        boolean namespaceGone = otherInstalledInNamespace || deleteNamespaceDirectory(key.id());
+        if (!directoryGone || !namespaceGone) {
+            DownloadedResources.invalidate();
+            return false;
         }
 
         config.remote.downloads.removeIf(pack -> pack == record);
@@ -784,6 +897,7 @@ public final class RemoteContentManager {
         }
 
         OVERRIDE_STATES.remove(key);
+        MEASURED_SIZES.remove(key);
 
         AutoConfig.getConfigHolder(MaMDataConfig.class).save();
         DownloadedResources.invalidate();
@@ -811,6 +925,7 @@ public final class RemoteContentManager {
 
     private static boolean deleteFromManifest(RemotePack.Key key) {
         Path manifest = manifestPath(key);
+        if (!Files.isRegularFile(manifest)) manifest = legacyManifestPath(key);
         if (!Files.isRegularFile(manifest)) return false;
 
         Path root = DIRECTORY.toAbsolutePath().normalize();
@@ -869,8 +984,8 @@ public final class RemoteContentManager {
         return paths;
     }
 
-    private static void deleteDirectory(Path directory) {
-        if (!Files.exists(directory)) return;
+    private static boolean deleteDirectory(Path directory) {
+        if (!Files.exists(directory)) return true;
 
         try (var files = Files.walk(directory)) {
             files.sorted(Comparator.reverseOrder()).forEach(path -> {
@@ -881,6 +996,7 @@ public final class RemoteContentManager {
             });
         } catch (IOException ignored) {
         }
+        return !Files.exists(directory);
     }
 
     private static void deleteEmptyParents(Path path, Path root) {
@@ -915,7 +1031,22 @@ public final class RemoteContentManager {
         return false;
     }
 
+    private static boolean deleteNamespaceDirectory(Identifier id) {
+        String namespace = id.getNamespace();
+        if (namespace.startsWith(".")) return true;
+        Path root = DIRECTORY.toAbsolutePath().normalize();
+        Path target = root.resolve(namespace).normalize();
+        if (!target.getParent().equals(root)) return true;
+        return deleteDirectory(target);
+    }
+
     private static Path manifestPath(RemotePack.Key key) {
+        String name = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(key.id().toString().getBytes(StandardCharsets.UTF_8));
+        return MANIFEST_DIRECTORY.resolve(name + ".txt");
+    }
+
+    private static Path legacyManifestPath(RemotePack.Key key) {
         String path = key.id().getPath().replace('/', '-');
         return MANIFEST_DIRECTORY.resolve(key.id().getNamespace() + "-" + path + ".txt");
     }

@@ -41,6 +41,8 @@ final class CreateEventScreen extends Screen {
             this.minecraft.setScreen(this.parent);
             return;
         }
+        String[] draft = this.nameField == null ? null : new String[] {
+                this.nameField.getValue(), this.descriptionField.getValue(), this.iconField.getValue(), this.pathField.getValue()};
         calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
@@ -70,6 +72,12 @@ final class CreateEventScreen extends Screen {
                 Component.translatable("button.music_and_melody.create"), false, ignored -> create()));
         this.addRenderableWidget(new WorkspaceButton(fieldX + buttonWidth + 5, buttonY, buttonWidth, 20,
                 CommonComponents.GUI_CANCEL, false, ignored -> this.onClose()));
+        if (draft != null) {
+            this.nameField.setValue(draft[0]);
+            this.descriptionField.setValue(draft[1]);
+            this.iconField.setValue(draft[2]);
+            this.pathField.setValue(draft[3]);
+        }
         this.setInitialFocus(this.nameField);
         refreshCreateState();
     }
@@ -114,7 +122,9 @@ final class CreateEventScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int x = panelX();

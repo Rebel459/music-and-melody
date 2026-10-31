@@ -87,6 +87,7 @@ final class ThemeExitConfirmScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
     }
 
     private void renderPopup(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {

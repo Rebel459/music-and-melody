@@ -51,6 +51,8 @@ final class AlbumEditorScreen extends Screen {
 
     @Override
     protected void init() {
+        String[] draft = this.nameField == null ? null : new String[] {
+                this.nameField.getValue(), this.iconField.getValue(), this.identifierField.getValue()};
         calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
@@ -89,6 +91,11 @@ final class AlbumEditorScreen extends Screen {
                 Component.translatable("button.music_and_melody.save"), false, ignored -> save()));
         this.addRenderableWidget(new WorkspaceButton(fieldX + buttonWidth + 5, buttonY, buttonWidth, 20,
                 CommonComponents.GUI_CANCEL, false, ignored -> this.onClose()));
+        if (draft != null) {
+            this.nameField.setValue(draft[0]);
+            this.iconField.setValue(draft[1]);
+            if (this.albumId == null) this.identifierField.setValue(draft[2]);
+        }
         this.setInitialFocus(this.nameField);
         refreshSaveState();
     }
@@ -101,7 +108,9 @@ final class AlbumEditorScreen extends Screen {
 
     private void selectMusic() {
         CustomAlbums.chooseAudioFiles(files -> {
-            this.addedTracks.addAll(files);
+            for (Path file : files) {
+                if (!this.addedTracks.contains(file)) this.addedTracks.add(file);
+            }
             refreshTrackList();
             refreshSaveState();
         });
@@ -163,7 +172,9 @@ final class AlbumEditorScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
