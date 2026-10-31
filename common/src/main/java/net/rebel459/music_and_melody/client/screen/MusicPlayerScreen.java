@@ -2034,7 +2034,7 @@ public class MusicPlayerScreen extends Screen {
         // Editors and popups from this mod open on top of the player and return to it; anything else means we are really leaving
         // (a disconnect or kick, for instance), and queued deletes and the reload would otherwise be silently dropped
         client.execute(() -> {
-            Screen next = client.screen;
+            Screen next = client.gui.screen();
             if (next == this || next != null && next.getClass().getName().startsWith("net.rebel459.music_and_melody")) return;
             if (this.page == Page.THEMES && this.previewingTheme) ThemeListener.restoreActive();
             this.previewingTheme = false;
