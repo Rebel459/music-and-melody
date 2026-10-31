@@ -85,7 +85,7 @@ public class MaMDataConfig implements ConfigData {
 		public String id = "";
 		public List<String> tags = new ArrayList<>();
 		public String version = "";
-		public String sha256 = "";
+		public long size = 0L;
 		public String file = "";
 	}
 
@@ -103,4 +103,32 @@ public class MaMDataConfig implements ConfigData {
 	public String active_theme = "music_and_melody:default";
 	
 	public float gui_multiplier = 0.85F;
+
+	@Override
+	public void validatePostLoad() {
+		if (player == null) player = new Player();
+		if (player.now_playing_type == null) player.now_playing_type = NowPlayingType.NONE;
+		if (player.now_playing_id == null) player.now_playing_id = "";
+		if (player.now_playing_name == null) player.now_playing_name = "";
+		if (player.custom_playlist_tracks == null) player.custom_playlist_tracks = new ArrayList<>();
+		if (player.custom_playlist_discs == null) player.custom_playlist_discs = new ArrayList<>();
+		if (player.favourites == null) player.favourites = new ArrayList<>();
+		if (player.recent_favourites == null) player.recent_favourites = new ArrayList<>();
+		if (albums == null) albums = new Albums();
+		if (albums.disabled == null) albums.disabled = new ArrayList<>();
+		if (albums.disabled_tracks == null) albums.disabled_tracks = new ArrayList<>();
+		if (events == null) events = new Events();
+		if (events.disabled == null) events.disabled = new ArrayList<>();
+		if (events.enabled == null) events.enabled = new ArrayList<>();
+		if (remote == null) remote = new Remote();
+		if (remote.catalogs == null) remote.catalogs = new ArrayList<>();
+		if (remote.downloads == null) remote.downloads = new ArrayList<>();
+		if (cache == null) cache = new Cache();
+		if (cache.splash == null) cache.splash = "";
+		if (cache.supporter == null) cache.supporter = "";
+		if (cache.composer == null) cache.composer = "";
+		if (active_theme == null || active_theme.isBlank()) active_theme = "music_and_melody:default";
+		if (!Float.isFinite(gui_multiplier) || gui_multiplier < 0.25F) gui_multiplier = 0.85F;
+		gui_multiplier = Math.min(gui_multiplier, 4.0F);
+	}
 }

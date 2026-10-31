@@ -17,7 +17,9 @@ import net.rebel459.music_and_melody.client.util.ThemeHelper;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.Set;
 
 import static net.rebel459.music_and_melody.client.util.ThemeHelper.*;
@@ -56,8 +58,10 @@ public final class RemoteDetailsPanel {
         renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.version", Component.literal(pack.version()), x, y + 26, width);
         renderField(graphics, font, marquee, "screen.music_and_melody.remote_details.state", Component.translatable(MusicPlayerScreen.remoteStateTranslationKey(RemoteContentManager.state(pack))), x, y + 52, width);
 
-        int cursor = y + 78;
-        ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE), x, cursor, TEXT_DESCRIPTION);
+        renderField(graphics, font, marquee, sizeKey(RemoteContentManager.state(pack)), sizeText(pack), x, y + 78, width);
+
+        int cursor = y + 104;
+        marquee.render(graphics, Component.translatable("screen.music_and_melody.theme.description").withStyle(ChatFormatting.UNDERLINE), x, cursor, width, TEXT_DESCRIPTION);
         cursor += 12;
         for (FormattedCharSequence line : body.description()) {
             ThemeHelper.text(graphics, font, line, x, cursor, TEXT_PRIMARY);
@@ -66,7 +70,7 @@ public final class RemoteDetailsPanel {
 
         if (!body.dependencies().isEmpty()) {
             cursor += 6;
-            ThemeHelper.text(graphics, font, Component.translatable("screen.music_and_melody.remote_details.dependencies").withStyle(ChatFormatting.UNDERLINE), x, cursor, TEXT_DESCRIPTION);
+            marquee.render(graphics, Component.translatable("screen.music_and_melody.remote_details.dependencies").withStyle(ChatFormatting.UNDERLINE), x, cursor, width, TEXT_DESCRIPTION);
             cursor += 12;
             for (FormattedCharSequence line : body.dependencies()) {
                 ThemeHelper.text(graphics, font, line, x, cursor, TEXT_PRIMARY);
@@ -99,9 +103,50 @@ public final class RemoteDetailsPanel {
         List<FormattedCharSequence> description = font.split(pack.description(), Math.max(1, width));
         List<FormattedCharSequence> dependencies = pack.dependencies().isEmpty()
                 ? List.of() : font.split(dependencies(pack), Math.max(1, width));
-        int height = 78 + 12 + description.size() * (font.lineHeight + 2);
+        int height = 104 + 12 + description.size() * (font.lineHeight + 2);
         if (!dependencies.isEmpty()) height += 6 + 12 + dependencies.size() * (font.lineHeight + 2);
         return new Body(description, dependencies, height);
+    }
+
+    private static String sizeKey(RemoteContentManager.State state) {
+        return switch (state) {
+            case INSTALLED, NEEDS_RELOAD -> "screen.music_and_melody.remote_details.size.current";
+            case UPDATE_AVAILABLE -> "screen.music_and_melody.remote_details.size.update";
+            default -> "screen.music_and_melody.remote_details.size.download_install";
+        };
+    }
+
+    private static Component sizeText(RemotePack pack) {
+        RemoteContentManager.State state = RemoteContentManager.state(pack);
+        OptionalLong current = RemoteContentManager.installedSize(pack);
+        Component currentSize = formatSize(current.isPresent() ? current.getAsLong() : 0L);
+        return switch (state) {
+            case INSTALLED, NEEDS_RELOAD -> currentSize;
+            case UPDATE_AVAILABLE -> join(formatSize(pack.downloadSize()), formatSize(pack.installSize()), currentSize);
+            default -> join(formatSize(pack.downloadSize()), formatSize(pack.installSize()));
+        };
+    }
+
+    private static Component join(Component... parts) {
+        MutableComponent result = Component.empty();
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) result.append(Component.literal(" / "));
+            result.append(parts[i]);
+        }
+        return result;
+    }
+
+    private static Component formatSize(long bytes) {
+        if (bytes <= 0L) return Component.translatable("screen.music_and_melody.remote_details.size.unknown");
+        if (bytes < 1024L) return Component.literal(bytes + " B");
+        String[] units = {"KB", "MB", "GB", "TB"};
+        double value = bytes;
+        int unit = -1;
+        while (value >= 1024.0D && unit < units.length - 1) {
+            value /= 1024.0D;
+            unit++;
+        }
+        return Component.literal(String.format(Locale.ROOT, value >= 100.0D ? "%.0f %s" : "%.1f %s", value, units[unit]));
     }
 
     private static Component dependencies(RemotePack pack) {
@@ -118,7 +163,7 @@ public final class RemoteDetailsPanel {
     }
 
     private static void renderField(GuiGraphicsExtractor graphics, Font font, MarqueeRenderer marquee, String headingKey, Component value, int x, int y, int width) {
-        ThemeHelper.text(graphics, font, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, TEXT_DESCRIPTION);
+        marquee.render(graphics, Component.translatable(headingKey).withStyle(ChatFormatting.UNDERLINE), x, y, width, TEXT_DESCRIPTION);
         marquee.render(graphics, value, x, y + 12, width, TEXT_PRIMARY);
     }
 

@@ -1,5 +1,8 @@
 package net.rebel459.music_and_melody.client;
 
+import com.mojang.logging.LogUtils;
+import com.mojang.serialization.DataResult;
+import net.rebel459.music_and_melody.client.util.AtomicFiles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -100,7 +103,7 @@ public class Playlist {
             files = stream
                     .filter(Files::isRegularFile)
                     .filter(Playlist::isJson)
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString(), String.CASE_INSENSITIVE_ORDER))
+                    .sorted(Comparator.comparing(path -> DIRECTORY.relativize(path).toString().replace('\\', '/'), String.CASE_INSENSITIVE_ORDER))
                     .toList();
         } catch (IOException ignored) {
             return;
@@ -110,7 +113,7 @@ public class Playlist {
         for (Path file : files) {
             Record record = readRecord(file);
             if (record == null) continue;
-            Identifier id = Identifier.fromNamespaceAndPath("config", uniquePath(sanitize(stem(file)), usedPaths));
+            Identifier id = Identifier.fromNamespaceAndPath("config", uniquePath(idPath(file), usedPaths));
             Playlist playlist = create(id, record, file);
             CONFIG_PLAYLISTS.add(playlist);
         }
@@ -175,8 +178,8 @@ public class Playlist {
             return false;
         }
 
-        try (Writer writer = Files.newBufferedWriter(path)) {
-            GSON.toJson(root, writer);
+        try {
+            AtomicFiles.write(path, writer -> GSON.toJson(root, writer));
         } catch (IOException ignored) {
             return false;
         }
@@ -192,9 +195,13 @@ public class Playlist {
             entry.tracks().forEach(track -> tracks.add(entry.namespace()
                     .map(namespace -> SafeIdentifier.fromNamespaceAndPath(namespace, track))
                     .orElseGet(() -> SafeIdentifier.parse(track))));
-            entry.discs().forEach(disc -> discs.add(entry.namespace()
-                    .map(namespace -> Identifier.fromNamespaceAndPath(namespace, disc))
-                    .orElseGet(() -> Identifier.parse(disc))));
+            entry.discs().forEach(disc -> {
+                Identifier parsed = entry.namespace()
+                        .map(namespace -> Identifier.tryBuild(namespace, disc))
+                        .orElseGet(() -> Identifier.tryParse(disc));
+                if (parsed == null) LogUtils.getLogger().warn("Playlist {} has an invalid disc id: {}", id, disc);
+                else discs.add(parsed);
+            });
         });
         return new Playlist(id, record.name(), record.icon(), tracks, discs, record.hidden, source);
     }
@@ -202,7 +209,9 @@ public class Playlist {
     private static Record readRecord(Path file) {
         try (Reader reader = Files.newBufferedReader(file)) {
             JsonElement json = JsonParser.parseReader(reader);
-            return Record.CODEC.parse(JsonOps.INSTANCE, json).result().orElse(null);
+            DataResult<Record> parsed = Record.CODEC.parse(JsonOps.INSTANCE, json);
+            parsed.error().ifPresent(error -> LogUtils.getLogger().warn("Invalid playlist JSON {}: {}", file, error.message()));
+            return parsed.result().orElse(null);
         } catch (Exception ignored) {
             return null;
         }
@@ -229,6 +238,13 @@ public class Playlist {
 
     private static boolean isJson(Path path) {
         return path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json");
+    }
+
+    private static String idPath(Path file) {
+        String relative = DIRECTORY.relativize(file).toString().replace('\\', '/');
+        if (relative.toLowerCase(Locale.ROOT).endsWith(".json")) relative = relative.substring(0, relative.length() - ".json".length());
+        String path = sanitizePath(relative);
+        return path.isBlank() ? "playlist" : path;
     }
 
     private static String stem(Path path) {

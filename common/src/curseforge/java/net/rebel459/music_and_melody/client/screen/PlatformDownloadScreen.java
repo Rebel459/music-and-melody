@@ -3,6 +3,7 @@ package net.rebel459.music_and_melody.client.screen;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
@@ -11,6 +12,10 @@ import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.remote.RemoteContentManager;
 import net.rebel459.music_and_melody.client.remote.RemotePack;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
+import net.minecraft.client.Minecraft;
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.net.URI;
@@ -23,6 +28,7 @@ public final class PlatformDownloadScreen extends Screen {
     private final MusicPlayerScreen parent;
     private final RemotePack pack;
     private WorkspaceButton importButton;
+    private boolean choosing;
     private int layoutWidth;
     private int layoutHeight;
 
@@ -46,7 +52,7 @@ public final class PlatformDownloadScreen extends Screen {
                 ignored -> Util.getPlatform().openUri(URI.create("https://modrinth.com/mod/music-and-melody"))));
         this.addRenderableWidget(new WorkspaceButton(x, y + panelHeight() - 29, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.download"), false,
-                ignored -> Util.getPlatform().openUri(URI.create(RemoteContentManager.externalDownloadUrl(this.pack)))));
+                ignored -> MusicScreenHelper.openUri(RemoteContentManager.externalDownloadUrl(this.pack))));
         this.importButton = this.addRenderableWidget(new WorkspaceButton(x + buttonWidth + 5, y + panelHeight() - 29, buttonWidth, 20,
                 Component.translatable("button.music_and_melody.import"), false, ignored -> importLocal()));
         this.addRenderableWidget(new WorkspaceButton(x + (buttonWidth + 5) * 2, y + panelHeight() - 29, buttonWidth, 20,
@@ -55,18 +61,36 @@ public final class PlatformDownloadScreen extends Screen {
     }
 
     private void importLocal() {
-        String path = TinyFileDialogs.tinyfd_openFileDialog(
-                Component.translatable("screen.music_and_melody.remote_redirect.import").getString(),
-                this.pack.fileName(), null, "ZIP files", false);
-        if (path == null || path.isBlank()) return;
-        RemoteContentManager.importLocal(this.pack, Path.of(path));
+        if (this.choosing) return;
+        this.choosing = true;
         updateImportButton();
+        String title = Component.translatable("screen.music_and_melody.remote_redirect.import").getString();
+        String defaultName = this.pack.importFileName();
+        Thread chooser = new Thread(() -> {
+            String path = null;
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                PointerBuffer filters = stack.mallocPointer(1);
+                filters.put(stack.UTF8("*.zip"));
+                filters.flip();
+                path = TinyFileDialogs.tinyfd_openFileDialog(title, defaultName, filters, "ZIP files", false);
+            } catch (RuntimeException ignored) {
+            }
+            String chosen = path;
+            Minecraft.getInstance().execute(() -> {
+                this.choosing = false;
+                if (chosen != null && !chosen.isBlank()) RemoteContentManager.importLocal(this.pack, Path.of(chosen));
+                updateImportButton();
+            });
+        }, "Music & Melody file picker");
+        chooser.setDaemon(true);
+        chooser.start();
     }
 
     private void updateImportButton() {
         if (this.importButton == null) return;
         RemoteContentManager.State state = RemoteContentManager.state(this.pack);
-        this.importButton.active = state != RemoteContentManager.State.DOWNLOADING
+        this.importButton.active = !this.choosing
+                && state != RemoteContentManager.State.DOWNLOADING
                 && state != RemoteContentManager.State.NEEDS_RELOAD
                 && state != RemoteContentManager.State.INSTALLED;
     }
@@ -78,7 +102,9 @@ public final class PlatformDownloadScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
@@ -105,12 +131,13 @@ public final class PlatformDownloadScreen extends Screen {
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
         graphics.fill(x, y, x + 1, y + height, POPUP_OUTLINE);
         graphics.fill(x + width - 1, y, x + width, y + height, POPUP_OUTLINE);
-        graphics.centeredText(this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
-        graphics.centeredText(this.font, this.pack.name(), x + width / 2, y + 37, TEXT_DESCRIPTION);
+        centeredText(graphics, this.font, this.title, x + width / 2, y + 13, TEXT_TITLE);
+        centeredText(graphics, this.font, Language.getInstance().getVisualOrder(this.font.substrByWidth(this.pack.name(), Math.max(1, width - 24))),
+                x + width / 2, y + 37, TEXT_DESCRIPTION);
 
         int textY = y + 59;
         for (var line : this.font.split(Component.translatable("screen.music_and_melody.remote_redirect.description"), width - 24)) {
-            graphics.centeredText(this.font, line, x + width / 2, textY, TEXT_DESCRIPTION);
+            centeredText(graphics, this.font, line, x + width / 2, textY, TEXT_DESCRIPTION);
             textY += this.font.lineHeight + 2;
         }
     }

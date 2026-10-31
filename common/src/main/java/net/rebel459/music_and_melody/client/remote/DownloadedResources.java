@@ -4,6 +4,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
 import net.rebel459.music_and_melody.MusicAndMelody;
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.io.IOException;
@@ -178,5 +179,6 @@ public final class DownloadedResources {
         dirty = true;
         RESOURCES.clear();
         OWNERS.clear();
+        MusicScreenHelper.clearIconCache();
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screens.inventory.tooltip.BelowOrAboveWidgetTool
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.client.gui.screens.inventory.tooltip.MenuTooltipPositioner;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -91,6 +92,17 @@ public class IconButton extends Button {
         this.icon = icon;
         this.tooltip = Tooltip.create(message);
         this.setMessage(message);
+    }
+
+    public boolean containsPoint(double x, double y) {
+        return this.visible && x >= this.getX() && y >= this.getY()
+                && x < this.getX() + this.getWidth() && y < this.getY() + this.getHeight();
+    }
+
+    public boolean clickConsumed(MouseButtonEvent event, boolean doubleClick) {
+        if (!containsPoint(event.x(), event.y())) return false;
+        if (this.active) this.mouseClicked(event, doubleClick);
+        return true;
     }
 
     public void setSelected(boolean selected) {

@@ -33,6 +33,8 @@ final class RepositoryScreen extends Screen {
     private Component feedback = Component.empty();
     private boolean feedbackError;
     private boolean changed;
+    private int layoutWidth;
+    private int layoutHeight;
 
     RepositoryScreen(MusicPlayerScreen parent) {
         super(Component.translatable("screen.music_and_melody.repositories"));
@@ -41,6 +43,8 @@ final class RepositoryScreen extends Screen {
 
     @Override
     protected void init() {
+        String draftUrl = this.urlField == null ? "" : this.urlField.getValue();
+        calculateLayoutSize();
         this.addRenderableOnly(this::renderDialog);
         int x = panelX();
         int y = panelY();
@@ -65,6 +69,7 @@ final class RepositoryScreen extends Screen {
         this.urlField = this.addRenderableWidget(new EditBox(this.font, x + 10, y + height - 31, Math.max(110, width - 82), 20,
                 Component.translatable("screen.music_and_melody.repositories.url")));
         this.urlField.setMaxLength(1024);
+        this.urlField.setValue(draftUrl);
         this.urlField.setHint(Component.literal("https://example.com/catalog.json")
                 .withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         this.urlField.setResponder(ignored -> clearFeedback());
@@ -77,18 +82,59 @@ final class RepositoryScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         this.parent.extractRenderState(graphics, -1, -1, tickDelta);
-        super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
+        IconButton.setTooltipScale(MaMDataConfig.get().gui_multiplier);
+        graphics.pose().pushMatrix();
+        try {
+            graphics.pose().scale(MaMDataConfig.get().gui_multiplier);
+            super.extractRenderState(graphics, scaled(mouseX), scaled(mouseY), tickDelta);
+        } finally {
+            graphics.pose().popMatrix();
+            IconButton.resetTooltipScale();
+        }
+    }
+
+    private void calculateLayoutSize() {
+        this.layoutWidth = Math.max(1, Math.round(this.width / MaMDataConfig.get().gui_multiplier));
+        this.layoutHeight = Math.max(1, Math.round(this.height / MaMDataConfig.get().gui_multiplier));
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    protected void repositionElements() {
+        calculateLayoutSize();
+        this.rebuildWidgets();
+    }
+
+    private static int scaled(int coordinate) {
+        return Math.round(coordinate / MaMDataConfig.get().gui_multiplier);
+    }
+
+    private static MouseButtonEvent scaled(MouseButtonEvent event) {
+        float multiplier = MaMDataConfig.get().gui_multiplier;
+        return new MouseButtonEvent(event.x() / multiplier, event.y() / multiplier, event.buttonInfo());
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        super.mouseMoved(mouseX / MaMDataConfig.get().gui_multiplier, mouseY / MaMDataConfig.get().gui_multiplier);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        float multiplier = MaMDataConfig.get().gui_multiplier;
+        return super.mouseScrolled(mouseX / multiplier, mouseY / multiplier, scrollX, scrollY);
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     private void renderDialog(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         int x = panelX();
         int y = panelY();
         int width = panelWidth();
         int height = panelHeight();
-        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.width, this.height, POPUP_OVERLAY);
+        if ((POPUP_OVERLAY >>> 24) != 0) graphics.fill(0, 0, this.layoutWidth, this.layoutHeight, POPUP_OVERLAY);
         graphics.fill(x, y, x + width, y + height, POPUP_PANEL_BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, POPUP_OUTLINE);
         graphics.fill(x, y + height - 1, x + width, y + height, POPUP_OUTLINE);
@@ -102,22 +148,26 @@ final class RepositoryScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (!insideDialog(event.x(), event.y())) return true;
-        super.mouseClicked(event, doubleClick);
+        MouseButtonEvent layoutEvent = scaled(event);
+        if (!insideDialog(layoutEvent.x(), layoutEvent.y())) return true;
+        super.mouseClicked(layoutEvent, doubleClick);
         return true;
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (!insideDialog(event.x(), event.y())) return true;
-        super.mouseDragged(event, dragX, dragY);
+        MouseButtonEvent layoutEvent = scaled(event);
+        if (!insideDialog(layoutEvent.x(), layoutEvent.y())) return true;
+        float multiplier = MaMDataConfig.get().gui_multiplier;
+        super.mouseDragged(layoutEvent, dragX / multiplier, dragY / multiplier);
         return true;
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (!insideDialog(event.x(), event.y())) return true;
-        super.mouseReleased(event);
+        MouseButtonEvent layoutEvent = scaled(event);
+        if (!insideDialog(layoutEvent.x(), layoutEvent.y())) return true;
+        super.mouseReleased(layoutEvent);
         return true;
     }
 
@@ -196,19 +246,19 @@ final class RepositoryScreen extends Screen {
     }
 
     private int panelWidth() {
-        return Math.min(460, this.width - 24);
+        return Math.min(460, this.layoutWidth - 24);
     }
 
     private int panelHeight() {
-        return Math.min(250, this.height - 28);
+        return Math.min(250, this.layoutHeight - 28);
     }
 
     private int panelX() {
-        return this.width / 2 - panelWidth() / 2;
+        return this.layoutWidth / 2 - panelWidth() / 2;
     }
 
     private int panelY() {
-        return this.height / 2 - panelHeight() / 2;
+        return this.layoutHeight / 2 - panelHeight() / 2;
     }
 
     private static final class RepositoryList extends ObjectSelectionList<RepositoryEntry> {

@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client.util;
 
+import java.util.concurrent.ConcurrentHashMap;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
@@ -25,7 +26,8 @@ public final class PlaylistHelper {
     public static final List<SafeIdentifier> QUEUED_SONGS = new ArrayList<>();
     private static final Map<SafeIdentifier, Identifier> QUEUED_DISCS = new HashMap<>();
     private static final List<MaMDataConfig.Entry> CUSTOM_PLAYLIST = new ArrayList<>();
-    public static final HashMap<SafeIdentifier, SampledFloat> STORED_VOLUME = new HashMap<>();
+    // Written by resource-reload worker threads and read on the main thread
+    public static final Map<SafeIdentifier, SampledFloat> STORED_VOLUME = new ConcurrentHashMap<>();
     public static boolean loop = false;
     private static boolean loaded = false;
 
@@ -34,7 +36,7 @@ public final class PlaylistHelper {
     private static int shuffleIndex = 0;
     private static int currentShuffleIndex = -1;
 
-    private static SoundInstance currentSong = null;
+    private static volatile SoundInstance currentSong = null;
     private static SafeIdentifier currentSongId = null;
     private static boolean currentSongLooping = false;
     private static boolean currentSongFromQueue = false;
@@ -54,7 +56,11 @@ public final class PlaylistHelper {
     private static long pausedQueueElapsedMillis;
     private static boolean soundEngineReloading = false;
     private static ReloadPlayback reloadPlayback;
-    private static long pendingSeekMillis = 0L;
+    private static volatile long pendingSeekMillis = 0L;
+
+    private static final long QUICK_END_MILLIS = 1_000L;
+    private static final int MAX_QUICK_ENDS = 3;
+    private static int consecutiveQuickEnds = 0;
 
     public static final Music EMPTY = new Music(MaMSounds.EMPTY, 0, 0, true);
 
@@ -307,7 +313,7 @@ public final class PlaylistHelper {
         if (shuffle == enabled) return;
         shuffle = enabled;
         if (shuffle) {
-            SafeIdentifier current = currentSongFromQueue && currentQueueIndex >= 0
+            SafeIdentifier current = currentSongFromQueue && currentQueueIndex >= 0 && currentQueueIndex < QUEUED_SONGS.size()
                     ? QUEUED_SONGS.get(currentQueueIndex)
                     : null;
             rebuildShuffleOrder(current);
@@ -661,6 +667,7 @@ public final class PlaylistHelper {
 
     public static boolean playNow(int index) {
         ensureLoaded();
+        consecutiveQuickEnds = 0;
         if (index < 0 || index >= QUEUED_SONGS.size()) return false;
         queuePaused = false;
         queueIndex = index;
@@ -673,6 +680,15 @@ public final class PlaylistHelper {
 
     private static void advanceFinishedQueuedSong(boolean requireInactive) {
         if (!currentSongFromQueue || currentSongId == null || (requireInactive && isPlaying())) return;
+        long playedMillis = currentSongStartedAtNanos == 0L ? Long.MAX_VALUE : (System.nanoTime() - currentSongStartedAtNanos) / 1_000_000L;
+        if (playedMillis < QUICK_END_MILLIS) {
+            if (++consecutiveQuickEnds >= MAX_QUICK_ENDS) {
+                consecutiveQuickEnds = 0;
+                queuePaused = true;
+            }
+        } else {
+            consecutiveQuickEnds = 0;
+        }
         int finishedIndex = currentQueueIndex >= 0 && currentQueueIndex < QUEUED_SONGS.size()
                 ? currentQueueIndex
                 : findCurrentQueueIndex();
@@ -1224,7 +1240,11 @@ public final class PlaylistHelper {
                 queuePaused = true;
                 return -1;
             }
+            SafeIdentifier last = SHUFFLE_ORDER.isEmpty() ? null : SHUFFLE_ORDER.get(SHUFFLE_ORDER.size() - 1);
             rebuildShuffleOrder(null);
+            if (last != null && SHUFFLE_ORDER.size() > 1 && SHUFFLE_ORDER.get(0).equals(last)) {
+                Collections.swap(SHUFFLE_ORDER, 0, 1 + new Random().nextInt(SHUFFLE_ORDER.size() - 1));
+            }
         }
         return SHUFFLE_ORDER.isEmpty() ? -1 : shuffleIndex++;
     }

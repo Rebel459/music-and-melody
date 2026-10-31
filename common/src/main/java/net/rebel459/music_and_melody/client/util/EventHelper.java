@@ -217,7 +217,7 @@ public class EventHelper {
     }
 
     public static boolean shouldContinueEventFade() {
-        return isEnabled() && fading && queuedEvent != null && shouldBeActive(queuedEvent.event().conditions, false);
+        return isEnabled() && fading && queuedEvent != null && Event.isRegistered(queuedEvent.event()) && shouldBeActive(queuedEvent.event().conditions, false);
     }
 
     public static boolean isFadingOutCurrentEvent() {
@@ -332,7 +332,7 @@ public class EventHelper {
         clearFadeEvent();
         if (queued == null) return null;
         Event event = queued.event();
-        if (!shouldBeActive(event.conditions, false)) return null;
+        if (!Event.isRegistered(event) || !shouldBeActive(event.conditions, false)) return null;
         return playEventOrBlockVanilla(Minecraft.getInstance(), event, queued.replaceCurrentMusic());
     }
 
@@ -617,6 +617,16 @@ public class EventHelper {
         return shouldBeActive(conditions, true);
     }
 
+    private static final Map<Event.Condition, Boolean> RANDOM_ROLLS = new IdentityHashMap<>();
+
+    private static boolean rolledRandomChance(Event.Condition condition) {
+        return RANDOM_ROLLS.computeIfAbsent(condition, key -> SoundInstance.createUnseededRandom().nextFloat() <= key.floatValue().get());
+    }
+
+    public static void clearRandomRolls() {
+        RANDOM_ROLLS.clear();
+    }
+
     private static boolean shouldBeActive(List<Event.Condition> conditions, boolean rollRandomChance) {
         return evaluateConditions(conditions, rollRandomChance) == ConditionResult.MATCH;
     }
@@ -694,7 +704,7 @@ public class EventHelper {
             case BOSSBAR -> result(level != null, () -> client.gui.hud.getBossOverlay().events.values().stream().anyMatch(event -> event.getName().getString().equals(Component.translatable(condition.stringValue().get()).getString())));
             case MOD_LOADED -> result(UnifiedPlatform.isModLoaded(condition.stringValue().get()));
             case ALBUM_LOADED -> result(Album.LOADED_ALBUMS.contains(condition.idValue().get()));
-            case RANDOM_CHANCE -> result(!rollRandomChance || SoundInstance.createUnseededRandom().nextFloat() <= condition.floatValue().get());
+            case RANDOM_CHANCE -> result(!rollRandomChance || rolledRandomChance(condition));
             case RIDDEN_ENTITY -> result(player != null, () -> player.getVehicle() != null && player.getVehicle().is(ResourceKey.create(Registries.ENTITY_TYPE, condition.idValue().get())));
             case RIDDEN_ENTITY_TAG -> result(player != null, () -> player.getVehicle() != null && player.getVehicle().is(TagKey.create(Registries.ENTITY_TYPE, condition.idValue().get())));
             case PVE_SCORE -> result(player != null, () -> CombatStatus.PvE.inCombat(condition.intValue().get()));

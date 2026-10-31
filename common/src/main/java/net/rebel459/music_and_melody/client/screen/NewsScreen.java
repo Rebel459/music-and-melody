@@ -38,6 +38,7 @@ final class NewsScreen extends Screen {
     private final List<Block> blocks = new ArrayList<>();
     private String error;
     private boolean loading = true;
+    private boolean requested;
     private double scroll;
     private double scrollMax;
     private int layoutWidth;
@@ -55,13 +56,14 @@ final class NewsScreen extends Screen {
         int width = dialogWidth();
         this.addRenderableWidget(new WorkspaceButton(dialogX() + width - 72, dialogY() + dialogHeight() - 28, 60, 20,
                 CommonComponents.GUI_DONE, false, ignored -> onClose()));
-        load();
+        if (!this.requested) load();
     }
 
     private void load() {
+        this.requested = true;
         if (!RemoteContentManager.onlineFunctionalityEnabled()) {
             this.loading = false;
-            this.error = "Online functionality is disabled";
+            this.error = Component.translatable("screen.music_and_melody.news.offline").getString();
             return;
         }
         CompletableFuture.supplyAsync(() -> {
@@ -75,6 +77,7 @@ final class NewsScreen extends Screen {
             }
         }).whenComplete((markdown, exception) -> this.minecraft.execute(() -> {
             this.loading = false;
+            this.error = null;
             if (exception != null) this.error = exception.getCause() == null ? exception.getMessage() : exception.getCause().getMessage();
             else parse(markdown);
         }));
@@ -97,7 +100,7 @@ final class NewsScreen extends Screen {
             } else if (line.startsWith("# ")) {
                 this.blocks.add(new TextBlock(line.substring(2), Kind.HEADING_LARGE));
             } else if (line.startsWith("- ") || line.startsWith("* ")) {
-                this.blocks.add(new TextBlock("Ã¢â‚¬Â¢ " + line.substring(2), Kind.BODY));
+                this.blocks.add(new TextBlock("\u2022 " + line.substring(2), Kind.BODY));
             } else if (line.startsWith("> ")) {
                 this.blocks.add(new TextBlock(line.substring(2), Kind.QUOTE));
             } else if (line.equals("---") || line.equals("***")) {
@@ -109,7 +112,9 @@ final class NewsScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {}
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
+    }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
@@ -141,7 +146,7 @@ final class NewsScreen extends Screen {
             return;
         }
         if (this.error != null) {
-            ThemeHelper.centeredText(graphics, this.font, Component.literal("Unable to load news: " + this.error), x + width / 2, top + 8, TEXT_HEADER_SECONDARY);
+            ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.news.error", this.error), x + width / 2, top + 8, TEXT_HEADER_SECONDARY);
             return;
         }
         int contentWidth = width - 32;
@@ -182,12 +187,14 @@ final class NewsScreen extends Screen {
         if (block instanceof ImageBlock image) {
             RemoteIconManager.Image loaded = RemoteIconManager.image(image.url());
             int imageHeight = height(image, width) - 8;
+            graphics.enableScissor(x, top, x + width, bottom);
             if (loaded == null) {
                 graphics.fill(x, y, x + width, y + imageHeight, PANEL_HIGHLIGHTED);
                 ThemeHelper.centeredText(graphics, this.font, Component.translatable("screen.music_and_melody.loading"), x + width / 2, y + imageHeight / 2 - 4, TEXT_DESCRIPTION);
-            } else if (y >= top && y + imageHeight <= bottom) {
-                graphics.blit(GUI_TEXTURED, loaded.texture(), x, y, 0.0F, 0.0F, width, imageHeight, loaded.width(), loaded.height());
+            } else {
+                graphics.blit(GUI_TEXTURED, loaded.texture(), x, y, 0.0F, 0.0F, width, imageHeight, loaded.width(), loaded.height(), loaded.width(), loaded.height());
             }
+            graphics.disableScissor();
             return;
         }
         TextBlock text = (TextBlock) block;

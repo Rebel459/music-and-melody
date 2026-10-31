@@ -11,6 +11,12 @@ public final class ServerPresenceHandler {
 
     private ServerPresenceHandler() {}
 
+    public static void reset() {
+        discUnlocking = false;
+        improvedPveDetection = false;
+        CombatMusicHandler.clientPlayerTrackedByMob = false;
+    }
+
     public static void init() {
         UnifiedHelpers.NETWORKING.registerPlayToClient(ServerPresencePacket.TYPE, ServerPresencePacket.CODEC, (packet, _) -> {
             discUnlocking = packet.discUnlocking();

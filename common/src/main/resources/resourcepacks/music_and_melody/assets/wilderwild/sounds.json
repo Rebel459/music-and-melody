@@ -298,6 +298,10 @@
     "replace": true,
     "sounds": [
       {
+        "name": "music_and_melody:music/caves/shelter",
+        "stream": true
+      },
+      {
         "name": "music/game/broken_clocks",
         "stream": true,
         "volume": 0.4
@@ -355,6 +359,12 @@
         "name": "music_and_melody:music/overworld/stasis",
         "stream": true,
         "volume": 0.5
+      },
+      {
+        "name": "music_and_melody:music/caves/infinite_development",
+        "stream": true,
+        "volume": 0.7,
+        "weight": 2
       },
       {
         "name": "music/game/ebb",

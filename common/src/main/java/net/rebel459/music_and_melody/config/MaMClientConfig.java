@@ -65,4 +65,10 @@ public class MaMClientConfig implements ConfigData {
 	@ConfigEntry.Gui.Tooltip
 	@ConfigEntry.Gui.RequiresRestart
 	public boolean online_functionality = true;
+
+	@Override
+	public void validatePostLoad() {
+		if (!Float.isFinite(fade_speed) || fade_speed <= 0.0F) fade_speed = 0.01F;
+		fade_speed = Math.min(fade_speed, 1.0F);
+	}
 }

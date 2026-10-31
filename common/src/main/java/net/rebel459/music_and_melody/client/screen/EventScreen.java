@@ -111,6 +111,9 @@ public class EventScreen extends Screen {
             this.minecraft.gui.setScreen(this.parent);
             return;
         }
+        if (this.soundPoolsSnapshot == null && this.musicField != null && this.weightField != null && this.conditionsField != null) {
+            this.soundPoolsSnapshot = snapshotEditor();
+        }
         calculateLayoutSize();
         EditorLayout layout = editorLayout();
         updateSettingsScroll(layout);
@@ -159,7 +162,7 @@ public class EventScreen extends Screen {
         this.conditionsField = this.addRenderableWidget(MultiLineEditBox.builder()
                 .setX(fieldX)
                 .setY(conditionsY)
-                .setPlaceholder(Component.literal("eg. biome=minecraft:forest, time=night, event=menu").withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))))
+                .setPlaceholder(Component.translatable("screen.music_and_melody.example", "biome=minecraft:forest, time=night, event=menu").withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))))
                 .build(this.font, fieldWidth, CONDITIONS_TWO_LINE_HEIGHT, Component.translatable("screen.music_and_melody.event_editor.conditions")));
         this.conditionsField.setValueListener(value -> markDirty());
 
@@ -203,7 +206,12 @@ public class EventScreen extends Screen {
         if (this.musicField == null || this.weightField == null || this.conditionsField == null) {
             return;
         }
-        this.soundPoolsSnapshot = new EditorSnapshot(
+        this.soundPoolsSnapshot = snapshotEditor();
+        this.minecraft.setScreen(new SoundPoolsScreen(this));
+    }
+
+    private EditorSnapshot snapshotEditor() {
+        return new EditorSnapshot(
                 this.selectedIndex,
                 this.categoryIndex,
                 this.priorityIndex,
@@ -213,7 +221,6 @@ public class EventScreen extends Screen {
                 this.musicField.getValue(),
                 this.weightField.getValue(),
                 this.conditionsField.getValue());
-        this.minecraft.gui.setScreen(new SoundPoolsScreen(this));
     }
 
     private void restoreEditor(EditorSnapshot snapshot) {
@@ -543,11 +550,67 @@ public class EventScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (!hasUnsavedChanges()) {
+            closeNow();
+            return;
+        }
+        this.minecraft.setScreen(new ThemeExitConfirmScreen(this,
+                Component.translatable("screen.music_and_melody.event_editor.unsaved"),
+                Component.translatable("screen.music_and_melody.event_editor.unsaved_warning"),
+                save -> {
+                    if (save && !saveForPrompt()) {
+                        this.minecraft.setScreen(this);
+                        return;
+                    }
+                    closeNow();
+                }));
+    }
+
+    private void closeNow() {
         if (this.savedChanges) {
             EventHelper.resetMusicBreak();
         }
         if (this.parent instanceof MusicPlayerScreen musicPlayer) musicPlayer.rebuildWidgets();
         this.minecraft.gui.setScreen(this.parent);
+    }
+
+    private boolean hasUnsavedChanges() {
+        if (this.musicField == null || this.weightField == null || this.conditionsField == null) return false;
+        Event.Source source = selectedSource();
+        if (source == null || !source.isConfig()) return false;
+        Event.ScreenEntry selected = selectedEntry();
+        if (selected == null) return !this.musicField.getValue().isBlank() || !this.conditionsField.getValue().isBlank();
+        Event.Record.Entry draft = editorEntry();
+        return draft == null || !draft.equals(selected.entry());
+    }
+
+    private boolean saveForPrompt() {
+        if (editorEntry() == null) return false;
+        saveEntry();
+        return !hasUnsavedChanges();
+    }
+
+    private void confirmUnsaved(Runnable action) {
+        if (!hasUnsavedChanges()) {
+            action.run();
+            return;
+        }
+        this.minecraft.setScreen(new ThemeExitConfirmScreen(this,
+                Component.translatable("screen.music_and_melody.event_editor.unsaved"),
+                Component.translatable("screen.music_and_melody.event_editor.unsaved_warning"),
+                save -> {
+                    if (save && !saveForPrompt()) {
+                        this.minecraft.setScreen(this);
+                        return;
+                    }
+                    action.run();
+                    if (this.minecraft.screen != this) this.minecraft.setScreen(this);
+                }));
+    }
+
+    private void requestSelect(int index) {
+        if (index == this.selectedIndex) return;
+        confirmUnsaved(() -> select(index));
     }
 
     private void toggleDelete() {
@@ -637,9 +700,11 @@ public class EventScreen extends Screen {
     private void addEntry() {
         Event.Source source = activeSource();
         if (source == null || !source.isConfig()) return;
-        clearEditor();
-        refreshList();
-        refreshEditorState();
+        confirmUnsaved(() -> {
+            clearEditor();
+            refreshList();
+            refreshEditorState();
+        });
     }
 
     private void saveEntry() {
@@ -730,7 +795,7 @@ public class EventScreen extends Screen {
         if (this.sustainButton != null) this.sustainButton.setMessage(sustainMessage());
         if (this.constantButton != null) this.constantButton.setMessage(constantMessage());
         if (this.musicField != null) {
-            String example = this.font.plainSubstrByWidth("eg. " + musicExample(),
+            String example = this.font.plainSubstrByWidth(Component.translatable("screen.music_and_melody.example", musicExample()).getString(),
                     Math.max(0, this.musicField.getWidth() - 8));
             this.musicField.setHint(Component.literal(example)
                     .withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
@@ -762,7 +827,10 @@ public class EventScreen extends Screen {
     }
 
     private boolean saveSourceEntries(Event.Source source, List<Event.Record.Entry> entries) {
-        if (!Event.saveSourceEntries(source, entries)) return false;
+        if (!Event.saveSourceEntries(source, entries)) {
+            MusicScreenHelper.saveFailed(this.minecraft);
+            return false;
+        }
         this.savedChanges = true;
         return true;
     }
@@ -884,6 +952,7 @@ public class EventScreen extends Screen {
         int separator = part.indexOf('=');
         String type = (separator < 0 ? part : part.substring(0, separator)).trim().toLowerCase(Locale.ROOT);
         String conditionValue = separator < 0 ? "" : part.substring(separator + 1).trim();
+        if (!Event.isKnownConditionType(type)) return null;
 
         Event.Record.Condition.Value parsedValue;
 
@@ -902,7 +971,7 @@ public class EventScreen extends Screen {
                 return null;
             }
         } else if (isStringCondition(type) || Identifier.tryParse(conditionValue) != null) {
-            if (conditionValue.isEmpty()) return null;
+            if (conditionValue.isEmpty() || !Event.isValidStringConditionValue(type, conditionValue)) return null;
             parsedValue = new Event.Record.Condition.Value.String(conditionValue);
         } else {
             return null;
@@ -1130,7 +1199,7 @@ public class EventScreen extends Screen {
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             AbstractWidget.playButtonClickSound(this.screen.minecraft.getSoundManager());
-            this.screen.select(this.index);
+            this.screen.requestSelect(this.index);
             return true;
         }
     }
