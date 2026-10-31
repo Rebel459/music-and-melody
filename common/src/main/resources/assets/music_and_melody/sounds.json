@@ -423,6 +423,11 @@
         "volume": 0.4
       },
       {
+        "name": "music/game/broken_clocks",
+        "stream": true,
+        "volume": 0.4
+      },
+      {
         "name": "music/game/home",
         "stream": true,
         "volume": 0.4

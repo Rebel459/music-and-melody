@@ -18,14 +18,17 @@ import net.rebel459.music_and_melody.client.element.IconButton;
 import net.rebel459.music_and_melody.client.element.WorkspaceButton;
 import net.rebel459.music_and_melody.client.util.CustomAlbums;
 import net.rebel459.music_and_melody.client.util.CustomSounds;
+import net.rebel459.music_and_melody.client.util.MusicScreenHelper;
 import net.rebel459.music_and_melody.client.util.PlaylistHelper;
 import net.rebel459.music_and_melody.client.util.SafeIdentifier;
 import net.rebel459.music_and_melody.client.util.ThemeHelper;
 import net.rebel459.music_and_melody.config.MaMDataConfig;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -45,6 +48,9 @@ final class SoundPoolsScreen extends Screen {
     private final List<HeaderHit> headerHits = new ArrayList<>();
     private boolean loaded;
     private boolean loadingFields;
+    private final Map<String, EditBox> keyedFields = new HashMap<>();
+    private String focusedKey;
+    private int focusedCursor;
     private boolean dirty;
     private WorkspaceButton saveButton;
     private int expanded = -1;
@@ -100,7 +106,28 @@ final class SoundPoolsScreen extends Screen {
                 CommonComponents.GUI_DONE, false, ignored -> done()));
     }
 
+    @Override
+    protected void rebuildWidgets() {
+        this.focusedKey = null;
+        for (Map.Entry<String, EditBox> entry : this.keyedFields.entrySet()) {
+            if (entry.getValue() == this.getFocused() && entry.getValue().isFocused()) {
+                this.focusedKey = entry.getKey();
+                this.focusedCursor = entry.getValue().getCursorPosition();
+                break;
+            }
+        }
+        super.rebuildWidgets();
+        EditBox restored = this.focusedKey == null ? null : this.keyedFields.get(this.focusedKey);
+        if (restored != null) {
+            this.setFocused(restored);
+            restored.setFocused(true);
+            restored.moveCursorTo(this.focusedCursor, false);
+        }
+        this.focusedKey = null;
+    }
+
     private void buildVisibleWidgets() {
+        this.keyedFields.clear();
         clearTransientFields();
         int cursor = contentTop() - (int) Math.round(this.scroll);
 
@@ -157,6 +184,7 @@ final class SoundPoolsScreen extends Screen {
                 changed();
             });
             id.setValue("config:" + pool.id);
+            this.keyedFields.put("id:" + poolIndex, id);
         }
 
         this.addRenderableWidget(new WorkspaceButton(copyX, y + 3, HEADER_BUTTON_WIDTH, 20,
@@ -186,9 +214,11 @@ final class SoundPoolsScreen extends Screen {
             changed();
         });
         name.setValue(sound.name);
+        int poolNumber = this.pools.indexOf(pool);
+        this.keyedFields.put("name:" + poolNumber + ":" + index, name);
 
         this.addRenderableWidget(new WorkspaceButton(typeX, y, 58, 20,
-                Component.literal(capitalizedType(sound.type)), false, ignored -> {
+                Component.translatable("screen.music_and_melody.sound_pools.type." + sound.type), false, ignored -> {
             sound.type = sound.type.equals("file") ? "event" : "file";
             sound.volume = "";
             sound.automaticVolume = true;
@@ -206,6 +236,7 @@ final class SoundPoolsScreen extends Screen {
         weight.setMaxLength(8);
         weight.setHint(sound.type.equals("file") ? defaultHint("1") : Component.empty());
         weight.setValue(sound.weight);
+        this.keyedFields.put("weight:" + poolNumber + ":" + index, weight);
 
         EditBox volume = field(volumeX, y, 58, "1.0", value -> {
             sound.volume = value;
@@ -220,6 +251,7 @@ final class SoundPoolsScreen extends Screen {
         volume.setHint(sound.type.equals("file") ? defaultHint("1.0") : Component.empty());
         volume.setValue(sound.volume);
         volume.active = sound.type.equals("file");
+        this.keyedFields.put("volume:" + poolNumber + ":" + index, volume);
 
         this.addRenderableWidget(new WorkspaceButton(removeX, y, 72, 20,
                 Component.translatable("button.music_and_melody.remove"), false,
@@ -230,7 +262,7 @@ final class SoundPoolsScreen extends Screen {
         ExampleHintEditBox field = this.addRenderableWidget(
                 new ExampleHintEditBox(this.font, x, y, width, 20, Component.empty()));
         field.setMaxLength(256);
-        String hint = this.font.plainSubstrByWidth("eg. " + example, Math.max(0, width - 8));
+        String hint = this.font.plainSubstrByWidth(Component.translatable("screen.music_and_melody.example", example).getString(), Math.max(0, width - 8));
         field.setHint(Component.literal(hint)
                 .withStyle(style -> style.withColor(rgb(TEXT_EXAMPLE))));
         field.setResponder(value -> {
@@ -431,6 +463,7 @@ final class SoundPoolsScreen extends Screen {
 
         JsonObject root = editorJson();
         if (!CustomSounds.saveEditorJson(root)) {
+            MusicScreenHelper.saveFailed(this.minecraft);
             return false;
         }
 
@@ -456,7 +489,7 @@ final class SoundPoolsScreen extends Screen {
                 if (sound.name.isBlank() || !validWeight(sound.weight) || !validVolume(sound.volume)) {
                     return false;
                 }
-                if (sound.type.equals("event") && Identifier.tryParse(sound.name) == null) {
+                if (Identifier.tryParse(sound.name.trim()) == null) {
                     return false;
                 }
             }
@@ -489,6 +522,7 @@ final class SoundPoolsScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
+        this.parent.extractBackground(graphics, mouseX, mouseY, tickDelta);
     }
 
     @Override
@@ -515,6 +549,7 @@ final class SoundPoolsScreen extends Screen {
             return true;
         }
 
+        if (scaled.y() < contentTop() || scaled.y() >= contentBottom()) return false;
         for (HeaderHit hit : this.headerHits) {
             if (scaled.x() >= dialogX() + 12
                     && scaled.x() < dialogX() + dialogWidth() - 12

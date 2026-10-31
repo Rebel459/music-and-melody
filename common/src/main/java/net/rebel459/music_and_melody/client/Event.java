@@ -1,5 +1,6 @@
 package net.rebel459.music_and_melody.client;
 
+import net.rebel459.music_and_melody.client.util.AtomicFiles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -7,6 +8,7 @@ import com.google.gson.JsonParser;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -229,6 +231,11 @@ public class Event {
         }
     }
 
+    public static boolean isRegistered(Event event) {
+        return VERY_HIGH_PRIORITY.contains(event) || HIGH_PRIORITY.contains(event) || MEDIUM_PRIORITY.contains(event)
+                || LOW_PRIORITY.contains(event) || VERY_LOW_PRIORITY.contains(event);
+    }
+
     private static void rebuildEvents() {
         VERY_HIGH_PRIORITY.clear();
         HIGH_PRIORITY.clear();
@@ -264,7 +271,9 @@ public class Event {
     private static Record readRecord(Path file, String fallbackName) {
         try (Reader reader = Files.newBufferedReader(file)) {
             JsonElement json = JsonParser.parseReader(reader);
-            Record record = Record.CODEC.parse(JsonOps.INSTANCE, json).result().orElse(null);
+            DataResult<Record> parsed = Record.CODEC.parse(JsonOps.INSTANCE, json);
+            parsed.error().ifPresent(error -> LogUtils.getLogger().warn("Invalid event music config {}: {}", file, error.message()));
+            Record record = parsed.result().orElse(null);
             return record == null || record.hasName() ? record : new Record(Component.literal(fallbackName), record.description(), record.icon(), record.entries(), record.dependencies(), record.defaultState(), false);
         } catch (Exception exception) {
             LogUtils.getLogger().warn("Failed to read event music config: " + file, exception);
@@ -286,8 +295,8 @@ public class Event {
             return false;
         }
 
-        try (Writer writer = Files.newBufferedWriter(file)) {
-            GSON.toJson(json, writer);
+        try {
+            AtomicFiles.write(file, writer -> GSON.toJson(json, writer));
             return true;
         } catch (IOException exception) {
             LogUtils.getLogger().warn("Failed to write event music config: " + file, exception);
@@ -352,9 +361,12 @@ public class Event {
             intValue = Optional.of(integer);
         }
         else if (type == ConditionType.RANDOM_CHANCE) {
-            if (!(value instanceof Record.Condition.Value.Float(float conditionFloat))) return Optional.empty();
+            float conditionFloat;
+            if (value instanceof Record.Condition.Value.Float(float decimal)) conditionFloat = decimal;
+            else if (value instanceof Record.Condition.Value.Integer(int whole)) conditionFloat = whole;
+            else return Optional.empty();
             if (conditionFloat < 0F || conditionFloat > 1F) {
-                LogUtils.getLogger().warn("Random chance must be a percentage (0-100%), was: " + intValue.get() + "%");
+                LogUtils.getLogger().warn("Random chance must be between 0 and 1, was: " + conditionFloat);
                 return Optional.empty();
             }
             floatValue = Optional.of(conditionFloat);
@@ -421,6 +433,23 @@ public class Event {
             case "disabled" -> DefaultState.DISABLED;
             case "enabled" -> DefaultState.ENABLED;
             default -> DefaultState.ENABLED;
+        };
+    }
+
+    public static boolean isKnownConditionType(String type) {
+        return conditionType(type) != null;
+    }
+
+    public static boolean isValidStringConditionValue(String type, String value) {
+        ConditionType conditionType = conditionType(type);
+        if (conditionType == null) return false;
+        return switch (conditionType) {
+            case TIME -> time(value) != null;
+            case WEATHER -> weather(value) != null;
+            case GAME_MODE -> gameMode(value) != null;
+            case PLAYER -> player(value) != null;
+            case SPECIAL -> special(value) != null;
+            default -> true;
         };
     }
 
@@ -655,7 +684,36 @@ public class Event {
         }
 
         public void setEnabled(boolean enabled) {
+            applyEnabled(MaMDataConfig.get(), enabled);
+            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+            rebuildEvents();
+        }
+
+        public boolean isDefaultState() {
+            return isEnabled() == defaultEnabled();
+        }
+
+        public static void setEnabled(Collection<Source> sources, boolean enabled) {
+            if (sources.isEmpty()) return;
             MaMDataConfig config = MaMDataConfig.get();
+            for (Source source : sources) source.applyEnabled(config, enabled);
+            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+            rebuildEvents();
+        }
+
+        public static void resetToDefault(Collection<Source> sources) {
+            if (sources.isEmpty()) return;
+            MaMDataConfig config = MaMDataConfig.get();
+            for (Source source : sources) {
+                String id = source.id.toString();
+                config.events.enabled.remove(id);
+                config.events.disabled.remove(id);
+            }
+            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
+            rebuildEvents();
+        }
+
+        private void applyEnabled(MaMDataConfig config, boolean enabled) {
             String id = this.id.toString();
             config.events.enabled.remove(id);
             config.events.disabled.remove(id);
@@ -666,8 +724,6 @@ public class Event {
                     config.events.disabled.add(id);
                 }
             }
-            AutoConfig.getConfigHolder(MaMDataConfig.class).save();
-            rebuildEvents();
         }
 
         public boolean deleteConfig() {
@@ -736,9 +792,15 @@ public class Event {
 
         public record Condition(String type, Value value) {
             public static final Codec<Condition> CODEC = Codec.recursive("SpecialCondition", self -> {
+                Codec<Integer> wholeNumber = Codec.of(Codec.INT, Codec.DOUBLE.comapFlatMap(
+                        number -> number == Math.rint(number) && Math.abs(number) <= Integer.MAX_VALUE
+                                ? DataResult.success((int) (double) number)
+                                : DataResult.error(() -> "Not a whole number: " + number),
+                        Integer::doubleValue
+                ));
                 Codec<Value> valueCodec = Codec.either(
                         Codec.either(
-                                Codec.either(Codec.STRING, Codec.INT),
+                                Codec.either(Codec.STRING, wholeNumber),
                                 Codec.FLOAT
                         ),
                         self.listOf()

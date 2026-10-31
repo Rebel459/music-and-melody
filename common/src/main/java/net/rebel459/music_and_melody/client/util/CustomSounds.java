@@ -46,23 +46,34 @@ public final class CustomSounds {
         ensureFile();
         try (Reader reader = Files.newBufferedReader(FILE, StandardCharsets.UTF_8)) {
             JsonElement json = JsonParser.parseReader(reader);
-            return json.isJsonObject() ? json.getAsJsonObject() : new JsonObject();
+            if (json.isJsonObject()) return json.getAsJsonObject();
         } catch (IOException | RuntimeException exception) {
             LOGGER.warn("Could not load config sounds editor file '{}'.", FILE, exception);
-            return new JsonObject();
         }
+        backUpUnreadableFile();
+        return new JsonObject();
     }
 
     public static boolean saveEditorJson(JsonObject json) {
         try {
             ensureFile();
-            try (Writer writer = Files.newBufferedWriter(FILE, StandardCharsets.UTF_8)) {
-                GSON.toJson(json, writer);
-            }
+            AtomicFiles.write(FILE, writer -> GSON.toJson(json, writer));
             return true;
         } catch (IOException exception) {
             LOGGER.warn("Could not save config sounds editor file '{}'.", FILE, exception);
             return false;
+        }
+    }
+
+    private static void backUpUnreadableFile() {
+        Path backup = FILE.resolveSibling(FILE.getFileName() + ".backup");
+        try {
+            if (Files.isRegularFile(FILE) && Files.notExists(backup)) {
+                Files.copy(FILE, backup);
+                LOGGER.warn("Backed up unreadable config sounds file to '{}'.", backup);
+            }
+        } catch (IOException exception) {
+            LOGGER.warn("Could not back up unreadable config sounds file '{}'.", FILE, exception);
         }
     }
 

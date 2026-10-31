@@ -67,8 +67,7 @@ public abstract class SoundBufferLibraryMixin {
 			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
 				try {
 					AudioStream stream = openDirectStream(path, looping);
-					skipToRequestedOffset(stream, PlaylistHelper.consumePendingSeekMillis(location));
-					return stream;
+					return seekedOrClosed(stream, PlaylistHelper.consumePendingSeekMillis(location));
 				} catch (IOException exception) {
 					throw new CompletionException(exception);
 				}
@@ -80,8 +79,7 @@ public abstract class SoundBufferLibraryMixin {
 			CompletableFuture<AudioStream> future = CompletableFuture.supplyAsync(() -> {
 				try {
 					AudioStream stream = openResourceStream(source, looping);
-					skipToRequestedOffset(stream, PlaylistHelper.consumePendingSeekMillis(location));
-					return stream;
+					return seekedOrClosed(stream, PlaylistHelper.consumePendingSeekMillis(location));
 				} catch (IOException exception) {
 					throw new CompletionException(exception);
 				}
@@ -108,6 +106,35 @@ public abstract class SoundBufferLibraryMixin {
 		}));
 	}
 
+	private static AudioStream seekedOrClosed(AudioStream stream, long offsetMillis) throws IOException {
+		try {
+			skipToRequestedOffset(stream, offsetMillis);
+			return stream;
+		} catch (IOException | RuntimeException exception) {
+			try {
+				stream.close();
+			} catch (IOException suppressed) {
+				exception.addSuppressed(suppressed);
+			}
+			throw exception;
+		}
+	}
+
+	private static AudioStream openOgg(InputStream inputStream, boolean looping) throws IOException {
+		try {
+			return looping
+					? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
+					: new JOrbisAudioStream(inputStream);
+		} catch (IOException | RuntimeException exception) {
+			try {
+				inputStream.close();
+			} catch (IOException suppressed) {
+				exception.addSuppressed(suppressed);
+			}
+			throw exception;
+		}
+	}
+
 	private static void skipToRequestedOffset(AudioStream stream, long offsetMillis) throws IOException {
 		if (offsetMillis <= 0L) return;
 		AudioFormat format = stream.getFormat();
@@ -127,10 +154,7 @@ public abstract class SoundBufferLibraryMixin {
 		if (AudioStreams.isSupported(path) && !path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".ogg")) {
 			return looping ? AudioStreams.openLooping(path) : AudioStreams.open(path);
 		}
-		InputStream inputStream = Files.newInputStream(path);
-		return looping
-				? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
-				: new JOrbisAudioStream(inputStream);
+		return openOgg(Files.newInputStream(path), looping);
 	}
 
 	private static AudioStream openResourceStream(DirectSoundFiles.ResourceSource source, boolean looping) throws IOException {
@@ -139,9 +163,6 @@ public abstract class SoundBufferLibraryMixin {
 					? AudioStreams.openLooping(source.stream(), source.extension())
 					: AudioStreams.open(source.stream().get(), source.extension());
 		}
-		InputStream inputStream = source.stream().get();
-		return looping
-				? new LoopingAudioStream(JOrbisAudioStream::new, inputStream)
-				: new JOrbisAudioStream(inputStream);
+		return openOgg(source.stream().get(), looping);
 	}
 }

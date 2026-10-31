@@ -2,7 +2,9 @@ package net.rebel459.music_and_melody.mixin.client;
 
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundAwardStatsPacket;
+import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.rebel459.music_and_melody.client.screen.MusicPlayerScreen;
+import net.rebel459.music_and_melody.network.ServerPresenceHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -10,6 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
+
+    @Inject(method = "handleLogin", at = @At("HEAD"))
+    private void resetServerPresence(ClientboundLoginPacket packet, CallbackInfo ci) {
+        ServerPresenceHandler.reset();
+    }
 
     @Inject(method = "handleAwardStats", at = @At("TAIL"))
     private void refreshAlbumDetailsStats(ClientboundAwardStatsPacket packet, CallbackInfo ci) {

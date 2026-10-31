@@ -1,10 +1,14 @@
 package net.rebel459.music_and_melody.client.util;
 
+import com.google.gson.JsonElement;
+import com.mojang.logging.LogUtils;
+import com.mojang.serialization.DataResult;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.JsonOps;
+import java.io.InputStream;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -191,7 +195,10 @@ public final class CustomAlbums {
         Path iconFile = ICON_DIRECTORY.resolve(icon.getPath()).normalize();
         if (!iconFile.toAbsolutePath().normalize().startsWith(ICON_DIRECTORY.toAbsolutePath().normalize()) || !Files.isRegularFile(iconFile)) return DEFAULT_ICON;
         try {
-            NativeImage image = NativeImage.read(Files.newInputStream(iconFile));
+            NativeImage image;
+            try (InputStream iconStream = Files.newInputStream(iconFile)) {
+                image = NativeImage.read(iconStream);
+            }
             Identifier dynamic = Identifier.fromNamespaceAndPath(MusicAndMelody.MOD_ID, "config_icons/" + icon.getPath());
             minecraft.getTextureManager().register(dynamic, new DynamicTexture(() -> "Config icon " + icon, image));
             synchronized (CustomAlbums.class) {
@@ -223,10 +230,9 @@ public final class CustomAlbums {
             if (iconId == null) return false;
             Album.Record record = new Album.Record(Component.literal(name.trim()), iconId,
                     List.of(new Album.Track(idPath, true)), List.of());
-            try (Writer writer = Files.newBufferedWriter(directory.resolve(ALBUM_FILE))) {
-                Album.Record.CODEC.encodeStart(JsonOps.INSTANCE, record).result()
-                        .ifPresent(json -> GSON.toJson(JsonParser.parseString(json.toString()), writer));
-            }
+            JsonElement encoded = Album.Record.CODEC.encodeStart(JsonOps.INSTANCE, record).result().orElse(null);
+            if (encoded == null) return false;
+            AtomicFiles.write(directory.resolve(ALBUM_FILE), writer -> GSON.toJson(JsonParser.parseString(encoded.toString()), writer));
             reload();
             return true;
         } catch (IOException ignored) {
@@ -302,7 +308,9 @@ public final class CustomAlbums {
         Path json = directory.resolve(ALBUM_FILE);
         if (!Files.isRegularFile(json)) return null;
         try (Reader reader = Files.newBufferedReader(json)) {
-            Album.Record record = Album.Record.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader)).result().orElse(null);
+            DataResult<Album.Record> parsed = Album.Record.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader));
+            parsed.error().ifPresent(error -> LogUtils.getLogger().warn("Invalid album JSON {}: {}", json, error.message()));
+            Album.Record record = parsed.result().orElse(null);
             if (record == null) return null;
             return new Metadata(Identifier.fromNamespaceAndPath("config", idPath), record.name(), record.icon(), record);
         } catch (Exception ignored) {

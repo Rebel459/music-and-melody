@@ -45,6 +45,11 @@ public abstract class MusicManagerMixin {
         if (key != null) cir.setReturnValue(key);
     }
 
+    @Inject(method = "startPlaying", at = @At("HEAD"))
+    private void rerollRandomChances(Music music, CallbackInfo ci) {
+        EventHelper.clearRandomRolls();
+    }
+
     @Unique
     private SoundEvent toastSoundEvent = null;
 

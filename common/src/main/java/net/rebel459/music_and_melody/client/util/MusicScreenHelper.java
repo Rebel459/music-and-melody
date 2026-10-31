@@ -1,7 +1,10 @@
 package net.rebel459.music_and_melody.client.util;
 
 import com.mojang.blaze3d.Blaze3D;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -17,6 +20,7 @@ public final class MusicScreenHelper {
 
     public static final Identifier FALLBACK_ICON = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
 
+    private static final Map<Identifier, Boolean> ICON_EXISTS = new ConcurrentHashMap<>();
     private static final URI DISCORD = URI.create("https://discord.com/invite/TGbBb47Gr5");
     private static final URI KOFI = URI.create("https://ko-fi.com/rebel459");
 
@@ -25,8 +29,13 @@ public final class MusicScreenHelper {
         icon = CustomAlbums.resolveIcon(minecraft, icon);
         if (CustomAlbums.isDynamicIcon(icon)) return icon;
         if (RemoteIconManager.isDynamic(icon)) return icon;
-        if (minecraft == null || minecraft.getResourceManager().getResource(icon).isPresent()) return icon;
-        return FALLBACK_ICON;
+        if (minecraft == null) return icon;
+        boolean exists = ICON_EXISTS.computeIfAbsent(icon, id -> minecraft.getResourceManager().getResource(id).isPresent());
+        return exists ? icon : FALLBACK_ICON;
+    }
+
+    public static void clearIconCache() {
+        ICON_EXISTS.clear();
     }
 
     public static void addCenteredSocialButtons(Screen screen, int centerX, int y) {
@@ -37,13 +46,24 @@ public final class MusicScreenHelper {
         screen.addRenderableWidget(new IconButton(x, y, Component.literal("Ko-Fi"), IconButton.icon("kofi"), _ -> Blaze3D.openUri(KOFI)));
     }
 
+    public static void saveFailed(Minecraft minecraft) {
+        if (minecraft == null) return;
+        SystemToast.addOrUpdate(minecraft.getToastManager(),
+                SystemToast.SystemToastId.PACK_COPY_FAILURE,
+                Component.translatable("screen.music_and_melody.save_failed"),
+                Component.translatable("screen.music_and_melody.save_failed.details"));
+    }
+
     public static void openKofi() {
         Blaze3D.openUri(KOFI);
     }
 
     public static void openUri(String value) {
         try {
-            Blaze3D.openUri(URI.create(value));
+            URI uri = URI.create(value);
+            String scheme = uri.getScheme();
+            if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) return;
+            Blaze3D.openUri(uri);
         } catch (IllegalArgumentException ignored) {
         }
     }

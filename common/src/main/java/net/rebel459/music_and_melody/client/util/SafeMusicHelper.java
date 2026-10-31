@@ -117,15 +117,16 @@ public final class SafeMusicHelper {
 			return Optional.empty();
 		}
 
-		Path exact = root.resolve(wantedPath).normalize();
+		Path absoluteRoot = root.toAbsolutePath().normalize();
+		Path exact = absoluteRoot.resolve(wantedPath).normalize();
 
-		if (Files.isRegularFile(exact)) {
+		if (exact.startsWith(absoluteRoot) && Files.isRegularFile(exact)) {
 			return Optional.of(exact);
 		}
 
-		Path withOgg = root.resolve(ensureOgg(wantedPath)).normalize();
+		Path withOgg = absoluteRoot.resolve(ensureOgg(wantedPath)).normalize();
 
-		if (Files.isRegularFile(withOgg)) {
+		if (withOgg.startsWith(absoluteRoot) && Files.isRegularFile(withOgg)) {
 			return Optional.of(withOgg);
 		}
 
@@ -142,18 +143,19 @@ public final class SafeMusicHelper {
 		String wantedWithOgg = ensureOgg(wantedPath);
 
 		try (Stream<Path> stream = Files.walk(root)) {
-			return stream
+			List<Path> audio = stream
 					.filter(Files::isRegularFile)
-				.filter(SafeMusicHelper::isSupportedAudio)
-					.filter(path -> {
-						String relative = normalize(root.relativize(path).toString());
-
-						return relative.equals(wantedPath)
-								|| relative.equals(wantedWithOgg)
-								|| relative.endsWith("/" + wantedWithOgg)
-								|| sameStem(path, wantedStem);
-					})
-					.findFirst();
+					.filter(SafeMusicHelper::isSupportedAudio)
+					.sorted()
+					.toList();
+			Optional<Path> byPath = audio.stream().filter(path -> {
+				String relative = normalize(root.relativize(path).toString());
+				return relative.equals(wantedPath)
+						|| relative.equals(wantedWithOgg)
+						|| relative.endsWith("/" + wantedWithOgg);
+			}).findFirst();
+			if (byPath.isPresent()) return byPath;
+			return audio.stream().filter(path -> sameStem(path, wantedStem)).findFirst();
 		} catch (IOException exception) {
 			throw new IllegalStateException("Failed to scan downloads folder '" + root + "'.", exception);
 		}

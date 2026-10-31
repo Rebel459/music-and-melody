@@ -2,6 +2,7 @@ package net.rebel459.music_and_melody.client.util;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.rebel459.music_and_melody.network.CombatMusicHandler;
@@ -23,6 +24,7 @@ public class CombatStatus {
 
     private static int ticks = 0;
     private static boolean reset = true;
+    private static LocalPlayer lastPlayer;
 
     private static final Set<Integer> PVE_CONDITIONS = new HashSet<>();
     private static final Set<Integer> PVP_CONDITIONS = new HashSet<>();
@@ -91,24 +93,24 @@ public class CombatStatus {
         UnifiedClientEvents.Instance.onTick(EventTiming.PRE, client -> {
             LocalPlayer player = client.player;
             if (player == null || !EventHelper.isEnabled()) {
+                lastPlayer = null;
                 if (!reset) {
-                    pveScore = 0;
-                    pvpScore = 0;
-                    PVE_CONDITIONS.clear();
-                    PVP_CONDITIONS.clear();
-                    lastPlayerAttackTimestamp = 1200;
-                    lastFightingPlayerTimestamp = 1200;
-                    ticks = 0;
-                    CombatMusicHandler.clientPlayerTrackedByMob = false;
+                    resetState();
                     reset = true;
                 }
                 return;
+            }
+            if (player != lastPlayer) {
+                lastPlayer = player;
+                resetState();
+                reset = true;
             }
             if (reset) {
                 lastHurtByTimestamp = player.getLastHurtByMobTimestamp();
                 lastHurtTimestamp = player.getLastHurtMobTimestamp();
                 reset = false;
             }
+            if (client.isPaused()) return;
 
             onTick(player);
 
@@ -118,6 +120,17 @@ public class CombatStatus {
                 onSecond(player);
             }
         });
+    }
+
+    private static void resetState() {
+        pveScore = 0;
+        pvpScore = 0;
+        PVE_CONDITIONS.clear();
+        PVP_CONDITIONS.clear();
+        lastPlayerAttackTimestamp = 1200;
+        lastFightingPlayerTimestamp = 1200;
+        ticks = 0;
+        CombatMusicHandler.clientPlayerTrackedByMob = false;
     }
 
     private static void onTick(LocalPlayer player) {
@@ -147,7 +160,7 @@ public class CombatStatus {
         else playerTrackedByMob = !player.level().getEntitiesOfClass(
                 Mob.class,
                 player.getBoundingBox().inflate(16),
-                mob -> mob instanceof Enemy && mob.isAlive() && mob.hasLineOfSight(player) && mob.distanceToSqr(player) <= 16 * 16
+                mob -> mob instanceof Enemy && !(mob instanceof NeutralMob) && mob.isAlive() && mob.hasLineOfSight(player) && mob.distanceToSqr(player) <= 16 * 16
         ).isEmpty();
 
         boolean atFullHealth = player.getHealth() >= player.getMaxHealth();

@@ -12,17 +12,20 @@ import java.util.*;
 public class CombatMusicHandler {
 
     private static int serverTicks = 0;
+    private static int resend = 0;
     private static final Map<UUID, Boolean> LAST_STATE = new HashMap<>();
 
     public static void init() {
-        if (!MaMServerConfig.get().improved_pve_detection) return;
         UnifiedHelpers.NETWORKING.registerPlayToClient(CombatMusicPacket.TYPE, CombatMusicPacket.CODEC, (packet, player) -> {
             clientPlayerTrackedByMob = packet.playerTrackedByMob();
         });
+        if (!MaMServerConfig.get().improved_pve_detection) return;
         UnifiedEvents.Players.onLeave(player -> LAST_STATE.remove(player.getUUID()));
         UnifiedEvents.Server.onTick(EventTiming.PRE, server -> {
             if (++serverTicks < 20) return;
             serverTicks = 0;
+            boolean shouldResend = ++resend >= 5;
+            if (shouldResend) resend = 0;
             server.getPlayerList().getPlayers().forEach(player -> {
                 boolean playerTrackedByMob = !player.level().getEntitiesOfClass(
                         Mob.class,
@@ -30,7 +33,7 @@ public class CombatMusicHandler {
                         mob -> mob instanceof Enemy && mob.isAlive() && mob.getTarget() == player && mob.distanceToSqr(player) <= 32 * 32
                 ).isEmpty();
                 Boolean lastState = LAST_STATE.get(player.getUUID());
-                if (lastState == null || lastState != playerTrackedByMob) {
+                if (shouldResend || lastState == null || lastState != playerTrackedByMob) {
                     LAST_STATE.put(player.getUUID(), playerTrackedByMob);
                     UnifiedHelpers.NETWORKING.send(new CombatMusicPacket(playerTrackedByMob), player);
                 }
